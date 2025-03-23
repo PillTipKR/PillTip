@@ -11,7 +11,7 @@ assignees: PillTip
 - ***OOO***기능을 개발합니다
 
 ## 기간
-- {{date:YYYY-MM-DD}}{{time}} - {{date:YYYY-MM-DD}}{{time}}
+- 2025.00.00 - 2025.00.00
 
 ## 구분
 - [ ] 프론트엔드
