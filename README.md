@@ -11,8 +11,8 @@
 ## 개발문서 :bookmark_tabs:
  개발 과정, 스터디 등 프로젝트 전반을 설명합니다. 천천히 읽어주세요 :smiley:  
  - [노션 링크](https://www.notion.so/PillTip-1bfc40a11aff80269822c5e2fcd8fbd9) // 권한을 요청해주세요!
- - [프론트엔드]()
- - [백엔드]()
+ - [프론트엔드](https://github.com/PillTip/PillTip/blob/main/PillTip/FE/README.md)
+ - [백엔드](https://github.com/PillTip/PillTip/blob/main/PillTip/BE/README.md)
 
 Copyright 2025 '**PillTip**' All right reserved.
 본 레포지토리 내 코드 또는 작업물의 무단 복제 및 활용을 금합니다.
