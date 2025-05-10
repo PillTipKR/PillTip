@@ -1,4 +1,4 @@
-#초기 설정
+# 초기 설정
 
 ## Docker 설치
 Milvus DB사용을 위해 Docker 설치가 필요합니다.
@@ -10,28 +10,28 @@ https://gaesae.com/161
 WSL사용자는 WSL을 실행하여 시도하여야 합니다!!
 https://jsonobject.tistory.com/8
 
-##파이썬 설치
+## 파이썬 설치
 sudo apt update & sudo apt upgrade
 sudo apt install python3
 sudo apt install python3-pip
 
-#실행하기 
+# 실행하기 
 
-##다운 받은 폴더로 이동하기
+## 다운 받은 폴더로 이동하기
 cd "다운로드 받은 경로" 
 (wsl 사용 시, 
 C드라이브는 C: -> /mnt/c로 변경하기. 
 D드라이브도 D: -> /mnt/d로 변경하기.
 주소가 \를 통해 구분되어 있는 경우, \를 /로 변경하여 이동하기
 
-##패키지 설치
+## 패키지 설치
 pip install -r data/requirements.txt
 
 pip3 install이 안될 경우 아래 링크 참고 하기
 https://blog.naver.com/b14nc4/223418048502
 
 
-##도커 컴포즈로 Milvus 구축
+## 도커 컴포즈로 Milvus 구축
 docker-compose up -d
 
 ## 실행 확인하기
@@ -41,6 +41,7 @@ milvus, etcd, minio 컨테이너가 떠 있으면 성공입니다.
 ## Python 코드 실행
 python3 milvus.py
 
+# 코드 동작 흐름
 이 코드는 다음 순서로 작동합니다:
 
 0. 사용자 입력 
