@@ -41,11 +41,11 @@ else:
 client.load_collection(collection_name)
     
 # 3. 증상 임베딩 불러오기
-with open("../data/symptom_embeddings.json", "r", encoding="utf-8") as f:
+with open("data/symptom_embeddings.json", "r", encoding="utf-8") as f:
     symptom_embeddings = json.load(f)
 
 # 4. 표현사전 불러오기 (효능 효과 텍스트 정규화용)
-with open("../data/expression_mappings.json", "r", encoding="utf-8") as f:
+with open("data/expression_mappings.json", "r", encoding="utf-8") as f:
     expression_dict = json.load(f)
 
 # DB 데이터 중복 확인 함수

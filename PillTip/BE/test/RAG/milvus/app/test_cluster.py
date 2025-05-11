@@ -154,7 +154,7 @@ def get_embedding(text):
     return np.array(client.embeddings.create(input=[text], model="text-embedding-3-large").data[0].embedding)
 
 # ✅ 증상 임베딩 파일 동기화 (추가/삭제/이름변경 반영)
-symptom_emb_file = "../data/symptom_embeddings.json"
+symptom_emb_file = "data/symptom_embeddings.json"
 if os.path.exists(symptom_emb_file):
     with open(symptom_emb_file, "r", encoding="utf-8") as f:
         symptom_emb = json.load(f)
@@ -179,7 +179,7 @@ with open(symptom_emb_file, "w", encoding="utf-8") as f:
     json.dump(symptom_emb, f, ensure_ascii=False, indent=2)
 
 # ✅ 클러스터 보정용 벡터 캐시도 동기화 (이름 변경 반영)
-cluster_map_file = "../data/cluster_mappings.json"
+cluster_map_file = "data/cluster_mappings.json"
 if os.path.exists(cluster_map_file):
     with open(cluster_map_file, "r", encoding="utf-8") as f:
         cluster_map = json.load(f)
@@ -225,7 +225,7 @@ with open(cluster_map_file, "w", encoding="utf-8") as f:
     json.dump(cluster_map, f, ensure_ascii=False, indent=2)
 
 # ✅ 표현 매핑 사전 자동 동기화
-expression_dict_file = "../data/expression_mappings.json"
+expression_dict_file = "data/expression_mappings.json"
 if os.path.exists(expression_dict_file):
     with open(expression_dict_file, "r", encoding="utf-8") as f:
         expression_dict = json.load(f)
