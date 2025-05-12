@@ -7,4 +7,6 @@
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    <color name="kakao_background_color">#FFFDE500</color>
+    <color name="kakao_font_color">#FF230E00</color>
 </resources>
