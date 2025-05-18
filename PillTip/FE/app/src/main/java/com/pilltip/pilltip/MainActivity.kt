@@ -8,13 +8,10 @@ import androidx.activity.enableEdgeToEdge
 import com.kakao.sdk.common.KakaoSdk
 import com.kakao.sdk.common.util.Utility
 import com.kakao.vectormap.KakaoMapSdk
-import com.pilltip.pilltip.calender.CalendarScreen
-import com.pilltip.pilltip.view.LoginPage
+import com.pilltip.pilltip.nav.NavGraph
 import dagger.hilt.android.AndroidEntryPoint
-import dagger.hilt.android.HiltAndroidApp
 
 @AndroidEntryPoint
-
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -23,10 +20,10 @@ class MainActivity : ComponentActivity() {
             Log.d("KeyHash", "${Utility.getKeyHash(this)}")
 
             val kakaoKey = BuildConfig.KAKAO_KEY
-            Log.d("KakaoMapKey", kakaoKey)
+            Log.d("KakaoKey", kakaoKey)
             KakaoSdk.init(this, kakaoKey)
             KakaoMapSdk.init(this, kakaoKey);
-            LoginPage()
+            NavGraph()
         }
     }
 }

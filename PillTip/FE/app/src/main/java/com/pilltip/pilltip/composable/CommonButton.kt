@@ -1,6 +1,6 @@
 package com.pilltip.pilltip.composable
 
-import android.content.Context
+import androidx.annotation.DrawableRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -25,10 +26,10 @@ import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.pilltip.pilltip.R
-import com.pilltip.pilltip.model.social.LoginViewModel
 import com.pilltip.pilltip.ui.theme.pretendard
 
 /**
@@ -105,5 +106,62 @@ fun ButtonWithLogo(
         )
         Spacer(modifier = Modifier.weight(1f))
         Box(modifier = Modifier.size(20.dp))
+    }
+}
+
+/**
+ * 뒤로가기 버튼입니다.
+ * @param title 뒤로가기 버튼 옆에 보여지는 텍스트입니다.
+ * @param horizontalPadding 뒤로가기 Row 양 쪽의 가로 패딩입니다.
+ * @param verticalPadding 뒤로가기 Row 위아래의 세로 패딩입니다.
+ * @param iconDrawable 뒤로가기 버튼 옆에 보여지는 아이콘으로, 한정자를 통해 R.drawable...만 입력 받습니다.
+ * @param navigationTo 뒤로가기 버튼을 누르면 실행되는 함수로, navigationTo = ({ navController.navigate(route)}) 형식으로 작성합니다.
+ */
+@Composable
+fun BackButton(
+    title : String = "",
+    horizontalPadding : Dp = 18.dp,
+    verticalPadding : Dp = 18.dp,
+    @DrawableRes iconDrawable : Int = 0,
+    navigationTo: () -> Unit, ){
+    HeightSpacer(50.dp)
+    Row(
+        modifier = Modifier
+            .background(color = Color.White)
+            .fillMaxWidth()
+            .padding(horizontal = horizontalPadding, vertical = verticalPadding)
+            .height(57.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Image(
+            imageVector = ImageVector.vectorResource(id = R.drawable.btn_black_arrow),
+            contentDescription = "backButtonIcon",
+            modifier = Modifier.clickable {
+                navigationTo()
+            }
+        )
+        Spacer(modifier = Modifier.weight(1f))
+        if(title.isNotEmpty()){
+            Text(
+                text = title,
+                style = TextStyle(
+                    fontSize = 18.sp,
+                    fontFamily = pretendard,
+                    fontWeight = FontWeight(400),
+                    color = Color(0xFF121212),
+                    textAlign = TextAlign.Center
+                )
+            )
+        }
+        Spacer(modifier = Modifier.weight(1f))
+        if(iconDrawable!=0) {
+            Image(
+                imageVector = ImageVector.vectorResource(id = iconDrawable),
+                contentDescription = "logo",
+                modifier = Modifier
+            )
+        } else {
+            Box(modifier = Modifier.width(20.dp))
+        }
     }
 }

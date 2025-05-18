@@ -1,4 +1,4 @@
-package com.pilltip.pilltip.model.social
+package com.pilltip.pilltip.model.signUp
 
 import android.content.Context
 import android.util.Log
@@ -9,9 +9,13 @@ import com.kakao.sdk.user.model.User
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 
+enum class LoginType {
+    NONE, KAKAO, GOOGLE, IDPW
+}
+
 @HiltViewModel
-class LoginViewModel @Inject constructor(
-    private val kakaoLoginManager: KakaoLoginManager
+class KaKaoLoginViewModel @Inject constructor(
+    private val kakaoAuthManager: KakaoAuthManager
 ) : ViewModel() {
 
     private val _user = mutableStateOf<User?>(null)
@@ -19,14 +23,14 @@ class LoginViewModel @Inject constructor(
     private var currentToken: String? = null
 
     fun kakaoLogin(context: Context) {
-        kakaoLoginManager.login(context) { token, error ->
+        kakaoAuthManager.login(context) { token, error ->
             if (error != null) {
                 Log.e("LoginVM", "로그인 실패", error)
             } else {
                 if (token != null) {
                     currentToken = token.accessToken
                 }
-                kakaoLoginManager.getUserInfo { userInfo ->
+                kakaoAuthManager.getUserInfo { userInfo ->
                     _user.value = userInfo
                     //Log.d("LoginVM", "사용자 정보: $userInfo")
                 }
@@ -37,13 +41,13 @@ class LoginViewModel @Inject constructor(
     fun getAccessToken(): String? = currentToken
 
     fun logout() {
-        kakaoLoginManager.logout {
+        kakaoAuthManager.logout {
             _user.value = null
         }
     }
 
     fun unlink(context : Context){
-        kakaoLoginManager.unlink(context)
+        kakaoAuthManager.unlink(context)
         logout()
     }
 }
