@@ -18,7 +18,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -60,6 +59,7 @@ import com.pilltip.pilltip.composable.PlaceholderTextField
 import com.pilltip.pilltip.composable.SelectButton
 import com.pilltip.pilltip.composable.TitleDescription
 import com.pilltip.pilltip.composable.WhiteScreenModifier
+import com.pilltip.pilltip.composable.WidthSpacer
 import com.pilltip.pilltip.composable.buttonModifier
 import com.pilltip.pilltip.model.signUp.SignUpViewModel
 import com.pilltip.pilltip.ui.theme.pretendard
@@ -604,6 +604,7 @@ fun AgePage(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ){
+        Spacer(modifier = Modifier.weight(1f))
         PillTipDatePicker(
             onDateSelected = { localDate ->
                 viewModel.updateBirthDate(
@@ -613,6 +614,92 @@ fun AgePage(
                 )
             }
         )
+        Spacer(modifier = Modifier.weight(1f))
+        NextButton(
+            mModifier = buttonModifier,
+            buttonColor =  Color(0xFF397CDB),
+            onClick = {
+                navController.navigate("BodyStatPage")
+            }
+        )
     }
 }
+
+@Composable
+fun BodyStatPage(
+    navController: NavController,
+    viewModel: SignUpViewModel = hiltViewModel()
+){
+    var height by remember { mutableStateOf("") }
+    var weight by remember { mutableStateOf("") }
+    var isFocusedHeight by remember { mutableStateOf(false) }
+    var isFocusedWeight by remember { mutableStateOf(false) }
+    val focusManager = LocalFocusManager.current
+
+    Column(
+        modifier = WhiteScreenModifier
+            .pointerInput(Unit) {
+                detectTapGestures {
+                    focusManager.clearFocus()
+                }
+            },
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        HeightSpacer(80.dp)
+        DoubleLineTitleText(upperTextLine = "키와 몸무게를", lowerTextLine = "입력해주세요")
+        HeightSpacer(12.dp)
+        TitleDescription(description = "복약 안전을 위해 필수적이에요")
+        HeightSpacer(29.dp)
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxWidth()
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                LabelText(labelText = if (height.isNotEmpty()) "키" else "")
+                PlaceholderTextField(
+                    placeHolder = "174",
+                    inputText = height,
+                    inputType = InputType.NUMBER,
+                    onTextChanged = { height = it },
+                    onFocusChanged = {
+                        isFocusedHeight = it
+                    }
+                )
+                HeightSpacer(14.dp)
+                HighlightingLine(text = height, isFocused = isFocusedHeight)
+            }
+            WidthSpacer(16.dp)
+            Column(modifier = Modifier.weight(1f)) {
+                LabelText(labelText = if (weight.isNotEmpty()) "몸무게" else "")
+                PlaceholderTextField(
+                    placeHolder = "50",
+                    inputText = weight,
+                    inputType = InputType.NUMBER,
+                    onTextChanged = { weight = it },
+                    onFocusChanged = {
+                        isFocusedWeight = it
+                    }
+                )
+                HeightSpacer(14.dp)
+                HighlightingLine(text = weight, isFocused = isFocusedWeight)
+            }
+        }
+
+        Spacer(modifier = Modifier.weight(1f))
+        NextButton(
+            mModifier = buttonModifier,
+            buttonColor = if (height.length >= 2 && weight.length >= 2) Color(0xFF397CDB) else Color(0xFFCADCF5),
+            onClick = {
+                if (height.length >= 2 && weight.length >= 2) {
+                    viewModel.updateHeight(height.toInt())
+                    viewModel.updateWeight(weight.toInt())
+                    navController.navigate("FavoritePage")
+                }
+            }
+        )
+    }
+}
+
+
 

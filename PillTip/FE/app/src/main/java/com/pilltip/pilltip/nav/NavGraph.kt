@@ -6,6 +6,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.pilltip.pilltip.model.VM
 import com.pilltip.pilltip.view.AgePage
+import com.pilltip.pilltip.view.BodyStatPage
 import com.pilltip.pilltip.view.GenderPage
 import com.pilltip.pilltip.view.IdPage
 import com.pilltip.pilltip.view.KakaoAuthPage
@@ -41,6 +42,9 @@ fun NavGraph() {
         }
         composable("AgePage"){
             AgePage(navController = navController)
+        }
+        composable("BodyStatPage"){
+            BodyStatPage(navController = navController)
         }
     }
 }
