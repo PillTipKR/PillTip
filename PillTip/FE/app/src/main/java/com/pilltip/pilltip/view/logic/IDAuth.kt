@@ -194,7 +194,7 @@ fun TermBottomSheet(
                 buttonColor = if (isEssentialChecked) Color(0xFF348ADF) else Color(0xFFCADCF5),
                 onClick = {
                     onDismiss()
-                    navController.navigate("Phone")
+                    navController.navigate("PhoneAuthenticationPage")
 
                 }
             )
