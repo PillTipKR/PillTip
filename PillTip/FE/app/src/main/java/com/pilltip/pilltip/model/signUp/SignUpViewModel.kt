@@ -18,6 +18,7 @@ class SignUpViewModel @Inject constructor(
     private val _signUpData = mutableStateOf(SignUpData())
     val signUpData: State<SignUpData> = _signUpData
 
+
     private val _isLoading = mutableStateOf(false)
     val isLoading: State<Boolean> = _isLoading
 
@@ -117,6 +118,8 @@ class SignUpViewModel @Inject constructor(
     // 약관 동의 여부
     fun isAgreedToTerms(): Boolean = _signUpData.value.term
 
+
+    // 최종 회원가입 요청
     fun completeSignUp(
         onSuccess: () -> Unit,
         onFailure: (Throwable?) -> Unit

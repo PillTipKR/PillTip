@@ -1,5 +1,6 @@
 package com.pilltip.pilltip.view
 
+
 import android.content.Context
 import android.widget.Toast
 import androidx.compose.foundation.Image
@@ -14,6 +15,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
@@ -703,6 +705,7 @@ fun BodyStatPage(
                 if (height.length >= 2 && weight.length >= 2) {
                     viewModel.updateHeight(height.toInt())
                     viewModel.updateWeight(weight.toInt())
+
                     navController.navigate("InterestPage")
                 }
             }

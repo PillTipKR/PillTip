@@ -198,8 +198,6 @@ fun TermBottomSheet(
                         vm.updateTermsOfServices(true)
                         navController.navigate("PhoneAuthenticationPage")
                     }
-
-
                 }
             )
         }

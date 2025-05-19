@@ -49,5 +49,6 @@ fun NavGraph() {
         composable("InterestPage"){
             InterestPage(navController = navController)
         }
+
     }
 }
