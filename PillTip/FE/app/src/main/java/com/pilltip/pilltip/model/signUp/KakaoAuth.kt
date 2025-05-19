@@ -29,6 +29,7 @@ class KaKaoLoginViewModel @Inject constructor(
             } else {
                 if (token != null) {
                     currentToken = token.accessToken
+
                 }
                 kakaoAuthManager.getUserInfo { userInfo ->
                     _user.value = userInfo
