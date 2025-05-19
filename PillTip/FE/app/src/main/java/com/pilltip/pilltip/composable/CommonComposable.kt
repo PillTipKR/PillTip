@@ -1,12 +1,16 @@
 package com.pilltip.pilltip.composable
 
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
+import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -16,11 +20,18 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -31,6 +42,7 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.TextStyle
@@ -43,6 +55,8 @@ import androidx.compose.ui.unit.sp
 import com.pilltip.pilltip.R
 import com.pilltip.pilltip.ui.theme.pretendard
 import com.pilltip.pilltip.view.logic.InputType
+import java.time.LocalDate
+import java.time.YearMonth
 
 /**
  * 세로 간격을 띄우기 위한 Spacer입니다.
@@ -333,4 +347,143 @@ fun PlaceholderTextField(
             }
         }
     )
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+fun PillTipDatePicker(
+    onDateSelected: (LocalDate) -> Unit
+){
+    var yearMonth: YearMonth by remember { mutableStateOf(YearMonth.now()) }
+    val daysInMonth by remember(yearMonth) {
+        mutableStateOf(
+            yearMonth.lengthOfMonth()
+        )
+    }
+
+    val yearListState = rememberLazyListState(yearMonth.year - 1900)
+    val monthListState = rememberLazyListState(yearMonth.monthValue - 1)
+    val dayListState = rememberLazyListState(1)
+
+
+    val density = LocalDensity.current
+    val threshold = remember { density.run { 20.dp.toPx() } }
+    val year by remember { derivedStateOf { (yearListState.firstVisibleItemIndex + if (yearListState.firstVisibleItemScrollOffset >= threshold) 1901 else 1900) } }
+    val month by remember { derivedStateOf { (monthListState.firstVisibleItemIndex + if (monthListState.firstVisibleItemScrollOffset >= threshold) 2 else 1) } }
+    val day by remember {
+        derivedStateOf {
+            val offsetThreshold = if (dayListState.firstVisibleItemScrollOffset >= threshold) 1 else 0
+            (dayListState.firstVisibleItemIndex + offsetThreshold + 1).coerceAtMost(daysInMonth)
+        }
+    }
+
+    LaunchedEffect(year, month) {
+        yearMonth = YearMonth.of(year, month)
+        if (day > daysInMonth) {
+            dayListState.scrollToItem(daysInMonth - 1)
+        }
+    }
+
+    LaunchedEffect(year, month, day) {
+        val safeDay = day.coerceAtMost(YearMonth.of(year, month).lengthOfMonth())
+        onDateSelected(LocalDate.of(year, month, safeDay))
+    }
+
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth(0.75f)
+        ) {
+            LazyColumn(
+                state = yearListState,
+                contentPadding = PaddingValues(vertical = 80.dp),
+                flingBehavior = rememberSnapFlingBehavior(yearListState),
+                modifier = Modifier
+                    .weight(1f)
+                    .height(200.dp)
+            ) {
+                items((1900..2025).toList()) { int ->
+                    val textColor by animateColorAsState(if (int == year) Color.Black else Color(0xFFD0D0D0))
+
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(40.dp)
+                    ) {
+                        BasicText(
+                            text = "${int}년",
+                            style = LocalTextStyle.current.copy(
+                                fontSize = 23.sp,
+                                fontWeight = FontWeight.Normal
+                            ),
+                            color = { textColor }
+                        )
+                    }
+                }
+            }
+            LazyColumn(
+                state = monthListState,
+                contentPadding = PaddingValues(vertical = 80.dp),
+                flingBehavior = rememberSnapFlingBehavior(monthListState),
+                modifier = Modifier
+                    .weight(1f)
+                    .height(200.dp)
+            ) {
+                items((1..12).toList()) { int ->
+                    val textColor by animateColorAsState(if (int == month) Color.Black else Color(0xFFD0D0D0))
+
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(40.dp)
+                    ) {
+                        BasicText(
+                            text = "${int}월",
+                            style = LocalTextStyle.current.copy(
+                                fontSize = 23.sp,
+                                fontWeight = FontWeight.Normal
+                            ),
+                            color = { textColor }
+                        )
+                    }
+                }
+            }
+
+            // 일 선택
+            LazyColumn(
+                state = dayListState,
+                contentPadding = PaddingValues(vertical = 80.dp),
+                flingBehavior = rememberSnapFlingBehavior(dayListState),
+                modifier = Modifier
+                    .weight(1f)
+                    .height(200.dp)
+            ) {
+                items((1..daysInMonth).toList()) { int ->
+                    val textColor by animateColorAsState(if (int == day) Color.Black else Color(0xFFD0D0D0))
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(40.dp)
+                    ) {
+                        BasicText(
+                            text = "${int}일",
+                            style = LocalTextStyle.current.copy(
+                                fontSize = 23.sp,
+                                fontWeight = FontWeight.Normal
+                            ),
+                            color = { textColor }
+                        )
+                    }
+                }
+            }
+        }
+    }
 }

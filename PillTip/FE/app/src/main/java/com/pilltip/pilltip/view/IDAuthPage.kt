@@ -1,8 +1,10 @@
 package com.pilltip.pilltip.view
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -10,6 +12,9 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -29,12 +34,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -47,7 +55,9 @@ import com.pilltip.pilltip.composable.HeightSpacer
 import com.pilltip.pilltip.composable.HighlightingLine
 import com.pilltip.pilltip.composable.LabelText
 import com.pilltip.pilltip.composable.NextButton
+import com.pilltip.pilltip.composable.PillTipDatePicker
 import com.pilltip.pilltip.composable.PlaceholderTextField
+import com.pilltip.pilltip.composable.SelectButton
 import com.pilltip.pilltip.composable.TitleDescription
 import com.pilltip.pilltip.composable.WhiteScreenModifier
 import com.pilltip.pilltip.composable.buttonModifier
@@ -494,9 +504,115 @@ fun PhoneAuthPage(
             onClick = {
                 if (phoneNumber.length >= 11) {
                     viewModel.updatePhone(phoneNumber)
-                    navController.navigate("SplashPage")
+                    navController.navigate("GenderPage")
                 }
             }
         )
     }
 }
+
+@Composable
+fun GenderPage(
+    navController: NavController,
+    viewModel: SignUpViewModel = hiltViewModel()
+){
+    val lc = LocalConfiguration.current.screenHeightDp
+    val localWitdh = LocalConfiguration.current.screenWidthDp
+    Column(
+        modifier = WhiteScreenModifier,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        HeightSpacer(50.dp)
+        Column(
+            modifier = Modifier.height((lc - 50 + 46).dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            HeightSpacer(120.dp)
+            Box(
+                Modifier
+                    .width(84.dp)
+                    .height(33.dp)
+                    .background(color = Color(0xFFEEF4FC), shape = RoundedCornerShape(size = 12.dp))
+                    .padding(start = 16.dp, top = 8.dp, end = 16.dp, bottom = 8.dp)
+            ) {
+                Text(
+                    text = "성별 선택",
+                    style = TextStyle(
+                        fontSize = 14.sp,
+                        fontFamily = pretendard,
+                        fontWeight = FontWeight(700),
+                        color = Color(0xFF397CDB),
+                        textAlign = TextAlign.Center,
+                    )
+                )
+            }
+            HeightSpacer(22.dp)
+            Text(
+                text = "맞춤 서비스 제공을 위해 필요해요",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp)
+                    .wrapContentHeight(Alignment.CenterVertically),
+                style = TextStyle(
+                    fontSize = 28.sp,
+                    fontFamily = pretendard,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF121212),
+                    letterSpacing = (-0.3).sp,
+                    textAlign = TextAlign.Center,
+                    platformStyle = PlatformTextStyle(
+                        includeFontPadding = false
+                    )
+                )
+            )
+            Row(
+                modifier = Modifier
+                    .padding(horizontal = 24.dp, vertical = 40.dp),
+                horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.Start),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                SelectButton(
+                    text = "남성",
+                    widthValue = (localWitdh - 48 - 16)/2,
+                    imageSource = R.drawable.btn_blue_checkmark,
+                    onClick = {
+                        viewModel.updateGender("M")
+                        navController.navigate("AgePage")
+                    }
+                )
+                SelectButton(
+                    text = "여성",
+                    widthValue = (localWitdh - 48 - 16)/2,
+                    imageSource = R.drawable.btn_gray_checkmark,
+                    onClick = {
+                        viewModel.updateGender("F")
+                        navController.navigate("AgePage")
+                    }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun AgePage(
+    navController: NavController,
+    viewModel: SignUpViewModel = hiltViewModel()
+){
+    Column(
+        modifier = WhiteScreenModifier,
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ){
+        PillTipDatePicker(
+            onDateSelected = { localDate ->
+                viewModel.updateBirthDate(
+                    localDate.year,
+                    localDate.monthValue,
+                    localDate.dayOfMonth
+                )
+            }
+        )
+    }
+}
+

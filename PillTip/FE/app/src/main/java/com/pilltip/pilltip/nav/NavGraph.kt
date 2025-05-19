@@ -5,6 +5,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.pilltip.pilltip.model.VM
+import com.pilltip.pilltip.view.AgePage
+import com.pilltip.pilltip.view.GenderPage
 import com.pilltip.pilltip.view.IdPage
 import com.pilltip.pilltip.view.KakaoAuthPage
 import com.pilltip.pilltip.view.PasswordPage
@@ -14,7 +16,6 @@ import com.pilltip.pilltip.view.SplashPage
 @Composable
 fun NavGraph() {
     val navController = rememberNavController()
-    val vm = VM()
     NavHost(
         navController = navController,
         startDestination = "SplashPage"
@@ -34,6 +35,12 @@ fun NavGraph() {
         }
         composable("PhoneAuthenticationPage"){
             PhoneAuthPage(navController = navController)
+        }
+        composable("GenderPage"){
+            GenderPage(navController = navController)
+        }
+        composable("AgePage"){
+            AgePage(navController = navController)
         }
     }
 }
