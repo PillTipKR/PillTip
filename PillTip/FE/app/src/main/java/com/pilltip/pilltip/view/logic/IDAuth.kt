@@ -193,8 +193,12 @@ fun TermBottomSheet(
                 text = "확인",
                 buttonColor = if (isEssentialChecked) Color(0xFF348ADF) else Color(0xFFCADCF5),
                 onClick = {
-                    onDismiss()
-                    navController.navigate("PhoneAuthenticationPage")
+                    if(isEssentialChecked){
+                        onDismiss()
+                        vm.updateTermsOfServices(true)
+                        navController.navigate("PhoneAuthenticationPage")
+                    }
+
 
                 }
             )

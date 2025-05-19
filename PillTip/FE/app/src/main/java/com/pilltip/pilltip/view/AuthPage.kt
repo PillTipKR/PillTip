@@ -1,5 +1,7 @@
 package com.pilltip.pilltip.view
 
+import android.content.Context
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -12,12 +14,14 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -34,6 +38,7 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.vectorResource
@@ -443,7 +448,11 @@ fun PasswordPage(
         )
     }
     if (termsOfService) {
-        TermBottomSheet(viewModel, navController, onDismiss = { termsOfService = false })
+        TermBottomSheet(
+            viewModel,
+            navController,
+            onDismiss = { termsOfService = false }
+        )
     }
 }
 
@@ -694,7 +703,83 @@ fun BodyStatPage(
                 if (height.length >= 2 && weight.length >= 2) {
                     viewModel.updateHeight(height.toInt())
                     viewModel.updateWeight(weight.toInt())
-                    navController.navigate("FavoritePage")
+                    navController.navigate("InterestPage")
+                }
+            }
+        )
+    }
+}
+
+@Composable
+fun InterestPage(
+    navController: NavController,
+    viewModel: SignUpViewModel = hiltViewModel()
+){
+    var interest by remember { mutableStateOf("") }
+    var isFocused by remember { mutableStateOf(false) }
+    val focusManager = LocalFocusManager.current
+    val context = LocalContext.current
+    Column(
+        modifier = WhiteScreenModifier,
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        HeightSpacer(80.dp)
+        DoubleLineTitleText(upperTextLine = "관심사를", lowerTextLine = "입력해주세요")
+        HeightSpacer(12.dp)
+        TitleDescription(description = "무엇에 관심이 있으신가요?")
+        HeightSpacer(29.dp)
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxWidth()
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                LabelText(labelText = if (interest.isNotEmpty()) "관심사" else "")
+                PlaceholderTextField(
+                    placeHolder = "174",
+                    inputText = interest,
+                    inputType = InputType.NUMBER,
+                    onTextChanged = { interest = it },
+                    onFocusChanged = {
+                        isFocused = it
+                    }
+                )
+            }
+        }
+        HeightSpacer(14.dp)
+        HighlightingLine(text = interest, isFocused = isFocused)
+        Spacer(modifier = Modifier.weight(1f))
+
+
+        NextButton(
+            mModifier = buttonModifier,
+            buttonColor = if (interest.isNotEmpty()) Color(0xFF397CDB) else Color(0xFFCADCF5),
+            onClick = {
+                if (interest.isNotEmpty()) {
+                    viewModel.updateInterest(interest)
+
+                    viewModel.completeSignUp(
+                        onSuccess = {
+                            val sharedPreferences = context.getSharedPreferences("user", Context.MODE_PRIVATE)
+                            with(sharedPreferences.edit()) {
+                                putString("userId", viewModel.getUserId())
+                                putString("token", viewModel.getToken())
+                                putString("nickname", viewModel.getNickname())
+                                apply()
+                            }
+
+                            navController.navigate("SplashPage") {
+                                popUpTo("InterestPage") { inclusive = true }
+                            }
+                        },
+                        onFailure = { error ->
+                            Toast.makeText(
+                                context,
+                                error?.message ?: "회원가입에 실패했습니다.",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    )
                 }
             }
         )

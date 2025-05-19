@@ -1,5 +1,6 @@
 package com.pilltip.pilltip.model.signUp
 
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
@@ -16,6 +17,9 @@ class SignUpViewModel @Inject constructor(
 
     private val _signUpData = mutableStateOf(SignUpData())
     val signUpData: State<SignUpData> = _signUpData
+
+    private val _isLoading = mutableStateOf(false)
+    val isLoading: State<Boolean> = _isLoading
 
     /*값 업데이트*/
     fun updateLoginType(type: LoginType) {
@@ -113,12 +117,12 @@ class SignUpViewModel @Inject constructor(
     // 약관 동의 여부
     fun isAgreedToTerms(): Boolean = _signUpData.value.term
 
-    // 최종 회원가입 요청
     fun completeSignUp(
         onSuccess: () -> Unit,
         onFailure: (Throwable?) -> Unit
     ) {
         viewModelScope.launch {
+            _isLoading.value = true
             try {
                 val result = authRepository.sendSignUp(_signUpData.value)
                 if (result) {
@@ -128,6 +132,8 @@ class SignUpViewModel @Inject constructor(
                 }
             } catch (e: Exception) {
                 onFailure(e)
+            } finally {
+                _isLoading.value = false
             }
         }
     }
