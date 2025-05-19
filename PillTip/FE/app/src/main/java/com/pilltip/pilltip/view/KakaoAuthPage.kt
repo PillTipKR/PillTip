@@ -1,5 +1,6 @@
 package com.pilltip.pilltip.view
 
+import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -37,6 +38,7 @@ fun KakaoAuthPage(
         if (user != null && token != null) {
             signUpViewModel.updateLoginType(LoginType.KAKAO)
             signUpViewModel.updateToken(token)
+            Log.d("accessToken: ", signUpViewModel.getToken())
 
             navController.navigate("PhoneAuthenticationPage") {
                 popUpTo("login") { inclusive = true }
