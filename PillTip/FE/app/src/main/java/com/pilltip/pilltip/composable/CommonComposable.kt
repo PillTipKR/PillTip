@@ -1,7 +1,11 @@
 package com.pilltip.pilltip.composable
 
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.updateTransition
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -13,6 +17,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -21,9 +26,12 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
@@ -39,8 +47,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.vectorResource
@@ -57,6 +67,7 @@ import com.pilltip.pilltip.ui.theme.pretendard
 import com.pilltip.pilltip.view.logic.InputType
 import java.time.LocalDate
 import java.time.YearMonth
+import kotlin.math.abs
 
 /**
  * 세로 간격을 띄우기 위한 Spacer입니다.
@@ -349,27 +360,36 @@ fun PlaceholderTextField(
     )
 }
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun PillTipDatePicker(
     onDateSelected: (LocalDate) -> Unit
-){
-    var yearMonth: YearMonth by remember { mutableStateOf(YearMonth.now()) }
+) {
+    var yearMonth by remember { mutableStateOf(YearMonth.now()) }
     val daysInMonth by remember(yearMonth) {
-        mutableStateOf(
-            yearMonth.lengthOfMonth()
-        )
+        mutableStateOf(yearMonth.lengthOfMonth())
     }
 
     val yearListState = rememberLazyListState(yearMonth.year - 1900)
     val monthListState = rememberLazyListState(yearMonth.monthValue - 1)
-    val dayListState = rememberLazyListState(1)
-
+    val dayListState = rememberLazyListState(0)
 
     val density = LocalDensity.current
     val threshold = remember { density.run { 20.dp.toPx() } }
-    val year by remember { derivedStateOf { (yearListState.firstVisibleItemIndex + if (yearListState.firstVisibleItemScrollOffset >= threshold) 1901 else 1900) } }
-    val month by remember { derivedStateOf { (monthListState.firstVisibleItemIndex + if (monthListState.firstVisibleItemScrollOffset >= threshold) 2 else 1) } }
+
+    val year by remember {
+        derivedStateOf {
+            val index = yearListState.firstVisibleItemIndex
+            val offset = yearListState.firstVisibleItemScrollOffset
+            index + if (offset >= threshold) 1901 else 1900
+        }
+    }
+    val month by remember {
+        derivedStateOf {
+            val index = monthListState.firstVisibleItemIndex
+            val offset = monthListState.firstVisibleItemScrollOffset
+            index + if (offset >= threshold) 2 else 1
+        }
+    }
     val day by remember {
         derivedStateOf {
             val offsetThreshold = if (dayListState.firstVisibleItemScrollOffset >= threshold) 1 else 0
@@ -390,99 +410,133 @@ fun PillTipDatePicker(
     }
 
     Box(
-        contentAlignment = Alignment.Center,
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 20.dp)
+            .height(200.dp)
+            .padding(horizontal = 24.dp),
+        contentAlignment = Alignment.Center
     ) {
+        // 가운데 강조 영역
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(40.dp)
+                .background(Color(0xFFF0F0F0), RoundedCornerShape(8.dp))
+                .align(Alignment.Center)
+        )
+
         Row(
             modifier = Modifier
-                .fillMaxWidth(0.75f)
+                .fillMaxWidth(0.8f)
+                .height(200.dp)
         ) {
-            LazyColumn(
+            WheelColumn(
+                items = (1900..2025).toList(),
+                selected = year,
                 state = yearListState,
-                contentPadding = PaddingValues(vertical = 80.dp),
-                flingBehavior = rememberSnapFlingBehavior(yearListState),
-                modifier = Modifier
-                    .weight(1f)
-                    .height(200.dp)
-            ) {
-                items((1900..2025).toList()) { int ->
-                    val textColor by animateColorAsState(if (int == year) Color.Black else Color(0xFFD0D0D0))
-
-                    Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(40.dp)
-                    ) {
-                        BasicText(
-                            text = "${int}년",
-                            style = LocalTextStyle.current.copy(
-                                fontSize = 23.sp,
-                                fontWeight = FontWeight.Normal
-                            ),
-                            color = { textColor }
-                        )
-                    }
-                }
-            }
-            LazyColumn(
+                label = "년",
+                modifier = Modifier.weight(1f)
+            )
+            WheelColumn(
+                items = (1..12).toList(),
+                selected = month,
                 state = monthListState,
-                contentPadding = PaddingValues(vertical = 80.dp),
-                flingBehavior = rememberSnapFlingBehavior(monthListState),
-                modifier = Modifier
-                    .weight(1f)
-                    .height(200.dp)
-            ) {
-                items((1..12).toList()) { int ->
-                    val textColor by animateColorAsState(if (int == month) Color.Black else Color(0xFFD0D0D0))
+                label = "월",
+                modifier = Modifier.weight(1f)
+            )
+            WheelColumn(
+                items = (1..daysInMonth).toList(),
+                selected = day,
+                state = dayListState,
+                label = "일",
+                modifier = Modifier.weight(1f)
+            )
+        }
 
-                    Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(40.dp)
-                    ) {
-                        BasicText(
-                            text = "${int}월",
-                            style = LocalTextStyle.current.copy(
-                                fontSize = 23.sp,
-                                fontWeight = FontWeight.Normal
-                            ),
-                            color = { textColor }
-                        )
-                    }
-                }
+        // 위/아래 fade mask
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(40.dp)
+                .align(Alignment.TopCenter)
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(Color.White, Color.Transparent)
+                    )
+                )
+        )
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(40.dp)
+                .align(Alignment.BottomCenter)
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(Color.Transparent, Color.White)
+                    )
+                )
+        )
+    }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun WheelColumn(
+    items: List<Int>,
+    selected: Int,
+    state: LazyListState,
+    label: String,
+    modifier: Modifier = Modifier
+) {
+    LazyColumn(
+        state = state,
+        contentPadding = PaddingValues(vertical = 80.dp),
+        flingBehavior = rememberSnapFlingBehavior(state),
+        modifier = modifier.fillMaxHeight()
+    ) {
+        itemsIndexed(items) { index, item ->
+            val centerIndex = state.firstVisibleItemIndex
+            val distance = abs(index - centerIndex).toFloat()
+
+            val transition = updateTransition(targetState = distance, label = "wheel")
+
+            val scale by transition.animateFloat(
+                transitionSpec = {
+                    spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)
+                },
+                label = "scale"
+            ) { dist ->
+                (1f - dist * 0.1f).coerceIn(0.7f, 1.15f)
             }
 
-            // 일 선택
-            LazyColumn(
-                state = dayListState,
-                contentPadding = PaddingValues(vertical = 80.dp),
-                flingBehavior = rememberSnapFlingBehavior(dayListState),
+            val alpha by transition.animateFloat(
+                transitionSpec = {
+                    spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessLow)
+                },
+                label = "alpha"
+            ) { dist ->
+                (1f - dist * 0.3f).coerceIn(0.3f, 1f)
+            }
+
+            val fontWeight = if (item == selected) FontWeight.Bold else FontWeight.Normal
+
+            Box(
+                contentAlignment = Alignment.Center,
                 modifier = Modifier
-                    .weight(1f)
-                    .height(200.dp)
-            ) {
-                items((1..daysInMonth).toList()) { int ->
-                    val textColor by animateColorAsState(if (int == day) Color.Black else Color(0xFFD0D0D0))
-                    Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(40.dp)
-                    ) {
-                        BasicText(
-                            text = "${int}일",
-                            style = LocalTextStyle.current.copy(
-                                fontSize = 23.sp,
-                                fontWeight = FontWeight.Normal
-                            ),
-                            color = { textColor }
-                        )
+                    .fillMaxWidth()
+                    .height(40.dp)
+                    .graphicsLayer {
+                        scaleX = scale
+                        scaleY = scale
+                        this.alpha = alpha
                     }
-                }
+            ) {
+                Text(
+                    text = "$item$label",
+                    fontSize = 23.sp,
+                    fontWeight = fontWeight,
+                    color = Color.Black
+                )
             }
         }
     }
