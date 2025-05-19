@@ -1,13 +1,13 @@
-// PillTip\BE\src\main\java\com\example\oauth2\service\CustomOAuth2UserService.java
+// PillTip\BE\src\main\java\com\oauth2\service\CustomOAuth2UserService.java
 // author : mireutale
 // date : 2025-05-19
 // description : 커스텀 OAuth2 사용자 서비스
 
-package com.example.oauth2.service;
+package com.oauth2.service;
 
-import com.example.oauth2.entity.LoginType;
-import com.example.oauth2.entity.User;
-import com.example.oauth2.repository.UserRepository;
+import com.oauth2.entity.LoginType;
+import com.oauth2.entity.User;
+import com.oauth2.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
@@ -37,10 +37,10 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         String picture = (String) attributes.get("picture");
         String socialId = (String) attributes.get("sub");
 
-        User user = userRepository.findByEmail(email) // 이메일로 유저 찾기
+        User user = userRepository.findBySocialId(socialId) // UUID로 유저 찾기
                 .map(entity -> entity.update(name, picture)) // 이미 존재하는 경우, 유저 업데이트
                 .orElse(User.builder() // 존재하지 않는 경우, 유저 생성
-                        .loginType(LoginType.SOCIAL) // 로그인 타입 소셜
+                        .loginType(LoginType.social) // 로그인 타입 소셜
                         .socialId(socialId) // 소셜 아이디
                         .nickname(name) // 닉네임
                         .profilePhotoUrl(picture) // 프로필 사진

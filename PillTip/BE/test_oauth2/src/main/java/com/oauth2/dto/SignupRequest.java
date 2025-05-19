@@ -3,9 +3,9 @@
 // date : 2025-05-19
 // description : 회원가입 요청 정보
 
-package com.example.oauth2.dto;
+package com.oauth2.dto;
 
-import com.example.oauth2.entity.LoginType;
+import com.oauth2.entity.LoginType;
 import lombok.Getter;
 import lombok.Setter;
 

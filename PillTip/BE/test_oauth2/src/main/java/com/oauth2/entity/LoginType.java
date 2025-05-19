@@ -2,8 +2,9 @@
 // author : mireutale
 // date : 2025-05-19
 // description : 로그인 타입
-package com.example.oauth2.entity;
+package com.oauth2.entity;
 
 public enum LoginType {
-    SOCIAL, IDPW // 소셜 로그인 or 아이디 비밀번호 로그인
+    social, idpw
+    // 소셜 로그인 or 아이디 비밀번호 로그인
 } 

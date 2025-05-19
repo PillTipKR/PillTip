@@ -3,9 +3,9 @@
 // date : 2025-05-19
 // description : 보안 설정
 
-package com.example.oauth2.config;
+package com.oauth2.config;
 
-import com.example.oauth2.service.CustomOAuth2UserService;
+import com.oauth2.service.CustomOAuth2UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

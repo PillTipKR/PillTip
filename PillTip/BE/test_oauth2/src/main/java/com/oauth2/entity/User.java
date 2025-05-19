@@ -3,11 +3,10 @@
 // date : 2025-05-19
 // description : Users(사용자) 엔티티
 
-package com.example.oauth2.entity;
+package com.oauth2.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.GenericGenerator;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -21,25 +20,24 @@ import java.util.UUID;
 @AllArgsConstructor // 모든 필드를 파라미터로 받는 생성자 생성
 public class User {
     @Id // 기본키 지정
-    @GeneratedValue(generator = "uuid2") // UUID 생성 전략 지정
-    @GenericGenerator(name = "uuid2", strategy = "uuid2") // UUID 생성 전략 지정
-    @Column(columnDefinition = "BINARY(16)") // UUID 타입 지정
-    private UUID uuid;
+    @Builder.Default // 빌더 대상에 포함, User.builder().build() 시 자동으로 UUID.randomUUID()가 실행되어 들어감
+    @Column(name = "uuid", columnDefinition = "BINARY(16)")
+    private final UUID uuid = UUID.randomUUID();
 
     @Enumerated(EnumType.STRING) // 열거형 타입 지정
     @Column(name = "login_type", nullable = false) // 로그인 타입 지정, social or idpw
     private LoginType loginType;
 
-    @Column(name = "social_id", length = 255)
+    @Column(name = "social_id") // length = 255
     private String socialId;
 
-    @Column(name = "password_hash", length = 255)
+    @Column(name = "password_hash") // length = 255
     private String passwordHash;
 
-    @Column(nullable = false, unique = true, length = 50) // 닉네임 지정
+    @Column(unique = true, length = 50) // 닉네임 지정
     private String nickname;
 
-    @Column(name = "profile_photo_url", length = 255)
+    @Column(name = "profile_photo_url") // length = 255
     private String profilePhotoUrl;
 
     @Column(name = "agreed_terms", columnDefinition = "BOOLEAN DEFAULT FALSE") // 이용약관 동의 지정

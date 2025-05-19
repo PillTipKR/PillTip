@@ -2,7 +2,7 @@
 // author : mireutale
 // date : 2025-05-19
 // description : API 응답 정보, DTO(Data Transfer Object) 사용
-package com.example.oauth2.dto;
+package com.oauth2.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

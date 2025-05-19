@@ -3,14 +3,14 @@
 // date : 2025-05-19
 // description : 컨트롤러
 
-package com.example.oauth2.controller;
+package com.oauth2.controller;
 
-import com.example.oauth2.dto.ApiResponse;
-import com.example.oauth2.dto.LoginRequest;
-import com.example.oauth2.dto.SignupRequest;
-import com.example.oauth2.dto.UserResponse;
-import com.example.oauth2.entity.User;
-import com.example.oauth2.service.UserService;
+import com.oauth2.dto.ApiResponse;
+import com.oauth2.dto.LoginRequest;
+import com.oauth2.dto.SignupRequest;
+import com.oauth2.dto.UserResponse;
+import com.oauth2.entity.User;
+import com.oauth2.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;

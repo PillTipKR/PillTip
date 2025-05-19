@@ -3,16 +3,16 @@
 // date : 2025-05-19
 // description : 사용자 서비스
 
-package com.example.oauth2.service;
+package com.oauth2.service;
 
-import com.example.oauth2.dto.LoginRequest;
-import com.example.oauth2.dto.SignupRequest;
-import com.example.oauth2.entity.Gender;
-import com.example.oauth2.entity.LoginType;
-import com.example.oauth2.entity.User;
-import com.example.oauth2.entity.UserProfile;
-import com.example.oauth2.entity.Interests;
-import com.example.oauth2.repository.UserRepository;
+import com.oauth2.dto.LoginRequest;
+import com.oauth2.dto.SignupRequest;
+import com.oauth2.entity.Gender;
+import com.oauth2.entity.LoginType;
+import com.oauth2.entity.User;
+import com.oauth2.entity.UserProfile;
+import com.oauth2.entity.Interests;
+import com.oauth2.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -31,10 +31,10 @@ public class UserService {
 
     // ID/PW 로그인
     public User login(LoginRequest request) {
-        User user = userRepository.findByUserId(request.getUserId())
+        User user = userRepository.findByUuid(UUID.fromString(request.getUserId()))
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        if (user.getLoginType() != LoginType.IDPW) {
+        if (user.getLoginType() != LoginType.idpw) {
             throw new RuntimeException("This account is not an ID/PW account");
         }
 
@@ -48,17 +48,17 @@ public class UserService {
     // 회원가입 (ID/PW 또는 소셜)
     public User signup(SignupRequest request) {
         // ID/PW 로그인인 경우, 아이디와 비밀번호가 필요
-        if (request.getLoginType() == LoginType.IDPW) {
+        if (request.getLoginType() == LoginType.idpw) {
             if (request.getUserId() == null || request.getPassword() == null) {
                 throw new RuntimeException("User ID and password are required for ID/PW login");
             }
             // 아이디가 이미 존재하는 경우
-            if (userRepository.findByUserId(request.getUserId()).isPresent()) {
+            if (userRepository.findByUuid(UUID.fromString(request.getUserId())).isPresent()) {
                 throw new RuntimeException("User ID already exists");
             }
         }
         // 소셜 로그인인 경우, 토큰이 필요
-        else if (request.getLoginType() == LoginType.SOCIAL) {
+        else if (request.getLoginType() == LoginType.social) {
             if (request.getToken() == null) {
                 throw new RuntimeException("Token is required for social login");
             }
@@ -77,7 +77,7 @@ public class UserService {
                 .uuid(UUID.randomUUID())
                 .loginType(request.getLoginType())
                 .socialId(request.getToken())
-                .passwordHash(request.getLoginType() == LoginType.IDPW ? 
+                .passwordHash(request.getLoginType() == LoginType.idpw ?
                         passwordEncoder.encode(request.getPassword()) : null)
                 .nickname(request.getNickname())
                 .agreedTerms(request.isAgreedTerms())
