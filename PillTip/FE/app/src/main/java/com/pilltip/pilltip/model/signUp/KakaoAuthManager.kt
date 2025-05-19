@@ -1,4 +1,4 @@
-package com.pilltip.pilltip.model.social
+package com.pilltip.pilltip.model.signUp
 
 import android.content.Context
 import android.util.Log
@@ -8,7 +8,7 @@ import com.kakao.sdk.user.UserApiClient
 import com.kakao.sdk.user.model.User
 import javax.inject.Inject
 
-class KakaoLoginManager @Inject constructor() {
+class KakaoAuthManager @Inject constructor() {
     fun login(context: Context, callback: (OAuthToken?, Throwable?) -> Unit) {
         if (UserApiClient.instance.isKakaoTalkLoginAvailable(context)) {
             UserApiClient.instance.loginWithKakaoTalk(context, callback = callback)
