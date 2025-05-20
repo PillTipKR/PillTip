@@ -34,7 +34,7 @@ fun NavGraph() {
         composable("PasswordPage"){
             PasswordPage(navController = navController)
         }
-        composable("PhoneAuthenticationPage"){
+        composable("PhoneAutPage"){
             PhoneAuthPage(navController = navController)
         }
         composable("GenderPage"){

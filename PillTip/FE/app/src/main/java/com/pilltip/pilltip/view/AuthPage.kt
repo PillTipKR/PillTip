@@ -118,7 +118,7 @@ fun IdPage(
             },
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        BackButton(navigationTo = ({ navController.navigate("SelectionPage") }))
+        BackButton(navigationTo = ({ navController.navigate("SplashPage") }))
         HeightSpacer(56.dp)
         DoubleLineTitleText("아이디를", "입력해주세요")
         HeightSpacer(42.dp)
@@ -482,7 +482,7 @@ fun PhoneAuthPage(
             },
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        BackButton(navigationTo = ({ navController.navigate("constructorName")}))
+        BackButton(navigationTo = ({ navController.navigate("PasswordPage")}))
         HeightSpacer(56.dp)
         DoubleLineTitleText(upperTextLine = "전화번호를", lowerTextLine = "입력해주세요")
         HeightSpacer(12.dp)
@@ -533,12 +533,13 @@ fun GenderPage(
         modifier = WhiteScreenModifier,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        HeightSpacer(50.dp)
+        BackButton(navigationTo = ({ navController.navigate("PhoneAuthPage")}))
+        HeightSpacer(56.dp)
         Column(
             modifier = Modifier.height((lc - 50 + 46).dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            HeightSpacer(120.dp)
+            HeightSpacer(60.dp)
             Box(
                 Modifier
                     .width(84.dp)
@@ -615,7 +616,10 @@ fun AgePage(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ){
-        Spacer(modifier = Modifier.weight(1f))
+        BackButton(navigationTo = ({ navController.navigate("GenderPage")}))
+        HeightSpacer(56.dp)
+        DoubleLineTitleText(upperTextLine = "나이를", lowerTextLine = "입력해주세요")
+        HeightSpacer(40.dp)
         PillTipDatePicker(
             onDateSelected = { localDate ->
                 viewModel.updateBirthDate(
@@ -656,7 +660,8 @@ fun BodyStatPage(
             },
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        HeightSpacer(80.dp)
+        BackButton(navigationTo = ({ navController.navigate("AgePage")}))
+        HeightSpacer(56.dp)
         DoubleLineTitleText(upperTextLine = "키와 몸무게를", lowerTextLine = "입력해주세요")
         HeightSpacer(12.dp)
         TitleDescription(description = "복약 안전을 위해 필수적이에요")
@@ -723,10 +728,16 @@ fun InterestPage(
     val focusManager = LocalFocusManager.current
     val context = LocalContext.current
     Column(
-        modifier = WhiteScreenModifier,
+        modifier = WhiteScreenModifier
+            .pointerInput(Unit) {
+                detectTapGestures {
+                    focusManager.clearFocus()
+                }
+            },
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        HeightSpacer(80.dp)
+        BackButton(navigationTo = ({ navController.navigate("BodyStatPage")}))
+        HeightSpacer(56.dp)
         DoubleLineTitleText(upperTextLine = "관심사를", lowerTextLine = "입력해주세요")
         HeightSpacer(12.dp)
         TitleDescription(description = "무엇에 관심이 있으신가요?")
@@ -752,8 +763,6 @@ fun InterestPage(
         HeightSpacer(14.dp)
         HighlightingLine(text = interest, isFocused = isFocused)
         Spacer(modifier = Modifier.weight(1f))
-
-
         NextButton(
             mModifier = buttonModifier,
             buttonColor = if (interest.isNotEmpty()) Color(0xFF397CDB) else Color(0xFFCADCF5),

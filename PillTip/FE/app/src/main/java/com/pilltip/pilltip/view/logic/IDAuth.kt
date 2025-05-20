@@ -196,7 +196,7 @@ fun TermBottomSheet(
                     if(isEssentialChecked){
                         onDismiss()
                         vm.updateTermsOfServices(true)
-                        navController.navigate("PhoneAuthenticationPage")
+                        navController.navigate("PhoneAuthPage")
                     }
                 }
             )
