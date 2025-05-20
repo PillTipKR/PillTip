@@ -18,7 +18,7 @@ bin/
 !**/src/test/**/bin/
 
 ### IntelliJ IDEA ###
-.idea/
+.idea/*
 .idea/vcs.xml
 .idea/workspace.xml
 *.iws
@@ -40,3 +40,4 @@ out/
 
 ### applicaiton.properties 파일 ###
 application.properties
+
