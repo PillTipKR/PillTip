@@ -1,11 +1,17 @@
 package com.pilltip.pilltip.model.signUp
 
+import android.app.Activity
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.firebase.auth.FirebaseUser
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import javax.inject.Inject
@@ -150,5 +156,117 @@ class SignUpViewModel @Inject constructor(
             age--
 
         return age
+    }
+}
+
+@HiltViewModel
+class PhoneAuthViewModel @Inject constructor(
+    private val phoneAuthManager: PhoneAuthManager
+) : ViewModel() {
+
+    private val _timeRemaining = MutableStateFlow(180) // 3분
+    val timeRemaining: StateFlow<Int> = _timeRemaining
+    private var timerJob: Job? = null
+
+    private val _rawPhone = MutableStateFlow("")
+    val rawPhone: StateFlow<String> = _rawPhone
+
+    private val _formattedPhone = MutableStateFlow("")
+    val formattedPhone: StateFlow<String> = _formattedPhone
+
+    private val _code = MutableStateFlow("")
+    val code: StateFlow<String> = _code
+
+    private val _verificationId = MutableStateFlow<String?>(null)
+    val verificationId: StateFlow<String?> = _verificationId
+
+    private val _status = MutableStateFlow("")
+    val status: StateFlow<String> = _status
+
+    private val _errorMessage = MutableStateFlow<String?>(null)
+    val errorMessage: StateFlow<String?> = _errorMessage
+
+    fun updatePhoneNumber(input: String) {
+        val digits = input.filter { it.isDigit() }.take(11)
+        _rawPhone.value = when {
+            digits.length <= 3 -> digits
+            digits.length <= 7 -> "${digits.substring(0, 3)}-${digits.substring(3)}"
+            else -> "${digits.substring(0, 3)}-${digits.substring(3, 7)}-${digits.substring(7)}"
+        }
+
+        _formattedPhone.value = if (digits.startsWith("0")) "+82${digits.drop(1)}" else digits
+    }
+
+    fun updateCode(value: String) {
+        _code.value = value
+    }
+
+    fun requestVerification(
+        activity: Activity,
+        onSent: () -> Unit,
+        onFailed: (String) -> Unit
+    ) {
+        _status.value = "인증 요청 중..."
+        _errorMessage.value = null
+
+        phoneAuthManager.startPhoneNumberVerification(
+            activity = activity,
+            phoneNumber = _formattedPhone.value,
+            onCodeSent = { id, _ ->
+                _verificationId.value = id
+                _status.value = "코드 전송됨"
+                startTimer()
+                onSent()
+            },
+            onVerificationCompleted = {
+                _status.value = "자동 인증 완료"
+            },
+            onVerificationFailed = { e ->
+                val msg = e.message ?: "인증 실패"
+                _status.value = "실패: $msg"
+                _errorMessage.value = msg
+                onFailed(msg)
+            }
+        )
+    }
+
+    fun verifyCodeInput(
+        onSuccess: () -> Unit,
+        onFailure: (String) -> Unit
+    ) {
+        val id = _verificationId.value
+        val inputCode = _code.value
+
+        if (id != null && inputCode.isNotEmpty()) {
+            _status.value = "코드 인증 중..."
+            _errorMessage.value = null
+
+            phoneAuthManager.verifyCode(
+                verificationId = id,
+                code = inputCode,
+                onSuccess = {
+                    _status.value = "성공: ${it.phoneNumber}"
+                    onSuccess()
+                },
+                onFailure = { e ->
+                    val msg = e.message ?: "코드 인증 실패"
+                    _status.value = "실패: $msg"
+                    _errorMessage.value = msg
+                    onFailure(msg)
+                }
+            )
+        } else {
+            _errorMessage.value = "인증 코드 또는 인증 ID가 없습니다."
+        }
+    }
+
+    fun startTimer() {
+        timerJob?.cancel()
+        timerJob = viewModelScope.launch {
+            for (i in 180 downTo 0) {
+                _timeRemaining.value = i
+                delay(1000)
+            }
+        }
     }
 }
