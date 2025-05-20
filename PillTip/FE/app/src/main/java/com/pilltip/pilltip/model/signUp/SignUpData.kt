@@ -27,7 +27,7 @@ data class SignUpRequest(
     val age: Int,
     val height: Int,
     val weight: Int,
-    val interest: String,
+    val interest: String?,
     val phone: String,
     val token: String?  // id/pw일 시 null
 )

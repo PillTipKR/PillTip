@@ -1,8 +1,13 @@
 package com.pilltip.pilltip.view
 
+
+import android.content.Context
+import android.widget.Toast
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -10,10 +15,15 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -29,12 +39,16 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -47,9 +61,12 @@ import com.pilltip.pilltip.composable.HeightSpacer
 import com.pilltip.pilltip.composable.HighlightingLine
 import com.pilltip.pilltip.composable.LabelText
 import com.pilltip.pilltip.composable.NextButton
+import com.pilltip.pilltip.composable.PillTipDatePicker
 import com.pilltip.pilltip.composable.PlaceholderTextField
+import com.pilltip.pilltip.composable.SelectButton
 import com.pilltip.pilltip.composable.TitleDescription
 import com.pilltip.pilltip.composable.WhiteScreenModifier
+import com.pilltip.pilltip.composable.WidthSpacer
 import com.pilltip.pilltip.composable.buttonModifier
 import com.pilltip.pilltip.model.signUp.SignUpViewModel
 import com.pilltip.pilltip.ui.theme.pretendard
@@ -433,7 +450,11 @@ fun PasswordPage(
         )
     }
     if (termsOfService) {
-        TermBottomSheet(viewModel, navController, onDismiss = { termsOfService = false })
+        TermBottomSheet(
+            viewModel,
+            navController,
+            onDismiss = { termsOfService = false }
+        )
     }
 }
 
@@ -494,9 +515,279 @@ fun PhoneAuthPage(
             onClick = {
                 if (phoneNumber.length >= 11) {
                     viewModel.updatePhone(phoneNumber)
-                    navController.navigate("SplashPage")
+                    navController.navigate("GenderPage")
                 }
             }
         )
     }
 }
+
+@Composable
+fun GenderPage(
+    navController: NavController,
+    viewModel: SignUpViewModel = hiltViewModel()
+){
+    val lc = LocalConfiguration.current.screenHeightDp
+    val localWitdh = LocalConfiguration.current.screenWidthDp
+    Column(
+        modifier = WhiteScreenModifier,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        HeightSpacer(50.dp)
+        Column(
+            modifier = Modifier.height((lc - 50 + 46).dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            HeightSpacer(120.dp)
+            Box(
+                Modifier
+                    .width(84.dp)
+                    .height(33.dp)
+                    .background(color = Color(0xFFEEF4FC), shape = RoundedCornerShape(size = 12.dp))
+                    .padding(start = 16.dp, top = 8.dp, end = 16.dp, bottom = 8.dp)
+            ) {
+                Text(
+                    text = "성별 선택",
+                    style = TextStyle(
+                        fontSize = 14.sp,
+                        fontFamily = pretendard,
+                        fontWeight = FontWeight(700),
+                        color = Color(0xFF397CDB),
+                        textAlign = TextAlign.Center,
+                    )
+                )
+            }
+            HeightSpacer(22.dp)
+            Text(
+                text = "맞춤 서비스 제공을 위해 필요해요",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp)
+                    .wrapContentHeight(Alignment.CenterVertically),
+                style = TextStyle(
+                    fontSize = 28.sp,
+                    fontFamily = pretendard,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF121212),
+                    letterSpacing = (-0.3).sp,
+                    textAlign = TextAlign.Center,
+                    platformStyle = PlatformTextStyle(
+                        includeFontPadding = false
+                    )
+                )
+            )
+            Row(
+                modifier = Modifier
+                    .padding(horizontal = 24.dp, vertical = 40.dp),
+                horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.Start),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                SelectButton(
+                    text = "남성",
+                    widthValue = (localWitdh - 48 - 16)/2,
+                    imageSource = R.drawable.btn_blue_checkmark,
+                    onClick = {
+                        viewModel.updateGender("M")
+                        navController.navigate("AgePage")
+                    }
+                )
+                SelectButton(
+                    text = "여성",
+                    widthValue = (localWitdh - 48 - 16)/2,
+                    imageSource = R.drawable.btn_gray_checkmark,
+                    onClick = {
+                        viewModel.updateGender("F")
+                        navController.navigate("AgePage")
+                    }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun AgePage(
+    navController: NavController,
+    viewModel: SignUpViewModel = hiltViewModel()
+){
+    Column(
+        modifier = WhiteScreenModifier,
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ){
+        Spacer(modifier = Modifier.weight(1f))
+        PillTipDatePicker(
+            onDateSelected = { localDate ->
+                viewModel.updateBirthDate(
+                    localDate.year,
+                    localDate.monthValue,
+                    localDate.dayOfMonth
+                )
+            }
+        )
+        Spacer(modifier = Modifier.weight(1f))
+        NextButton(
+            mModifier = buttonModifier,
+            buttonColor =  Color(0xFF397CDB),
+            onClick = {
+                navController.navigate("BodyStatPage")
+            }
+        )
+    }
+}
+
+@Composable
+fun BodyStatPage(
+    navController: NavController,
+    viewModel: SignUpViewModel = hiltViewModel()
+){
+    var height by remember { mutableStateOf("") }
+    var weight by remember { mutableStateOf("") }
+    var isFocusedHeight by remember { mutableStateOf(false) }
+    var isFocusedWeight by remember { mutableStateOf(false) }
+    val focusManager = LocalFocusManager.current
+
+    Column(
+        modifier = WhiteScreenModifier
+            .pointerInput(Unit) {
+                detectTapGestures {
+                    focusManager.clearFocus()
+                }
+            },
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        HeightSpacer(80.dp)
+        DoubleLineTitleText(upperTextLine = "키와 몸무게를", lowerTextLine = "입력해주세요")
+        HeightSpacer(12.dp)
+        TitleDescription(description = "복약 안전을 위해 필수적이에요")
+        HeightSpacer(29.dp)
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxWidth()
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                LabelText(labelText = if (height.isNotEmpty()) "키" else "")
+                PlaceholderTextField(
+                    placeHolder = "174",
+                    inputText = height,
+                    inputType = InputType.NUMBER,
+                    onTextChanged = { height = it },
+                    onFocusChanged = {
+                        isFocusedHeight = it
+                    }
+                )
+                HeightSpacer(14.dp)
+                HighlightingLine(text = height, isFocused = isFocusedHeight)
+            }
+            WidthSpacer(16.dp)
+            Column(modifier = Modifier.weight(1f)) {
+                LabelText(labelText = if (weight.isNotEmpty()) "몸무게" else "")
+                PlaceholderTextField(
+                    placeHolder = "50",
+                    inputText = weight,
+                    inputType = InputType.NUMBER,
+                    onTextChanged = { weight = it },
+                    onFocusChanged = {
+                        isFocusedWeight = it
+                    }
+                )
+                HeightSpacer(14.dp)
+                HighlightingLine(text = weight, isFocused = isFocusedWeight)
+            }
+        }
+
+        Spacer(modifier = Modifier.weight(1f))
+        NextButton(
+            mModifier = buttonModifier,
+            buttonColor = if (height.length >= 2 && weight.length >= 2) Color(0xFF397CDB) else Color(0xFFCADCF5),
+            onClick = {
+                if (height.length >= 2 && weight.length >= 2) {
+                    viewModel.updateHeight(height.toInt())
+                    viewModel.updateWeight(weight.toInt())
+
+                    navController.navigate("InterestPage")
+                }
+            }
+        )
+    }
+}
+
+@Composable
+fun InterestPage(
+    navController: NavController,
+    viewModel: SignUpViewModel = hiltViewModel()
+){
+    var interest by remember { mutableStateOf("") }
+    var isFocused by remember { mutableStateOf(false) }
+    val focusManager = LocalFocusManager.current
+    val context = LocalContext.current
+    Column(
+        modifier = WhiteScreenModifier,
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        HeightSpacer(80.dp)
+        DoubleLineTitleText(upperTextLine = "관심사를", lowerTextLine = "입력해주세요")
+        HeightSpacer(12.dp)
+        TitleDescription(description = "무엇에 관심이 있으신가요?")
+        HeightSpacer(29.dp)
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxWidth()
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                LabelText(labelText = if (interest.isNotEmpty()) "관심사" else "")
+                PlaceholderTextField(
+                    placeHolder = "174",
+                    inputText = interest,
+                    inputType = InputType.NUMBER,
+                    onTextChanged = { interest = it },
+                    onFocusChanged = {
+                        isFocused = it
+                    }
+                )
+            }
+        }
+        HeightSpacer(14.dp)
+        HighlightingLine(text = interest, isFocused = isFocused)
+        Spacer(modifier = Modifier.weight(1f))
+
+
+        NextButton(
+            mModifier = buttonModifier,
+            buttonColor = if (interest.isNotEmpty()) Color(0xFF397CDB) else Color(0xFFCADCF5),
+            onClick = {
+                if (interest.isNotEmpty()) {
+                    viewModel.updateInterest(interest)
+
+                    viewModel.completeSignUp(
+                        onSuccess = {
+                            val sharedPreferences = context.getSharedPreferences("user", Context.MODE_PRIVATE)
+                            with(sharedPreferences.edit()) {
+                                putString("userId", viewModel.getUserId())
+                                putString("token", viewModel.getToken())
+                                putString("nickname", viewModel.getNickname())
+                                apply()
+                            }
+
+                            navController.navigate("SplashPage") {
+                                popUpTo("InterestPage") { inclusive = true }
+                            }
+                        },
+                        onFailure = { error ->
+                            Toast.makeText(
+                                context,
+                                error?.message ?: "회원가입에 실패했습니다.",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    )
+                }
+            }
+        )
+    }
+}
+
+
+
