@@ -21,10 +21,10 @@ fun NavGraph() {
         navController = navController,
         startDestination = "SplashPage"
     ) {
+        /*SignIn Flow*/
         composable("SplashPage"){
             SplashPage(navController)
         }
-        //Main.kt
         composable("KakaoAuthPage") {
             KakaoAuthPage(navController)
         }
@@ -34,7 +34,7 @@ fun NavGraph() {
         composable("PasswordPage"){
             PasswordPage(navController = navController)
         }
-        composable("PhoneAutPage"){
+        composable("PhoneAuthPage"){
             PhoneAuthPage(navController = navController)
         }
         composable("GenderPage"){

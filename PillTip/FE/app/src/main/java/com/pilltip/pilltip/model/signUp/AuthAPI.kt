@@ -1,5 +1,6 @@
 package com.pilltip.pilltip.model.signUp
 
+import com.google.firebase.auth.FirebaseAuth
 import com.kakao.sdk.auth.AuthApi
 import dagger.Module
 import dagger.Provides
@@ -10,6 +11,7 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.Body
 import retrofit2.http.POST
+import javax.inject.Singleton
 
 interface ServerAuthAPI {
     @POST("auth/signup")
@@ -31,5 +33,16 @@ object NetworkModule {
     @Provides
     fun provideServerAuthAPI(retrofit: Retrofit): ServerAuthAPI {
         return retrofit.create(ServerAuthAPI::class.java)
+    }
+}
+
+@Module
+@InstallIn(SingletonComponent::class)
+object FirebaseModule {
+
+    @Provides
+    @Singleton
+    fun provideFirebaseAuth(): FirebaseAuth {
+        return FirebaseAuth.getInstance()
     }
 }

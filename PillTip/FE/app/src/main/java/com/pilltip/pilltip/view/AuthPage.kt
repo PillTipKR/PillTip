@@ -1,6 +1,8 @@
 package com.pilltip.pilltip.view
 
 
+import android.annotation.SuppressLint
+import android.app.Activity
 import android.content.Context
 import android.widget.Toast
 import androidx.compose.foundation.Image
@@ -24,8 +26,10 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -68,6 +72,7 @@ import com.pilltip.pilltip.composable.TitleDescription
 import com.pilltip.pilltip.composable.WhiteScreenModifier
 import com.pilltip.pilltip.composable.WidthSpacer
 import com.pilltip.pilltip.composable.buttonModifier
+import com.pilltip.pilltip.model.signUp.PhoneAuthViewModel
 import com.pilltip.pilltip.model.signUp.SignUpViewModel
 import com.pilltip.pilltip.ui.theme.pretendard
 import com.pilltip.pilltip.view.logic.InputType
@@ -442,7 +447,7 @@ fun PasswordPage(
             if (isAllConditionsValid && password == reenteredPassword) Color(0xFF348ADF)
             else Color(0xFFCADCF5),
             onClick = {
-                if (isAllConditionsValid) {
+                if (isAllConditionsValid && password == reenteredPassword) {
                     if (!termsOfService)
                         termsOfService = true
                 }
@@ -464,14 +469,29 @@ fun PasswordPage(
  * @param navController Navigation Controller입니다.
  * @author 김기윤
  */
+@SuppressLint("DefaultLocale")
 @Composable
 fun PhoneAuthPage(
     viewModel: SignUpViewModel = hiltViewModel(),
+    phoneViewModel: PhoneAuthViewModel = hiltViewModel(),
     navController: NavController,
 ) {
     var phoneNumber by remember { mutableStateOf("") }
+    val verificationId by phoneViewModel.verificationId.collectAsState()
+    val code by phoneViewModel.code.collectAsState()
+    val status by phoneViewModel.status.collectAsState()
+    val errorMessage by phoneViewModel.errorMessage.collectAsState()
+    val timeRemaining by phoneViewModel.timeRemaining.collectAsState()
+    val timerText = remember(timeRemaining) {
+        val min = timeRemaining / 60
+        val sec = timeRemaining % 60
+        String.format("%02d:%02d", min, sec)
+    }
+
     var isFocused by remember { mutableStateOf(false) }
     val focusManager = LocalFocusManager.current
+    val context = LocalContext.current
+    val activity = context as? Activity
 
     Column(
         modifier = WhiteScreenModifier
@@ -499,7 +519,9 @@ fun PhoneAuthPage(
                     placeHolder = "010-0000-0000",
                     inputText = phoneNumber,
                     inputType = InputType.NUMBER,
-                    onTextChanged = { phoneNumber = it },
+                    onTextChanged = {
+                        phoneNumber = it
+                        phoneViewModel.updatePhoneNumber(it) },
                     onFocusChanged = {
                         isFocused = it
                     }
@@ -508,14 +530,84 @@ fun PhoneAuthPage(
         }
         HeightSpacer(14.dp)
         HighlightingLine(text = phoneNumber, isFocused = isFocused)
+
+        if (verificationId != null) {
+            HeightSpacer(24.dp)
+            Row(
+                verticalAlignment = Alignment.Bottom,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.weight(4f)) {
+                    LabelText(labelText = if (code.isNotEmpty()) "인증 코드" else "")
+                    PlaceholderTextField(
+                        placeHolder = "인증번호 6자리",
+                        inputText = code,
+                        inputType = InputType.NUMBER,
+                        onTextChanged = { phoneViewModel.updateCode(it) },
+                        onFocusChanged = { isFocused = it }
+                    )
+                }
+                Text(
+                    modifier = Modifier.weight(1f),
+                    text = if (timeRemaining > 0) timerText else "만료됨",
+                    textAlign = TextAlign.Center,
+                    fontSize = 14.sp,
+                    fontFamily = pretendard,
+                    fontWeight = FontWeight.Normal,
+                    color = Color(0xFF818181)
+                )
+            }
+            HeightSpacer(14.dp)
+            HighlightingLine(text = code, isFocused = isFocused)
+        }
+
+        if (status.isNotEmpty()) {
+            HeightSpacer(12.dp)
+            Text(
+                text = status,
+                fontSize = 14.sp,
+                fontFamily = pretendard,
+                fontWeight = FontWeight.Normal,
+                color = Color(0xFF818181)
+            )
+        }
+
+        if (errorMessage != null) {
+            HeightSpacer(6.dp)
+            Text(errorMessage ?: "", color = Color.Red)
+        }
+
         Spacer(modifier = Modifier.weight(1f))
         NextButton(
             mModifier = buttonModifier,
-            buttonColor = if (phoneNumber.length >= 11) Color(0xFF397CDB) else Color(0xFFCADCF5),
+            buttonColor = if (
+                (verificationId == null && phoneNumber.length >= 11) ||
+                (verificationId != null && code.length == 6)
+            ) Color(0xFF397CDB) else Color(0xFFCADCF5),
+            text = if (
+                (verificationId != null && code.length == 6)
+            ) "인증하기" else "다음",
             onClick = {
-                if (phoneNumber.length >= 11) {
-                    viewModel.updatePhone(phoneNumber)
-                    navController.navigate("GenderPage")
+                if (
+                    (verificationId == null && phoneNumber.length >= 11) ||
+                    (verificationId != null && code.length == 6)
+                ){
+                    activity?.let {
+                        if (verificationId == null) {
+                            phoneViewModel.requestVerification(
+                                activity = it,
+                                onSent = {},
+                                onFailed = {}
+                            )
+                        } else {
+                            phoneViewModel.verifyCodeInput(
+                                onSuccess = {
+                                    navController.navigate("GenderPage")
+                                },
+                                onFailure = {}
+                            )
+                        }
+                    }
                 }
             }
         )
