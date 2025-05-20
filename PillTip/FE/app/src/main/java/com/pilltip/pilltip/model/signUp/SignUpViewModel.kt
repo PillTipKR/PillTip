@@ -1,5 +1,6 @@
 package com.pilltip.pilltip.model.signUp
 
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
@@ -17,6 +18,11 @@ class SignUpViewModel @Inject constructor(
     private val _signUpData = mutableStateOf(SignUpData())
     val signUpData: State<SignUpData> = _signUpData
 
+
+    private val _isLoading = mutableStateOf(false)
+    val isLoading: State<Boolean> = _isLoading
+
+    /*값 업데이트*/
     fun updateLoginType(type: LoginType) {
         _signUpData.value = _signUpData.value.copy(loginType = type)
     }
@@ -71,12 +77,55 @@ class SignUpViewModel @Inject constructor(
         _signUpData.value = _signUpData.value.copy(token = token)
     }
 
+    /*값 읽기*/
+
+    // 로그인 타입
+    fun getLoginType(): LoginType = _signUpData.value.loginType
+
+    // 사용자 ID
+    fun getUserId(): String = _signUpData.value.userId
+
+    // 비밀번호
+    fun getPassword(): String = _signUpData.value.password
+
+    // 닉네임
+    fun getNickname(): String = _signUpData.value.nickname
+
+    // 성별
+    fun getGender(): String = _signUpData.value.gender
+
+    // 생년월일
+    fun getBirthDate(): String = _signUpData.value.birthDate
+
+    // 나이
+    fun getAge(): Int = _signUpData.value.age
+
+    // 키
+    fun getHeight(): Int = _signUpData.value.height
+
+    // 몸무게
+    fun getWeight(): Int = _signUpData.value.weight
+
+    // 관심사
+    fun getInterest(): String = _signUpData.value.interest
+
+    // 전화번호
+    fun getPhone(): String = _signUpData.value.phone
+
+    // 토큰
+    fun getToken(): String = _signUpData.value.token
+
+    // 약관 동의 여부
+    fun isAgreedToTerms(): Boolean = _signUpData.value.term
+
+
     // 최종 회원가입 요청
     fun completeSignUp(
         onSuccess: () -> Unit,
         onFailure: (Throwable?) -> Unit
     ) {
         viewModelScope.launch {
+            _isLoading.value = true
             try {
                 val result = authRepository.sendSignUp(_signUpData.value)
                 if (result) {
@@ -86,6 +135,8 @@ class SignUpViewModel @Inject constructor(
                 }
             } catch (e: Exception) {
                 onFailure(e)
+            } finally {
+                _isLoading.value = false
             }
         }
     }

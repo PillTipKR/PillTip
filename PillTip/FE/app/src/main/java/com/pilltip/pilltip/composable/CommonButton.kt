@@ -4,7 +4,9 @@ import androidx.annotation.DrawableRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -29,6 +31,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import com.pilltip.pilltip.R
 import com.pilltip.pilltip.ui.theme.pretendard
 
@@ -119,11 +122,12 @@ fun ButtonWithLogo(
  */
 @Composable
 fun BackButton(
-    title : String = "",
-    horizontalPadding : Dp = 18.dp,
-    verticalPadding : Dp = 18.dp,
-    @DrawableRes iconDrawable : Int = 0,
-    navigationTo: () -> Unit, ){
+    title: String = "",
+    horizontalPadding: Dp = 18.dp,
+    verticalPadding: Dp = 18.dp,
+    @DrawableRes iconDrawable: Int = 0,
+    navigationTo: () -> Unit,
+) {
     HeightSpacer(50.dp)
     Row(
         modifier = Modifier
@@ -141,7 +145,7 @@ fun BackButton(
             }
         )
         Spacer(modifier = Modifier.weight(1f))
-        if(title.isNotEmpty()){
+        if (title.isNotEmpty()) {
             Text(
                 text = title,
                 style = TextStyle(
@@ -154,7 +158,7 @@ fun BackButton(
             )
         }
         Spacer(modifier = Modifier.weight(1f))
-        if(iconDrawable!=0) {
+        if (iconDrawable != 0) {
             Image(
                 imageVector = ImageVector.vectorResource(id = iconDrawable),
                 contentDescription = "logo",
@@ -162,6 +166,61 @@ fun BackButton(
             )
         } else {
             Box(modifier = Modifier.width(20.dp))
+        }
+    }
+}
+
+/**
+ * 선택 버튼입니다.
+ * @param text 버튼에 보여지는 텍스트 입니다.
+ * @param verticalPadding 뒤로가기 Row 위아래의 세로 패딩입니다.
+ * @param imageSource 한정자를 통해 R.drawable...만 입력 받습니다.
+ */
+@Composable
+fun SelectButton(
+    text: String = "",
+    widthValue: Int,
+    imageSource: Int,
+    onClick: () -> Unit
+) {
+    Box(
+        Modifier
+            .width(widthValue.dp)
+            .height(222.dp)
+            .background(
+                color = Color(0xFFEEF4FC),
+                shape = RoundedCornerShape(size = 16.dp)
+            )
+            .padding(start = 17.dp, top = 22.dp, end = 17.dp, bottom = 18.dp)
+            .noRippleClickable({
+                onClick()
+            }),
+        contentAlignment = Alignment.BottomCenter
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Image(
+                imageVector = ImageVector.vectorResource(id = imageSource),
+                contentDescription = text
+            )
+            Spacer(modifier = Modifier.height(18.dp))
+            Text(
+                text = text,
+                modifier = Modifier
+                    .background(color = Color(0xFFFFFFFF), shape = RoundedCornerShape(size = 12.dp))
+                    .padding(start = 16.dp, top = 8.dp, end = 16.dp, bottom = 8.dp),
+                style = TextStyle(
+                    fontSize = 16.sp,
+                    fontFamily = pretendard,
+                    fontWeight = FontWeight(700),
+                    color = Color(0xFF397CDB),
+                    platformStyle = PlatformTextStyle(
+                        includeFontPadding = false
+                    )
+                )
+            )
         }
     }
 }
