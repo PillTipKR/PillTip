@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "262804289219",
+    "project_id": "pilltip-b243a",
+    "storage_bucket": "pilltip-b243a.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:262804289219:android:cae62e42594044430f5476",
+        "android_client_info": {
+          "package_name": "com.pilltip.pilltip"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "262804289219-9etc47o95nd6spc82b6s8fc2v5msnase.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.pilltip.pilltip",
+            "certificate_hash": "b2e12dad729786de04b20b409371511cbccaca53"
+          }
+        },
+        {
+          "client_id": "262804289219-dtpbdo11rei2m3lbl8v7r3atq0a1229a.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAbAG9kxsrrgCP1quhbJss3Y8LFrLCF8Co"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "262804289219-dtpbdo11rei2m3lbl8v7r3atq0a1229a.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

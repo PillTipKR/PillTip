@@ -1,11 +1,15 @@
 package com.pilltip.pilltip.model.signUp
 
+import android.app.Activity
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.firebase.auth.FirebaseUser
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import javax.inject.Inject
@@ -150,5 +154,58 @@ class SignUpViewModel @Inject constructor(
             age--
 
         return age
+    }
+}
+
+@HiltViewModel
+class AuthViewModel @Inject constructor(
+    private val phoneAuthManager: PhoneAuthManager
+) : ViewModel() {
+
+    private val _phoneNumber = MutableStateFlow("")
+    val phoneNumber: StateFlow<String> = _phoneNumber
+
+    private val _code = MutableStateFlow("")
+    val code: StateFlow<String> = _code
+
+    private val _verificationId = MutableStateFlow<String?>(null)
+    val verificationId: StateFlow<String?> = _verificationId
+
+    private val _status = MutableStateFlow("")
+    val status: StateFlow<String> = _status
+
+    fun updatePhoneNumber(value: String) {
+        _phoneNumber.value = value
+    }
+
+    fun updateCode(value: String) {
+        _code.value = value
+    }
+
+    fun requestVerification(activity: Activity) {
+        _status.value = "인증 요청 중..."
+
+        phoneAuthManager.startPhoneNumberVerification(
+            activity = activity,
+            phoneNumber = _phoneNumber.value,
+            onCodeSent = { id, _ -> _verificationId.value = id; _status.value = "코드 전송됨" },
+            onVerificationCompleted = { _status.value = "자동 인증 완료" },
+            onVerificationFailed = { e -> _status.value = "실패: ${e.message}" }
+        )
+    }
+
+    fun verifyCodeInput() {
+        val id = _verificationId.value
+        val codeInput = _code.value
+
+        if (id != null && codeInput.isNotEmpty()) {
+            _status.value = "코드 인증 중..."
+            phoneAuthManager.verifyCode(
+                verificationId = id,
+                code = codeInput,
+                onSuccess = { user -> _status.value = "성공: ${user.phoneNumber}" },
+                onFailure = { e -> _status.value = "실패: ${e.message}" }
+            )
+        }
     }
 }
