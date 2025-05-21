@@ -1,6 +1,6 @@
 // PillTip\BE\src\main\java\com\example\oauth2\entity\User.java
 // author : mireutale
-// date : 2025-05-19
+// date : 2025-05-21
 // description : Users(사용자) 엔티티
 
 package com.oauth2.entity;
@@ -10,6 +10,7 @@ import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
+import java.util.List;
 
 @Entity //JPA에서 DB테이블과 매핑되는 클래스임을 명시
 @Table(name = "users") //DB에서 테이블 이름
@@ -40,20 +41,31 @@ public class User {
     @Column(name = "profile_photo_url") // length = 255
     private String profilePhotoUrl;
 
-    @Column(name = "agreed_terms", columnDefinition = "BOOLEAN DEFAULT FALSE") // 이용약관 동의 지정
+    @Column(name = "terms", columnDefinition = "BOOLEAN DEFAULT FALSE") // 이용약관 동의 지정
     private boolean agreedTerms;
-
-    @Column(name = "agreed_privacy", columnDefinition = "BOOLEAN DEFAULT FALSE") // 개인정보 동의 지정
-    private boolean agreedPrivacy;
 
     @Column(name = "created_at", columnDefinition = "DATETIME DEFAULT CURRENT_TIMESTAMP") // 생성일 지정
     private LocalDateTime createdAt;
 
+    // 유저 프로필 1대 1 관계
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
-    private UserProfile userProfile;
+    private UserProfile userProfile; 
 
+    // 유저 관심사 1대 1 관계
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
     private Interests interests;
+
+    // 유저 동의사항 1대 1 관계
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
+    private UserPermissions userPermissions;
+
+    // 유저 위치 1대 1 관계
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
+    private UserLocation userLocation;
+
+    // 유저 문진표 1대 N 관계
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    private List<PatientQuestionnaire> questionnaires;
 
     @PrePersist // 엔티티 저장 전 실행
     protected void onCreate() {

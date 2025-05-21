@@ -81,7 +81,6 @@ public class UserService {
                         passwordEncoder.encode(request.getPassword()) : null)
                 .nickname(request.getNickname())
                 .agreedTerms(request.isAgreedTerms())
-                .agreedPrivacy(request.isAgreedPrivacy())
                 .build();
 
         // UserProfile 엔티티 생성
@@ -121,12 +120,6 @@ public class UserService {
     // 이용약관 동의
     public User agreeToTerms(User user) {
         user.setAgreedTerms(true);
-        return userRepository.save(user);
-    }
-
-    // 개인정보 처리방침 동의
-    public User agreeToPrivacy(User user) {
-        user.setAgreedPrivacy(true);
         return userRepository.save(user);
     }
 

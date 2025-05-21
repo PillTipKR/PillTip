@@ -15,7 +15,6 @@ public class UserResponse {
     private final String nickname;
     private final String profilePhotoUrl;
     private final boolean agreedTerms;
-    private final boolean agreedPrivacy;
 
     // 생성자, 앱에서 정보를 처리하기 쉽도록 일정한 형식으로 변환
     public UserResponse(User user) {
@@ -23,7 +22,6 @@ public class UserResponse {
         this.nickname = user.getNickname(); // 닉네임
         this.profilePhotoUrl = user.getProfilePhotoUrl(); // 프로필 사진 URL
         this.agreedTerms = user.isAgreedTerms(); // 이용약관 동의 여부
-        this.agreedPrivacy = user.isAgreedPrivacy(); // 개인정보 처리방침 동의 여부
     }
 
     /*
