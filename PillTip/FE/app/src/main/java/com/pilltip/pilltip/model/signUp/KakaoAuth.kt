@@ -10,7 +10,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 
 enum class LoginType {
-    NONE, KAKAO, GOOGLE, IDPW
+    social, GOOGLE, idpw
 }
 
 @HiltViewModel

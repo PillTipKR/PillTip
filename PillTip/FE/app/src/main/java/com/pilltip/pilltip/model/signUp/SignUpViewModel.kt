@@ -1,6 +1,7 @@
 package com.pilltip.pilltip.model.signUp
 
 import android.app.Activity
+import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
@@ -31,26 +32,39 @@ class SignUpViewModel @Inject constructor(
     /*값 업데이트*/
     fun updateLoginType(type: LoginType) {
         _signUpData.value = _signUpData.value.copy(loginType = type)
+        Log.d("SignUpViewModel", " 사용자 type 업데이트: $type")
+        Log.d("🧾 결과값", _signUpData.value.toString())
     }
 
     fun updateUserId(id: String) {
         _signUpData.value = _signUpData.value.copy(userId = id)
+        Log.d("SignUpViewModel", " userId 업데이트: $id")
+        Log.d("🧾 결과값", _signUpData.value.toString())
     }
 
     fun updatePassword(password: String) {
         _signUpData.value = _signUpData.value.copy(password = password)
+        Log.d("SignUpViewModel", " password 업데이트: $password")
+        Log.d("🧾 결과값", _signUpData.value.toString())
     }
 
     fun updateTermsOfServices(agreed: Boolean){
         _signUpData.value = _signUpData.value.copy(term = agreed)
+        Log.d("SignUpViewModel", " term 업데이트: $agreed")
+        Log.d("🧾 결과값", _signUpData.value.toString())
+
     }
 
     fun updateNickname(nickname: String) {
         _signUpData.value = _signUpData.value.copy(nickname = nickname)
+        Log.d("SignUpViewModel", " nickname 업데이트: $nickname")
+        Log.d("🧾 결과값", _signUpData.value.toString())
     }
 
     fun updateGender(gender: String) {
         _signUpData.value = _signUpData.value.copy(gender = gender)
+        Log.d("SignUpViewModel", " gender 업데이트: $gender")
+        Log.d("🧾 결과값", _signUpData.value.toString())
     }
 
     fun updateBirthDate(year: Int, month: Int, day: Int) {
@@ -65,22 +79,31 @@ class SignUpViewModel @Inject constructor(
 
     fun updateHeight(height: Int) {
         _signUpData.value = _signUpData.value.copy(height = height)
+        Log.d("SignUpViewModel", " height 업데이트: $height")
+        Log.d("🧾 결과값", _signUpData.value.toString())
     }
 
     fun updateWeight(weight: Int) {
         _signUpData.value = _signUpData.value.copy(weight = weight)
+        Log.d("SignUpViewModel", " weight 업데이트: $weight")
+        Log.d("🧾 결과값", _signUpData.value.toString())
     }
 
     fun updateInterest(interest: String) {
         _signUpData.value = _signUpData.value.copy(interest = interest)
+        Log.d("SignUpViewModel", " interest 업데이트: $interest")
+        Log.d("🧾 결과값", _signUpData.value.toString())
     }
 
     fun updatePhone(phone: String) {
         _signUpData.value = _signUpData.value.copy(phone = phone)
+        Log.d("SignUpViewModel", " phone 업데이트: $phone")
+        Log.d("🧾 결과값", _signUpData.value.toString())
     }
 
     fun updateToken(token: String) {
         _signUpData.value = _signUpData.value.copy(token = token)
+        Log.d("SignUpViewModel", " token 업데이트: $token")
     }
 
     /*값 읽기*/
@@ -124,8 +147,25 @@ class SignUpViewModel @Inject constructor(
     // 약관 동의 여부
     fun isAgreedToTerms(): Boolean = _signUpData.value.term
 
+    fun logSignUpData(tag: String = "SignUpData") {
+        val data = _signUpData.value
+        Log.d(tag, """
+        - loginType: ${data.loginType}
+        - userId: ${data.userId}
+        - password: ${data.password}
+        - term: ${data.term}
+        - nickname: ${data.nickname}
+        - gender: ${data.gender}
+        - birthDate: ${data.birthDate}
+        - age: ${data.age}
+        - height: ${data.height}
+        - weight: ${data.weight}
+        - interest: ${data.interest}
+        - phone: ${data.phone}
+        - token: ${data.token}
+    """.trimIndent())
+    }
 
-    // 최종 회원가입 요청
     fun completeSignUp(
         onSuccess: () -> Unit,
         onFailure: (Throwable?) -> Unit
@@ -137,6 +177,7 @@ class SignUpViewModel @Inject constructor(
                 if (result) {
                     onSuccess()
                 } else {
+                    Log.d("AuthError", "여기 에러")
                     onFailure(null)
                 }
             } catch (e: Exception) {

@@ -1,4 +1,4 @@
-package com.pilltip.pilltip.view
+package com.pilltip.pilltip.view.auth
 
 
 import android.annotation.SuppressLint
@@ -18,15 +18,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -75,9 +72,9 @@ import com.pilltip.pilltip.composable.buttonModifier
 import com.pilltip.pilltip.model.signUp.PhoneAuthViewModel
 import com.pilltip.pilltip.model.signUp.SignUpViewModel
 import com.pilltip.pilltip.ui.theme.pretendard
-import com.pilltip.pilltip.view.logic.InputType
-import com.pilltip.pilltip.view.logic.TermBottomSheet
-import com.pilltip.pilltip.view.logic.containsSequentialNumbers
+import com.pilltip.pilltip.view.auth.logic.InputType
+import com.pilltip.pilltip.view.auth.logic.TermBottomSheet
+import com.pilltip.pilltip.view.auth.logic.containsSequentialNumbers
 
 /**
  * 아이디 입력 페이지입니다.
@@ -87,8 +84,8 @@ import com.pilltip.pilltip.view.logic.containsSequentialNumbers
  */
 @Composable
 fun IdPage(
-    viewModel: SignUpViewModel = hiltViewModel(),
-    navController: NavController
+    navController: NavController,
+    viewModel: SignUpViewModel
 ) {
     var ID by remember { mutableStateOf("") }
     var isChecked by remember { mutableStateOf(false) }
@@ -138,7 +135,6 @@ fun IdPage(
                 cursorBrush = SolidColor(if (isFocused) Color(0xFF397CDB) else Color(0xFFBFBFBF)),
                 onValueChange = {
                     ID = it
-                    viewModel.updateUserId(ID)
                 },
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                 keyboardActions = KeyboardActions(
@@ -228,6 +224,7 @@ fun IdPage(
             text = if (isChecked) "다음" else "아이디 중복 확인",
             buttonColor = if (isAllConditionsValid) Color(0xFF348ADF) else Color(0xFFCADCF5),
             onClick = {
+                viewModel.updateUserId(ID)
                 if (isChecked && isAllConditionsValid) navController.navigate("PasswordPage")
                 isChecked = true
             }
@@ -243,8 +240,8 @@ fun IdPage(
  */
 @Composable
 fun PasswordPage(
-    viewModel: SignUpViewModel = hiltViewModel(),
-    navController: NavController
+    navController: NavController,
+    viewModel: SignUpViewModel,
 ) {
     var password by remember { mutableStateOf("") }
     var reenteredPassword by remember { mutableStateOf("") }
@@ -288,7 +285,6 @@ fun PasswordPage(
                 value = password,
                 onValueChange = {
                     password = it
-                    viewModel.updatePassword(password)
                 },
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                 keyboardActions = KeyboardActions(
@@ -335,7 +331,6 @@ fun PasswordPage(
                         .padding(start = 21.43.dp, end = 9.dp, top = 2.5.dp, bottom = 2.5.dp)
                         .clickable {
                             password = ""
-                            viewModel.updatePassword("")
                         }
                 )
             }
@@ -448,6 +443,7 @@ fun PasswordPage(
             else Color(0xFFCADCF5),
             onClick = {
                 if (isAllConditionsValid && password == reenteredPassword) {
+                    viewModel.updatePassword(password)
                     if (!termsOfService)
                         termsOfService = true
                 }
@@ -472,9 +468,9 @@ fun PasswordPage(
 @SuppressLint("DefaultLocale")
 @Composable
 fun PhoneAuthPage(
-    viewModel: SignUpViewModel = hiltViewModel(),
-    phoneViewModel: PhoneAuthViewModel = hiltViewModel(),
     navController: NavController,
+    viewModel: SignUpViewModel,
+    phoneViewModel: PhoneAuthViewModel = hiltViewModel(),
 ) {
     var phoneNumber by remember { mutableStateOf("") }
     val verificationId by phoneViewModel.verificationId.collectAsState()
@@ -502,7 +498,7 @@ fun PhoneAuthPage(
             },
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        BackButton(navigationTo = ({ navController.navigate("PasswordPage")}))
+        BackButton(navigationTo = ({ navController.navigate("PasswordPage") }))
         HeightSpacer(56.dp)
         DoubleLineTitleText(upperTextLine = "전화번호를", lowerTextLine = "입력해주세요")
         HeightSpacer(12.dp)
@@ -521,7 +517,8 @@ fun PhoneAuthPage(
                     inputType = InputType.NUMBER,
                     onTextChanged = {
                         phoneNumber = it
-                        phoneViewModel.updatePhoneNumber(it) },
+                        phoneViewModel.updatePhoneNumber(it)
+                    },
                     onFocusChanged = {
                         isFocused = it
                     }
@@ -591,7 +588,7 @@ fun PhoneAuthPage(
                 if (
                     (verificationId == null && phoneNumber.length >= 11) ||
                     (verificationId != null && code.length == 6)
-                ){
+                ) {
                     activity?.let {
                         if (verificationId == null) {
                             phoneViewModel.requestVerification(
@@ -602,7 +599,8 @@ fun PhoneAuthPage(
                         } else {
                             phoneViewModel.verifyCodeInput(
                                 onSuccess = {
-                                    navController.navigate("GenderPage")
+                                    viewModel.updatePhone(phoneNumber)
+                                    navController.navigate("NicknamePage")
                                 },
                                 onFailure = {}
                             )
@@ -614,18 +612,86 @@ fun PhoneAuthPage(
     }
 }
 
+/**
+ * 닉네임 입력 페이지입니다.
+ * @param SignUpViewModel로, SignIn Data를 관리합니다.
+ * @param navController Navigation Controller입니다.
+ * @author 김기윤
+ */
+@Composable
+fun NicknamePage(
+    navController: NavController,
+    viewModel: SignUpViewModel,
+) {
+    var nickname by remember { mutableStateOf("") }
+    var isFocused by remember { mutableStateOf(false) }
+    val focusManager = LocalFocusManager.current
+
+    Column(
+        modifier = WhiteScreenModifier
+            .pointerInput(Unit) {
+                detectTapGestures {
+                    focusManager.clearFocus()
+                }
+            },
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        BackButton(navigationTo = ({ navController.navigate("PhoneAuthPage") }))
+        HeightSpacer(56.dp)
+        DoubleLineTitleText(upperTextLine = "닉네임을", lowerTextLine = "입력해주세요")
+        HeightSpacer(12.dp)
+        TitleDescription(description = "원하는 대로 설정하세요!")
+        HeightSpacer(29.dp)
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxWidth()
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                LabelText(labelText = if (nickname.isNotEmpty()) "닉네임" else "")
+                PlaceholderTextField(
+                    placeHolder = "PillTip",
+                    inputText = nickname,
+                    inputType = InputType.TEXT,
+                    onTextChanged = {
+                        nickname = it
+                    },
+                    onFocusChanged = {
+                        isFocused = it
+                    }
+                )
+            }
+        }
+        HeightSpacer(14.dp)
+        HighlightingLine(text = nickname, isFocused = isFocused)
+
+        Spacer(modifier = Modifier.weight(1f))
+        NextButton(
+            mModifier = buttonModifier,
+            buttonColor = if (nickname.isNotEmpty()) Color(0xFF397CDB) else Color(0xFFCADCF5),
+            text = "다음",
+            onClick = {
+                if (nickname.isNotEmpty()) {
+                    viewModel.updateNickname(nickname)
+                    navController.navigate("GenderPage")
+                }
+            }
+        )
+    }
+}
+
 @Composable
 fun GenderPage(
     navController: NavController,
-    viewModel: SignUpViewModel = hiltViewModel()
-){
+    viewModel: SignUpViewModel
+) {
     val lc = LocalConfiguration.current.screenHeightDp
     val localWitdh = LocalConfiguration.current.screenWidthDp
     Column(
         modifier = WhiteScreenModifier,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        BackButton(navigationTo = ({ navController.navigate("PhoneAuthPage")}))
+        BackButton(navigationTo = ({ navController.navigate("PhoneAuthPage") }))
         HeightSpacer(56.dp)
         Column(
             modifier = Modifier.height((lc - 50 + 46).dp),
@@ -677,7 +743,7 @@ fun GenderPage(
             ) {
                 SelectButton(
                     text = "남성",
-                    widthValue = (localWitdh - 48 - 16)/2,
+                    widthValue = (localWitdh - 48 - 16) / 2,
                     imageSource = R.drawable.btn_blue_checkmark,
                     onClick = {
                         viewModel.updateGender("M")
@@ -686,7 +752,7 @@ fun GenderPage(
                 )
                 SelectButton(
                     text = "여성",
-                    widthValue = (localWitdh - 48 - 16)/2,
+                    widthValue = (localWitdh - 48 - 16) / 2,
                     imageSource = R.drawable.btn_gray_checkmark,
                     onClick = {
                         viewModel.updateGender("F")
@@ -701,14 +767,14 @@ fun GenderPage(
 @Composable
 fun AgePage(
     navController: NavController,
-    viewModel: SignUpViewModel = hiltViewModel()
-){
+    viewModel: SignUpViewModel
+) {
     Column(
         modifier = WhiteScreenModifier,
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
-    ){
-        BackButton(navigationTo = ({ navController.navigate("GenderPage")}))
+    ) {
+        BackButton(navigationTo = ({ navController.navigate("GenderPage") }))
         HeightSpacer(56.dp)
         DoubleLineTitleText(upperTextLine = "나이를", lowerTextLine = "입력해주세요")
         HeightSpacer(40.dp)
@@ -724,7 +790,7 @@ fun AgePage(
         Spacer(modifier = Modifier.weight(1f))
         NextButton(
             mModifier = buttonModifier,
-            buttonColor =  Color(0xFF397CDB),
+            buttonColor = Color(0xFF397CDB),
             onClick = {
                 navController.navigate("BodyStatPage")
             }
@@ -735,8 +801,8 @@ fun AgePage(
 @Composable
 fun BodyStatPage(
     navController: NavController,
-    viewModel: SignUpViewModel = hiltViewModel()
-){
+    viewModel: SignUpViewModel
+) {
     var height by remember { mutableStateOf("") }
     var weight by remember { mutableStateOf("") }
     var isFocusedHeight by remember { mutableStateOf(false) }
@@ -752,7 +818,7 @@ fun BodyStatPage(
             },
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        BackButton(navigationTo = ({ navController.navigate("AgePage")}))
+        BackButton(navigationTo = ({ navController.navigate("AgePage") }))
         HeightSpacer(56.dp)
         DoubleLineTitleText(upperTextLine = "키와 몸무게를", lowerTextLine = "입력해주세요")
         HeightSpacer(12.dp)
@@ -797,7 +863,9 @@ fun BodyStatPage(
         Spacer(modifier = Modifier.weight(1f))
         NextButton(
             mModifier = buttonModifier,
-            buttonColor = if (height.length >= 2 && weight.length >= 2) Color(0xFF397CDB) else Color(0xFFCADCF5),
+            buttonColor = if (height.length >= 2 && weight.length >= 2) Color(0xFF397CDB) else Color(
+                0xFFCADCF5
+            ),
             onClick = {
                 if (height.length >= 2 && weight.length >= 2) {
                     viewModel.updateHeight(height.toInt())
@@ -813,8 +881,8 @@ fun BodyStatPage(
 @Composable
 fun InterestPage(
     navController: NavController,
-    viewModel: SignUpViewModel = hiltViewModel()
-){
+    viewModel: SignUpViewModel
+) {
     var interest by remember { mutableStateOf("") }
     var isFocused by remember { mutableStateOf(false) }
     val focusManager = LocalFocusManager.current
@@ -828,7 +896,7 @@ fun InterestPage(
             },
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        BackButton(navigationTo = ({ navController.navigate("BodyStatPage")}))
+        BackButton(navigationTo = ({ navController.navigate("BodyStatPage") }))
         HeightSpacer(56.dp)
         DoubleLineTitleText(upperTextLine = "관심사를", lowerTextLine = "입력해주세요")
         HeightSpacer(12.dp)
@@ -842,9 +910,9 @@ fun InterestPage(
             Column(modifier = Modifier.weight(1f)) {
                 LabelText(labelText = if (interest.isNotEmpty()) "관심사" else "")
                 PlaceholderTextField(
-                    placeHolder = "174",
+                    placeHolder = "헬스케어",
                     inputText = interest,
-                    inputType = InputType.NUMBER,
+                    inputType = InputType.TEXT,
                     onTextChanged = { interest = it },
                     onFocusChanged = {
                         isFocused = it
@@ -861,10 +929,11 @@ fun InterestPage(
             onClick = {
                 if (interest.isNotEmpty()) {
                     viewModel.updateInterest(interest)
-
+                    viewModel.logSignUpData()
                     viewModel.completeSignUp(
                         onSuccess = {
-                            val sharedPreferences = context.getSharedPreferences("user", Context.MODE_PRIVATE)
+                            val sharedPreferences =
+                                context.getSharedPreferences("user", Context.MODE_PRIVATE)
                             with(sharedPreferences.edit()) {
                                 putString("userId", viewModel.getUserId())
                                 putString("token", viewModel.getToken())
@@ -872,9 +941,7 @@ fun InterestPage(
                                 apply()
                             }
 
-                            navController.navigate("SplashPage") {
-                                popUpTo("InterestPage") { inclusive = true }
-                            }
+                            navController.navigate("PillMainPage")
                         },
                         onFailure = { error ->
                             Toast.makeText(
@@ -882,6 +949,7 @@ fun InterestPage(
                                 error?.message ?: "회원가입에 실패했습니다.",
                                 Toast.LENGTH_SHORT
                             ).show()
+                            navController.navigate("PillMainPage")
                         }
                     )
                 }

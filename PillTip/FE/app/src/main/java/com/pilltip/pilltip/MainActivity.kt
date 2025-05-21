@@ -5,11 +5,18 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.lifecycle.lifecycleScope
+import com.google.android.recaptcha.Recaptcha
+import com.google.firebase.appcheck.debug.DebugAppCheckProviderFactory
+import com.google.firebase.appcheck.ktx.appCheck
+import com.google.firebase.ktx.Firebase
+import com.google.firebase.ktx.initialize
 import com.kakao.sdk.common.KakaoSdk
 import com.kakao.sdk.common.util.Utility
 import com.kakao.vectormap.KakaoMapSdk
 import com.pilltip.pilltip.nav.NavGraph
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -18,12 +25,17 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             Log.d("KeyHash", "${Utility.getKeyHash(this)}")
+            Firebase.initialize(context = this)
+            Firebase.appCheck.installAppCheckProviderFactory(
+                DebugAppCheckProviderFactory.getInstance(),
+            )
 
             val kakaoKey = BuildConfig.KAKAO_KEY
             Log.d("KakaoKey", kakaoKey)
             KakaoSdk.init(this, kakaoKey)
             KakaoMapSdk.init(this, kakaoKey);
-            NavGraph()
+            NavGraph(startPage = "SplashPage")
         }
     }
 }
+

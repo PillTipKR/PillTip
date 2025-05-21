@@ -59,6 +59,9 @@ dependencies {
     implementation(platform("com.google.firebase:firebase-bom:33.13.0"))
     implementation("com.google.firebase:firebase-analytics")
     implementation("com.google.firebase:firebase-auth")
+    implementation("com.google.firebase:firebase-appcheck-debug")
+    implementation("com.google.firebase:firebase-appcheck-playintegrity")
+
 
     /* Kakao */
     implementation("com.kakao.sdk:v2-common:2.20.6")
@@ -80,6 +83,9 @@ dependencies {
     implementation (libs.kotlinx.coroutines.core)
     implementation (libs.kotlinx.coroutines.android)
     implementation (libs.kotlinx.coroutines.play.services)
+
+    /*Status Bar*/
+    implementation("com.google.accompanist:accompanist-systemuicontroller:0.30.1")
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
