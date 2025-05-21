@@ -45,7 +45,6 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                         .nickname(name) // 닉네임
                         .profilePhotoUrl(picture) // 프로필 사진
                         .agreedTerms(false) // 이용약관 동의
-                        .agreedPrivacy(false) // 개인정보 동의
                         .build());
 
         return userRepository.save(user); // 유저 저장

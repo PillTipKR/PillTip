@@ -51,13 +51,6 @@ public class AuthController {
         return ResponseEntity.ok(ApiResponse.success("Terms agreed successfully", new UserResponse(updatedUser)));
     }
 
-    // 개인정보 처리방침 동의
-    @PostMapping("/privacy")
-    public ResponseEntity<ApiResponse<UserResponse>> agreeToPrivacy(@AuthenticationPrincipal User user) {
-        User updatedUser = userService.agreeToPrivacy(user);
-        return ResponseEntity.ok(ApiResponse.success("Privacy policy agreed successfully", new UserResponse(updatedUser)));
-    }
-
     // 닉네임 업데이트
     @PutMapping("/nickname")
     public ResponseEntity<ApiResponse<UserResponse>> updateNickname(
