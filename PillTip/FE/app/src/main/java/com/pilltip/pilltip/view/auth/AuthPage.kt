@@ -26,6 +26,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -488,6 +489,16 @@ fun PhoneAuthPage(
     val focusManager = LocalFocusManager.current
     val context = LocalContext.current
     val activity = context as? Activity
+
+    val isAutoVerified by phoneViewModel.isAutoVerified.collectAsState()
+
+
+    LaunchedEffect(isAutoVerified) {
+        if (isAutoVerified) {
+            viewModel.updatePhone(phoneNumber)
+            navController.navigate("NicknamePage")
+        }
+    }
 
     Column(
         modifier = WhiteScreenModifier

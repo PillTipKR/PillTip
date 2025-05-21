@@ -60,8 +60,6 @@ dependencies {
     implementation("com.google.firebase:firebase-analytics")
     implementation("com.google.firebase:firebase-auth")
     implementation("com.google.firebase:firebase-appcheck-debug")
-    implementation("com.google.firebase:firebase-appcheck-playintegrity")
-
 
     /* Kakao */
     implementation("com.kakao.sdk:v2-common:2.20.6")

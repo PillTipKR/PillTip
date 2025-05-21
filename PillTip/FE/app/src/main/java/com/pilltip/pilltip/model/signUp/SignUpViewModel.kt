@@ -7,6 +7,7 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
@@ -32,39 +33,26 @@ class SignUpViewModel @Inject constructor(
     /*값 업데이트*/
     fun updateLoginType(type: LoginType) {
         _signUpData.value = _signUpData.value.copy(loginType = type)
-        Log.d("SignUpViewModel", " 사용자 type 업데이트: $type")
-        Log.d("🧾 결과값", _signUpData.value.toString())
     }
 
     fun updateUserId(id: String) {
         _signUpData.value = _signUpData.value.copy(userId = id)
-        Log.d("SignUpViewModel", " userId 업데이트: $id")
-        Log.d("🧾 결과값", _signUpData.value.toString())
     }
 
     fun updatePassword(password: String) {
         _signUpData.value = _signUpData.value.copy(password = password)
-        Log.d("SignUpViewModel", " password 업데이트: $password")
-        Log.d("🧾 결과값", _signUpData.value.toString())
     }
 
     fun updateTermsOfServices(agreed: Boolean){
         _signUpData.value = _signUpData.value.copy(term = agreed)
-        Log.d("SignUpViewModel", " term 업데이트: $agreed")
-        Log.d("🧾 결과값", _signUpData.value.toString())
-
     }
 
     fun updateNickname(nickname: String) {
         _signUpData.value = _signUpData.value.copy(nickname = nickname)
-        Log.d("SignUpViewModel", " nickname 업데이트: $nickname")
-        Log.d("🧾 결과값", _signUpData.value.toString())
     }
 
     fun updateGender(gender: String) {
         _signUpData.value = _signUpData.value.copy(gender = gender)
-        Log.d("SignUpViewModel", " gender 업데이트: $gender")
-        Log.d("🧾 결과값", _signUpData.value.toString())
     }
 
     fun updateBirthDate(year: Int, month: Int, day: Int) {
@@ -79,31 +67,22 @@ class SignUpViewModel @Inject constructor(
 
     fun updateHeight(height: Int) {
         _signUpData.value = _signUpData.value.copy(height = height)
-        Log.d("SignUpViewModel", " height 업데이트: $height")
-        Log.d("🧾 결과값", _signUpData.value.toString())
     }
 
     fun updateWeight(weight: Int) {
         _signUpData.value = _signUpData.value.copy(weight = weight)
-        Log.d("SignUpViewModel", " weight 업데이트: $weight")
-        Log.d("🧾 결과값", _signUpData.value.toString())
     }
 
     fun updateInterest(interest: String) {
         _signUpData.value = _signUpData.value.copy(interest = interest)
-        Log.d("SignUpViewModel", " interest 업데이트: $interest")
-        Log.d("🧾 결과값", _signUpData.value.toString())
     }
 
     fun updatePhone(phone: String) {
         _signUpData.value = _signUpData.value.copy(phone = phone)
-        Log.d("SignUpViewModel", " phone 업데이트: $phone")
-        Log.d("🧾 결과값", _signUpData.value.toString())
     }
 
     fun updateToken(token: String) {
         _signUpData.value = _signUpData.value.copy(token = token)
-        Log.d("SignUpViewModel", " token 업데이트: $token")
     }
 
     /*값 읽기*/
@@ -227,6 +206,9 @@ class PhoneAuthViewModel @Inject constructor(
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> = _errorMessage
 
+    private val _isAutoVerified = MutableStateFlow(false)
+    val isAutoVerified: StateFlow<Boolean> = _isAutoVerified
+
     fun updatePhoneNumber(input: String) {
         val digits = input.filter { it.isDigit() }.take(11)
         _rawPhone.value = when {
@@ -245,7 +227,8 @@ class PhoneAuthViewModel @Inject constructor(
     fun requestVerification(
         activity: Activity,
         onSent: () -> Unit,
-        onFailed: (String) -> Unit
+        onFailed: (String) -> Unit,
+        onAutoVerified: () -> Unit = {}
     ) {
         _status.value = "인증 요청 중..."
         _errorMessage.value = null
@@ -259,8 +242,24 @@ class PhoneAuthViewModel @Inject constructor(
                 startTimer()
                 onSent()
             },
-            onVerificationCompleted = {
-                _status.value = "자동 인증 완료"
+            onVerificationCompleted = {credential, code ->
+                val autoCode = code
+                if (!autoCode.isNullOrEmpty()) {
+                    _code.value = autoCode
+                }
+                _status.value = "자동 인증 중..."
+                FirebaseAuth.getInstance().signInWithCredential(credential)
+                    .addOnSuccessListener {
+                        _status.value = "자동 인증 성공"
+                        _isAutoVerified.value = true
+                        onAutoVerified()
+                    }
+                    .addOnFailureListener { e ->
+                        val msg = e.message ?: "자동 인증 실패"
+                        _status.value = "실패: $msg"
+                        _errorMessage.value = msg
+                        onFailed(msg)
+                    }
             },
             onVerificationFailed = { e ->
                 val msg = e.message ?: "인증 실패"
