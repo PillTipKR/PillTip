@@ -1,5 +1,6 @@
 package com.pilltip.pilltip.model.signUp
 
+import android.util.Log
 import com.google.firebase.auth.FirebaseAuth
 import dagger.Module
 import dagger.Provides
@@ -13,7 +14,7 @@ import retrofit2.http.POST
 import javax.inject.Singleton
 
 interface ServerAuthAPI {
-    @POST("auth/signup")
+    @POST("signup")
     suspend fun signUp(@Body request: SignUpRequest): Response<SignUpResponse>
 }
 
@@ -24,7 +25,7 @@ object NetworkModule {
     @Provides
     fun provideRetrofit(): Retrofit {
         return Retrofit.Builder()
-            .baseUrl("https://api.pilltip.com/")
+            .baseUrl("http://164.125.253.20:20022/api/auth/") // BaseUrl
             .addConverterFactory(GsonConverterFactory.create())
             .build()
     }

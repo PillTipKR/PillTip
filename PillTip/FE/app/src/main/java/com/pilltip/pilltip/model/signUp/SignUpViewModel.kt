@@ -1,11 +1,13 @@
 package com.pilltip.pilltip.model.signUp
 
 import android.app.Activity
+import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
@@ -124,8 +126,25 @@ class SignUpViewModel @Inject constructor(
     // 약관 동의 여부
     fun isAgreedToTerms(): Boolean = _signUpData.value.term
 
+    fun logSignUpData(tag: String = "SignUpData") {
+        val data = _signUpData.value
+        Log.d(tag, """
+        - loginType: ${data.loginType}
+        - userId: ${data.userId}
+        - password: ${data.password}
+        - term: ${data.term}
+        - nickname: ${data.nickname}
+        - gender: ${data.gender}
+        - birthDate: ${data.birthDate}
+        - age: ${data.age}
+        - height: ${data.height}
+        - weight: ${data.weight}
+        - interest: ${data.interest}
+        - phone: ${data.phone}
+        - token: ${data.token}
+    """.trimIndent())
+    }
 
-    // 최종 회원가입 요청
     fun completeSignUp(
         onSuccess: () -> Unit,
         onFailure: (Throwable?) -> Unit
@@ -137,6 +156,7 @@ class SignUpViewModel @Inject constructor(
                 if (result) {
                     onSuccess()
                 } else {
+                    Log.d("AuthError", "여기 에러")
                     onFailure(null)
                 }
             } catch (e: Exception) {
@@ -186,6 +206,9 @@ class PhoneAuthViewModel @Inject constructor(
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> = _errorMessage
 
+    private val _isAutoVerified = MutableStateFlow(false)
+    val isAutoVerified: StateFlow<Boolean> = _isAutoVerified
+
     fun updatePhoneNumber(input: String) {
         val digits = input.filter { it.isDigit() }.take(11)
         _rawPhone.value = when {
@@ -204,7 +227,8 @@ class PhoneAuthViewModel @Inject constructor(
     fun requestVerification(
         activity: Activity,
         onSent: () -> Unit,
-        onFailed: (String) -> Unit
+        onFailed: (String) -> Unit,
+        onAutoVerified: () -> Unit = {}
     ) {
         _status.value = "인증 요청 중..."
         _errorMessage.value = null
@@ -218,8 +242,24 @@ class PhoneAuthViewModel @Inject constructor(
                 startTimer()
                 onSent()
             },
-            onVerificationCompleted = {
-                _status.value = "자동 인증 완료"
+            onVerificationCompleted = {credential, code ->
+                val autoCode = code
+                if (!autoCode.isNullOrEmpty()) {
+                    _code.value = autoCode
+                }
+                _status.value = "자동 인증 중..."
+                FirebaseAuth.getInstance().signInWithCredential(credential)
+                    .addOnSuccessListener {
+                        _status.value = "자동 인증 성공"
+                        _isAutoVerified.value = true
+                        onAutoVerified()
+                    }
+                    .addOnFailureListener { e ->
+                        val msg = e.message ?: "자동 인증 실패"
+                        _status.value = "실패: $msg"
+                        _errorMessage.value = msg
+                        onFailed(msg)
+                    }
             },
             onVerificationFailed = { e ->
                 val msg = e.message ?: "인증 실패"

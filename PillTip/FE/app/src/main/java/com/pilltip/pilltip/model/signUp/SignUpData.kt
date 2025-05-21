@@ -1,7 +1,7 @@
 package com.pilltip.pilltip.model.signUp
 
 data class SignUpData(
-    val loginType: LoginType = LoginType.NONE,
+    val loginType: LoginType = LoginType.idpw,
     val userId: String = "",
     val password: String = "",
     val term: Boolean = false,

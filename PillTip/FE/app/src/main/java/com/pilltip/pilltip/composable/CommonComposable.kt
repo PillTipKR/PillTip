@@ -51,8 +51,10 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.TextStyle
@@ -64,7 +66,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.pilltip.pilltip.R
 import com.pilltip.pilltip.ui.theme.pretendard
-import com.pilltip.pilltip.view.logic.InputType
+import com.pilltip.pilltip.ui.theme.primaryColor
+import com.pilltip.pilltip.view.auth.logic.InputType
 import java.time.LocalDate
 import java.time.YearMonth
 import kotlin.math.abs
@@ -120,10 +123,10 @@ fun HighlightingLine(text: String, isFocused: Boolean, isAllConditionsValid: Boo
                     .fillMaxWidth(fraction = animatedFillPercentage)
                     .height(2.dp)
                     .background(
-                        if (text.isEmpty()) Color(0xFF397CDB)
+                        if (text.isEmpty()) primaryColor
                         else {
                             if (isAllConditionsValid)
-                                Color(0xFF397CDB)
+                                primaryColor
                             else
                                 Color(0xFFE43D45)
                         }
@@ -539,5 +542,35 @@ private fun WheelColumn(
                 )
             }
         }
+    }
+}
+
+/**
+ * 메인 화면에 있는 로고 이미지 필드 컴포저블 입니다.
+ * @param horizontalPadding: 좌우패딩을 설정합니다.
+ */
+@Composable
+fun LogoField(horizontalPadding: Dp = 24.dp) {
+    Row(
+        modifier = Modifier
+            .height(54.dp)
+            .fillMaxWidth()
+            .background(primaryColor)
+            .padding(horizontal = horizontalPadding),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Image(
+            painter = painterResource(id = R.drawable.logo_pilltip),
+            contentDescription = "logo",
+            modifier = Modifier.size(100.dp)
+        )
+        Spacer(modifier = Modifier.weight(1f))
+        Image(
+            imageVector = ImageVector.vectorResource(id = R.drawable.btn_alarmbell),
+            contentDescription = "alarm",
+            modifier = Modifier
+                .padding(1.dp)
+                .height(24.dp)
+        )
     }
 }
