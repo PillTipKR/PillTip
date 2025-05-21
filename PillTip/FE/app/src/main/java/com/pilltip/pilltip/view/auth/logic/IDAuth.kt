@@ -1,4 +1,4 @@
-package com.pilltip.pilltip.view.logic
+package com.pilltip.pilltip.view.auth.logic
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
@@ -194,8 +194,8 @@ fun TermBottomSheet(
                 buttonColor = if (isEssentialChecked) Color(0xFF348ADF) else Color(0xFFCADCF5),
                 onClick = {
                     if(isEssentialChecked){
-                        onDismiss()
                         vm.updateTermsOfServices(true)
+                        onDismiss()
                         navController.navigate("PhoneAuthPage")
                     }
                 }

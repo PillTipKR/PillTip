@@ -1,53 +1,65 @@
 package com.pilltip.pilltip.nav
 
 import androidx.compose.runtime.Composable
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.pilltip.pilltip.view.AgePage
-import com.pilltip.pilltip.view.BodyStatPage
-import com.pilltip.pilltip.view.GenderPage
-import com.pilltip.pilltip.view.IdPage
-import com.pilltip.pilltip.view.InterestPage
-import com.pilltip.pilltip.view.KakaoAuthPage
-import com.pilltip.pilltip.view.PasswordPage
-import com.pilltip.pilltip.view.PhoneAuthPage
-import com.pilltip.pilltip.view.SplashPage
+import com.pilltip.pilltip.model.signUp.SignUpViewModel
+import com.pilltip.pilltip.view.auth.AgePage
+import com.pilltip.pilltip.view.auth.BodyStatPage
+import com.pilltip.pilltip.view.auth.GenderPage
+import com.pilltip.pilltip.view.auth.IdPage
+import com.pilltip.pilltip.view.auth.InterestPage
+import com.pilltip.pilltip.view.auth.KakaoAuthPage
+import com.pilltip.pilltip.view.auth.NicknamePage
+import com.pilltip.pilltip.view.auth.PasswordPage
+import com.pilltip.pilltip.view.auth.PhoneAuthPage
+import com.pilltip.pilltip.view.auth.SplashPage
+import com.pilltip.pilltip.view.main.PillMainPage
 
 @Composable
-fun NavGraph() {
+fun NavGraph(startPage: String) {
     val navController = rememberNavController()
+    val signUpViewModel: SignUpViewModel = hiltViewModel()
     NavHost(
         navController = navController,
-        startDestination = "SplashPage"
+        startDestination = startPage
     ) {
         /*SignIn Flow*/
         composable("SplashPage"){
             SplashPage(navController)
         }
         composable("KakaoAuthPage") {
-            KakaoAuthPage(navController)
+            KakaoAuthPage(navController, signUpViewModel)
         }
         composable("IDPage"){
-            IdPage(navController = navController)
+            IdPage(navController = navController, signUpViewModel)
         }
         composable("PasswordPage"){
-            PasswordPage(navController = navController)
+            PasswordPage(navController = navController, signUpViewModel)
         }
         composable("PhoneAuthPage"){
-            PhoneAuthPage(navController = navController)
+            PhoneAuthPage(navController = navController, signUpViewModel)
+        }
+        composable("NicknamePage"){
+            NicknamePage(navController = navController, signUpViewModel)
         }
         composable("GenderPage"){
-            GenderPage(navController = navController)
+            GenderPage(navController = navController, signUpViewModel)
         }
         composable("AgePage"){
-            AgePage(navController = navController)
+            AgePage(navController = navController, signUpViewModel)
         }
         composable("BodyStatPage"){
-            BodyStatPage(navController = navController)
+            BodyStatPage(navController = navController, signUpViewModel)
         }
         composable("InterestPage"){
-            InterestPage(navController = navController)
+            InterestPage(navController = navController, signUpViewModel)
+        }
+
+        composable("PillMainPage"){
+            PillMainPage()
         }
 
     }

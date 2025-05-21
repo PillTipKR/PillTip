@@ -1,6 +1,7 @@
 package com.pilltip.pilltip.model.signUp
 
 import android.app.Activity
+import android.util.Log
 import com.google.firebase.FirebaseException
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
@@ -17,7 +18,7 @@ class PhoneAuthManager @Inject constructor(
         activity: Activity,
         phoneNumber: String,
         onCodeSent: (String, PhoneAuthProvider.ForceResendingToken) -> Unit,
-        onVerificationCompleted: (PhoneAuthCredential) -> Unit,
+        onVerificationCompleted: (PhoneAuthCredential, String?) -> Unit,
         onVerificationFailed: (FirebaseException) -> Unit
     ) {
         val options = PhoneAuthOptions.newBuilder(auth)
@@ -26,7 +27,12 @@ class PhoneAuthManager @Inject constructor(
             .setActivity(activity)
             .setCallbacks(object : PhoneAuthProvider.OnVerificationStateChangedCallbacks() {
                 override fun onVerificationCompleted(credential: PhoneAuthCredential) {
-                    onVerificationCompleted(credential)
+                    val code = credential.smsCode
+
+                    if (code != null) {
+                        Log.d("PhoneAuth", "자동 감지된 인증 코드: $code")
+                    }
+                    onVerificationCompleted(credential, code)
                 }
 
                 override fun onVerificationFailed(e: FirebaseException) {
