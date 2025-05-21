@@ -2,7 +2,6 @@ package com.pilltip.pilltip.model.signUp
 
 import android.util.Log
 import com.google.firebase.auth.FirebaseAuth
-import com.kakao.sdk.auth.AuthApi
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
