@@ -26,7 +26,7 @@ public class UserService {
 
     // ID/PW 로그인
     public LoginResponse login(LoginRequest request) {
-        User user = userRepository.findById(Long.parseLong(request.getUserId()))
+        User user = userRepository.findByLoginId(request.getLoginId())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         if (user.getLoginType() != LoginType.IDPW) {
@@ -40,7 +40,6 @@ public class UserService {
         UserToken userToken = tokenService.generateTokens(user.getId());
         
         return LoginResponse.builder()
-                .user(user)
                 .accessToken(userToken.getAccessToken())
                 .refreshToken(userToken.getRefreshToken())
                 .build();
@@ -58,7 +57,6 @@ public class UserService {
         UserToken userToken = tokenService.generateTokens(user.getId());
         
         return LoginResponse.builder()
-                .user(user)
                 .accessToken(userToken.getAccessToken())
                 .refreshToken(userToken.getRefreshToken())
                 .build();
@@ -71,15 +69,13 @@ public class UserService {
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         return LoginResponse.builder()
-                .user(user)
                 .accessToken(userToken.getAccessToken())
                 .refreshToken(userToken.getRefreshToken())
                 .build();
     }
 
     // 현재 로그인한 사용자 정보 조회
-    public User getCurrentUser(String accessToken) {
-        Long userId = tokenService.getUserIdFromToken(accessToken);
+    public User getCurrentUser(Long userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
     }

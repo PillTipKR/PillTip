@@ -6,6 +6,7 @@ description : user(사용자) 엔티티
 */
 package com.oauth2.entity;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -55,26 +56,32 @@ public class User {
     private LocalDateTime createdAt; // onCreate에서 현재 시간을 가져오고, 이 값을 저장
 
     // 유저 프로필 1대 1 관계
+    @JsonManagedReference
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
     private UserProfile userProfile; 
 
     // 유저 관심사 1대 1 관계
+    @JsonManagedReference
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
     private Interests interests;
 
     // 유저 동의사항 1대 1 관계
+    @JsonManagedReference
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
     private UserPermissions userPermissions;
 
     // 유저 위치 1대 1 관계
+    @JsonManagedReference
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
     private UserLocation userLocation;
 
     // 유저 토큰 1대 1 관계
+    @JsonManagedReference
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
     private UserToken userToken;
 
     // 유저 문진표 1대 N 관계
+    @JsonManagedReference
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<PatientQuestionnaire> questionnaires;
 

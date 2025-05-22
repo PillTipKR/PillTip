@@ -12,14 +12,14 @@ import lombok.Getter;
 public class UserResponse {
     // 필요한 데이터만 선택해서 응답
     private final String nickname;
-    private final String profilePhotoUrl;
+    private final String profilePhoto;
     private final boolean terms;
 
     // 생성자, 앱에서 정보를 처리하기 쉽도록 일정한 형식으로 변환
     public UserResponse(User user) {
-        this.nickname = user.getNickname(); // 닉네임
-        this.profilePhotoUrl = user.getProfilePhoto(); // 프로필 사진 URL
-        this.terms = user.isTerms(); // 이용약관 동의 여부
+        this.nickname = user.getNickname();
+        this.profilePhoto = user.getProfilePhoto();
+        this.terms = user.isTerms();
     }
 
     /*

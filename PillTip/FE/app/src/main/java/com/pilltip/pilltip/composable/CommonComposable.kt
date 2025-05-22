@@ -65,6 +65,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.pilltip.pilltip.R
+import com.pilltip.pilltip.ui.theme.gray400
+import com.pilltip.pilltip.ui.theme.gray800
 import com.pilltip.pilltip.ui.theme.pretendard
 import com.pilltip.pilltip.ui.theme.primaryColor
 import com.pilltip.pilltip.view.auth.logic.InputType
@@ -227,6 +229,30 @@ fun DoubleLineTitleText(
 }
 
 /**
+ * 한 줄 짜리 제목 Composable 입니다.
+ * @param titleText 기본적으로 사용될 텍스트 입니다.
+ * @param padding horizontal padding 기본값 24로 설정되어 있습니다.
+ */
+@Composable
+fun SingleLineTitleText(titleText: String = "", padding: Dp = 24.dp) {
+    Text(
+        text = titleText,
+        fontFamily = pretendard,
+        fontWeight = FontWeight.Bold,
+        fontSize = 22.sp,
+        color = gray800,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = padding),
+        style = TextStyle(
+            platformStyle = PlatformTextStyle(
+                includeFontPadding = false
+            )
+        )
+    )
+}
+
+/**
  * Title 아래 세부 설명사항을 작성하는 Composable입니다.
  * @param description : String | 세부 설명사항을 작성합니다.
  */
@@ -339,9 +365,9 @@ fun PlaceholderTextField(
                         text = placeHolder,
                         style = TextStyle(
                             fontFamily = pretendard,
-                            fontWeight = FontWeight.Normal,
-                            fontSize = 18.sp,
-                            color = Color(0xFFAFB8C1)
+                            fontWeight = FontWeight.W500,
+                            fontSize = 20.sp,
+                            color = gray400
                         )
                     )
                 }

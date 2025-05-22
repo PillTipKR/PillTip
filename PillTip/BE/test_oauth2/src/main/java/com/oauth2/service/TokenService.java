@@ -2,6 +2,7 @@ package com.oauth2.service;
 
 import com.oauth2.entity.UserToken;
 import com.oauth2.repository.UserTokenRepository;
+import com.oauth2.repository.UserRepository;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -22,6 +23,7 @@ import java.util.Date;
 @Transactional
 public class TokenService {
     private final UserTokenRepository userTokenRepository;
+    private final UserRepository userRepository;
 
     // JWT 시크릿 키 (application.properties에서 주입)
     @Value("${jwt.secret}")
@@ -43,19 +45,28 @@ public class TokenService {
     public UserToken generateTokens(Long userId) {
         String accessToken = generateAccessToken(userId);
         String refreshToken = generateRefreshToken(userId);
-        
         LocalDateTime accessTokenExpiry = LocalDateTime.now().plusMinutes(accessTokenValidityInMinutes);
         LocalDateTime refreshTokenExpiry = LocalDateTime.now().plusDays(refreshTokenValidityInDays);
 
-        UserToken userToken = UserToken.builder()
-                .userId(userId)
-                .accessToken(accessToken)
-                .refreshToken(refreshToken)
-                .accessTokenExpiry(accessTokenExpiry)
-                .refreshTokenExpiry(refreshTokenExpiry)
-                .build();
-
-        return userTokenRepository.save(userToken);
+        // 기존 토큰이 있는지 확인
+        UserToken existingToken = userTokenRepository.findById(userId).orElse(null);
+        
+        if (existingToken != null) {
+            // 기존 토큰이 있으면 업데이트
+            existingToken.updateTokens(accessToken, refreshToken, accessTokenExpiry, refreshTokenExpiry);
+            return userTokenRepository.save(existingToken);
+        } else {
+            // 기존 토큰이 없으면 새로 생성
+            UserToken newToken = UserToken.builder()
+                    .userId(userId)
+                    .user(userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found")))
+                    .accessToken(accessToken)
+                    .refreshToken(refreshToken)
+                    .accessTokenExpiry(accessTokenExpiry)
+                    .refreshTokenExpiry(refreshTokenExpiry)
+                    .build();
+            return userTokenRepository.save(newToken);
+        }
     }
 
     /**
@@ -69,27 +80,21 @@ public class TokenService {
             throw new RuntimeException("Invalid refresh token");
         }
 
-        Claims claims = Jwts.parser()
-                .setSigningKey(secretKey)
-                .parseClaimsJws(refreshToken)
-                .getBody();
-
+        Claims claims = getClaimsFromToken(refreshToken);
         Long userId = Long.parseLong(claims.getSubject());
-        UserToken userToken = userTokenRepository.findByUserId(userId)
+        
+        UserToken userToken = userTokenRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("Token not found"));
 
         if (!userToken.getRefreshToken().equals(refreshToken)) {
             throw new RuntimeException("Invalid refresh token");
         }
 
-        String newAccessToken = generateAccessToken(userId);
-        String newRefreshToken = generateRefreshToken(userId);
-        
-        LocalDateTime accessTokenExpiry = LocalDateTime.now().plusMinutes(accessTokenValidityInMinutes);
-        LocalDateTime refreshTokenExpiry = LocalDateTime.now().plusDays(refreshTokenValidityInDays);
+        if (userToken.getRefreshTokenExpiry().isBefore(LocalDateTime.now())) {
+            throw new RuntimeException("Refresh token has expired");
+        }
 
-        userToken.updateTokens(newAccessToken, newRefreshToken, accessTokenExpiry, refreshTokenExpiry);
-        return userTokenRepository.save(userToken);
+        return generateTokens(userId);
     }
 
     /**
@@ -99,7 +104,7 @@ public class TokenService {
      */
     private String generateAccessToken(Long userId) {
         return Jwts.builder()
-                .setSubject(userId.toString())
+                .setSubject(String.valueOf(userId))
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + accessTokenValidityInMinutes * 60 * 1000))
                 .signWith(SignatureAlgorithm.HS512, secretKey)
@@ -113,7 +118,7 @@ public class TokenService {
      */
     private String generateRefreshToken(Long userId) {
         return Jwts.builder()
-                .setSubject(userId.toString())
+                .setSubject(String.valueOf(userId))
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + refreshTokenValidityInDays * 24 * 60 * 60 * 1000))
                 .signWith(SignatureAlgorithm.HS512, secretKey)
@@ -127,10 +132,29 @@ public class TokenService {
      */
     public boolean validateToken(String token) {
         try {
-            Jwts.parser().setSigningKey(secretKey).parseClaimsJws(token);
+            Jwts.parser()
+                .setSigningKey(secretKey)
+                .parseClaimsJws(token);
             return true;
         } catch (Exception e) {
             return false;
+        }
+    }
+
+    /**
+     * 토큰에서 Claims를 추출
+     * @param token JWT 토큰
+     * @return 토큰의 Claims
+     * @throws RuntimeException 토큰이 유효하지 않은 경우
+     */
+    private Claims getClaimsFromToken(String token) {
+        try {
+            return Jwts.parser()
+                .setSigningKey(secretKey)
+                .parseClaimsJws(token)
+                .getBody();
+        } catch (Exception e) {
+            throw new RuntimeException("Invalid token");
         }
     }
 
@@ -140,10 +164,7 @@ public class TokenService {
      * @return 토큰에 포함된 사용자 ID
      */
     public Long getUserIdFromToken(String token) {
-        Claims claims = Jwts.parser()
-                .setSigningKey(secretKey)
-                .parseClaimsJws(token)
-                .getBody();
+        Claims claims = getClaimsFromToken(token);
         return Long.parseLong(claims.getSubject());
     }
 } 

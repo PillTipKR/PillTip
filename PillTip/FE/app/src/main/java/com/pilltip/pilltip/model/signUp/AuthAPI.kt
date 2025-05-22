@@ -1,6 +1,5 @@
 package com.pilltip.pilltip.model.signUp
 
-import android.util.Log
 import com.google.firebase.auth.FirebaseAuth
 import dagger.Module
 import dagger.Provides
