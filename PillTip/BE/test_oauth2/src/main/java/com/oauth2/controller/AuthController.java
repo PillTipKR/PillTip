@@ -15,6 +15,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import com.oauth2.dto.LoginResponse;
+import com.oauth2.service.SignupService;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -22,25 +24,26 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final UserService userService;
+    private final SignupService signupService;
 
     // ID/PW 로그인
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<UserResponse>> login(@RequestBody LoginRequest request) {
-        User user = userService.login(request);
-        return ResponseEntity.ok(ApiResponse.success("Login successful", new UserResponse(user)));
+        LoginResponse loginResponse = userService.login(request);
+        return ResponseEntity.ok(ApiResponse.success("Login successful", new UserResponse(loginResponse.getUser())));
     }
 
     // ID/PW 회원가입
     @PostMapping("/signup")
     public ResponseEntity<ApiResponse<UserResponse>> signup(@RequestBody SignupRequest request) {
-        User user = userService.signup(request);
+        User user = signupService.signup(request);
         return ResponseEntity.ok(ApiResponse.success("Signup successful", new UserResponse(user)));
     }
 
     // 로그인 해야만 접근, 현재 로그인한 사용자 정보 조회
     @GetMapping("/me")
     public ResponseEntity<ApiResponse<UserResponse>> getCurrentUser(@AuthenticationPrincipal User user) {
-        User currentUser = userService.getCurrentUser(user); 
+        User currentUser = userService.getCurrentUser(user.getUserToken().getAccessToken()); 
         return ResponseEntity.ok(ApiResponse.success(new UserResponse(currentUser))); 
     }
 

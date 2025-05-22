@@ -1,51 +1,58 @@
-// PillTip\BE\src\main\java\com\example\oauth2\entity\User.java
-// author : mireutale
-// date : 2025-05-21
-// description : Users(사용자) 엔티티
-
+/* 
+PillTip\BE\test_oauth2\src\main\java\com\oauth2\entity\User.java
+author : mireutale
+date : 2025-05-22
+description : user(사용자) 엔티티
+*/
 package com.oauth2.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
 import java.util.List;
 
 @Entity //JPA에서 DB테이블과 매핑되는 클래스임을 명시
 @Table(name = "users") //DB에서 테이블 이름
 @Getter // 모든 필드의 Getter 메서드 생성
-@Setter // 모든 필드의 Setter 메서드 생성
+@Setter
 @NoArgsConstructor // 기본 생성자 생성
 @Builder // 빌더 패턴 사용
 @AllArgsConstructor // 모든 필드를 파라미터로 받는 생성자 생성
 public class User {
     @Id // 기본키 지정
-    @Builder.Default // 빌더 대상에 포함, User.builder().build() 시 자동으로 UUID.randomUUID()가 실행되어 들어감
-    @Column(name = "uuid", columnDefinition = "BINARY(16)")
-    private final UUID uuid = UUID.randomUUID();
+    @GeneratedValue(strategy = GenerationType.IDENTITY) // Id에 대해서 AUTO_INCREMENT 수행
+    private Long id;
 
     @Enumerated(EnumType.STRING) // 열거형 타입 지정
     @Column(name = "login_type", nullable = false) // 로그인 타입 지정, social or idpw
     private LoginType loginType;
 
-    @Column(name = "social_id") // length = 255
+    @Column(name = "login_id", unique = true) // 로그인 ID
+    private String loginId;
+
+    @Column(name = "social_id", unique = true) // 소셜 로그인 Oauth2의 토큰
     private String socialId;
 
-    @Column(name = "password_hash") // length = 255
+    @Column(name = "password_hash", unique = true) // 로그인 비밀번호 hash
     private String passwordHash;
 
-    @Column(unique = true, length = 50) // 닉네임 지정
+    @Column(name = "user_email", unique = true) // 유저의 이메일
+    private String userEmail;
+
+    @Column(name = "profile_photo") // 유저의 프로필 사진 URL
+    private String profilePhoto;
+
+    @Column(nullable = false, unique = true) // 유저의 닉네임
     private String nickname;
 
-    @Column(name = "profile_photo_url") // length = 255
-    private String profilePhotoUrl;
+    @Column(nullable = false) // 유저의 동의사항
+    private boolean terms;
 
-    @Column(name = "terms", columnDefinition = "BOOLEAN DEFAULT FALSE") // 이용약관 동의 지정
-    private boolean agreedTerms;
-
-    @Column(name = "created_at", columnDefinition = "DATETIME DEFAULT CURRENT_TIMESTAMP") // 생성일 지정
-    private LocalDateTime createdAt;
+    @CreationTimestamp
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt; // onCreate에서 현재 시간을 가져오고, 이 값을 저장
 
     // 유저 프로필 1대 1 관계
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
@@ -63,6 +70,10 @@ public class User {
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
     private UserLocation userLocation;
 
+    // 유저 토큰 1대 1 관계
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
+    private UserToken userToken;
+
     // 유저 문진표 1대 N 관계
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<PatientQuestionnaire> questionnaires;
@@ -74,9 +85,21 @@ public class User {
         }
     }
 
-    public User update(String nickname, String profilePhotoUrl) {
-        this.nickname = nickname; // 닉네임 업데이트
-        this.profilePhotoUrl = profilePhotoUrl; // 프로필 사진 업데이트
+    public User update(String new_nickname, String new_profilePhoto) {
+        this.nickname = new_nickname; // 닉네임 업데이트
+        this.profilePhoto = new_profilePhoto; // 프로필 사진 업데이트
         return this; // 업데이트된 유저 반환
+    }
+
+    @Builder
+    public User(LoginType loginType, String loginId, String socialId, String passwordHash,
+                String profilePhoto, String nickname, boolean terms) {
+        this.loginType = loginType;
+        this.loginId = loginId;
+        this.socialId = socialId;
+        this.passwordHash = passwordHash;
+        this.profilePhoto = profilePhoto;
+        this.nickname = nickname;
+        this.terms = terms;
     }
 } 
