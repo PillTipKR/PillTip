@@ -1,4 +1,4 @@
-package com.pilltip.pilltip.view.logic
+package com.pilltip.pilltip.view.auth.logic
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column

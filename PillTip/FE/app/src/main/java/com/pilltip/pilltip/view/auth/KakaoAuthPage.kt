@@ -1,4 +1,4 @@
-package com.pilltip.pilltip.view
+package com.pilltip.pilltip.view.auth
 
 import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
@@ -8,6 +8,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -20,29 +23,30 @@ import androidx.navigation.compose.rememberNavController
 import com.pilltip.pilltip.R
 import com.pilltip.pilltip.composable.ButtonWithLogo
 import com.pilltip.pilltip.composable.HeightSpacer
+import com.pilltip.pilltip.composable.NextButton
+import com.pilltip.pilltip.composable.buttonModifier
 import com.pilltip.pilltip.model.signUp.KaKaoLoginViewModel
 import com.pilltip.pilltip.model.signUp.LoginType
 import com.pilltip.pilltip.model.signUp.SignUpViewModel
+import com.pilltip.pilltip.view.auth.logic.TermBottomSheet
 
 @Composable
 fun KakaoAuthPage(
     navController: NavController,
+    signUpViewModel: SignUpViewModel,
     kakaoViewModel: KaKaoLoginViewModel = hiltViewModel(),
-    signUpViewModel: SignUpViewModel = hiltViewModel()
 ) {
     val user by kakaoViewModel.user
     val context = LocalContext.current
     val token = kakaoViewModel.getAccessToken()
+    var termsOfService by remember { mutableStateOf(false) }
 
     LaunchedEffect(user) {
         if (user != null && token != null) {
-            signUpViewModel.updateLoginType(LoginType.KAKAO)
+            signUpViewModel.updateLoginType(LoginType.social)
             signUpViewModel.updateToken(token)
             Log.d("accessToken: ", signUpViewModel.getToken())
-
-            navController.navigate("PhoneAuthenticationPage") {
-                popUpTo("login") { inclusive = true }
-            }
+            termsOfService = true
         }
     }
 
@@ -90,12 +94,12 @@ fun KakaoAuthPage(
         )
         HeightSpacer(80.dp)
     }
-}
 
-@Preview
-@Composable
-fun LoginPagePreview() {
-    KakaoAuthPage(
-        navController = rememberNavController()
-    )
+    if (termsOfService) {
+        TermBottomSheet(
+            signUpViewModel,
+            navController,
+            onDismiss = { termsOfService = false }
+        )
+    }
 }
