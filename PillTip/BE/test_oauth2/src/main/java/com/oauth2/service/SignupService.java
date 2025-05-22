@@ -25,25 +25,31 @@ public class SignupService {
         validateSignupRequest(request); //요청 유효성 검사
 
         User user = createUser(request); //사용자 생성
+        user = userRepository.save(user); //먼저 User를 저장하여 ID 생성
+
         UserProfile userProfile = createUserProfile(user, request); //사용자 프로필 생성
         Interests userInterests = createUserInterests(user, request); //사용자 관심사 생성
         UserPermissions userPermissions = createUserPermissions(user);
         UserLocation userLocation = createUserLocation(user);
-        UserToken userToken = createUserToken(user);
 
         user.setUserProfile(userProfile); //사용자 프로필 설정
         user.setInterests(userInterests); //사용자 관심사 설정
         user.setUserPermissions(userPermissions);
         user.setUserLocation(userLocation);
-        user.setUserToken(userToken);
 
-        return userRepository.save(user); //저장소에 저장
+        user = userRepository.save(user); //연관 엔티티들과 함께 저장
+
+        // UserToken은 마지막에 생성하고 설정
+        UserToken userToken = tokenService.generateTokens(user.getId());
+        user.setUserToken(userToken);
+        
+        return userRepository.save(user); //최종 저장
     }
 
     //회원가입 요청 유효성 검사
     private void validateSignupRequest(SignupRequest request) {
         // IDPW 로그인, 빈 값 검사, 중복 검사
-        if (request.getLoginType() == LoginType.idpw) {
+        if (request.getLoginType() == LoginType.IDPW) {
             if (request.getLoginId() == null || request.getPassword() == null) {
                 throw new RuntimeException("User ID and password are required for ID/PW login");
             }
@@ -53,7 +59,7 @@ public class SignupService {
                 });
         } 
         // 소셜 로그인, 빈 값 검사, 중복 검사
-        else if (request.getLoginType() == LoginType.social) {
+        else if (request.getLoginType() == LoginType.SOCIAL) {
             if (request.getToken() == null) {
                 throw new RuntimeException("Token is required for social login");
             }
@@ -76,9 +82,9 @@ public class SignupService {
     private User createUser(SignupRequest request) {
         return User.builder()
                 .loginType(request.getLoginType())
-                .loginId(request.getLoginType() == LoginType.idpw ? request.getLoginId() : null)
-                .socialId(request.getLoginType() == LoginType.social ? request.getToken() : null)
-                .passwordHash(request.getLoginType() == LoginType.idpw ?
+                .loginId(request.getLoginType() == LoginType.IDPW ? request.getLoginId() : null)
+                .socialId(request.getLoginType() == LoginType.SOCIAL ? request.getToken() : null)
+                .passwordHash(request.getLoginType() == LoginType.IDPW ?
                         passwordEncoder.encode(request.getPassword()) : null)
                 .nickname(request.getNickname())
                 .profilePhoto(null)
@@ -157,11 +163,6 @@ public class SignupService {
                 .latitude(new BigDecimal("0.0"))
                 .longitude(new BigDecimal("0.0"))
                 .build();
-    }
-
-    // 사용자 토큰 생성
-    private UserToken createUserToken(User user) {
-        return tokenService.generateTokens(user.getId());
     }
 
     // 전화번호 유효성 검사

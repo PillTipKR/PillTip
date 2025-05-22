@@ -11,9 +11,11 @@ import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @Getter
+@Setter
 @NoArgsConstructor
 @Table(name = "interests")
 public class Interests {
@@ -39,7 +41,7 @@ public class Interests {
     private boolean aging; // 노화
 
     @Column(nullable = false)
-    private boolean nutrient; // 영양
+    private boolean nutrient; // 영양   
 
     @Builder
     public Interests(User user, boolean diet, boolean health, boolean muscle, boolean aging, boolean nutrient) {

@@ -11,12 +11,12 @@ import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
 import java.util.List;
 
 @Entity //JPA에서 DB테이블과 매핑되는 클래스임을 명시
 @Table(name = "users") //DB에서 테이블 이름
 @Getter // 모든 필드의 Getter 메서드 생성
+@Setter
 @NoArgsConstructor // 기본 생성자 생성
 @Builder // 빌더 패턴 사용
 @AllArgsConstructor // 모든 필드를 파라미터로 받는 생성자 생성
@@ -92,14 +92,12 @@ public class User {
     }
 
     @Builder
-    @Setter
-    public User(LoginType loginType, String userId, String socialId, String passwordHash,
-                String profilePhoto, String nickname, boolean terms) { // String userEmail은 현재 제외
+    public User(LoginType loginType, String loginId, String socialId, String passwordHash,
+                String profilePhoto, String nickname, boolean terms) {
         this.loginType = loginType;
-        this.userId = userId;
+        this.loginId = loginId;
         this.socialId = socialId;
         this.passwordHash = passwordHash;
-        // this.userEmail = userEmail;
         this.profilePhoto = profilePhoto;
         this.nickname = nickname;
         this.terms = terms;

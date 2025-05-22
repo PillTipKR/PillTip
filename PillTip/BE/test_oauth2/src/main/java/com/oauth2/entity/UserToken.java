@@ -41,8 +41,9 @@ public class UserToken {
     private LocalDateTime refreshTokenExpiry; // 리프레시 토큰 만료 시간
 
     @Builder
-    public UserToken(User user, String accessToken, String refreshToken,
+    public UserToken(Long userId, User user, String accessToken, String refreshToken,
                     LocalDateTime accessTokenExpiry, LocalDateTime refreshTokenExpiry) {
+        this.userId = userId;
         this.user = user;
         this.accessToken = accessToken;
         this.refreshToken = refreshToken;
@@ -50,7 +51,6 @@ public class UserToken {
         this.refreshTokenExpiry = refreshTokenExpiry;
     }
 
-    @Setter
     public void updateTokens(String accessToken, String refreshToken,
                             LocalDateTime accessTokenExpiry, LocalDateTime refreshTokenExpiry) {
         this.accessToken = accessToken;

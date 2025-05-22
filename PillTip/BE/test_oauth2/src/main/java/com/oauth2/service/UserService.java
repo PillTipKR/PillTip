@@ -16,8 +16,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.UUID;
-
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -28,10 +26,10 @@ public class UserService {
 
     // ID/PW 로그인
     public LoginResponse login(LoginRequest request) {
-        User user = userRepository.findByUuid(UUID.fromString(request.getUserId()))
+        User user = userRepository.findById(Long.parseLong(request.getUserId()))
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        if (user.getLoginType() != LoginType.idpw) {
+        if (user.getLoginType() != LoginType.IDPW) {
             throw new RuntimeException("This account is not an ID/PW account");
         }
 
@@ -39,7 +37,7 @@ public class UserService {
             throw new RuntimeException("Invalid password");
         }
 
-        UserToken userToken = tokenService.generateTokens(user.getUuid());
+        UserToken userToken = tokenService.generateTokens(user.getId());
         
         return LoginResponse.builder()
                 .user(user)
@@ -57,7 +55,7 @@ public class UserService {
             throw new RuntimeException("Invalid login type");
         }
 
-        UserToken userToken = tokenService.generateTokens(user.getUuid());
+        UserToken userToken = tokenService.generateTokens(user.getId());
         
         return LoginResponse.builder()
                 .user(user)
@@ -81,14 +79,14 @@ public class UserService {
 
     // 현재 로그인한 사용자 정보 조회
     public User getCurrentUser(String accessToken) {
-        UUID userId = tokenService.getUserIdFromToken(accessToken);
+        Long userId = tokenService.getUserIdFromToken(accessToken);
         return userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
     }
 
     // 이용약관 동의
     public User agreeToTerms(User user) {
-        user.setAgreedTerms(true);
+        user.setTerms(true);
         return userRepository.save(user);
     }
 
@@ -103,7 +101,7 @@ public class UserService {
 
     // 프로필 사진 업데이트
     public User updateProfilePhoto(User user, String photoUrl) {
-        user.setProfilePhotoUrl(photoUrl);
+        user.setProfilePhoto(photoUrl);
         return userRepository.save(user);
     }
 }

@@ -14,7 +14,7 @@ import lombok.Setter;
 public class SignupRequest {
     // User 엔티티의 필드와 매핑
     private LoginType loginType;
-    private String userId;
+    private String loginId;
     private String password;
     private boolean terms;
     private String nickname;
