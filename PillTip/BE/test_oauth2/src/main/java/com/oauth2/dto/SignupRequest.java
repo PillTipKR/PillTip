@@ -15,6 +15,7 @@ public class SignupRequest {
     private LoginType loginType;
     private String userId;
     private String password;
+    private boolean terms;
     private String nickname;
     private String gender;
     private String birthDate;  // YYYY-MM-DD
@@ -24,6 +25,4 @@ public class SignupRequest {
     private String interest;   // 콤마로 구분된 관심사 문자열
     private String phone;
     private String token;      // 소셜 로그인 토큰
-    private boolean agreedTerms;
-    private boolean agreedPrivacy;
 }
