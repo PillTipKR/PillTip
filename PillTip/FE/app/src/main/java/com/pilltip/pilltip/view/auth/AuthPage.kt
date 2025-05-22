@@ -225,7 +225,7 @@ fun IdPage(
             text = if (isChecked) "다음" else "아이디 중복 확인",
             buttonColor = if (isAllConditionsValid) Color(0xFF348ADF) else Color(0xFFCADCF5),
             onClick = {
-                viewModel.updateUserId(ID)
+                viewModel.updateloginId(ID)
                 if (isChecked && isAllConditionsValid) navController.navigate("PasswordPage")
                 isChecked = true
             }
@@ -757,7 +757,7 @@ fun GenderPage(
                     widthValue = (localWitdh - 48 - 16) / 2,
                     imageSource = R.drawable.btn_blue_checkmark,
                     onClick = {
-                        viewModel.updateGender("M")
+                        viewModel.updateGender("MALE")
                         navController.navigate("AgePage")
                     }
                 )
@@ -766,7 +766,7 @@ fun GenderPage(
                     widthValue = (localWitdh - 48 - 16) / 2,
                     imageSource = R.drawable.btn_gray_checkmark,
                     onClick = {
-                        viewModel.updateGender("F")
+                        viewModel.updateGender("FEMALE")
                         navController.navigate("AgePage")
                     }
                 )
@@ -942,18 +942,30 @@ fun InterestPage(
                     viewModel.updateInterest(interest)
                     viewModel.logSignUpData()
                     viewModel.completeSignUp(
-                        onSuccess = {
+                        onSuccess = { accessToken, refreshToken ->
                             val sharedPreferences =
                                 context.getSharedPreferences("user", Context.MODE_PRIVATE)
                             with(sharedPreferences.edit()) {
-                                putString("userId", viewModel.getUserId())
-                                putString("token", viewModel.getToken())
-                                putString("nickname", viewModel.getNickname())
+                                putString("accessToken", accessToken)
+                                putString("refreshToken", refreshToken)
                                 apply()
                             }
 
-                            navController.navigate("PillMainPage")
-                        },
+                            viewModel.submitTerms(
+                                token = accessToken,
+                                onSuccess = {
+                                    navController.navigate("PillMainPage")
+                                },
+                                onFailure = { error ->
+                                    Toast.makeText(
+                                        context,
+                                        "약관 전송 실패: ${error?.message ?: "알 수 없는 오류"}",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                    navController.navigate("PillMainPage")
+                                }
+                            )
+                                    },
                         onFailure = { error ->
                             Toast.makeText(
                                 context,

@@ -8,12 +8,14 @@ import javax.inject.Inject
 class AuthRepository @Inject constructor(
     private val authApi: ServerAuthAPI
 ) {
-    suspend fun sendSignUp(data: SignUpData): Boolean {
+    suspend fun sendSignUp(data: SignUpData): Pair<Boolean, SignUpTokenData?> {
+        val rawPhone = data.phone
+        val formattedPhone = formatPhoneForServer(rawPhone)
         val request = SignUpRequest(
             loginType = data.loginType.name,
-            userId = if (data.loginType == LoginType.idpw) data.userId else null,
-            password = if (data.loginType == LoginType.idpw) data.password else null,
-            term = data.term,
+            loginId = if (data.loginType == LoginType.IDPW) data.loginId else null,
+            password = if (data.loginType == LoginType.IDPW) data.password else null,
+//            term = data.term,
             nickname = data.nickname,
             gender = data.gender,
             birthDate = data.birthDate,
@@ -21,18 +23,44 @@ class AuthRepository @Inject constructor(
             height = data.height,
             weight = data.weight,
             interest = data.interest,
-            phone = data.phone,
-            token = if (data.loginType == LoginType.social) data.token else null
+            phone = formattedPhone,
+            token = if (data.loginType == LoginType.SOCIAL) data.token else null
         )
 
         return try {
             val response = authApi.signUp(request)
-            Log.d("SignUp", "sendSignUp called")
-            Log.d("SignUp", "Code: ${response.code()}, Success: ${response.body()?.success}, Error: ${response.errorBody()?.string()}")
-            response.isSuccessful && response.body()?.success == true
+            if (response.isSuccessful && response.body()?.status == "success") {
+                Pair(true, response.body()?.data)
+            } else {
+                Log.e("SignUp", "Response failed: ${response.errorBody()?.string()}")
+                Pair(false, null)
+            }
         } catch (e: Exception) {
             Log.e("SignUp", "Network error", e)
+            Pair(false, null)
+        }
+    }
+
+    suspend fun submitTerms(token: String, agreed: Boolean): Boolean {
+        return try {
+            val request = TermsRequest(
+                termsOfService = agreed,
+                privacyPolicy = true,
+                marketingConsent = false
+            )
+            val response = authApi.submitTerms("Bearer $token", request)
+            response.isSuccessful
+        } catch (e: Exception) {
+            Log.e("SubmitTerms", "Error submitting terms", e)
             false
+        }
+    }
+
+    fun formatPhoneForServer(phone: String): String {
+        return when {
+            phone.length == 11 -> "${phone.substring(0,3)}-${phone.substring(3,7)}-${phone.substring(7)}"
+            phone.length == 10 -> "${phone.substring(0,3)}-${phone.substring(3,6)}-${phone.substring(6)}"
+            else -> phone // 예외 처리: 그냥 반환
         }
     }
 }
