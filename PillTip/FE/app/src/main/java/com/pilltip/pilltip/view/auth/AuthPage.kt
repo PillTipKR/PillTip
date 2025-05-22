@@ -66,14 +66,18 @@ import com.pilltip.pilltip.composable.NextButton
 import com.pilltip.pilltip.composable.PillTipDatePicker
 import com.pilltip.pilltip.composable.PlaceholderTextField
 import com.pilltip.pilltip.composable.SelectButton
+import com.pilltip.pilltip.composable.SingleLineTitleText
 import com.pilltip.pilltip.composable.TitleDescription
 import com.pilltip.pilltip.composable.WhiteScreenModifier
 import com.pilltip.pilltip.composable.WidthSpacer
 import com.pilltip.pilltip.composable.buttonModifier
 import com.pilltip.pilltip.model.signUp.PhoneAuthViewModel
 import com.pilltip.pilltip.model.signUp.SignUpViewModel
+import com.pilltip.pilltip.ui.theme.gray500
+import com.pilltip.pilltip.ui.theme.gray700
 import com.pilltip.pilltip.ui.theme.pretendard
 import com.pilltip.pilltip.view.auth.logic.InputType
+import com.pilltip.pilltip.view.auth.logic.OtpInputField
 import com.pilltip.pilltip.view.auth.logic.TermBottomSheet
 import com.pilltip.pilltip.view.auth.logic.containsSequentialNumbers
 
@@ -489,6 +493,7 @@ fun PhoneAuthPage(
     val focusManager = LocalFocusManager.current
     val context = LocalContext.current
     val activity = context as? Activity
+    val localWitdh = LocalConfiguration.current.screenWidthDp
 
     val isAutoVerified by phoneViewModel.isAutoVerified.collectAsState()
 
@@ -509,81 +514,97 @@ fun PhoneAuthPage(
             },
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        BackButton(navigationTo = ({ navController.navigate("PasswordPage") }))
-        HeightSpacer(56.dp)
-        DoubleLineTitleText(upperTextLine = "전화번호를", lowerTextLine = "입력해주세요")
-        HeightSpacer(12.dp)
-        TitleDescription(description = "연락 가능한 번호를 입력해주세요")
-        HeightSpacer(29.dp)
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier
-                .fillMaxWidth()
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                LabelText(labelText = if (phoneNumber.isNotEmpty()) "전화번호" else "")
-                PlaceholderTextField(
-                    placeHolder = "010-0000-0000",
-                    inputText = phoneNumber,
-                    inputType = InputType.NUMBER,
-                    onTextChanged = {
-                        phoneNumber = it
-                        phoneViewModel.updatePhoneNumber(it)
-                    },
-                    onFocusChanged = {
-                        isFocused = it
-                    }
-                )
-            }
-        }
-        HeightSpacer(14.dp)
-        HighlightingLine(text = phoneNumber, isFocused = isFocused)
+//        BackButton(navigationTo = ({ navController.navigate("PasswordPage") }))
 
         if (verificationId != null) {
+            HeightSpacer(130.dp)
+            SingleLineTitleText("문자로 받은")
+            SingleLineTitleText("인증번호를 입력해주세요")
             HeightSpacer(24.dp)
+            Text(
+                text = if (timeRemaining > 0) "남은 시간 $timerText" else "만료",
+                fontSize = 16.sp,
+                fontFamily = pretendard,
+                fontWeight = FontWeight.Medium,
+                color = gray500
+            )
+            HeightSpacer(40.dp)
+            OtpInputField(
+                otpText = code,
+                onOtpTextChange = { phoneViewModel.updateCode(it) },
+                modifier = Modifier.width((localWitdh - 48).dp)
+            )
+//            Row(
+//                verticalAlignment = Alignment.Bottom,
+//                modifier = Modifier.width((localWitdh - 48).dp)
+//            ) {
+//                Column {
+//                    LabelText(labelText = if (code.isNotEmpty()) "인증 코드" else "")
+//                    PlaceholderTextField(
+//                        placeHolder = "인증번호 6자리",
+//                        inputText = code,
+//                        inputType = InputType.NUMBER,
+//                        onTextChanged = { phoneViewModel.updateCode(it) },
+//                        onFocusChanged = { isFocused = it }
+//                    )
+//                }
+//            }
+//            HeightSpacer(14.dp)
+//            HighlightingLine(text = code, isFocused = isFocused)
+        } else {
+            HeightSpacer(130.dp)
+            SingleLineTitleText("휴대폰 번호를 알려주세요")
+            HeightSpacer(56.dp)
             Row(
-                verticalAlignment = Alignment.Bottom,
-                modifier = Modifier.fillMaxWidth()
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .fillMaxWidth()
             ) {
-                Column(modifier = Modifier.weight(4f)) {
-                    LabelText(labelText = if (code.isNotEmpty()) "인증 코드" else "")
+                Column(modifier = Modifier.weight(1f)) {
+                    LabelText(labelText = if (phoneNumber.isNotEmpty()) "휴대폰 번호" else "")
                     PlaceholderTextField(
-                        placeHolder = "인증번호 6자리",
-                        inputText = code,
+                        placeHolder = "휴대폰 번호",
+                        inputText = phoneNumber,
                         inputType = InputType.NUMBER,
-                        onTextChanged = { phoneViewModel.updateCode(it) },
-                        onFocusChanged = { isFocused = it }
+                        onTextChanged = {
+                            phoneNumber = it
+                            phoneViewModel.updatePhoneNumber(it)
+                        },
+                        onFocusChanged = {
+                            isFocused = it
+                        }
                     )
                 }
-                Text(
-                    modifier = Modifier.weight(1f),
-                    text = if (timeRemaining > 0) timerText else "만료됨",
-                    textAlign = TextAlign.Center,
-                    fontSize = 14.sp,
-                    fontFamily = pretendard,
-                    fontWeight = FontWeight.Normal,
-                    color = Color(0xFF818181)
-                )
             }
             HeightSpacer(14.dp)
-            HighlightingLine(text = code, isFocused = isFocused)
-        }
-
-        if (status.isNotEmpty()) {
-            HeightSpacer(12.dp)
+            HighlightingLine(text = phoneNumber, isFocused = isFocused)
+            HeightSpacer(14.dp)
             Text(
-                text = status,
-                fontSize = 14.sp,
-                fontFamily = pretendard,
-                fontWeight = FontWeight.Normal,
-                color = Color(0xFF818181)
+                text = "입력된 정보는 회원가입에만 사용돼요.",
+                style = TextStyle(
+                    fontSize = 12.sp,
+                    fontFamily = pretendard,
+                    fontWeight = FontWeight(500),
+                    color = gray700
+                )
             )
         }
 
-        if (errorMessage != null) {
-            HeightSpacer(6.dp)
-            Text(errorMessage ?: "", color = Color.Red)
-        }
+//        if (status.isNotEmpty()) {
+//            HeightSpacer(12.dp)
+//            Text(
+//                text = status,
+//                fontSize = 14.sp,
+//                fontFamily = pretendard,
+//                fontWeight = FontWeight.Normal,
+//                color = Color(0xFF818181)
+//            )
+//        }
+//
+//        if (errorMessage != null) {
+//            HeightSpacer(6.dp)
+//            Text(errorMessage ?: "", color = Color.Red)
+//        }
 
         Spacer(modifier = Modifier.weight(1f))
         NextButton(
