@@ -35,6 +35,7 @@ data class SignUpRequest(
 data class SignUpResponse(
     val success: Boolean,
     val userId: String,
-    val token: String,
+    val accessToken: String,
+    val refreshToken: String,
     val nickname: String
 )

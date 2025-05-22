@@ -5,16 +5,23 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.focusable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
@@ -26,6 +33,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -42,7 +52,10 @@ import com.pilltip.pilltip.composable.NextButton
 import com.pilltip.pilltip.composable.WidthSpacer
 import com.pilltip.pilltip.composable.noRippleClickable
 import com.pilltip.pilltip.model.signUp.SignUpViewModel
+import com.pilltip.pilltip.ui.theme.gray100
+import com.pilltip.pilltip.ui.theme.gray400
 import com.pilltip.pilltip.ui.theme.pretendard
+import com.pilltip.pilltip.ui.theme.primaryColor
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -234,3 +247,66 @@ enum class InputType {
     TEXT, EMAIL, PASSWORD, NUMBER
 }
 
+@Composable
+fun OtpInputField(
+    otpText: String,
+    onOtpTextChange: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val focusRequester = remember { FocusRequester() }
+
+    BoxWithConstraints(modifier = modifier) {
+        val boxSize = maxWidth / 7 // 여백 고려해 6칸 + 패딩 맞춤
+        val space = (maxWidth - boxSize * 6) / 5
+
+        Box {
+            // 실질적으로 입력을 받는 투명 TextField
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { focusRequester.requestFocus() },
+                horizontalArrangement = Arrangement.spacedBy(space)
+            ) {
+                (0 until 6).forEach { index ->
+                    val char = otpText.getOrNull(index)?.toString() ?: ""
+                    Box(
+                        modifier = Modifier
+                            .height(72.dp)
+                            .width(boxSize)
+                            .aspectRatio(1f)
+                            .border(
+                                width = 1.5.dp,
+                                color = if (char.isNotEmpty()) primaryColor else gray100,
+                                shape = RoundedCornerShape(14.dp)
+                            )
+                            .background(if(char.isEmpty()) gray100 else Color.White, RoundedCornerShape(14.dp)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = char,
+                            style = TextStyle(
+                                fontSize = 24.sp,
+                                fontWeight = FontWeight.W500,
+                                color = primaryColor
+                            )
+                        )
+                    }
+                }
+            }
+            BasicTextField(
+                value = otpText,
+                onValueChange = {
+                    if (it.length <= 6 && it.all { ch -> ch.isDigit() })
+                        onOtpTextChange(it)
+                },
+                modifier = Modifier
+                    .alpha(0f)
+                    .height(72.dp)
+                    .fillMaxWidth()
+                    .focusRequester(focusRequester)
+                    .focusable()
+                    .align(Alignment.Center)
+            )
+        }
+    }
+}
