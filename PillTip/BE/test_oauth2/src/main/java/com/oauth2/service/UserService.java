@@ -20,6 +20,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.Period;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Service // 스프링 서비스 빈으로 등록
@@ -53,9 +56,10 @@ public class UserService {
                 throw new RuntimeException("User ID and password are required for ID/PW login");
             }
             // 아이디가 이미 존재하는 경우
-            if (userRepository.findByUuid(UUID.fromString(request.getUserId())).isPresent()) {
-                throw new RuntimeException("User ID already exists");
-            }
+            userRepository.findByUserId(request.getUserId())
+                .ifPresent(user -> {
+                    throw new IllegalArgumentException("이미 존재하는 사용자 ID입니다.");
+                });
         }
         // 소셜 로그인인 경우, 토큰이 필요
         else if (request.getLoginType() == LoginType.social) {
@@ -74,41 +78,90 @@ public class UserService {
 
         // User 엔티티 생성
         User user = User.builder()
-                .uuid(UUID.randomUUID())
                 .loginType(request.getLoginType())
-                .socialId(request.getToken())
+                .userId(request.getLoginType() == LoginType.idpw ? request.getUserId() : null)
+                .socialId(request.getLoginType() == LoginType.social ? request.getToken() : null)
                 .passwordHash(request.getLoginType() == LoginType.idpw ?
                         passwordEncoder.encode(request.getPassword()) : null)
                 .nickname(request.getNickname())
-                .agreedTerms(request.isAgreedTerms())
+                .profilePhotoUrl(null)  // 초기값은 null로 설정
+                .agreedTerms(request.isTerms())  // Terms 값 그대로 사용
                 .build();
 
         // UserProfile 엔티티 생성
         UserProfile userProfile = UserProfile.builder()
+                .uuid(user.getUuid())  // User의 UUID를 그대로 사용
                 .user(user)
-                .age(request.getAge())
+                .age(request.getAge())  // 프론트에서 전달받은 나이
                 .gender(Gender.valueOf(request.getGender().toUpperCase()))
                 .birthDate(LocalDate.parse(request.getBirthDate()))
                 .height(new BigDecimal(request.getHeight()))
                 .weight(new BigDecimal(request.getWeight()))
-                .phone(request.getPhone())
+                .phone(validatePhoneNumber(request.getPhone()))
+                .healthStatus("")  // 빈 문자열로 초기화
+                .takingPills("")
+                .diseaseInfo("")
+                .allergyInfo("")
                 .build();
 
-        // Interests 엔티티 생성, "interest": ["diet", "health", "muscle"] 형태
-        Interests interests = Interests.builder()
+        // Interests 엔티티 생성
+        String interest = request.getInterest();
+//        if (interest == null || interest.trim().isEmpty()) {
+//            throw new IllegalArgumentException("최소 하나 이상의 관심사를 선택해주세요.");
+//        }
+        
+        Interests userInterests = Interests.builder()
                 .user(user)
-                .diet(request.getInterest().contains("diet"))
-                .health(request.getInterest().contains("health"))
-                .muscle(request.getInterest().contains("muscle"))
-                .aging(request.getInterest().contains("aging"))
-                .nutrient(request.getInterest().contains("nutrient"))
+                .diet(false)
+                .health(false)
+                .muscle(false)
+                .aging(false)
+                .nutrient(false)
                 .build();
+
+        // 관심사 문자열을 분리하여 각각의 boolean 값을 설정
+        String[] interestArray = interest.split(",");
+        for (String interestItem : interestArray) {
+            switch (interestItem.trim().toLowerCase()) {
+                case "diet":
+                    userInterests.setDiet(true);
+                    break;
+                case "health":
+                    userInterests.setHealth(true);
+                    break;
+                case "muscle":
+                    userInterests.setMuscle(true);
+                    break;
+                case "aging":
+                    userInterests.setAging(true);
+                    break;
+                case "nutrient":
+                    userInterests.setNutrient(true);
+                    break;
+            }
+        }
 
         // 연관관계 설정
         user.setUserProfile(userProfile);
-        user.setInterests(interests);
+        user.setInterests(userInterests);
 
         return userRepository.save(user);
+    }
+
+    // 숫자 형식 검증 및 변환
+    private BigDecimal validateAndParseDecimal(Integer value, String fieldName) {
+        if (value == null || value <= 0) {
+            throw new IllegalArgumentException(fieldName + " must be greater than 0");
+        }
+        return new BigDecimal(value);
+    }
+
+    // 전화번호 형식 검증
+    private String validatePhoneNumber(String phone) {
+        if (phone == null || !phone.matches("^01(?:0|1|[6-9])-(?:\\d{3}|\\d{4})-\\d{4}$")) {
+            throw new IllegalArgumentException("Invalid phone number format");
+        }
+        return phone;
     }
 
     // 현재 로그인한 사용자 정보 조회

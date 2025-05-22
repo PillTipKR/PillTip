@@ -26,9 +26,9 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     // Spring Security에서 로그인을 처리한 뒤, 사용자 정보를 DB에 저장
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
-        OAuth2User oauth2User = super.loadUser(userRequest);
-        saveOrUpdate(oauth2User);
-        return oauth2User;
+        OAuth2User oauth2User = super.loadUser(userRequest); // 소셜 로그인으로부터 사용자 정보 로드
+        saveOrUpdate(oauth2User);  // 사용자 저장 또는 업데이트
+        return oauth2User;  // 최종 사용자 객체 반환
     }
 
     private User saveOrUpdate(OAuth2User oauth2User) {
@@ -37,7 +37,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         String picture = (String) attributes.get("picture");
         String socialId = (String) attributes.get("sub");
 
-        User user = userRepository.findBySocialId(socialId) // UUID로 유저 찾기
+        User user = userRepository.findBySocialId(socialId) // socialId(token)으로 유저 찾기
                 .map(entity -> entity.update(name, picture)) // 이미 존재하는 경우, 유저 업데이트
                 .orElse(User.builder() // 존재하지 않는 경우, 유저 생성
                         .loginType(LoginType.social) // 로그인 타입 소셜

@@ -29,22 +29,25 @@ public class User {
     @Column(name = "login_type", nullable = false) // 로그인 타입 지정, social or idpw
     private LoginType loginType;
 
-    @Column(name = "social_id") // length = 255
+    @Column(name = "user_id", length = 255)
+    private String userId;
+
+    @Column(name = "social_id", length = 255)
     private String socialId;
 
-    @Column(name = "password_hash") // length = 255
+    @Column(name = "password_hash", length = 255)
     private String passwordHash;
+
+    @Column(name = "profile_photo_url", length = 255)
+    private String profilePhotoUrl;
 
     @Column(unique = true, length = 50) // 닉네임 지정
     private String nickname;
 
-    @Column(name = "profile_photo_url") // length = 255
-    private String profilePhotoUrl;
-
     @Column(name = "terms", columnDefinition = "BOOLEAN DEFAULT FALSE") // 이용약관 동의 지정
     private boolean agreedTerms;
 
-    @Column(name = "created_at", columnDefinition = "DATETIME DEFAULT CURRENT_TIMESTAMP") // 생성일 지정
+    @Column(name = "created_at", columnDefinition = "DATETIME")
     private LocalDateTime createdAt;
 
     // 유저 프로필 1대 1 관계
