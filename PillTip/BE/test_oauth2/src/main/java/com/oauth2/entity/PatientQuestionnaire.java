@@ -1,7 +1,9 @@
-// PillTip\BE\src\main\java\com\example\oauth2\entity\PatientQuestionnaire.java
-// author : mireutale
-// date : 2025-05-21
-// description : 문진표 엔티티
+/* 
+PillTip\BE\test_oauth2\src\main\java\com\oauth2\entity\PatientQuestionnaire.java
+author : mireutale
+date : 2025-05-22
+description : patientQuestionnaire(환자 문진표) 엔티티
+*/
 package com.oauth2.entity;
 
 import jakarta.persistence.*;
