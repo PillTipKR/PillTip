@@ -6,6 +6,7 @@ description : patientQuestionnaire(환자 문진표) 엔티티
 */
 package com.oauth2.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -24,6 +25,7 @@ public class PatientQuestionnaire {
     @Column(name = "questionnaire_id")
     private Integer questionnaireId;
 
+    @JsonBackReference
     @ManyToOne
     @JoinColumn(name = "uuid")
     private User user;

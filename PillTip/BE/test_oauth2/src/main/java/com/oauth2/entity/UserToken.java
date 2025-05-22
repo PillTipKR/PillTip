@@ -7,41 +7,47 @@ description : user_token(사용자 토큰) 엔티티
 
 package com.oauth2.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.AccessLevel;
 
 import java.time.LocalDateTime;
 
 @Entity
-@Getter
-@NoArgsConstructor
 @Table(name = "user_tokens")
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class UserToken {
     @Id
     @Column(name = "user_id")
     private Long userId;
 
-    @OneToOne
+    @JsonBackReference
+    @OneToOne(fetch = FetchType.LAZY)
     @MapsId
     @JoinColumn(name = "user_id")
     private User user;
 
-    @Column(name = "access_token", nullable = false, columnDefinition = "TEXT")
-    private String accessToken; // 액세스 토큰
+    @Column(nullable = false)
+    private String accessToken;
 
-    @Column(name = "refresh_token", nullable = false, columnDefinition = "TEXT")
-    private String refreshToken; // 리프레시 토큰
+    @Column(nullable = false)
+    private String refreshToken;
 
-    @Column(name = "access_token_expiry", nullable = false)
-    private LocalDateTime accessTokenExpiry; // 액세스 토큰 만료 시간
+    @Column(nullable = false)
+    private LocalDateTime accessTokenExpiry;
 
-    @Column(name = "refresh_token_expiry", nullable = false)
-    private LocalDateTime refreshTokenExpiry; // 리프레시 토큰 만료 시간
+    @Column(nullable = false)
+    private LocalDateTime refreshTokenExpiry;
+
+    @Version
+    private Long version;
 
     @Builder
-    public UserToken(Long userId, User user, String accessToken, String refreshToken,
+    public UserToken(Long userId, User user, String accessToken, String refreshToken, 
                     LocalDateTime accessTokenExpiry, LocalDateTime refreshTokenExpiry) {
         this.userId = userId;
         this.user = user;
@@ -51,8 +57,8 @@ public class UserToken {
         this.refreshTokenExpiry = refreshTokenExpiry;
     }
 
-    public void updateTokens(String accessToken, String refreshToken,
-                            LocalDateTime accessTokenExpiry, LocalDateTime refreshTokenExpiry) {
+    public void updateTokens(String accessToken, String refreshToken, 
+                           LocalDateTime accessTokenExpiry, LocalDateTime refreshTokenExpiry) {
         this.accessToken = accessToken;
         this.refreshToken = refreshToken;
         this.accessTokenExpiry = accessTokenExpiry;

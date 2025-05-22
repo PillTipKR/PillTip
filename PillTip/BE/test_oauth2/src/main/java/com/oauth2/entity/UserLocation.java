@@ -6,6 +6,7 @@ description : user_location(사용자 위치) 엔티티
 */
 package com.oauth2.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Getter;
@@ -24,6 +25,7 @@ public class UserLocation {
     @Column(name = "user_id")
     private Long userId;
 
+    @JsonBackReference
     @OneToOne
     @MapsId
     @JoinColumn(name = "user_id")
