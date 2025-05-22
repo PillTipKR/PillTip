@@ -12,17 +12,20 @@ import lombok.Setter;
 @Getter
 @Setter
 public class SignupRequest {
+    // User 엔티티의 필드와 매핑
     private LoginType loginType;
     private String userId;
     private String password;
     private boolean terms;
     private String nickname;
+    private String token;      // 소셜 로그인 토큰
+    // UserProfile 엔티티의 필드와 매핑
     private String gender;
     private String birthDate;  // YYYY-MM-DD
     private Integer age;
     private Integer height;
     private Integer weight;
-    private String interest;   // 콤마로 구분된 관심사 문자열
     private String phone;
-    private String token;      // 소셜 로그인 토큰
+    // Interests 엔티티의 필드와 매핑
+    private String interest;   // 콤마로 구분된 관심사 문자열
 }

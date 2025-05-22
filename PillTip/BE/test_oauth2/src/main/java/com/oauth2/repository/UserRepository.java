@@ -12,10 +12,15 @@ import java.util.Optional;
 import java.util.UUID;
 
 // DB에서 유저 조회
-// CustomOAuth2UserService에서 return으로 user의 정보를 DB에 저장하기 위해서 사용
+// JpaRepository를 상속받아 기본적인 CRUD 작업 제공
+// save, findById, findAll, delete 등의 메서드 제공
 public interface UserRepository extends JpaRepository<User, UUID> {
+    // SELECT * FROM users WHERE uuid = ?
     Optional<User> findByUuid(UUID uuid);
+    // SELECT * FROM users WHERE nickname = ?
     Optional<User> findByNickname(String nickname);
+    // SELECT * FROM users WHERE social_id = ?
     Optional<User> findBySocialId(String socialId);
-    Optional<User> findByUserId(String userId);
+    // SELECT * FROM users WHERE login_id = ?
+    Optional<User> findByLoginId(String loginId);
 }
