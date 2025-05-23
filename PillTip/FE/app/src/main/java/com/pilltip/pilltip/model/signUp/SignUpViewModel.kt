@@ -28,13 +28,19 @@ class SignUpViewModel @Inject constructor(
     private val _isLoading = mutableStateOf(false)
     val isLoading: State<Boolean> = _isLoading
 
+    private val _accessToken = mutableStateOf("")
+    val accessToken: State<String> = _accessToken
+
+    private val _refreshToken = mutableStateOf("")
+    val refreshToken: State<String> = _refreshToken
+
     /*값 업데이트*/
     fun updateLoginType(type: LoginType) {
         _signUpData.value = _signUpData.value.copy(loginType = type)
     }
 
-    fun updateUserId(id: String) {
-        _signUpData.value = _signUpData.value.copy(userId = id)
+    fun updateloginId(id: String) {
+        _signUpData.value = _signUpData.value.copy(loginId = id)
     }
 
     fun updatePassword(password: String) {
@@ -89,7 +95,7 @@ class SignUpViewModel @Inject constructor(
     fun getLoginType(): LoginType = _signUpData.value.loginType
 
     // 사용자 ID
-    fun getUserId(): String = _signUpData.value.userId
+    fun getloginId(): String = _signUpData.value.loginId
 
     // 비밀번호
     fun getPassword(): String = _signUpData.value.password
@@ -128,7 +134,7 @@ class SignUpViewModel @Inject constructor(
         val data = _signUpData.value
         Log.d(tag, """
         - loginType: ${data.loginType}
-        - userId: ${data.userId}
+        - userId: ${data.loginId}
         - password: ${data.password}
         - term: ${data.term}
         - nickname: ${data.nickname}
@@ -144,17 +150,18 @@ class SignUpViewModel @Inject constructor(
     }
 
     fun completeSignUp(
-        onSuccess: () -> Unit,
+        onSuccess: (accessToken: String, refreshToken: String) -> Unit,
         onFailure: (Throwable?) -> Unit
     ) {
         viewModelScope.launch {
             _isLoading.value = true
             try {
-                val result = authRepository.sendSignUp(_signUpData.value)
-                if (result) {
-                    onSuccess()
+                val (result, tokenData) = authRepository.sendSignUp(_signUpData.value)
+                if (result && tokenData != null) {
+                    _accessToken.value = tokenData.accessToken
+                    _refreshToken.value = tokenData.refreshToken
+                    onSuccess(tokenData.accessToken, tokenData.refreshToken)
                 } else {
-                    Log.d("AuthError", "여기 에러")
                     onFailure(null)
                 }
             } catch (e: Exception) {
@@ -174,6 +181,25 @@ class SignUpViewModel @Inject constructor(
             age--
 
         return age
+    }
+
+    fun submitTerms(
+        token: String,
+        onSuccess: () -> Unit,
+        onFailure: (Throwable?) -> Unit
+    ) {
+        viewModelScope.launch {
+            try {
+                val success = authRepository.submitTerms(token, _signUpData.value.term)
+                if (success) {
+                    onSuccess()
+                } else {
+                    onFailure(null)
+                }
+            } catch (e: Exception) {
+                onFailure(e)
+            }
+        }
     }
 }
 
@@ -308,3 +334,4 @@ class PhoneAuthViewModel @Inject constructor(
         }
     }
 }
+

@@ -13,8 +13,8 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Override
     public void addCorsMappings(CorsRegistry registry) {
-        registry.addMapping("/**") // 모든 경로에 대해 CORS(Cross-Origin Resource Sharing) 설정 -> 모바일 앱에서 API 접근 가능
-                .allowedOriginPatterns("*") // allowedOrigins 대신 allowedOriginPatterns 사용
+        registry.addMapping("/**")
+                .allowedOriginPatterns("*")  // allowedOrigins 대신 allowedOriginPatterns 사용
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                 .allowedHeaders("*")
                 .allowCredentials(true)

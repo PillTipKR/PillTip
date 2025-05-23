@@ -1,8 +1,8 @@
 package com.pilltip.pilltip.model.signUp
 
 data class SignUpData(
-    val loginType: LoginType = LoginType.idpw,
-    val userId: String = "",
+    val loginType: LoginType = LoginType.IDPW,
+    val loginId: String = "",
     val password: String = "",
     val term: Boolean = false,
     val nickname: String = "",
@@ -18,9 +18,9 @@ data class SignUpData(
 
 data class SignUpRequest(
     val loginType: String,
-    val userId: String?, // token일 시 null
+    val loginId: String?, // token일 시 null
     val password: String?,  // token일 시 null
-    val term: Boolean,
+//    val term: Boolean,
     val nickname: String,
     val gender: String,
     val birthDate: String,
@@ -33,9 +33,18 @@ data class SignUpRequest(
 )
 
 data class SignUpResponse(
-    val success: Boolean,
-    val userId: String,
+    val status: String,
+    val message: String,
+    val data: SignUpTokenData
+)
+
+data class SignUpTokenData(
     val accessToken: String,
-    val refreshToken: String,
-    val nickname: String
+    val refreshToken: String
+)
+
+data class TermsRequest(
+    val termsOfService: Boolean,
+    val privacyPolicy: Boolean,
+    val marketingConsent: Boolean
 )

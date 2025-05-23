@@ -27,26 +27,38 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
         OAuth2User oauth2User = super.loadUser(userRequest); // 소셜 로그인으로부터 사용자 정보 로드
-        saveOrUpdate(oauth2User);  // 사용자 저장 또는 업데이트
+        saveOrUpdate(userRequest.getClientRegistration().getRegistrationId(), oauth2User);  // 사용자 저장 또는 업데이트
         return oauth2User;  // 최종 사용자 객체 반환
     }
 
-    private User saveOrUpdate(OAuth2User oauth2User) {
+    private User saveOrUpdate(String registrationId, OAuth2User oauth2User) {
         Map<String, Object> attributes = oauth2User.getAttributes();
-        String name = (String) attributes.get("name");
-        String picture = (String) attributes.get("picture");
-        String socialId = (String) attributes.get("sub");
+        final String name;
+        final String picture;
+        final String socialId;
 
-        User user = userRepository.findBySocialId(socialId) // socialId(token)으로 유저 찾기
-                .map(entity -> entity.update(name, picture)) // 이미 존재하는 경우, 유저 업데이트
-                .orElse(User.builder() // 존재하지 않는 경우, 유저 생성
-                        .loginType(LoginType.social) // 로그인 타입 소셜
-                        .socialId(socialId) // 소셜 아이디
-                        .nickname(name) // 닉네임
-                        .profilePhotoUrl(picture) // 프로필 사진
-                        .agreedTerms(false) // 이용약관 동의
-                        .build());
-
-        return userRepository.save(user); // 유저 저장
+        if ("google".equals(registrationId)) {
+            name = (String) attributes.get("name");
+            picture = (String) attributes.get("picture");
+            socialId = (String) attributes.get("sub");
+        } else if ("kakao".equals(registrationId)) {
+            socialId = String.valueOf(attributes.get("id"));
+            Map<String, Object> kakaoAccount = (Map<String, Object>) attributes.get("kakao_account");
+            Map<String, Object> profile = (Map<String, Object>) kakaoAccount.get("profile");
+            name = (String) profile.get("nickname");
+            picture = (String) profile.get("profile_image_url");
+        } else {
+            throw new IllegalArgumentException("Unsupported registration ID: " + registrationId);
+        }
+    
+        return userRepository.findBySocialId(socialId)
+                .map(user -> user.update(name, picture))
+                .orElseGet(() -> userRepository.save(User.builder()
+                        .loginType(LoginType.SOCIAL)
+                        .socialId(socialId)
+                        .nickname(name)
+                        .profilePhoto(picture)
+                        .terms(false)
+                        .build()));
     }
 } 

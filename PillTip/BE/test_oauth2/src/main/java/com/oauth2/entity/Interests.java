@@ -1,44 +1,57 @@
-// PillTip\BE\src\main\java\com\example\oauth2\entity\Interests.java
-// author : mireutale
-// date : 2025-05-19
-// description : interests(관심사) 엔티티
+/* 
+PillTip\BE\test_oauth2\src\main\java\com\oauth2\entity\Interests.java
+author : mireutale
+date : 2025-05-22
+description : interests(관심사) 엔티티
+*/
 
 package com.oauth2.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
-import lombok.*;
-
-import java.util.UUID;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
-@Table(name = "interests")
 @Getter
 @Setter
 @NoArgsConstructor
-@Builder
-@AllArgsConstructor
+@Table(name = "interests")
 public class Interests {
     @Id
-    @Column(columnDefinition = "BINARY(16)")
-    private UUID uuid;
+    @Column(name = "user_id")
+    private Long userId;
 
+    @JsonBackReference
     @OneToOne
     @MapsId
-    @JoinColumn(name = "uuid")
+    @JoinColumn(name = "user_id")
     private User user;
 
-    @Column
-    private boolean diet;
+    @Column(nullable = false)
+    private boolean diet; // 다이어트
 
-    @Column
-    private boolean health;
+    @Column(nullable = false)
+    private boolean health; // 건강
 
-    @Column
-    private boolean muscle;
+    @Column(nullable = false)
+    private boolean muscle; // 운동
 
-    @Column
-    private boolean aging;
+    @Column(nullable = false)
+    private boolean aging; // 노화
 
-    @Column
-    private boolean nutrient;
+    @Column(nullable = false)
+    private boolean nutrient; // 영양   
+
+    @Builder
+    public Interests(User user, boolean diet, boolean health, boolean muscle, boolean aging, boolean nutrient) {
+        this.user = user;
+        this.diet = diet;
+        this.health = health;
+        this.muscle = muscle;
+        this.aging = aging;
+        this.nutrient = nutrient;
+    }
 } 

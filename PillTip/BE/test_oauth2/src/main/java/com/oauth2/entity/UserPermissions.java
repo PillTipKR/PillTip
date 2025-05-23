@@ -1,43 +1,59 @@
-// PillTip\BE\src\main\java\com\example\oauth2\entity\UserPermissions.java
-// author : mireutale
-// date : 2025-05-21
-// description : user_permissions(사용자 동의) 엔티티
+/* 
+PillTip\BE\test_oauth2\src\main\java\com\oauth2\entity\UserPermissions.java
+author : mireutale
+date : 2025-05-22
+description : user_permissions(사용자 동의) 엔티티
+*/
 package com.oauth2.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
-import lombok.*;
-
-import java.util.UUID;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "user_permissions")
 @Getter
-@Setter
 @NoArgsConstructor
-@AllArgsConstructor
-@Builder
+@Table(name = "user_permissions")
 public class UserPermissions {
     @Id
-    @Column(columnDefinition = "BINARY(16)")
-    private UUID uuid;
+    @Column(name = "user_id")
+    private Long userId;
 
+    @JsonBackReference
     @OneToOne
     @MapsId
-    @JoinColumn(name = "uuid")
-    private User user;
+    @JoinColumn(name = "user_id")
+    private User user; // 유저 동의 user_id를 user 테이블의 id와 매핑
 
-    @Column(name = "location_permission", columnDefinition = "BOOLEAN DEFAULT FALSE")
-    private boolean locationPermission; // 위치 권한 허용 여부
+    @Column(name = "location_permission", nullable = false)
+    private boolean locationPermission; // 유저 위치 동의
 
-    @Column(name = "camera_permission", columnDefinition = "BOOLEAN DEFAULT FALSE")
-    private boolean cameraPermission; // 카메라 권한 허용 여부
+    @Column(name = "camera_permission", nullable = false)
+    private boolean cameraPermission; // 유저 카메라 동의
 
-    @Column(name = "gallery_permission", columnDefinition = "BOOLEAN DEFAULT FALSE")
-    private boolean galleryPermission; // 갤러리 접근 권한 허용 여부
+    @Column(name = "gallery_permission", nullable = false)
+    private boolean galleryPermission; // 유저 갤러리 동의
 
-    @Column(name = "phone_permission", columnDefinition = "BOOLEAN DEFAULT FALSE")
-    private boolean phonePermission; // 전화 권한 허용 여부
+    @Column(name = "phone_permission", nullable = false)
+    private boolean phonePermission; // 유저 전화번호 동의
 
-    @Column(name = "sms_permission", columnDefinition = "BOOLEAN DEFAULT FALSE")
-    private boolean smsPermission; // SMS 권한 허용 여부
+    @Column(name = "sms_permission", nullable = false)
+    private boolean smsPermission; // 유저 문자 동의
+
+    @Column(name = "file_permission", nullable = false)
+    private boolean filePermission; // 유저 파일 동의
+
+    @Builder
+    public UserPermissions(User user, boolean locationPermission, boolean cameraPermission,
+                          boolean galleryPermission, boolean phonePermission, boolean smsPermission, boolean filePermission) {
+        this.user = user;
+        this.locationPermission = locationPermission;
+        this.cameraPermission = cameraPermission;
+        this.galleryPermission = galleryPermission;
+        this.phonePermission = phonePermission;
+        this.smsPermission = smsPermission;
+        this.filePermission = filePermission;
+    }
 }

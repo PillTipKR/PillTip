@@ -43,7 +43,7 @@ fun KakaoAuthPage(
 
     LaunchedEffect(user) {
         if (user != null && token != null) {
-            signUpViewModel.updateLoginType(LoginType.social)
+            signUpViewModel.updateLoginType(LoginType.SOCIAL)
             signUpViewModel.updateToken(token)
             Log.d("accessToken: ", signUpViewModel.getToken())
             termsOfService = true

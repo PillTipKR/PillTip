@@ -3,8 +3,8 @@ package com.pilltip.pilltip.model.main
 import com.pilltip.pilltip.model.signUp.LoginType
 
 data class MainData(
-    val loginType: LoginType = LoginType.idpw,
-    val userId: String = "",
+    val loginType: LoginType = LoginType.IDPW,
+    val loginId: String = "",
     val password: String = "",
     val term: Boolean = false,
     val nickname: String = "",
