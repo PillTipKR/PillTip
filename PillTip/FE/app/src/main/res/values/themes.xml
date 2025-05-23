@@ -4,6 +4,12 @@
     <style name="Theme.PillTip" parent="android:Theme.Material.Light.NoActionBar">
 
     </style>
+    <style name="Theme.PillTip.Starting" parent="Theme.SplashScreen">
+        <item name="android:windowNoTitle">true</item>
+        <item name="windowSplashScreenBackground">#2579EF</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_color_logo</item>
+        <item name="postSplashScreenTheme">@style/Theme.PillTip</item>
+    </style>
 
 
 </resources>
