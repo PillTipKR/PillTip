@@ -15,6 +15,7 @@ import com.pilltip.pilltip.view.auth.KakaoAuthPage
 import com.pilltip.pilltip.view.auth.NicknamePage
 import com.pilltip.pilltip.view.auth.PasswordPage
 import com.pilltip.pilltip.view.auth.PhoneAuthPage
+import com.pilltip.pilltip.view.auth.SelectPage
 import com.pilltip.pilltip.view.auth.SplashPage
 import com.pilltip.pilltip.view.main.PillMainPage
 
@@ -29,6 +30,9 @@ fun NavGraph(startPage: String) {
         /*SignIn Flow*/
         composable("SplashPage"){
             SplashPage(navController)
+        }
+        composable("SelectPage"){
+            SelectPage(navController)
         }
         composable("KakaoAuthPage") {
             KakaoAuthPage(navController, signUpViewModel)

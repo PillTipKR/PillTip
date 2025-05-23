@@ -5,6 +5,8 @@ import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
 import android.widget.Toast
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -14,6 +16,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -27,6 +30,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -34,6 +38,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
@@ -51,10 +56,13 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
+import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.pilltip.pilltip.R
 import com.pilltip.pilltip.composable.BackButton
 import com.pilltip.pilltip.composable.DoubleLineTitleText
@@ -76,10 +84,84 @@ import com.pilltip.pilltip.model.signUp.SignUpViewModel
 import com.pilltip.pilltip.ui.theme.gray500
 import com.pilltip.pilltip.ui.theme.gray700
 import com.pilltip.pilltip.ui.theme.pretendard
+import com.pilltip.pilltip.ui.theme.primaryColor
 import com.pilltip.pilltip.view.auth.logic.InputType
 import com.pilltip.pilltip.view.auth.logic.OtpInputField
 import com.pilltip.pilltip.view.auth.logic.TermBottomSheet
 import com.pilltip.pilltip.view.auth.logic.containsSequentialNumbers
+import kotlinx.coroutines.delay
+
+@Composable
+fun SplashPage(navController: NavController) {
+    var visible by remember { mutableStateOf(false) }
+
+    val systemUiController = rememberSystemUiController()
+    SideEffect {
+        systemUiController.isNavigationBarVisible = false
+    }
+
+    LaunchedEffect(Unit) {
+        visible = true
+        delay(3000)
+        navController.navigate("SelectPage") {
+            popUpTo("SplashPage") { inclusive = true }
+        }
+    }
+
+    val alpha by animateFloatAsState(
+        targetValue = if (visible) 1f else 0f,
+        animationSpec = tween(durationMillis = 1000) // 1초간 페이드 인
+    )
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(color = primaryColor),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Image(
+            imageVector = ImageVector.vectorResource(R.drawable.logo_splash),
+            contentDescription = "PillTip_Logo",
+            modifier = Modifier.alpha(alpha)
+        )
+    }
+}
+
+@Composable
+fun SelectPage(navController: NavController){
+    val systemUiController = rememberSystemUiController()
+
+    SideEffect {
+        systemUiController.isNavigationBarVisible = true
+    }
+    Column(
+        modifier = WhiteScreenModifier
+    ){
+        Spacer(modifier = Modifier.weight(1f))
+        NextButton(
+            text = "ID로 회원가입",
+            onClick = {
+                navController.navigate("IDPage")
+            }
+        )
+        NextButton(
+            text = "카카오로 회원가입",
+            onClick = {
+                navController.navigate("KakaoAuthPage")
+            }
+        )
+
+    }
+}
+
+@Preview
+@Composable
+fun SelectPagePreview(){
+    SelectPage(
+        navController = rememberNavController()
+    )
+}
 
 /**
  * 아이디 입력 페이지입니다.
@@ -514,8 +596,6 @@ fun PhoneAuthPage(
             },
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-//        BackButton(navigationTo = ({ navController.navigate("PasswordPage") }))
-
         if (verificationId != null) {
             HeightSpacer(130.dp)
             SingleLineTitleText("문자로 받은")

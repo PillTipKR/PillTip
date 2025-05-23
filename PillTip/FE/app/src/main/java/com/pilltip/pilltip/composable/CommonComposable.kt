@@ -586,7 +586,7 @@ fun LogoField(horizontalPadding: Dp = 24.dp) {
         verticalAlignment = Alignment.CenterVertically
     ) {
         Image(
-            painter = painterResource(id = R.drawable.logo_pilltip),
+            imageVector = ImageVector.vectorResource(id = R.drawable.logo_splash),
             contentDescription = "logo",
             modifier = Modifier.size(100.dp)
         )
