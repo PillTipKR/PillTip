@@ -21,7 +21,9 @@ public class DrugIngredient {
     @Setter
     @Embeddable
     public static class DrugIngredientId implements java.io.Serializable {
+        @Column(nullable = false)
         private Long drugId;
+        @Column(nullable = false)
         private Long ingredientId;
         // equals, hashCode 생략
     }

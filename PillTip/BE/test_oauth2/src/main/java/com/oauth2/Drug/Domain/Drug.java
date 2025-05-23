@@ -16,17 +16,22 @@ public class Drug {
     @Column(nullable = false)
     private String name;
     private String code;
+
+    @Column(nullable = false)
     private String manufacturer;
     private Date approvalDate;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(columnDefinition = "TEXT",nullable = false)
     private String packaging;
 
     private String form;
     private String atcCode;
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private Tag tag;
+
+    private String image;
 
     public enum Tag {
         EXPERT, COMMON
