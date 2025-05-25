@@ -17,6 +17,8 @@ public class Drug {
     @Column(nullable = false)
     private String name;
     private String code;
+
+    @Column(nullable = false)
     private String manufacturer;
     private Date approvalDate;
 
