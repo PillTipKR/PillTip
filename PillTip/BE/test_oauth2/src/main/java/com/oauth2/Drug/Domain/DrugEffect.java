@@ -13,12 +13,14 @@ public class DrugEffect {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false)
     private Long drugId;
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private Type type;
 
-    @Column(columnDefinition = "LONGTEXT")
+    @Column(columnDefinition = "LONGTEXT",nullable = false)
     private String content;
 
     public enum Type {

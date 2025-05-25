@@ -13,13 +13,18 @@ public class DrugCaution {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long cautionId;
 
+    @Column(nullable = false)
     private Long ingredientId;
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private ConditionType conditionType;
+
+    @Column(nullable = false)
     private String conditionValue;
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private Level level;
 
     @Column(columnDefinition = "TEXT")
