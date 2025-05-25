@@ -1,4 +1,4 @@
-package com.oauth2.AutoComplete.Service;
+package com.oauth2.Search.Service;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;

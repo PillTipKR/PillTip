@@ -1,4 +1,4 @@
-package com.oauth2.AutoComplete.Service;
+package com.oauth2.DetailPage.Service;
 
 import com.oauth2.DetailPage.Dto.DrugDetail;
 import com.oauth2.DetailPage.Mapper.DrugDetailRowMapper;

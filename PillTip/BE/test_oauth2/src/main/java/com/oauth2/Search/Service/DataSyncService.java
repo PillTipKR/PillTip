@@ -1,10 +1,9 @@
-package com.oauth2.AutoComplete.Service;
+package com.oauth2.Search.Service;
 
 import com.oauth2.Drug.Domain.Drug;
 import com.oauth2.Drug.Domain.Ingredient;
 import com.oauth2.Drug.Repository.DrugRepository;
 import com.oauth2.Drug.Repository.IngredientRepository;
-import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -32,7 +31,6 @@ public class DataSyncService {
         this.ingredientRepository = ingredientRepository;
     }
 
-    //@PostConstruct // redis 캐시 설정
     public void syncDataWithRedis() {
         List<Drug> drugs = drugRepository.findAll();
         List<Ingredient> ingredients = ingredientRepository.findAll();

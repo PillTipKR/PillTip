@@ -13,14 +13,10 @@ public class DrugStorageCondition {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
     private Long drugId;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
     private Category category;
-
-    @Column(nullable = false)
     private String value;
     private String iconUrl;
 

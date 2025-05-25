@@ -1,6 +1,9 @@
 package com.oauth2.Drug.Domain;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Embeddable;
+import jakarta.persistence.EmbeddedId;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -21,9 +24,7 @@ public class DrugIngredient {
     @Setter
     @Embeddable
     public static class DrugIngredientId implements java.io.Serializable {
-        @Column(nullable = false)
         private Long drugId;
-        @Column(nullable = false)
         private Long ingredientId;
         // equals, hashCode 생략
     }
