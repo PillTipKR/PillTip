@@ -16,6 +16,5 @@ public class Ingredient {
     @Column(nullable = false)
     private String nameKr;
     private String nameEn;
-
     // getter, setter 생략
 } 

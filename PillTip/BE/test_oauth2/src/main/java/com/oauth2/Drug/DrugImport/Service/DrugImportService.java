@@ -1,5 +1,10 @@
 package com.oauth2.Drug.DrugImport.Service;
 
+import com.oauth2.Drug.Domain.*;
+import com.oauth2.Drug.Service.*;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.sql.Date;
@@ -8,11 +13,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import com.oauth2.Drug.Domain.*;
-import com.oauth2.Drug.Service.*;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class DrugImportService {
@@ -184,8 +184,8 @@ public class DrugImportService {
         if (filteredCaution.length() > 0) {
             // 개행 문자 처리 로직 개선
             String[] cautionLines = filteredCaution.split("\\r?\\n");
-            for (String cautionLine : cautionLines) {
-                String line = cautionLine.trim();
+            for (int i = 0; i < cautionLines.length; i++) {
+                String line = cautionLines[i].trim();
 
                 // 보관 관련 키워드 포함 여부 검사
                 if (line.contains("닿지 않는 곳에 보관")) continue;

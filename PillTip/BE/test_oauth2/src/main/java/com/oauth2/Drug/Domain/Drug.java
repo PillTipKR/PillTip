@@ -13,6 +13,7 @@ public class Drug {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
     @Column(nullable = false)
     private String name;
     private String code;
@@ -21,7 +22,7 @@ public class Drug {
     private String manufacturer;
     private Date approvalDate;
 
-    @Column(columnDefinition = "TEXT",nullable = false)
+    @Column(columnDefinition = "TEXT",nullable=false)
     private String packaging;
 
     private String form;
