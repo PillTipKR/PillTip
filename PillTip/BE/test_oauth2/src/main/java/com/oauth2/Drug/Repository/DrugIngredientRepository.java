@@ -7,4 +7,6 @@ import java.util.List;
 
 public interface DrugIngredientRepository extends JpaRepository<DrugIngredient, DrugIngredient.DrugIngredientId> {
     List<DrugIngredient> findById_IngredientId(Long ingredientId);
+
+    List<DrugIngredient> findById_DrugId(Long id_drugId);
 } 

@@ -3,7 +3,7 @@
 ## Docker 설치
 Milvus DB사용을 위해 Docker 설치가 필요합니다.
 이를 위해, Window 사용자의 경우, WSL이 필요합니다.
-https://jsonobject.tistory.com/8
+https://gaesae.com/161
 위 링크를 참고하여 WSL을 설치해주세요.
 
 아래 링크를 참고하여 Docker, Docker-compose를 설치해주세요.
@@ -11,7 +11,7 @@ WSL사용자는 WSL을 실행하여 시도하여야 합니다!!
 - Docker 설치
 https://haengsin.tistory.com/128
 - Docker-compose 설치
-https://gaesae.com/161
+https://jsonobject.tistory.com/8
 
 ## 파이썬 설치
 ```
@@ -51,7 +51,7 @@ milvus, etcd, minio 컨테이너가 떠 있으면 성공입니다.
 
 ## Python 코드 실행
 ```
-python3 milvus.py
+python3 app/milvus.py
 ```
 이 코드는 다음 순서로 작동합니다:
 

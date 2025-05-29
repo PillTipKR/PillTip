@@ -1,10 +1,5 @@
 package com.oauth2.Drug.DrugImport.Service;
 
-import com.oauth2.Drug.Domain.*;
-import com.oauth2.Drug.Service.*;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.sql.Date;
@@ -13,6 +8,16 @@ import java.time.format.DateTimeFormatter;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import com.oauth2.Drug.Service.*;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.oauth2.Drug.Domain.Drug;
+import com.oauth2.Drug.Domain.DrugEffect;
+import com.oauth2.Drug.Domain.DrugIngredient;
+import com.oauth2.Drug.Domain.DrugStorageCondition;
+import com.oauth2.Drug.Domain.Ingredient;
 
 @Service
 public class DrugImportService {
@@ -159,21 +164,21 @@ public class DrugImportService {
         String filteredEffect = filterContent(effect.toString());
         String filteredUsage = filterContent(usage.toString());
         String filteredCaution = filterContent(caution.toString());
-        if (filteredEffect.length() > 0) {
+        if (!filteredEffect.isEmpty()) {
             DrugEffect de = new DrugEffect();
             de.setDrugId(drug.getId());
             de.setType(DrugEffect.Type.EFFECT);
             de.setContent(filteredEffect.trim());
             drugEffectService.save(de);
         }
-        if (filteredUsage.length() > 0) {
+        if (!filteredUsage.isEmpty()) {
             DrugEffect de = new DrugEffect();
             de.setDrugId(drug.getId());
             de.setType(DrugEffect.Type.USAGE);
             de.setContent(filteredUsage.trim());
             drugEffectService.save(de);
         }
-        if (filteredCaution.length() > 0) {
+        if (!filteredCaution.isEmpty()) {
             DrugEffect de = new DrugEffect();
             de.setDrugId(drug.getId());
             de.setType(DrugEffect.Type.CAUTION);
@@ -181,17 +186,16 @@ public class DrugImportService {
             drugEffectService.save(de);
         }
         // 5. 보관 방법 파싱 및 저장
-        if (filteredCaution.length() > 0) {
+        if (!filteredCaution.isEmpty()) {
             // 개행 문자 처리 로직 개선
-            String[] cautionLines = filteredCaution.split("\\r?\\n");
-            for (int i = 0; i < cautionLines.length; i++) {
+            String[] cautionLines = filteredCaution.split("\\n");
+            for (int i=0; i<cautionLines.length; i++) {
                 String line = cautionLines[i].trim();
-
                 // 보관 관련 키워드 포함 여부 검사
                 if (line.contains("닿지 않는 곳에 보관")) continue;
-                if (!line.contains("보관") || !line.contains("바꾸어 넣지")) continue;
-                // 긍정/부정 연결어 패턴
-                String regex = "(보관하지 (않고|않으며|않게|않을 것|말 것|않는다|않도록|말고)?|보관하면 안된다|보관하지 말고|(보관(하며|하고|하도록|한다|할 것)?))";
+                if (!line.contains("보관") && !line.contains("바꾸어 넣지")) continue;
+                // 긍정/부정 연결어 패턴\\
+                String regex = "보관(?:(?:하지 ?않(?:고|으며|게|을 것|말 것|는다|도록|말고)?)|하면 안된다|하지 말고|하며|하고|하도록|한다|할 것)?";
                 Pattern pattern = Pattern.compile(regex);
                 Matcher matcher = pattern.matcher(line);
                 int lastPos = 0;
