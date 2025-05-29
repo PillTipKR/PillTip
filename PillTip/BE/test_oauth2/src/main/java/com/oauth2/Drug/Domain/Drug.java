@@ -32,11 +32,11 @@ public class Drug {
     @Column(nullable = false)
     private Tag tag;
 
-    private String image;
-
     public enum Tag {
         EXPERT, COMMON
     }
+
+    private String image;
 
     // getter, setter 생략
 } 
