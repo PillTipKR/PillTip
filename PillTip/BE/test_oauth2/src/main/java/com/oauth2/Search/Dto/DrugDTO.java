@@ -1,9 +1,11 @@
 package com.oauth2.Search.Dto;
 
 
+import java.util.List;
+
 public record DrugDTO(
         Long id,
         String drugName,
-        String manufacturer,
-        String imageUrl
+        List<IngredientDetail> ingredients,
+        String manufacturer
 ) {}
