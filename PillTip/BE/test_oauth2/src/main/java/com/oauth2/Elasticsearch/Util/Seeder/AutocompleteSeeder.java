@@ -1,6 +1,6 @@
-package com.oauth2.Util.Seeder;
+package com.oauth2.Elasticsearch.Util.Seeder;
 
-import com.oauth2.AutoComplete.Service.AutocompleteService;
+import com.oauth2.Elasticsearch.Service.ElasticsearchService;
 import com.oauth2.Search.Service.DataSyncService;
 import com.oauth2.Search.Service.SearchService;
 import org.springframework.boot.CommandLineRunner;
@@ -11,12 +11,12 @@ import org.springframework.stereotype.Component;
 @Order(2)
 public class AutocompleteSeeder implements CommandLineRunner {
 
-    private final AutocompleteService autocompleteIndexService;
+    private final ElasticsearchService autocompleteIndexService;
     private final SearchService searchService;
 
     private final DataSyncService dataSyncService;
 
-    public AutocompleteSeeder(AutocompleteService autocompleteIndexService, SearchService searchService, DataSyncService dataSyncService) {
+    public AutocompleteSeeder(ElasticsearchService autocompleteIndexService, SearchService searchService, DataSyncService dataSyncService) {
         this.autocompleteIndexService = autocompleteIndexService;
         this.searchService = searchService;
         this.dataSyncService = dataSyncService;

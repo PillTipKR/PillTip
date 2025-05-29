@@ -1,23 +1,23 @@
-package com.oauth2.AutoComplete.Provider;
+package com.oauth2.Elasticsearch.Provider;
 
 import co.elastic.clients.elasticsearch._types.mapping.TypeMapping;
 import co.elastic.clients.elasticsearch.indices.IndexSettings;
-import com.oauth2.AutoComplete.Dto.AutocompleteDTO;
-import com.oauth2.Util.Provider.CommonSettingsProvider;
-import com.oauth2.Util.Provider.IndexMappingProvider;
+import com.oauth2.Elasticsearch.Dto.ElasticsearchDTO;
+import com.oauth2.Elasticsearch.Util.Provider.CommonSettingsProvider;
+import com.oauth2.Elasticsearch.Util.Provider.IndexMappingProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Component
-public class AutoCompleteProvider implements IndexMappingProvider<AutocompleteDTO> {
+public class ElasticsearchProvider implements IndexMappingProvider<ElasticsearchDTO> {
 
     private final CommonSettingsProvider settingsProvider;
 
-    public AutoCompleteProvider(CommonSettingsProvider settingsProvider) {
+    public ElasticsearchProvider(CommonSettingsProvider settingsProvider) {
         this.settingsProvider = settingsProvider;
     }
 
-    @Value("${elastic.autocomplete}")
+    @Value("${elastic.autocomplete.index}")
     private String index;
 
     @Override
@@ -26,8 +26,8 @@ public class AutoCompleteProvider implements IndexMappingProvider<AutocompleteDT
     }
 
     @Override
-    public Class<AutocompleteDTO> getDtoClass() {
-        return AutocompleteDTO.class;
+    public Class<ElasticsearchDTO> getDtoClass() {
+        return ElasticsearchDTO.class;
     }
 
     @Override

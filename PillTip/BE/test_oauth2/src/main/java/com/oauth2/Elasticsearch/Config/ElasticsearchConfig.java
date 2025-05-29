@@ -1,4 +1,4 @@
-package com.oauth2.AutoComplete.Config;
+package com.oauth2.Elasticsearch.Config;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.json.jackson.JacksonJsonpMapper;

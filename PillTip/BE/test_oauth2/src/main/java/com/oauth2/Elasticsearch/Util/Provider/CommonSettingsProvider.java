@@ -1,30 +1,25 @@
-package com.oauth2.Util.Provider;
+package com.oauth2.Elasticsearch.Util.Provider;
 
 import co.elastic.clients.elasticsearch._types.analysis.*;
 import co.elastic.clients.elasticsearch.indices.IndexSettings;
 import co.elastic.clients.elasticsearch.indices.IndexSettingsAnalysis;
+import lombok.Getter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Component
 public class CommonSettingsProvider {
+    @Getter
     @Value("${elastic.nGramAnalyzer}")
     private String autoNGramAnalyzer;
 
+    @Getter
     @Value("${elastic.edgeNGramAnalyzer}")
     private String autoEdgeNGramAnalyzer;
     @Value("${elastic.nGram}")
     private String nGram;
     @Value("${elastic.edgeNGram}")
     private String edgeNGram;
-
-    public String getAutoNGramAnalyzer() {
-        return autoNGramAnalyzer;
-    }
-
-    public String getAutoEdgeNGramAnalyzer() {
-        return autoEdgeNGramAnalyzer;
-    }
 
     public IndexSettingsAnalysis getAnalysis() {
         NGramTokenizer nGramTokenizer = new NGramTokenizer.Builder()
