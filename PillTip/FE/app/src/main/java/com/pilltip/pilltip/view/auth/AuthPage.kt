@@ -136,9 +136,34 @@ fun SelectPage(navController: NavController){
         systemUiController.isNavigationBarVisible = true
     }
     Column(
-        modifier = WhiteScreenModifier
+        modifier = WhiteScreenModifier,
+        horizontalAlignment = Alignment.CenterHorizontally
     ){
-        Spacer(modifier = Modifier.weight(1f))
+        HeightSpacer(214.dp)
+        Image(imageVector =
+        ImageVector.vectorResource(R.drawable.logo_pilltip_blue_pill),
+            contentDescription = "PillTip_Logo_blue_pill",
+            modifier = Modifier.size(30.67.dp)
+        )
+        HeightSpacer(13.dp)
+        Image(imageVector =
+        ImageVector.vectorResource(R.drawable.logo_pilltip_typo),
+            contentDescription = "PillTip_Logo_typo"
+        )
+        HeightSpacer(12.dp)
+        Text(
+            text = stringResource(id = R.string.SelectPage_app_desc, "필팁 desc"),
+            style = TextStyle(
+                fontSize = 16.sp,
+                fontFamily = pretendard,
+                fontWeight = FontWeight(500),
+                color = gray600,
+                textAlign = TextAlign.Center,
+            )
+        )
+        HeightSpacer(116.67.dp)
+        Image(painter = painterResource(id = R.drawable.ic_select_page_fast_signin), contentDescription = "fast_sign_in")
+        HeightSpacer(10.dp)
         NextButton(
             text = "ID로 회원가입",
             onClick = {
