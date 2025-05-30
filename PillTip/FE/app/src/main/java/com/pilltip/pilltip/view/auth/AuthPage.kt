@@ -1015,6 +1015,7 @@ fun ProfilePage(
         HeightSpacer(28.dp)
         Row {
             ProfileStepDescription("연령")
+            WidthSpacer(4.dp)
             Image(
                 imageVector = ImageVector.vectorResource(R.drawable.btn_profile_question),
                 contentDescription = "물음표 아이콘을 누를 시 간단한 알림 문구를 표출합니다"
@@ -1027,7 +1028,10 @@ fun ProfilePage(
         }
         Spacer(modifier = Modifier.weight(1f))
         NextButton(
-            mModifier = buttonModifier,
+            mModifier = Modifier.fillMaxWidth()
+                .padding(vertical = 16.dp)
+                .padding(bottom = 46.dp)
+                .height(58.dp),
             buttonColor = if (isFormValid) Color(0xFF397CDB) else Color(0xFFCADCF5),
             onClick = {
                 if (height.length >= 2 && weight.length >= 2) {

@@ -413,7 +413,8 @@ fun BodyProfile(
                 selectedHeight = "$it"
                 showHeightPicker = false
             },
-            onDismiss = { showHeightPicker = false }
+            onDismiss = { showHeightPicker = false },
+            initial = 174
         )
     }
     if (showWeightPicker) {
@@ -425,7 +426,8 @@ fun BodyProfile(
                 selectedWeight = "$it"
                 showWeightPicker = false
             },
-            onDismiss = { showWeightPicker = false }
+            onDismiss = { showWeightPicker = false },
+            initial = 68
         )
     }
     if (selectedHeight != "입력없음" && selectedWeight != "입력없음") selectedBodyProfile(
@@ -441,7 +443,8 @@ fun PillTipHeightWeightBottomSheet(
     end: Int,
     label: String,
     onSelected: (Int) -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    initial: Int
 ) {
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var selected by remember { mutableStateOf(start) }
@@ -476,7 +479,8 @@ fun PillTipHeightWeightBottomSheet(
                 start = start,
                 end = end,
                 label = label,
-                onSelected = { selected = it }
+                onSelected = { selected = it },
+                initial = initial
             )
             HeightSpacer(16.dp)
             NextButton(
@@ -505,18 +509,20 @@ fun PillTipHeightWeightPicker(
     end: Int,
     label: String,
     onSelected: (Int) -> Unit,
+    initial: Int
 ) {
-    val HeightRange = (start..end).toList()
-    val HeightListState = rememberLazyListState(0)
+    val Range = (start..end).toList()
+    val initialIndex = (initial - start).coerceIn(0, Range.lastIndex)
+    val ListState = rememberLazyListState(initialIndex)
 
     val density = LocalDensity.current
     val threshold = remember { density.run { 20.dp.toPx() } }
 
     val selected by remember {
         derivedStateOf {
-            val index = HeightListState.firstVisibleItemIndex
-            val offset = HeightListState.firstVisibleItemScrollOffset
-            HeightRange.getOrNull(index + if (offset >= threshold) 1 else 0) ?: 20
+            val index = ListState.firstVisibleItemIndex
+            val offset = ListState.firstVisibleItemScrollOffset
+            Range.getOrNull(index + if (offset >= threshold) 1 else 0) ?: 20
         }
     }
 
@@ -546,9 +552,9 @@ fun PillTipHeightWeightPicker(
             verticalAlignment = Alignment.CenterVertically
         ) {
             WheelColumn(
-                items = HeightRange,
+                items = Range,
                 selected = selected,
-                state = HeightListState,
+                state = ListState,
                 label = label,
                 modifier = Modifier.fillMaxWidth()
             )
