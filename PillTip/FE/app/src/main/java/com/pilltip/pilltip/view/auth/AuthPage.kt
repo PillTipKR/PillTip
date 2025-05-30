@@ -85,6 +85,7 @@ import com.pilltip.pilltip.composable.buttonModifier
 import com.pilltip.pilltip.model.signUp.PhoneAuthViewModel
 import com.pilltip.pilltip.model.signUp.SignUpViewModel
 import com.pilltip.pilltip.ui.theme.gray500
+import com.pilltip.pilltip.ui.theme.gray600
 import com.pilltip.pilltip.ui.theme.gray700
 import com.pilltip.pilltip.ui.theme.pretendard
 import com.pilltip.pilltip.ui.theme.primaryColor
