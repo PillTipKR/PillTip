@@ -9,6 +9,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -28,6 +29,7 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
@@ -60,10 +62,12 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.pilltip.pilltip.R
+import com.pilltip.pilltip.composable.AppBar
 import com.pilltip.pilltip.composable.BackButton
 import com.pilltip.pilltip.composable.DoubleLineTitleText
 import com.pilltip.pilltip.composable.Guideline
@@ -79,12 +83,18 @@ import com.pilltip.pilltip.composable.TitleDescription
 import com.pilltip.pilltip.composable.WhiteScreenModifier
 import com.pilltip.pilltip.composable.WidthSpacer
 import com.pilltip.pilltip.composable.buttonModifier
+import com.pilltip.pilltip.model.signUp.AuthRepository
 import com.pilltip.pilltip.model.signUp.PhoneAuthViewModel
 import com.pilltip.pilltip.model.signUp.SignUpViewModel
+import com.pilltip.pilltip.ui.theme.gray200
 import com.pilltip.pilltip.ui.theme.gray500
 import com.pilltip.pilltip.ui.theme.gray700
+import com.pilltip.pilltip.ui.theme.gray800
 import com.pilltip.pilltip.ui.theme.pretendard
 import com.pilltip.pilltip.ui.theme.primaryColor
+import com.pilltip.pilltip.view.auth.composable.NicknameField
+import com.pilltip.pilltip.view.auth.composable.ProfileGenderPick
+import com.pilltip.pilltip.view.auth.composable.ProfileStepDescription
 import com.pilltip.pilltip.view.auth.logic.InputType
 import com.pilltip.pilltip.view.auth.logic.OtpInputField
 import com.pilltip.pilltip.view.auth.logic.TermBottomSheet
@@ -129,7 +139,7 @@ fun SplashPage(navController: NavController) {
 }
 
 @Composable
-fun SelectPage(navController: NavController){
+fun SelectPage(navController: NavController) {
     val systemUiController = rememberSystemUiController()
 
     SideEffect {
@@ -137,7 +147,7 @@ fun SelectPage(navController: NavController){
     }
     Column(
         modifier = WhiteScreenModifier
-    ){
+    ) {
         Spacer(modifier = Modifier.weight(1f))
         NextButton(
             text = "ID로 회원가입",
@@ -157,7 +167,7 @@ fun SelectPage(navController: NavController){
 
 @Preview
 @Composable
-fun SelectPagePreview(){
+fun SelectPagePreview() {
     SelectPage(
         navController = rememberNavController()
     )
@@ -562,8 +572,6 @@ fun PhoneAuthPage(
     var phoneNumber by remember { mutableStateOf("") }
     val verificationId by phoneViewModel.verificationId.collectAsState()
     val code by phoneViewModel.code.collectAsState()
-    val status by phoneViewModel.status.collectAsState()
-    val errorMessage by phoneViewModel.errorMessage.collectAsState()
     val timeRemaining by phoneViewModel.timeRemaining.collectAsState()
     val timerText = remember(timeRemaining) {
         val min = timeRemaining / 60
@@ -614,23 +622,6 @@ fun PhoneAuthPage(
                 onOtpTextChange = { phoneViewModel.updateCode(it) },
                 modifier = Modifier.width((localWitdh - 48).dp)
             )
-//            Row(
-//                verticalAlignment = Alignment.Bottom,
-//                modifier = Modifier.width((localWitdh - 48).dp)
-//            ) {
-//                Column {
-//                    LabelText(labelText = if (code.isNotEmpty()) "인증 코드" else "")
-//                    PlaceholderTextField(
-//                        placeHolder = "인증번호 6자리",
-//                        inputText = code,
-//                        inputType = InputType.NUMBER,
-//                        onTextChanged = { phoneViewModel.updateCode(it) },
-//                        onFocusChanged = { isFocused = it }
-//                    )
-//                }
-//            }
-//            HeightSpacer(14.dp)
-//            HighlightingLine(text = code, isFocused = isFocused)
         } else {
             HeightSpacer(130.dp)
             SingleLineTitleText("휴대폰 번호를 알려주세요")
@@ -669,23 +660,6 @@ fun PhoneAuthPage(
                 )
             )
         }
-
-//        if (status.isNotEmpty()) {
-//            HeightSpacer(12.dp)
-//            Text(
-//                text = status,
-//                fontSize = 14.sp,
-//                fontFamily = pretendard,
-//                fontWeight = FontWeight.Normal,
-//                color = Color(0xFF818181)
-//            )
-//        }
-//
-//        if (errorMessage != null) {
-//            HeightSpacer(6.dp)
-//            Text(errorMessage ?: "", color = Color.Red)
-//        }
-
         Spacer(modifier = Modifier.weight(1f))
         NextButton(
             mModifier = buttonModifier,
@@ -712,7 +686,7 @@ fun PhoneAuthPage(
                             phoneViewModel.verifyCodeInput(
                                 onSuccess = {
                                     viewModel.updatePhone(phoneNumber)
-                                    navController.navigate("NicknamePage")
+                                    navController.navigate("ProfilePage")
                                 },
                                 onFailure = {}
                             )
@@ -1066,7 +1040,7 @@ fun InterestPage(
                                     navController.navigate("PillMainPage")
                                 }
                             )
-                                    },
+                        },
                         onFailure = { error ->
                             Toast.makeText(
                                 context,
@@ -1082,5 +1056,47 @@ fun InterestPage(
     }
 }
 
+@Composable
+fun ProfilePage(
+    navController: NavController,
+    viewModel: SignUpViewModel
+) {
+    var nickname by remember { mutableStateOf("") }
+    var gender by remember { mutableStateOf("") }
+    Column(
+        modifier = WhiteScreenModifier.padding(horizontal = 24.dp)
+    ) {
+        HeightSpacer(50.dp)
+        AppBar(
+            horizontalPadding = 0.dp,
+            LNB = R.drawable.btn_left_gray_arrow,
+            LNBDesc = "뒤로가기 버튼",
+            TitleText = "프로필 등록",
+        )
+        HeightSpacer(36.dp)
+        ProfileStepDescription("닉네임")
+        HeightSpacer(12.dp)
+        NicknameField(
+            nickname,
+            nicknameChange = { nickname = it }
+        )
+        HeightSpacer(28.dp)
+        ProfileStepDescription("성별")
+        HeightSpacer(12.dp)
+        ProfileGenderPick(select = { gender = it })
+        HeightSpacer(28.dp)
+        ProfileStepDescription("연령")
+        HeightSpacer(12.dp)
 
+    }
+}
+
+@Preview
+@Composable
+fun ProfilePagePreview() {
+    ProfilePage(
+        navController = rememberNavController(),
+        viewModel = viewModel()
+    )
+}
 

@@ -15,6 +15,7 @@ import com.pilltip.pilltip.view.auth.KakaoAuthPage
 import com.pilltip.pilltip.view.auth.NicknamePage
 import com.pilltip.pilltip.view.auth.PasswordPage
 import com.pilltip.pilltip.view.auth.PhoneAuthPage
+import com.pilltip.pilltip.view.auth.ProfilePage
 import com.pilltip.pilltip.view.auth.SelectPage
 import com.pilltip.pilltip.view.auth.SplashPage
 import com.pilltip.pilltip.view.main.PillMainPage
@@ -45,6 +46,9 @@ fun NavGraph(startPage: String) {
         }
         composable("PhoneAuthPage"){
             PhoneAuthPage(navController = navController, signUpViewModel)
+        }
+        composable("ProfilePage"){
+            ProfilePage(navController, signUpViewModel)
         }
         composable("NicknamePage"){
             NicknamePage(navController = navController, signUpViewModel)
