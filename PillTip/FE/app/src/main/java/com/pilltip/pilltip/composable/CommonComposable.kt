@@ -454,7 +454,6 @@ fun PillTipDatePicker(
             .padding(horizontal = 24.dp),
         contentAlignment = Alignment.Center
     ) {
-        // 가운데 강조 영역
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -490,8 +489,6 @@ fun PillTipDatePicker(
                 modifier = Modifier.weight(1f)
             )
         }
-
-        // 위/아래 fade mask
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -517,9 +514,11 @@ fun PillTipDatePicker(
     }
 }
 
+
+
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun WheelColumn(
+fun WheelColumn(
     items: List<Int>,
     selected: Int,
     state: LazyListState,
