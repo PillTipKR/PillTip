@@ -6,7 +6,7 @@ import json
 from difflib import get_close_matches
 import re
 
-client = OpenAI(api_key="sk-proj-...")  # 실제 키로 대체
+client = OpenAI(api_key="")  # 실제 키로 대체
 
 # ✅ 기준 증상 및 연관 증상 정의
 cluster_symptoms = [

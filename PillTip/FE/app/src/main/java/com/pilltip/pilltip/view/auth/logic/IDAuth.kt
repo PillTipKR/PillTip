@@ -22,6 +22,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
@@ -36,12 +38,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -53,7 +58,9 @@ import com.pilltip.pilltip.composable.WidthSpacer
 import com.pilltip.pilltip.composable.noRippleClickable
 import com.pilltip.pilltip.model.signUp.SignUpViewModel
 import com.pilltip.pilltip.ui.theme.gray100
+import com.pilltip.pilltip.ui.theme.gray200
 import com.pilltip.pilltip.ui.theme.gray400
+import com.pilltip.pilltip.ui.theme.gray500
 import com.pilltip.pilltip.ui.theme.pretendard
 import com.pilltip.pilltip.ui.theme.primaryColor
 
@@ -254,6 +261,7 @@ fun OtpInputField(
     modifier: Modifier = Modifier
 ) {
     val focusRequester = remember { FocusRequester() }
+    val keyboardController = LocalSoftwareKeyboardController.current
 
     BoxWithConstraints(modifier = modifier) {
         val boxSize = maxWidth / 7 // 여백 고려해 6칸 + 패딩 맞춤
@@ -305,8 +313,13 @@ fun OtpInputField(
                     .fillMaxWidth()
                     .focusRequester(focusRequester)
                     .focusable()
-                    .align(Alignment.Center)
+                    .align(Alignment.Center),
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                keyboardActions = KeyboardActions(
+                    onDone = { keyboardController?.hide() }
+                ),
             )
         }
     }
 }
+

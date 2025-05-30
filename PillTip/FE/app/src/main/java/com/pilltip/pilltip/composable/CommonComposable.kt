@@ -1,5 +1,6 @@
 package com.pilltip.pilltip.composable
 
+import android.icu.text.CaseMap.Title
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloat
@@ -191,10 +192,13 @@ fun Guideline(description: String, isValid: Boolean) {
  * @param upperTextLine 윗 줄에 작성되는 Title Text입니다.
  * @param lowerTextLine 아랫 줄에 작성되는 Title Text입니다.
  * @param padding : Dp | Title Text의 horizontal 패딩을 설정합니다.
+ * author : 김기윤
  */
 @Composable
 fun DoubleLineTitleText(
-    upperTextLine: String = "Upper TextLine", lowerTextLine: String = "Lower TextLine", padding: Dp = 24.dp
+    upperTextLine: String = "Upper TextLine",
+    lowerTextLine: String = "Lower TextLine",
+    padding: Dp = 24.dp
 ) {
     Text(
         text = upperTextLine,
@@ -232,6 +236,7 @@ fun DoubleLineTitleText(
  * 한 줄 짜리 제목 Composable 입니다.
  * @param titleText 기본적으로 사용될 텍스트 입니다.
  * @param padding horizontal padding 기본값 24로 설정되어 있습니다.
+ * author : 김기윤
  */
 @Composable
 fun SingleLineTitleText(titleText: String = "", padding: Dp = 24.dp) {
@@ -255,6 +260,7 @@ fun SingleLineTitleText(titleText: String = "", padding: Dp = 24.dp) {
 /**
  * Title 아래 세부 설명사항을 작성하는 Composable입니다.
  * @param description : String | 세부 설명사항을 작성합니다.
+ * author : 김기윤
  */
 @Composable
 fun TitleDescription(description: String = "TitleDescription") {
@@ -278,6 +284,7 @@ fun TitleDescription(description: String = "TitleDescription") {
  * @param labelText : String | 라벨 텍스트를 설정합니다.
  * @param padding : Dp | 라벨 텍스트의 start 패딩을 설정합니다.
  * @param bottomPadding : Dp | 라벨 텍스트의 bottom 패딩을 설정합니다.
+ * author : 김기윤
  */
 @Composable
 fun LabelText(labelText: String = "", padding: Dp = 24.dp, bottomPadding: Dp = 8.dp) {
@@ -302,6 +309,7 @@ fun LabelText(labelText: String = "", padding: Dp = 24.dp, bottomPadding: Dp = 8
  * @param inputType : InputType | 텍스트 필드의 입력 타입을 설정합니다. TEXT, EMAIL, PASSWORD, NUMBER 중 하나를 선택하여 입력합니다.
  * @param onTextChanged : (String) -> Unit | 텍스트 필드의 텍스트가 변경될 때 호출되는 콜백 함수입니다.
  * @param onFocusChanged : (Boolean) -> Unit | 텍스트 필드의 포커스 여부가 변경될 때 호출되는 콜백 함수입니다.
+ * author : 김기윤
  */
 @Composable
 fun PlaceholderTextField(
@@ -329,7 +337,7 @@ fun PlaceholderTextField(
                 imeAction = ImeAction.Next,
                 keyboardType = KeyboardType.Email
             )
-        else if(inputType == InputType.PASSWORD) KeyboardOptions(
+        else if (inputType == InputType.PASSWORD) KeyboardOptions(
             keyboardType = KeyboardType.Password,
             imeAction = ImeAction.Next
         ) else {
@@ -421,7 +429,8 @@ fun PillTipDatePicker(
     }
     val day by remember {
         derivedStateOf {
-            val offsetThreshold = if (dayListState.firstVisibleItemScrollOffset >= threshold) 1 else 0
+            val offsetThreshold =
+                if (dayListState.firstVisibleItemScrollOffset >= threshold) 1 else 0
             (dayListState.firstVisibleItemIndex + offsetThreshold + 1).coerceAtMost(daysInMonth)
         }
     }
@@ -531,7 +540,10 @@ private fun WheelColumn(
 
             val scale by transition.animateFloat(
                 transitionSpec = {
-                    spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)
+                    spring(
+                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                        stiffness = Spring.StiffnessLow
+                    )
                 },
                 label = "scale"
             ) { dist ->
@@ -540,7 +552,10 @@ private fun WheelColumn(
 
             val alpha by transition.animateFloat(
                 transitionSpec = {
-                    spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessLow)
+                    spring(
+                        dampingRatio = Spring.DampingRatioNoBouncy,
+                        stiffness = Spring.StiffnessLow
+                    )
                 },
                 label = "alpha"
             ) { dist ->
@@ -598,5 +613,61 @@ fun LogoField(horizontalPadding: Dp = 24.dp) {
                 .padding(1.dp)
                 .height(24.dp)
         )
+    }
+}
+
+@Composable
+fun AppBar(
+    horizontalPadding: Dp = 20.dp,
+    backgroudnColor: Color = Color.White,
+    LNB: Int? = null,
+    LNBDesc: String = "LNB입니다.",
+    LNBSize: Dp = 10.dp,
+    LNBClickable: (() -> Unit)? = null,
+    TitleText: String,
+    TitleTextColor: Color = Color.Black,
+    TitleTextSize: Int = 16,
+    TitleTextWeight: FontWeight = FontWeight.W600,
+    RNB: Int? = null,
+    RNBDesc: String = "RNB입니다.",
+    RNBSize: Dp = 10.dp,
+    RNBClickable: (() -> Unit)? = null,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(56.dp)
+            .padding(horizontal = horizontalPadding)
+            .background(backgroudnColor),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        if (LNB != null) {
+            Image(
+                imageVector = ImageVector.vectorResource(LNB),
+                contentDescription = LNBDesc,
+                modifier = Modifier
+                    .size(LNBSize)
+                    .clickable(onClick = { LNBClickable?.invoke() })
+            )
+        } else Box(Modifier.size(RNBSize))
+
+        Spacer(Modifier.weight(1f))
+        Text(
+            text = TitleText,
+            color = TitleTextColor,
+            fontFamily = pretendard,
+            fontWeight = TitleTextWeight,
+            fontSize = TitleTextSize.sp
+        )
+        Spacer(Modifier.weight(1f))
+        if (RNB != null) {
+            Image(
+                imageVector = ImageVector.vectorResource(RNB),
+                contentDescription = RNBDesc,
+                modifier = Modifier
+                    .size(RNBSize)
+                    .clickable(onClick = { RNBClickable?.invoke() })
+            )
+        } else Box(Modifier.size(RNBSize))
     }
 }

@@ -25,7 +25,7 @@ if not client.has_collection(collection_name):
     )
 else:
     print(f"📦 이미 존재하는 컬렉션: {collection_name}")
-    index_info = client.describe_index(index_name=collection_name)
+    index_info = client.describe_index(index_name=collection_name,index_name="_default")
     has_symptom_vector_index = any(idx["field_name"] == "symptom_vector" for idx in index_info)
     if not has_symptom_vector_index:
         client.create_index(
@@ -39,7 +39,7 @@ else:
 
 # ✅ 컬렉션 로딩
 client.load_collection(collection_name)
-    
+
 # 3. 증상 임베딩 불러오기
 with open("data/symptom_embeddings.json", "r", encoding="utf-8") as f:
     symptom_embeddings = json.load(f)
@@ -62,7 +62,7 @@ def insert_from_textblock(text_block):
         return
 
     name = product_match.group(1).strip()
-    
+
     if is_product_exists(name):
         print(f"⚠️ 이미 존재함: {name} → 삽입 생략")
         return
@@ -81,7 +81,7 @@ def insert_from_textblock(text_block):
         "symptom_4": vectors[3],
         "symptom_5": vectors[4],
     }
-    
+
     client.insert(collection_name=collection_name, data=[data])
     print(f"✅ 삽입 완료: {name} ({len(symptoms)}개 증상)")
 
