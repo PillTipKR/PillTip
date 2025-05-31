@@ -3,6 +3,7 @@ package com.pilltip.pilltip.ui.theme
 import androidx.compose.ui.graphics.Color
 
 val primaryColor = Color(0xFF2579EF)
+val primaryColor400 = Color(0x0FF408AF1)
 val secondaryColor = Color(0xFFFFE039)
 
 val gray800 = Color(0xFF323439)
