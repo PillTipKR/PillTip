@@ -29,7 +29,6 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
@@ -55,6 +54,7 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontVariation.width
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
@@ -62,12 +62,13 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.pilltip.pilltip.R
 import com.pilltip.pilltip.composable.AppBar
+import com.pilltip.pilltip.composable.AuthComposable.AgeField
+import com.pilltip.pilltip.composable.AuthComposable.BodyProfile
 import com.pilltip.pilltip.composable.BackButton
 import com.pilltip.pilltip.composable.DoubleLineTitleText
 import com.pilltip.pilltip.composable.Guideline
@@ -83,18 +84,17 @@ import com.pilltip.pilltip.composable.TitleDescription
 import com.pilltip.pilltip.composable.WhiteScreenModifier
 import com.pilltip.pilltip.composable.WidthSpacer
 import com.pilltip.pilltip.composable.buttonModifier
-import com.pilltip.pilltip.model.signUp.AuthRepository
 import com.pilltip.pilltip.model.signUp.PhoneAuthViewModel
 import com.pilltip.pilltip.model.signUp.SignUpViewModel
-import com.pilltip.pilltip.ui.theme.gray200
 import com.pilltip.pilltip.ui.theme.gray500
 import com.pilltip.pilltip.ui.theme.gray700
-import com.pilltip.pilltip.ui.theme.gray800
 import com.pilltip.pilltip.ui.theme.pretendard
 import com.pilltip.pilltip.ui.theme.primaryColor
-import com.pilltip.pilltip.view.auth.composable.NicknameField
-import com.pilltip.pilltip.view.auth.composable.ProfileGenderPick
-import com.pilltip.pilltip.view.auth.composable.ProfileStepDescription
+import com.pilltip.pilltip.composable.AuthComposable.NicknameField
+import com.pilltip.pilltip.composable.AuthComposable.ProfileGenderPick
+import com.pilltip.pilltip.composable.AuthComposable.ProfileStepDescription
+import com.pilltip.pilltip.ui.theme.gray200
+import com.pilltip.pilltip.ui.theme.gray800
 import com.pilltip.pilltip.view.auth.logic.InputType
 import com.pilltip.pilltip.view.auth.logic.OtpInputField
 import com.pilltip.pilltip.view.auth.logic.TermBottomSheet
@@ -965,6 +965,93 @@ fun BodyStatPage(
 }
 
 @Composable
+fun ProfilePage(
+    navController: NavController,
+    viewModel: SignUpViewModel
+) {
+    var nickname by remember { mutableStateOf("") }
+    var gender by remember { mutableStateOf("") }
+    var year by remember { mutableStateOf(0) }
+    var month by remember { mutableStateOf(0) }
+    var day by remember { mutableStateOf(0) }
+    var height by remember { mutableStateOf("")}
+    var weight by remember { mutableStateOf("") }
+
+    val isFormValid = nickname.isNotBlank()
+            && gender.isNotBlank()
+            && year > 0 && month > 0 && day > 0
+            && height.length >= 2
+            && weight.length >= 2
+
+    Column(
+        modifier = WhiteScreenModifier.padding(horizontal = 24.dp)
+    ) {
+        HeightSpacer(50.dp)
+        AppBar(
+            horizontalPadding = 0.dp,
+            LNB = R.drawable.btn_left_gray_arrow,
+            LNBDesc = "뒤로가기 버튼",
+            TitleText = "프로필 등록",
+        )
+        HeightSpacer(36.dp)
+        ProfileStepDescription("닉네임")
+        HeightSpacer(12.dp)
+        NicknameField(
+            nickname,
+            nicknameChange = { nickname = it }
+        )
+        HeightSpacer(28.dp)
+        ProfileStepDescription("성별")
+        HeightSpacer(12.dp)
+        ProfileGenderPick(select = { gender = it })
+        HeightSpacer(28.dp)
+        ProfileStepDescription("연령")
+        HeightSpacer(12.dp)
+        AgeField { selectedYear, selectedMonth, selectedDay ->
+            year = selectedYear
+            month = selectedMonth
+            day = selectedDay
+        }
+        HeightSpacer(28.dp)
+        Row {
+            ProfileStepDescription("연령")
+            WidthSpacer(4.dp)
+            Image(
+                imageVector = ImageVector.vectorResource(R.drawable.btn_profile_question),
+                contentDescription = "물음표 아이콘을 누를 시 간단한 알림 문구를 표출합니다"
+            )
+        }
+        HeightSpacer(12.dp)
+        BodyProfile { selectedHeight, selectedWeight ->
+            height = selectedHeight
+            weight = selectedWeight
+        }
+        Spacer(modifier = Modifier.weight(1f))
+        NextButton(
+            mModifier = Modifier.fillMaxWidth()
+                .padding(vertical = 16.dp)
+                .padding(bottom = 46.dp)
+                .height(58.dp),
+            buttonColor = if (isFormValid) Color(0xFF397CDB) else Color(0xFFCADCF5),
+            onClick = {
+                if (height.length >= 2 && weight.length >= 2) {
+                    viewModel.updateBirthDate(
+                        year,
+                        month,
+                        day
+                    )
+                    viewModel.updateNickname(nickname)
+                    viewModel.updateGender(gender)
+                    viewModel.updateHeight(height.toInt())
+                    viewModel.updateWeight(weight.toInt())
+                    navController.navigate("InterestPage")
+                }
+            }
+        )
+    }
+}
+
+@Composable
 fun InterestPage(
     navController: NavController,
     viewModel: SignUpViewModel
@@ -1056,47 +1143,5 @@ fun InterestPage(
     }
 }
 
-@Composable
-fun ProfilePage(
-    navController: NavController,
-    viewModel: SignUpViewModel
-) {
-    var nickname by remember { mutableStateOf("") }
-    var gender by remember { mutableStateOf("") }
-    Column(
-        modifier = WhiteScreenModifier.padding(horizontal = 24.dp)
-    ) {
-        HeightSpacer(50.dp)
-        AppBar(
-            horizontalPadding = 0.dp,
-            LNB = R.drawable.btn_left_gray_arrow,
-            LNBDesc = "뒤로가기 버튼",
-            TitleText = "프로필 등록",
-        )
-        HeightSpacer(36.dp)
-        ProfileStepDescription("닉네임")
-        HeightSpacer(12.dp)
-        NicknameField(
-            nickname,
-            nicknameChange = { nickname = it }
-        )
-        HeightSpacer(28.dp)
-        ProfileStepDescription("성별")
-        HeightSpacer(12.dp)
-        ProfileGenderPick(select = { gender = it })
-        HeightSpacer(28.dp)
-        ProfileStepDescription("연령")
-        HeightSpacer(12.dp)
 
-    }
-}
-
-@Preview
-@Composable
-fun ProfilePagePreview() {
-    ProfilePage(
-        navController = rememberNavController(),
-        viewModel = viewModel()
-    )
-}
 

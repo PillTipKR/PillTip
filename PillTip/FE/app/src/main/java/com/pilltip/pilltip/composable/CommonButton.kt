@@ -89,7 +89,7 @@ fun ButtonWithLogo(
             .fillMaxWidth()
             .height(54.dp)
             .background(color = backgroundColor, shape = RoundedCornerShape(size = 16.dp))
-            .clickable { onClick() }
+            .noRippleClickable { onClick() }
             .padding(horizontal = 20.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -140,7 +140,7 @@ fun BackButton(
         Image(
             imageVector = ImageVector.vectorResource(id = R.drawable.btn_black_arrow),
             contentDescription = "backButtonIcon",
-            modifier = Modifier.clickable {
+            modifier = Modifier.noRippleClickable {
                 navigationTo()
             }
         )

@@ -44,6 +44,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.pilltip.pilltip.composable.HeightSpacer
+import com.pilltip.pilltip.composable.noRippleClickable
 import kotlinx.coroutines.launch
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -203,7 +204,7 @@ fun CalendarScreen() {
             style = MaterialTheme.typography.titleLarge,
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable { showBottomSheet = true }
+                .noRippleClickable { showBottomSheet = true }
                 .padding(vertical = 16.dp),
             textAlign = TextAlign.Center
         )
