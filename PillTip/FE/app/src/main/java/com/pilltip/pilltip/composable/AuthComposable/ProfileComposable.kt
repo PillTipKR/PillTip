@@ -62,6 +62,41 @@ import kotlinx.coroutines.launch
 import java.time.LocalDate
 
 @Composable
+fun LoginButton(
+    text: String,
+    sourceImage : Int,
+    borderColor: Color,
+    backgroundColor: Color,
+    fontColor: Color,
+    onClick: () -> Unit
+){
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(52.dp)
+            .border(width = 1.dp, color = borderColor, shape = RoundedCornerShape(size = 100.dp))
+            .background(color = backgroundColor, shape = RoundedCornerShape(size = 100.dp))
+            .padding(start = 0.dp, top = 16.dp, end = 0.dp, bottom = 16.dp)
+            .noRippleClickable { onClick() },
+        contentAlignment = Alignment.Center
+    ){
+        Row(
+            verticalAlignment = Alignment.CenterVertically
+        ){
+            Image(imageVector = ImageVector.vectorResource(sourceImage), contentDescription = "Login icon image")
+            WidthSpacer(12.dp)
+            Text(
+                text = text,
+                fontSize = 16.sp,
+                fontFamily = pretendard,
+                fontWeight = FontWeight(600),
+                color = fontColor,
+            )
+        }
+    }
+}
+
+@Composable
 fun ProfileStepDescription(
     Title: String
 ) {

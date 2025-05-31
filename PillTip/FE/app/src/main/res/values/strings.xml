@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">PillTip</string>
+    <string name="SelectPage_app_desc">당신만의 AI 의약 관리</string>
 </resources>

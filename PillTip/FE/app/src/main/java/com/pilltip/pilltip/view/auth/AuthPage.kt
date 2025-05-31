@@ -4,12 +4,12 @@ package com.pilltip.pilltip.view.auth
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -21,7 +21,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -51,24 +50,26 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontVariation.width
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.pilltip.pilltip.R
 import com.pilltip.pilltip.composable.AppBar
 import com.pilltip.pilltip.composable.AuthComposable.AgeField
 import com.pilltip.pilltip.composable.AuthComposable.BodyProfile
+import com.pilltip.pilltip.composable.AuthComposable.LoginButton
+import com.pilltip.pilltip.composable.AuthComposable.NicknameField
+import com.pilltip.pilltip.composable.AuthComposable.ProfileGenderPick
+import com.pilltip.pilltip.composable.AuthComposable.ProfileStepDescription
 import com.pilltip.pilltip.composable.BackButton
 import com.pilltip.pilltip.composable.DoubleLineTitleText
 import com.pilltip.pilltip.composable.Guideline
@@ -84,17 +85,15 @@ import com.pilltip.pilltip.composable.TitleDescription
 import com.pilltip.pilltip.composable.WhiteScreenModifier
 import com.pilltip.pilltip.composable.WidthSpacer
 import com.pilltip.pilltip.composable.buttonModifier
+import com.pilltip.pilltip.model.signUp.KaKaoLoginViewModel
+import com.pilltip.pilltip.model.signUp.LoginType
 import com.pilltip.pilltip.model.signUp.PhoneAuthViewModel
 import com.pilltip.pilltip.model.signUp.SignUpViewModel
 import com.pilltip.pilltip.ui.theme.gray500
+import com.pilltip.pilltip.ui.theme.gray600
 import com.pilltip.pilltip.ui.theme.gray700
 import com.pilltip.pilltip.ui.theme.pretendard
 import com.pilltip.pilltip.ui.theme.primaryColor
-import com.pilltip.pilltip.composable.AuthComposable.NicknameField
-import com.pilltip.pilltip.composable.AuthComposable.ProfileGenderPick
-import com.pilltip.pilltip.composable.AuthComposable.ProfileStepDescription
-import com.pilltip.pilltip.ui.theme.gray200
-import com.pilltip.pilltip.ui.theme.gray800
 import com.pilltip.pilltip.view.auth.logic.InputType
 import com.pilltip.pilltip.view.auth.logic.OtpInputField
 import com.pilltip.pilltip.view.auth.logic.TermBottomSheet
@@ -139,38 +138,96 @@ fun SplashPage(navController: NavController) {
 }
 
 @Composable
-fun SelectPage(navController: NavController) {
+fun SelectPage(
+    navController: NavController,
+    signUpViewModel: SignUpViewModel,
+    kakaoViewModel: KaKaoLoginViewModel = hiltViewModel(),
+) {
     val systemUiController = rememberSystemUiController()
+    val user by kakaoViewModel.user
+    val context = LocalContext.current
+    val token = kakaoViewModel.getAccessToken()
+    var termsOfService by remember { mutableStateOf(false) }
+
+    LaunchedEffect(user) {
+        if (user != null && token != null) {
+            signUpViewModel.updateLoginType(LoginType.SOCIAL)
+            signUpViewModel.updateToken(token)
+            Log.d("accessToken: ", signUpViewModel.getToken())
+            termsOfService = true
+        }
+    }
 
     SideEffect {
         systemUiController.isNavigationBarVisible = true
     }
     Column(
-        modifier = WhiteScreenModifier
+        modifier = WhiteScreenModifier.padding(horizontal = 24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Spacer(modifier = Modifier.weight(1f))
-        NextButton(
-            text = "ID로 회원가입",
+        HeightSpacer(214.dp)
+        Image(
+            imageVector = ImageVector.vectorResource(id = R.drawable.logo_pilltip_blue_pill),
+            contentDescription = "필팁 알약 로고"
+        )
+        HeightSpacer(13.dp)
+        Image(
+            imageVector = ImageVector.vectorResource(id = R.drawable.logo_pilltip_typo),
+            contentDescription = "필팁 로고 typography"
+        )
+        HeightSpacer(12.dp)
+        Text(
+            text = "당신만의 AI 의약 관리",
+            fontSize = 16.sp,
+            fontFamily = pretendard,
+            fontWeight = FontWeight(500),
+            color = gray600
+        )
+        HeightSpacer(117.dp)
+        Image(
+            painter = painterResource(id = R.drawable.ic_select_page_fast_signin),
+            contentDescription = "빠른 회원가입"
+        )
+        Spacer(modifier = Modifier.height(10.dp))
+        LoginButton(
+            text = "카카오로 시작하기",
+            sourceImage = R.drawable.ic_kakao_login,
+            borderColor = Color(0xFFFEE500),
+            backgroundColor = Color(0xFFFEE500),
+            fontColor = Color.Black,
             onClick = {
-                navController.navigate("IDPage")
+                kakaoViewModel.kakaoLogin(context)
             }
         )
-        NextButton(
-            text = "카카오로 회원가입",
-            onClick = {
-                navController.navigate("KakaoAuthPage")
-            }
+//        HeightSpacer(16.dp)
+//        LoginButton(
+//            text = "구글로 시작하기 - 개발 중",
+//            sourceImage = R.drawable.ic_google_login,
+//            borderColor = gray500,
+//            backgroundColor = Color.White,
+//            fontColor = Color.Black,
+//            onClick = {
+//
+//            }
+//        )
+        HeightSpacer(16.dp)
+        LoginButton(
+            text = "아이디로 시작하기",
+            sourceImage = R.drawable.ic_id_login,
+            borderColor = Color(0xFF408AF1),
+            backgroundColor = Color.White,
+            fontColor = primaryColor,
+            onClick = { navController.navigate("IDPage") }
         )
-
     }
-}
 
-@Preview
-@Composable
-fun SelectPagePreview() {
-    SelectPage(
-        navController = rememberNavController()
-    )
+    if (termsOfService) {
+        TermBottomSheet(
+            signUpViewModel,
+            navController,
+            onDismiss = { termsOfService = false }
+        )
+    }
 }
 
 /**
@@ -217,7 +274,7 @@ fun IdPage(
             },
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        BackButton(navigationTo = ({ navController.navigate("SplashPage") }))
+        BackButton(navigationTo = ({ navController.navigate("SelectPage") }))
         HeightSpacer(56.dp)
         DoubleLineTitleText("아이디를", "입력해주세요")
         HeightSpacer(42.dp)
@@ -591,7 +648,7 @@ fun PhoneAuthPage(
     LaunchedEffect(isAutoVerified) {
         if (isAutoVerified) {
             viewModel.updatePhone(phoneNumber)
-            navController.navigate("NicknamePage")
+            navController.navigate("ProfilePage")
         }
     }
 
@@ -698,272 +755,6 @@ fun PhoneAuthPage(
     }
 }
 
-/**
- * 닉네임 입력 페이지입니다.
- * @param SignUpViewModel로, SignIn Data를 관리합니다.
- * @param navController Navigation Controller입니다.
- * @author 김기윤
- */
-@Composable
-fun NicknamePage(
-    navController: NavController,
-    viewModel: SignUpViewModel,
-) {
-    var nickname by remember { mutableStateOf("") }
-    var isFocused by remember { mutableStateOf(false) }
-    val focusManager = LocalFocusManager.current
-
-    Column(
-        modifier = WhiteScreenModifier
-            .pointerInput(Unit) {
-                detectTapGestures {
-                    focusManager.clearFocus()
-                }
-            },
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        BackButton(navigationTo = ({ navController.navigate("PhoneAuthPage") }))
-        HeightSpacer(56.dp)
-        DoubleLineTitleText(upperTextLine = "닉네임을", lowerTextLine = "입력해주세요")
-        HeightSpacer(12.dp)
-        TitleDescription(description = "원하는 대로 설정하세요!")
-        HeightSpacer(29.dp)
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier
-                .fillMaxWidth()
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                LabelText(labelText = if (nickname.isNotEmpty()) "닉네임" else "")
-                PlaceholderTextField(
-                    placeHolder = "PillTip",
-                    inputText = nickname,
-                    inputType = InputType.TEXT,
-                    onTextChanged = {
-                        nickname = it
-                    },
-                    onFocusChanged = {
-                        isFocused = it
-                    }
-                )
-            }
-        }
-        HeightSpacer(14.dp)
-        HighlightingLine(text = nickname, isFocused = isFocused)
-
-        Spacer(modifier = Modifier.weight(1f))
-        NextButton(
-            mModifier = buttonModifier,
-            buttonColor = if (nickname.isNotEmpty()) Color(0xFF397CDB) else Color(0xFFCADCF5),
-            text = "다음",
-            onClick = {
-                if (nickname.isNotEmpty()) {
-                    viewModel.updateNickname(nickname)
-                    navController.navigate("GenderPage")
-                }
-            }
-        )
-    }
-}
-
-@Composable
-fun GenderPage(
-    navController: NavController,
-    viewModel: SignUpViewModel
-) {
-    val lc = LocalConfiguration.current.screenHeightDp
-    val localWitdh = LocalConfiguration.current.screenWidthDp
-    Column(
-        modifier = WhiteScreenModifier,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        BackButton(navigationTo = ({ navController.navigate("PhoneAuthPage") }))
-        HeightSpacer(56.dp)
-        Column(
-            modifier = Modifier.height((lc - 50 + 46).dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            HeightSpacer(60.dp)
-            Box(
-                Modifier
-                    .width(84.dp)
-                    .height(33.dp)
-                    .background(color = Color(0xFFEEF4FC), shape = RoundedCornerShape(size = 12.dp))
-                    .padding(start = 16.dp, top = 8.dp, end = 16.dp, bottom = 8.dp)
-            ) {
-                Text(
-                    text = "성별 선택",
-                    style = TextStyle(
-                        fontSize = 14.sp,
-                        fontFamily = pretendard,
-                        fontWeight = FontWeight(700),
-                        color = Color(0xFF397CDB),
-                        textAlign = TextAlign.Center,
-                    )
-                )
-            }
-            HeightSpacer(22.dp)
-            Text(
-                text = "맞춤 서비스 제공을 위해 필요해요",
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 16.dp)
-                    .wrapContentHeight(Alignment.CenterVertically),
-                style = TextStyle(
-                    fontSize = 28.sp,
-                    fontFamily = pretendard,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF121212),
-                    letterSpacing = (-0.3).sp,
-                    textAlign = TextAlign.Center,
-                    platformStyle = PlatformTextStyle(
-                        includeFontPadding = false
-                    )
-                )
-            )
-            Row(
-                modifier = Modifier
-                    .padding(horizontal = 24.dp, vertical = 40.dp),
-                horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.Start),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                SelectButton(
-                    text = "남성",
-                    widthValue = (localWitdh - 48 - 16) / 2,
-                    imageSource = R.drawable.btn_blue_checkmark,
-                    onClick = {
-                        viewModel.updateGender("MALE")
-                        navController.navigate("AgePage")
-                    }
-                )
-                SelectButton(
-                    text = "여성",
-                    widthValue = (localWitdh - 48 - 16) / 2,
-                    imageSource = R.drawable.btn_gray_checkmark,
-                    onClick = {
-                        viewModel.updateGender("FEMALE")
-                        navController.navigate("AgePage")
-                    }
-                )
-            }
-        }
-    }
-}
-
-@Composable
-fun AgePage(
-    navController: NavController,
-    viewModel: SignUpViewModel
-) {
-    Column(
-        modifier = WhiteScreenModifier,
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        BackButton(navigationTo = ({ navController.navigate("GenderPage") }))
-        HeightSpacer(56.dp)
-        DoubleLineTitleText(upperTextLine = "나이를", lowerTextLine = "입력해주세요")
-        HeightSpacer(40.dp)
-        PillTipDatePicker(
-            onDateSelected = { localDate ->
-                viewModel.updateBirthDate(
-                    localDate.year,
-                    localDate.monthValue,
-                    localDate.dayOfMonth
-                )
-            }
-        )
-        Spacer(modifier = Modifier.weight(1f))
-        NextButton(
-            mModifier = buttonModifier,
-            buttonColor = Color(0xFF397CDB),
-            onClick = {
-                navController.navigate("BodyStatPage")
-            }
-        )
-    }
-}
-
-@Composable
-fun BodyStatPage(
-    navController: NavController,
-    viewModel: SignUpViewModel
-) {
-    var height by remember { mutableStateOf("") }
-    var weight by remember { mutableStateOf("") }
-    var isFocusedHeight by remember { mutableStateOf(false) }
-    var isFocusedWeight by remember { mutableStateOf(false) }
-    val focusManager = LocalFocusManager.current
-
-    Column(
-        modifier = WhiteScreenModifier
-            .pointerInput(Unit) {
-                detectTapGestures {
-                    focusManager.clearFocus()
-                }
-            },
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        BackButton(navigationTo = ({ navController.navigate("AgePage") }))
-        HeightSpacer(56.dp)
-        DoubleLineTitleText(upperTextLine = "키와 몸무게를", lowerTextLine = "입력해주세요")
-        HeightSpacer(12.dp)
-        TitleDescription(description = "복약 안전을 위해 필수적이에요")
-        HeightSpacer(29.dp)
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier
-                .fillMaxWidth()
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                LabelText(labelText = if (height.isNotEmpty()) "키" else "")
-                PlaceholderTextField(
-                    placeHolder = "174",
-                    inputText = height,
-                    inputType = InputType.NUMBER,
-                    onTextChanged = { height = it },
-                    onFocusChanged = {
-                        isFocusedHeight = it
-                    }
-                )
-                HeightSpacer(14.dp)
-                HighlightingLine(text = height, isFocused = isFocusedHeight)
-            }
-            WidthSpacer(16.dp)
-            Column(modifier = Modifier.weight(1f)) {
-                LabelText(labelText = if (weight.isNotEmpty()) "몸무게" else "")
-                PlaceholderTextField(
-                    placeHolder = "50",
-                    inputText = weight,
-                    inputType = InputType.NUMBER,
-                    onTextChanged = { weight = it },
-                    onFocusChanged = {
-                        isFocusedWeight = it
-                    }
-                )
-                HeightSpacer(14.dp)
-                HighlightingLine(text = weight, isFocused = isFocusedWeight)
-            }
-        }
-
-        Spacer(modifier = Modifier.weight(1f))
-        NextButton(
-            mModifier = buttonModifier,
-            buttonColor = if (height.length >= 2 && weight.length >= 2) Color(0xFF397CDB) else Color(
-                0xFFCADCF5
-            ),
-            onClick = {
-                if (height.length >= 2 && weight.length >= 2) {
-                    viewModel.updateHeight(height.toInt())
-                    viewModel.updateWeight(weight.toInt())
-
-                    navController.navigate("InterestPage")
-                }
-            }
-        )
-    }
-}
-
 @Composable
 fun ProfilePage(
     navController: NavController,
@@ -974,7 +765,7 @@ fun ProfilePage(
     var year by remember { mutableStateOf(0) }
     var month by remember { mutableStateOf(0) }
     var day by remember { mutableStateOf(0) }
-    var height by remember { mutableStateOf("")}
+    var height by remember { mutableStateOf("") }
     var weight by remember { mutableStateOf("") }
 
     val isFormValid = nickname.isNotBlank()
@@ -1027,8 +818,18 @@ fun ProfilePage(
             weight = selectedWeight
         }
         Spacer(modifier = Modifier.weight(1f))
+        Text(
+            text = "등록된 정보는 나중에 수정할 수 있어요!",
+            style = TextStyle(
+                fontSize = 14.sp,
+                fontFamily = pretendard,
+                fontWeight = FontWeight(500),
+                color = primaryColor,
+            )
+        )
         NextButton(
-            mModifier = Modifier.fillMaxWidth()
+            mModifier = Modifier
+                .fillMaxWidth()
                 .padding(vertical = 16.dp)
                 .padding(bottom = 46.dp)
                 .height(58.dp),
