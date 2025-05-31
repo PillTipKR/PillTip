@@ -6,13 +6,9 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.pilltip.pilltip.model.signUp.SignUpViewModel
-import com.pilltip.pilltip.view.auth.AgePage
-import com.pilltip.pilltip.view.auth.BodyStatPage
-import com.pilltip.pilltip.view.auth.GenderPage
 import com.pilltip.pilltip.view.auth.IdPage
 import com.pilltip.pilltip.view.auth.InterestPage
 import com.pilltip.pilltip.view.auth.KakaoAuthPage
-import com.pilltip.pilltip.view.auth.NicknamePage
 import com.pilltip.pilltip.view.auth.PasswordPage
 import com.pilltip.pilltip.view.auth.PhoneAuthPage
 import com.pilltip.pilltip.view.auth.ProfilePage
@@ -33,7 +29,7 @@ fun NavGraph(startPage: String) {
             SplashPage(navController)
         }
         composable("SelectPage"){
-            SelectPage(navController)
+            SelectPage(navController, signUpViewModel)
         }
         composable("KakaoAuthPage") {
             KakaoAuthPage(navController, signUpViewModel)
@@ -49,18 +45,6 @@ fun NavGraph(startPage: String) {
         }
         composable("ProfilePage"){
             ProfilePage(navController, signUpViewModel)
-        }
-        composable("NicknamePage"){
-            NicknamePage(navController = navController, signUpViewModel)
-        }
-        composable("GenderPage"){
-            GenderPage(navController = navController, signUpViewModel)
-        }
-        composable("AgePage"){
-            AgePage(navController = navController, signUpViewModel)
-        }
-        composable("BodyStatPage"){
-            BodyStatPage(navController = navController, signUpViewModel)
         }
         composable("InterestPage"){
             InterestPage(navController = navController, signUpViewModel)
