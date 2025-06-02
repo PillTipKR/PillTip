@@ -34,7 +34,7 @@ class MainActivity : ComponentActivity() {
             val kakaoKey = BuildConfig.KAKAO_KEY
             Log.d("KakaoKey", kakaoKey)
             KakaoSdk.init(this, kakaoKey)
-            KakaoMapSdk.init(this, kakaoKey);
+            KakaoMapSdk.init(this, kakaoKey)
             NavGraph(startPage = "SplashPage")
         }
     }

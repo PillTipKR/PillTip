@@ -15,6 +15,8 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -27,12 +29,15 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -81,6 +86,7 @@ import com.pilltip.pilltip.composable.PillTipDatePicker
 import com.pilltip.pilltip.composable.PlaceholderTextField
 import com.pilltip.pilltip.composable.SelectButton
 import com.pilltip.pilltip.composable.SingleLineTitleText
+import com.pilltip.pilltip.composable.TagButton
 import com.pilltip.pilltip.composable.TitleDescription
 import com.pilltip.pilltip.composable.WhiteScreenModifier
 import com.pilltip.pilltip.composable.WidthSpacer
@@ -782,6 +788,7 @@ fun ProfilePage(
             horizontalPadding = 0.dp,
             LNB = R.drawable.btn_left_gray_arrow,
             LNBDesc = "뒤로가기 버튼",
+            LNBClickable = { navController.navigate("SelectPage") },
             TitleText = "프로필 등록",
         )
         HeightSpacer(36.dp)
@@ -825,7 +832,9 @@ fun ProfilePage(
                 fontFamily = pretendard,
                 fontWeight = FontWeight(500),
                 color = primaryColor,
-            )
+                textAlign = TextAlign.Center
+            ),
+            modifier = Modifier.fillMaxWidth()
         )
         NextButton(
             mModifier = Modifier
@@ -852,57 +861,67 @@ fun ProfilePage(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun InterestPage(
     navController: NavController,
     viewModel: SignUpViewModel
 ) {
-    var interest by remember { mutableStateOf("") }
-    var isFocused by remember { mutableStateOf(false) }
-    val focusManager = LocalFocusManager.current
+    val selectedKeywords = remember { mutableStateListOf<String>() }
+    val allKeywords = List(20) { index -> "키워드~${index + 1}" }
     val context = LocalContext.current
+
+
     Column(
-        modifier = WhiteScreenModifier
-            .pointerInput(Unit) {
-                detectTapGestures {
-                    focusManager.clearFocus()
-                }
-            },
-        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = WhiteScreenModifier,
     ) {
-        BackButton(navigationTo = ({ navController.navigate("BodyStatPage") }))
+        HeightSpacer(50.dp)
+        AppBar(
+            horizontalPadding = 20.dp,
+            LNB = R.drawable.btn_left_gray_arrow,
+            LNBDesc = "뒤로가기 버튼",
+            LNBClickable = { navController.navigate("ProfilePage") },
+            TitleText = "관심사 선택",
+        )
         HeightSpacer(56.dp)
-        DoubleLineTitleText(upperTextLine = "관심사를", lowerTextLine = "입력해주세요")
+        DoubleLineTitleText(upperTextLine = "관심있는 키워드를", lowerTextLine = "선택해보세요", padding = 20.dp)
         HeightSpacer(12.dp)
-        TitleDescription(description = "무엇에 관심이 있으신가요?")
-        HeightSpacer(29.dp)
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier
-                .fillMaxWidth()
+        Text(
+            text = "최대 5개까지 선택할 수 있어요",
+            fontSize = 12.sp,
+            fontFamily = pretendard,
+            fontWeight = FontWeight(500),
+            color = gray500,
+            modifier = Modifier.padding(horizontal = 20.dp)
+        )
+        HeightSpacer(40.dp)
+        FlowRow(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
-            Column(modifier = Modifier.weight(1f)) {
-                LabelText(labelText = if (interest.isNotEmpty()) "관심사" else "")
-                PlaceholderTextField(
-                    placeHolder = "헬스케어",
-                    inputText = interest,
-                    inputType = InputType.TEXT,
-                    onTextChanged = { interest = it },
-                    onFocusChanged = {
-                        isFocused = it
+            allKeywords.forEach { keyword ->
+                val isSelected = keyword in selectedKeywords
+                TagButton(
+                    keyword = keyword,
+                    isSelected = isSelected,
+                    onClick = {
+                        if (isSelected) {
+                            selectedKeywords.remove(keyword)
+                        } else if (selectedKeywords.size < 5) {
+                            selectedKeywords.add(keyword)
+                        }
                     }
                 )
             }
         }
-        HeightSpacer(14.dp)
-        HighlightingLine(text = interest, isFocused = isFocused)
         Spacer(modifier = Modifier.weight(1f))
         NextButton(
             mModifier = buttonModifier,
-            buttonColor = if (interest.isNotEmpty()) Color(0xFF397CDB) else Color(0xFFCADCF5),
+            buttonColor = if (selectedKeywords.isNotEmpty()) Color(0xFF397CDB) else Color(0xFFCADCF5),
             onClick = {
-                if (interest.isNotEmpty()) {
-                    viewModel.updateInterest(interest)
+                if (selectedKeywords.isNotEmpty()) {
+                    viewModel.updateInterest(interest = selectedKeywords.joinToString(","))
                     viewModel.logSignUpData()
                     viewModel.completeSignUp(
                         onSuccess = { accessToken, refreshToken ->
