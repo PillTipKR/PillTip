@@ -13,8 +13,10 @@ public class Ingredient {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true, columnDefinition = "TEXT")
     private String nameKr;
+
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String nameEn;
     // getter, setter 생략
 } 

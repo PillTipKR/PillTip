@@ -39,12 +39,6 @@ public class SearchController {
             @RequestParam String input,
             @RequestParam(defaultValue = "0") int page) throws IOException {
         return searchService.getDrugSearch(input, drug, pageSize, page);
-
-/*
-        List<String> filter = List.of(id,drug);
-        ElasticQuery eq = ElasitcQueryBuilder.queryBuild(input, drug, filter,page);
-        return elasticsearchService.getMatchingFromElasticsearch(eq, ElasticsearchDTO.class);
- */
     }
 
     @GetMapping("/manufacturers")

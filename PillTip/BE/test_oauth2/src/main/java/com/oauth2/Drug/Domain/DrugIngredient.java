@@ -13,6 +13,7 @@ public class DrugIngredient {
     private DrugIngredientId id;
 
     private Float amount;
+    private String amountBackup;
     private String unit;
 
     // getter, setter 생략

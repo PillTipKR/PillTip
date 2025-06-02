@@ -13,20 +13,12 @@ public class DrugInteraction {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long interactionId;
 
-    @Column(nullable = false)
-    private Long ingredientId1;
-    @Column(nullable = false)
-    private Long ingredientId2;
+    private Long groupId1;
+    private Long groupId2;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private InteractionLevel interactionLevel;
+    @Column(columnDefinition = "TEXT")
+    private String reason;
 
-    @Column(columnDefinition = "TEXT",nullable = false)
-    private String description;
-
-    public enum InteractionLevel {
-        CAUTION, TABOO, INFO
-    }
-    // getter, setter 생략
-} 
+    @Column(columnDefinition = "TEXT")
+    private String note;
+}
