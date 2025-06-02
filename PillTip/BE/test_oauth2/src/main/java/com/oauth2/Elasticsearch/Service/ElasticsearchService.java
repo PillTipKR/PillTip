@@ -2,24 +2,16 @@ package com.oauth2.Elasticsearch.Service;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.query_dsl.NestedQuery;
-import co.elastic.clients.elasticsearch.core.IndexRequest;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.elasticsearch.core.search.Hit;
 import com.oauth2.Elasticsearch.Dto.ElasticQuery;
-import com.oauth2.Elasticsearch.Dto.ElasticsearchDTO;
-import com.oauth2.Drug.Domain.Drug;
-import com.oauth2.Drug.Domain.Ingredient;
-import com.oauth2.Drug.Repository.DrugRepository;
-import com.oauth2.Drug.Repository.IngredientRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 
 @Service
 public class ElasticsearchService {
@@ -31,24 +23,10 @@ public class ElasticsearchService {
     @Value("${elastic.autocomplete.field}")
     private String autocompleteField;
 
-    @Value("${elastic.drug.drug}")
-    private String drugName;
-
-    @Value("${elastic.drug.manufacturer}")
-    private String manufacturer;
-
-    @Value("${elastic.drug.ingredient}")
-    private String ingredientName;
-
     private final ElasticsearchClient elasticsearchClient;
-    private final DrugRepository drugRepository;
 
-    private final IngredientRepository ingredientRepository;
-
-    public ElasticsearchService(ElasticsearchClient elasticsearchClient, DrugRepository drugRepository, IngredientRepository ingredientRepository) {
+    public ElasticsearchService(ElasticsearchClient elasticsearchClient) {
         this.elasticsearchClient = elasticsearchClient;
-        this.drugRepository = drugRepository;
-        this.ingredientRepository = ingredientRepository;
     }
 
     // 인덱스를 기준으로 analyzer,tokenizer,indexsetting 등을 가짐
@@ -58,39 +36,6 @@ public class ElasticsearchService {
     //- firebase에 약품 id와 매핑해서 저장 후, 약의 대한 정보를 주면 firebase에서 받아오기
     //- 이미지 url도 DB에 저장해서 사용하기
 
-
-    public void syncTextToElasticsearch() throws IOException {
-        List<Drug> drugs = drugRepository.findAll();
-        List<Ingredient> ingredients = ingredientRepository.findAll();
-        Set<String> manufacturers = new HashSet<>();
-        for (int i=0; i<1000; i++){
-            Drug drug = drugs.get(i);
-            injectIndex(drugName,drug.getName());
-            if (manufacturers.add(drug.getManufacturer())) {
-                injectIndex(manufacturer, drug.getManufacturer());
-            }
-        }
-        for(int i=0; i<1000; i++){
-            Ingredient ingredient = ingredients.get(i);
-            injectIndex(ingredientName,ingredient.getNameKr());
-        }
-        System.out.println("index injection completed");
-    }
-
-    private void injectIndex(String type, String value) throws IOException {
-        // 중복 방지를 위한 고유 ID 생성
-        ElasticsearchDTO elasticsearchDTO = new ElasticsearchDTO(
-                type,
-                value
-        );
-
-        IndexRequest<ElasticsearchDTO> indexRequest = new IndexRequest.Builder<ElasticsearchDTO>()
-                .index(autocomplete)
-                .document(elasticsearchDTO)
-                .build();
-
-        elasticsearchClient.index(indexRequest);
-    }
 
     private NestedQuery nestedQuery(String field, String value) {
         String nestedPath = field.split("\\.")[0]; // e.g., "ingredient"
@@ -133,10 +78,8 @@ public class ElasticsearchService {
             s = s.query(q -> q
                     .bool(b -> {
                             if(index.equals(autocomplete)) {
-                                System.out.println(field[0]);
                                 b = b.must(m -> m.term(t -> t.field("type").value(field[0])));
                                 field[0] = autocompleteField;
-                                System.out.println(field[0]);
                             }
 
                         b.minimumShouldMatch("1");
@@ -170,8 +113,7 @@ public class ElasticsearchService {
             return s;
         });
         SearchResponse<T> response = elasticsearchClient.search(searchRequest,dtoClass);
-        System.out.println(searchRequest.toString());
-        System.out.println(response.hits());
+
         return response.hits().hits().stream()
                 .map(Hit::source)
                 .filter(Objects::nonNull)

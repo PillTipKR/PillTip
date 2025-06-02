@@ -28,6 +28,7 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'com.opencsv:opencsv:5.8'
 
 	implementation 'org.springframework.boot:spring-boot-starter-data-elasticsearch'
 	implementation 'co.elastic.clients:elasticsearch-java:8.11.1'

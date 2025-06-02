@@ -12,6 +12,7 @@ import com.oauth2.Drug.Repository.DrugRepository;
 import com.oauth2.Drug.Repository.IngredientRepository;
 import com.oauth2.Search.Dto.IngredientDetail;
 import com.oauth2.Search.Dto.SearchIndexDTO;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -22,63 +23,13 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
 public class SearchService {
 
     @Value("${elastic.allSearch}")
     private String index;
 
-    private final ElasticsearchClient elasticsearchClient;
     private final ElasticsearchService elasticsearchService;
-    private final DrugRepository drugRepository;
-    private final IngredientRepository ingredientRepository;
-    private final DrugIngredientRepository drugIngredientRepository;
-
-    public SearchService(ElasticsearchClient elasticsearchClient, ElasticsearchService elasticsearchService, DrugRepository drugRepository, IngredientRepository ingredientRepository, DrugIngredientRepository drugIngredientRepository) {
-        this.elasticsearchClient = elasticsearchClient;
-        this.elasticsearchService = elasticsearchService;
-        this.drugRepository = drugRepository;
-        this.ingredientRepository = ingredientRepository;
-        this.drugIngredientRepository = drugIngredientRepository;
-    }
-
-    public void syncDrugsToElasticsearch() throws IOException {
-        List<Drug> drugs = drugRepository.findAll();
-        for (int i = 0; i < 1000; i++) {
-            Drug drug = drugs.get(i);
-            List<DrugIngredient> di = drugIngredientRepository.findById_DrugId(drug.getId());
-            List<IngredientDetail> ingredientDetails = new ArrayList<>();
-            for(DrugIngredient ding : di){
-                Optional<Ingredient> ing =
-                        ingredientRepository.findById(ding.getId().getIngredientId());
-                if(ing.isPresent()){
-                    IngredientDetail isidto = new IngredientDetail(
-                            ing.get().getNameKr(),
-                            ding.getAmountBackup()+ding.getUnit(),
-                            false
-                    );
-                    ingredientDetails.add(isidto);
-                }
-                System.out.println(ingredientDetails.size());
-                ingredientDetails.sort(Collections.reverseOrder());
-                ingredientDetails.get(0).setMain(true);
-            }
-            //for (Drug drug : drugs) {
-            SearchIndexDTO dto = new SearchIndexDTO(
-                    drug.getId(),
-                    drug.getName(),
-                    ingredientDetails,
-                    drug.getManufacturer()
-            );
-
-            IndexRequest<SearchIndexDTO> indexRequest = new IndexRequest.Builder<SearchIndexDTO>()
-                    .index(index)
-                    .id(String.valueOf(dto.id()))
-                    .document(dto)
-                    .build();
-
-            elasticsearchClient.index(indexRequest);
-        }
-    }
 
     public List<SearchIndexDTO> getDrugSearch(String input, String field,
                                        int pageSize, int page) throws IOException {
