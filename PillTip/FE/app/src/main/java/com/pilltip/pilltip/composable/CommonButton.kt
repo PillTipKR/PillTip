@@ -3,6 +3,7 @@ package com.pilltip.pilltip.composable
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -31,7 +32,12 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.pilltip.pilltip.R
+import com.pilltip.pilltip.ui.theme.gray200
+import com.pilltip.pilltip.ui.theme.gray300
+import com.pilltip.pilltip.ui.theme.gray800
 import com.pilltip.pilltip.ui.theme.pretendard
+import com.pilltip.pilltip.ui.theme.primaryColor
+import com.pilltip.pilltip.ui.theme.primaryColor050
 
 /**
  * 주로 화면 아랫 부분에 있는 버튼입니다. 앱 전반에서 주로 사용합니다.
@@ -220,5 +226,40 @@ fun SelectButton(
                 )
             )
         }
+    }
+}
+
+@Composable
+fun TagButton(
+    keyword: String,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    selectedBackgroundColor: Color = primaryColor050,
+    selectedTextColor: Color = primaryColor,
+    selectedBorderColor: Color = primaryColor,
+    unselectedBackgroundColor: Color = Color.White,
+    unselectedTextColor: Color = gray800,
+    unselectedBorderColor: Color = gray300
+) {
+    val backgroundColor = if (isSelected) selectedBackgroundColor else unselectedBackgroundColor
+    val textColor = if (isSelected) selectedTextColor else unselectedTextColor
+    val borderColor = if (isSelected) selectedBorderColor else unselectedBorderColor
+
+    Box(
+        modifier = Modifier
+            .border(width = 1.dp, color = borderColor, shape = RoundedCornerShape(size = 100.dp))
+            .height(33.dp)
+            .background(color = backgroundColor, shape = RoundedCornerShape(size = 100.dp))
+            .padding(start = 16.dp, top = 8.dp, end = 16.dp, bottom = 8.dp)
+            .noRippleClickable { onClick() },
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            keyword,
+            fontSize = 14.sp,
+            fontFamily = pretendard,
+            fontWeight = FontWeight(500),
+            color = textColor
+        )
     }
 }

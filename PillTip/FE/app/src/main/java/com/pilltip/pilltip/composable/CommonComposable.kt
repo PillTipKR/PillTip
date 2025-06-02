@@ -621,7 +621,7 @@ fun AppBar(
     backgroudnColor: Color = Color.White,
     LNB: Int? = null,
     LNBDesc: String = "LNB입니다.",
-    LNBSize: Dp = 10.dp,
+    LNBSize: Dp = 20.dp,
     LNBClickable: (() -> Unit)? = null,
     TitleText: String,
     TitleTextColor: Color = Color.Black,
@@ -629,7 +629,7 @@ fun AppBar(
     TitleTextWeight: FontWeight = FontWeight.W600,
     RNB: Int? = null,
     RNBDesc: String = "RNB입니다.",
-    RNBSize: Dp = 10.dp,
+    RNBSize: Dp = 20.dp,
     RNBClickable: (() -> Unit)? = null,
 ) {
     Row(
