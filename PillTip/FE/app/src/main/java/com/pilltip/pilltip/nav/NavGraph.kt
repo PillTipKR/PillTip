@@ -15,6 +15,7 @@ import com.pilltip.pilltip.view.auth.ProfilePage
 import com.pilltip.pilltip.view.auth.SelectPage
 import com.pilltip.pilltip.view.auth.SplashPage
 import com.pilltip.pilltip.view.main.PillMainPage
+import com.pilltip.pilltip.view.search.SearchPage
 
 @Composable
 fun NavGraph(startPage: String) {
@@ -51,7 +52,10 @@ fun NavGraph(startPage: String) {
         }
 
         composable("PillMainPage"){
-            PillMainPage()
+            PillMainPage(navController)
+        }
+        composable("SearchPage"){
+            SearchPage(navController)
         }
 
     }

@@ -75,7 +75,10 @@ fun LogoField(
  * @param horizontalPadding 좌우패딩을 설정합니다.
  */
 @Composable
-fun MainSearchField(horizontalPadding: Dp = 22.dp) {
+fun MainSearchField(
+    horizontalPadding: Dp = 22.dp,
+    onClick: () -> Unit
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -87,7 +90,8 @@ fun MainSearchField(horizontalPadding: Dp = 22.dp) {
                 ambientColor = Color(0x14000000)
             )
             .background(color = Color(0xFFFFFFFF), shape = RoundedCornerShape(size = 12.dp))
-            .padding(horizontal = 18.dp, vertical = 12.dp),
+            .padding(horizontal = 18.dp, vertical = 12.dp)
+            .noRippleClickable { onClick() },
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
@@ -115,7 +119,7 @@ fun MainSearchField(horizontalPadding: Dp = 22.dp) {
 }
 
 /**
- * 메인 화면에 있는 공고 등록, 연락 이력 카드입니다.
+ * 메인 화면에 있는 작은 카드입니다.
  * @param HeaderText: title을 작성합니다.
  * @param SubHeaderText: desc을 작성합니다.
  * @param ImageField: 이미지를 추가해줍니다.
@@ -170,7 +174,7 @@ fun SmallTabCard(
                         .padding(top = 5.44.dp)
                 )
                 Image(
-                    imageVector = ImageVector.vectorResource(id = ImageField),
+                    painter = painterResource(id = ImageField),
                     contentDescription = "logo",
                     modifier = Modifier
                         .width(60.dp)
@@ -186,7 +190,7 @@ fun SmallTabCard(
  * announcementText: 공지사항 카드 설명란
  */
 @Composable
-fun AnnouncementTab(announcementText: String = "TEST") {
+fun AnnouncementCard(announcementText: String = "TEST") {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -210,7 +214,9 @@ fun AnnouncementTab(announcementText: String = "TEST") {
                 .width(47.dp)
                 .height(41.dp)
         )
-        Column {
+        Column(
+            modifier = Modifier.weight(1f)
+        ) {
             Text(
                 text = "공지사항",
                 style = TextStyle(
@@ -232,7 +238,7 @@ fun AnnouncementTab(announcementText: String = "TEST") {
                 )
             )
         }
-        Spacer(modifier = Modifier.weight(1f))
+//        Spacer(modifier = Modifier.weight(1f))
         Image(
             imageVector = ImageVector.vectorResource(id = R.drawable.btn_announce_arrow),
             contentDescription = "arrow",
