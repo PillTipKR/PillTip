@@ -66,6 +66,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.pilltip.pilltip.R
+import com.pilltip.pilltip.ui.theme.backgroundColor
 import com.pilltip.pilltip.ui.theme.gray400
 import com.pilltip.pilltip.ui.theme.gray800
 import com.pilltip.pilltip.ui.theme.pretendard
@@ -582,36 +583,6 @@ fun WheelColumn(
                 )
             }
         }
-    }
-}
-
-/**
- * 메인 화면에 있는 로고 이미지 필드 컴포저블 입니다.
- * @param horizontalPadding: 좌우패딩을 설정합니다.
- */
-@Composable
-fun LogoField(horizontalPadding: Dp = 24.dp) {
-    Row(
-        modifier = Modifier
-            .height(54.dp)
-            .fillMaxWidth()
-            .background(primaryColor)
-            .padding(horizontal = horizontalPadding),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Image(
-            imageVector = ImageVector.vectorResource(id = R.drawable.logo_splash),
-            contentDescription = "logo",
-            modifier = Modifier.size(100.dp)
-        )
-        Spacer(modifier = Modifier.weight(1f))
-        Image(
-            imageVector = ImageVector.vectorResource(id = R.drawable.btn_alarmbell),
-            contentDescription = "alarm",
-            modifier = Modifier
-                .padding(1.dp)
-                .height(24.dp)
-        )
     }
 }
 

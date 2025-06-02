@@ -917,6 +917,7 @@ fun InterestPage(
         }
         Spacer(modifier = Modifier.weight(1f))
         NextButton(
+            text = "저장하기",
             mModifier = buttonModifier,
             buttonColor = if (selectedKeywords.isNotEmpty()) Color(0xFF397CDB) else Color(0xFFCADCF5),
             onClick = {
