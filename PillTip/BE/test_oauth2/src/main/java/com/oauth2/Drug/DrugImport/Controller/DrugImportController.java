@@ -58,10 +58,5 @@ public class DrugImportController {
     }
 
 
-    @PostMapping("/interaction")
-    public ResponseEntity<?> uploadInteraction(@RequestParam MultipartFile file) {
-        ingredientImportService.importInteractionsFromCsv(file);
-        return ResponseEntity.ok("성분 데이터 임포트 완료");
-    }
 
 } 

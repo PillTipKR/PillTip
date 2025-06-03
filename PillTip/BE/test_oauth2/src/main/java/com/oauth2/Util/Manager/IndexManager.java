@@ -1,8 +1,8 @@
-package com.oauth2.Elasticsearch.Util.Manager;
+package com.oauth2.Util.Manager;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch.indices.CreateIndexRequest;
-import com.oauth2.Elasticsearch.Util.Provider.IndexMappingProvider;
+import com.oauth2.Util.Provider.IndexMappingProvider;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;

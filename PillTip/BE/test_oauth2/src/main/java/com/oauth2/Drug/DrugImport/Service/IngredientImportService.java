@@ -22,8 +22,6 @@ public class IngredientImportService {
     private final IngredientRepository ingredientRepository;
     private final DrugCautionRepository ducationRepository;
     private final DrugTherapeuticDupRepository drugTherapeuticDupRepository;
-    private final IngredientGroupRepository ingredientGroupRepository;
-    private final IngredientGroupMemberRepository ingredientGroupMemberRepository;
     private final DrugInteractionRepository interactionRepository;
 
     public void importIngredientsFromCsv(MultipartFile file) {
@@ -159,103 +157,6 @@ public class IngredientImportService {
             e.printStackTrace();
         }
     }
-
-    public void importInteractionsFromCsv(MultipartFile file) {
-        try (
-                CSVReader reader = new CSVReader(new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8))
-        ) {
-            reader.readNext(); // Skip header
-            String[] line;
-
-            while ((line = reader.readNext()) != null) {
-                String fullExpr = line[0].trim(); // 전체 조합
-                String expr1 = line[1].trim();    // 왼쪽 복합 성분명
-                String expr2 = line[2].trim();    // 오른쪽 복합 성분명
-                String reason = line[3].trim();
-                String note = line.length >= 6 ? line[5].trim() : "";
-
-                List<List<Long>> leftIdSets = parseExprToIngredientIdSets(expr1);
-                List<List<Long>> rightIdSets = parseExprToIngredientIdSets(expr2);
-
-                List<List<Long>> leftCombos = cartesianProduct(leftIdSets);
-                List<List<Long>> rightCombos = cartesianProduct(rightIdSets);
-
-                for (List<Long> leftCombo : leftCombos) {
-                    Long groupId1 = createGroupIfNotExists(leftCombo);
-
-                    for (List<Long> rightCombo : rightCombos) {
-                        Long groupId2 = createGroupIfNotExists(rightCombo);
-
-                        DrugInteraction interaction = new DrugInteraction();
-                        interaction.setGroupId1(groupId1);
-                        interaction.setGroupId2(groupId2);
-                        interaction.setReason(reason);
-                        interaction.setNote(note + "\n | 전체조합: " + fullExpr);
-                        interactionRepository.save(interaction);
-                    }
-                }
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    private List<List<Long>> parseExprToIngredientIdSets(String expr) {
-        List<List<Long>> result = new ArrayList<>();
-        if (expr == null || expr.isEmpty()) return result;
-
-        String[] names = expr.split("[+,]");
-        for (String name : names) {
-            name = name.trim();
-            List<Ingredient> ingredients = ingredientRepository.findByNameEn(name);
-            List<Long> ids = ingredients.stream().map(Ingredient::getId).toList();
-            if (!ids.isEmpty()) result.add(ids);
-        }
-        return result;
-    }
-
-    private List<List<Long>> cartesianProduct(List<List<Long>> lists) {
-        List<List<Long>> result = new ArrayList<>();
-        if (lists == null || lists.isEmpty()) return result;
-
-        result.add(new ArrayList<>()); // seed with empty list
-        for (List<Long> pool : lists) {
-            List<List<Long>> newResult = new ArrayList<>();
-            for (List<Long> prefix : result) {
-                for (Long item : pool) {
-                    List<Long> newCombo = new ArrayList<>(prefix);
-                    newCombo.add(item);
-                    newResult.add(newCombo);
-                }
-            }
-            result = newResult;
-        }
-        return result;
-    }
-
-    private Long createGroupIfNotExists(List<Long> ingredientIds) {
-        List<Long> sortedIds = new ArrayList<>(ingredientIds);
-        Collections.sort(sortedIds);
-        String key = sortedIds.stream().map(String::valueOf).collect(Collectors.joining("+"));
-
-        Optional<IngredientGroup> existing = ingredientGroupRepository.findByGroupName(key);
-        if (existing.isPresent()) return existing.get().getGroupId();
-
-        IngredientGroup group = new IngredientGroup();
-        group.setGroupName(key);
-        group = ingredientGroupRepository.save(group);
-
-        for (Long ingId : sortedIds) {
-            IngredientGroupMember member = new IngredientGroupMember();
-            member.setGroupId(group.getGroupId());
-            member.setIngredientId(ingId);
-            ingredientGroupMemberRepository.save(member);
-        }
-
-        return group.getGroupId();
-    }
-
 
 
 }
