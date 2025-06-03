@@ -53,11 +53,24 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     }
 
     private User createNewUser(String registrationId, Map<String, Object> attributes) {
-        // 기본 사용자 정보 생성
-        String name = (String) attributes.get("name");
-        if (name == null) {
-            name = "User" + System.currentTimeMillis(); // 기본 닉네임 생성
+        // 기본 닉네임 생성
+        String defaultNickname = "User" + System.currentTimeMillis();
+    
+        // 소셜 닉네임 추출
+        String socialNickname = null;
+        if (registrationId.equalsIgnoreCase("google")) {
+            socialNickname = (String) attributes.get("name");
+        } else if (registrationId.equalsIgnoreCase("kakao")) {
+            Map<String, Object> kakaoAccount = (Map<String, Object>) attributes.get("kakao_account");
+            if (kakaoAccount != null) {
+                Map<String, Object> profile = (Map<String, Object>) kakaoAccount.get("profile");
+                if (profile != null) {
+                    socialNickname = (String) profile.get("nickname");
+                }
+            }
         }
+    
+        String nickname = (socialNickname != null && !socialNickname.isEmpty()) ? socialNickname : defaultNickname;
 
         User user = User.builder()
                 .loginType(LoginType.SOCIAL)  // 모든 소셜 로그인은 LoginType.SOCIAL 사용
