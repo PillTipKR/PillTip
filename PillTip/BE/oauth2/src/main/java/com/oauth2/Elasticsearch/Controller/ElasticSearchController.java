@@ -3,7 +3,11 @@ package com.oauth2.Elasticsearch.Controller;
 import com.oauth2.Elasticsearch.Dto.ElasticQuery;
 import com.oauth2.Elasticsearch.Dto.ElasticsearchDTO;
 import com.oauth2.Elasticsearch.Service.ElasticsearchService;
+import com.oauth2.User.dto.ApiResponse;
+import com.oauth2.User.entity.User;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -38,29 +42,47 @@ public class ElasticSearchController {
     }
 
     @GetMapping("/drugs")
-    public List<ElasticsearchDTO> getDrugSearch(
+    public ResponseEntity<ApiResponse<List<ElasticsearchDTO>>> getDrugSearch(
+            @AuthenticationPrincipal User user,
             @RequestParam String input,
             @RequestParam(defaultValue = "0") int page) throws IOException {
+        if (user == null) {
+            return ResponseEntity.badRequest()
+                .body(ApiResponse.error("User not authenticated"));
+        }
         List<String> filter = List.of();
-        ElasticQuery eq = new ElasticQuery(input, drug, index,filter,pageSize,page);
-        return elasticsearchService.getMatchingFromElasticsearch(eq, ElasticsearchDTO.class);
+        ElasticQuery eq = new ElasticQuery(input, drug, index, filter, pageSize, page);
+        List<ElasticsearchDTO> result = elasticsearchService.getMatchingFromElasticsearch(eq, ElasticsearchDTO.class);
+        return ResponseEntity.ok(ApiResponse.success(result));
     }
 
     @GetMapping("/manufacturers")
-    public List<ElasticsearchDTO> getManufacturerSearch(
+    public ResponseEntity<ApiResponse<List<ElasticsearchDTO>>> getManufacturerSearch(
+            @AuthenticationPrincipal User user,
             @RequestParam String input,
             @RequestParam(defaultValue = "0") int page) throws IOException {
+        if (user == null) {
+            return ResponseEntity.badRequest()
+                .body(ApiResponse.error("User not authenticated"));
+        }
         List<String> filter = List.of();
-        ElasticQuery eq = new ElasticQuery(input, manufacturer,index,filter,pageSize,page);
-        return elasticsearchService.getMatchingFromElasticsearch(eq, ElasticsearchDTO.class);
+        ElasticQuery eq = new ElasticQuery(input, manufacturer, index, filter, pageSize, page);
+        List<ElasticsearchDTO> result = elasticsearchService.getMatchingFromElasticsearch(eq, ElasticsearchDTO.class);
+        return ResponseEntity.ok(ApiResponse.success(result));
     }
 
     @GetMapping("/ingredients")
-    public List<ElasticsearchDTO> getIngredientSearch(
+    public ResponseEntity<ApiResponse<List<ElasticsearchDTO>>> getIngredientSearch(
+            @AuthenticationPrincipal User user,
             @RequestParam String input,
             @RequestParam(defaultValue = "0") int page) throws IOException {
+        if (user == null) {
+            return ResponseEntity.badRequest()
+                .body(ApiResponse.error("User not authenticated"));
+        }
         List<String> filter = List.of();
-        ElasticQuery eq = new ElasticQuery(input, ingredient,index,filter,pageSize,page);
-        return elasticsearchService.getMatchingFromElasticsearch(eq, ElasticsearchDTO.class);
+        ElasticQuery eq = new ElasticQuery(input, ingredient, index, filter, pageSize, page);
+        List<ElasticsearchDTO> result = elasticsearchService.getMatchingFromElasticsearch(eq, ElasticsearchDTO.class);
+        return ResponseEntity.ok(ApiResponse.success(result));
     }
 }
