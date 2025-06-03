@@ -13,40 +13,38 @@ class AuthRepository @Inject constructor(
             loginType = data.loginType.name,
             loginId = if (data.loginType == LoginType.IDPW) data.loginId else null,
             password = if (data.loginType == LoginType.IDPW) data.password else null,
-//            term = data.term,
+            token = if (data.loginType == LoginType.SOCIAL) data.token else null,
+            provider = if (data.loginType == LoginType.SOCIAL) data.provider else null,
             nickname = data.nickname,
             gender = data.gender,
             birthDate = data.birthDate,
             age = data.age,
             height = data.height,
             weight = data.weight,
-            interest = data.interest,
             phone = formattedPhone,
-            token = if (data.loginType == LoginType.SOCIAL) data.token else null
+            interest = data.interest,
         )
+        Log.d("SignUp", "Request 객체 생성 완료")
 
         return try {
             val response = authApi.signUp(request)
+
             if (response.isSuccessful && response.body()?.status == "success") {
                 Pair(true, response.body()?.data)
             } else {
-                Log.e("SignUp", "Response failed: ${response.errorBody()?.string()}")
+                val errorBody = response.errorBody()?.string()
+                Log.e("SignUp", "응답 실패 - 코드: ${response.code()}, 바디: $errorBody")
                 Pair(false, null)
             }
         } catch (e: Exception) {
-            Log.e("SignUp", "Network error", e)
+            Log.e("SignUp", "네트워크 오류 발생", e)
             Pair(false, null)
         }
     }
 
-    suspend fun submitTerms(token: String, agreed: Boolean): Boolean {
+    suspend fun submitTerms(token: String): Boolean {
         return try {
-            val request = TermsRequest(
-                termsOfService = agreed,
-                privacyPolicy = true,
-                marketingConsent = false
-            )
-            val response = authApi.submitTerms("Bearer $token", request)
+            val response = authApi.submitTerms("Bearer $token")
             response.isSuccessful
         } catch (e: Exception) {
             Log.e("SubmitTerms", "Error submitting terms", e)

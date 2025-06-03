@@ -1,4 +1,4 @@
-package com.pilltip.pilltip.composable.search
+package com.pilltip.pilltip.composable.SearchComposable
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -22,6 +23,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.Card
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -48,10 +51,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.pilltip.pilltip.R
+import com.pilltip.pilltip.composable.HeightSpacer
 import com.pilltip.pilltip.composable.WidthSpacer
 import com.pilltip.pilltip.composable.noRippleClickable
+import com.pilltip.pilltip.model.search.DrugSearchResult
 import com.pilltip.pilltip.model.search.SearchData
 import com.pilltip.pilltip.model.search.LogViewModel
+import com.pilltip.pilltip.ui.theme.gray050
 import com.pilltip.pilltip.ui.theme.gray100
 import com.pilltip.pilltip.ui.theme.gray200
 import com.pilltip.pilltip.ui.theme.gray500
@@ -63,12 +69,13 @@ import com.pilltip.pilltip.ui.theme.primaryColor
 
 @Composable
 fun PillSearchField(
+    initialQuery: String ="",
     navController: NavController,
-    searchViewModel: LogViewModel,
     nowTyping: (String) -> Unit,
-    searching: (String) -> Unit
+    searching: (String) -> Unit,
+    onNavigateToResult: (String) -> Unit
 ) {
-    var inputText by remember { mutableStateOf("") }
+    var inputText by remember { mutableStateOf(initialQuery) }
     val keyboardController = LocalSoftwareKeyboardController.current
 
     Row(
@@ -110,10 +117,9 @@ fun PillSearchField(
                 ),
                 keyboardActions = KeyboardActions(
                     onSearch = {
-                        searchViewModel.addSearchQuery(inputText)
-                        inputText = ""
                         searching(inputText)
                         keyboardController?.hide()
+                        onNavigateToResult(inputText)
                     }
                 ),
                 decorationBox = { innerTextField ->
@@ -175,13 +181,15 @@ fun PillSearchField(
 @Composable
 fun SearchTag(
     tagText: String,
-    onClick: () -> Unit
+    onNavigateToResult: () -> Unit,
+    onDelete: () -> Unit
 ) {
     Row(
         modifier = Modifier
             .height(30.dp)
             .background(color = gray100, shape = RoundedCornerShape(size = 100.dp))
-            .padding(start = 12.dp, top = 8.dp, end = 12.dp, bottom = 8.dp),
+            .padding(start = 12.dp, top = 8.dp, end = 12.dp, bottom = 8.dp)
+            .noRippleClickable { onNavigateToResult() },
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center
     ) {
@@ -203,7 +211,7 @@ fun SearchTag(
             modifier = Modifier
                 .size(14.dp)
                 .padding(1.dp)
-                .noRippleClickable { onClick() }
+                .noRippleClickable { onDelete() }
         )
     }
 }
@@ -225,7 +233,13 @@ fun HighlightedText(fullText: String, keyword: String) {
 
     val annotated = buildAnnotatedString {
         append(fullText.substring(0, start))
-        withStyle(SpanStyle(color = primaryColor, fontFamily = pretendard, fontWeight = FontWeight.Bold)) {
+        withStyle(
+            SpanStyle(
+                color = primaryColor,
+                fontFamily = pretendard,
+                fontWeight = FontWeight.Bold
+            )
+        ) {
             append(fullText.substring(start, end))
         }
         append(fullText.substring(end))
@@ -278,5 +292,112 @@ fun AutoCompleteList(
                     onLoadMore()
                 }
             }
+    }
+}
+
+@Composable
+fun DrugSearchResultList(drugs: List<DrugSearchResult>) {
+    LazyColumn(modifier = Modifier
+        .fillMaxSize()
+        .padding(horizontal = 22.dp, vertical = 16.dp)) {
+        items(drugs) { drug ->
+            DrugSearchResultCard(drug)
+            Spacer(modifier = Modifier.height(8.dp))
+        }
+    }
+}
+
+@Composable
+fun DrugSearchResultCard(drug: DrugSearchResult) {
+    Card(modifier = Modifier.fillMaxWidth().height(202.dp)) {
+        Column(
+            modifier = Modifier.padding(
+                top = 22.dp,
+                bottom = 16.dp,
+                start = 20.dp,
+                end = 20.dp
+            )
+        ) {
+            Row() {
+                Image(
+                    imageVector = ImageVector.vectorResource(R.drawable.logo_pilltip_blue_pill),
+                    contentDescription = "기본 이미지",
+                    Modifier
+                        .border(
+                            width = 0.6.dp,
+                            color = gray200,
+                            shape = RoundedCornerShape(size = 10.8.dp)
+                        )
+                        .width(90.dp)
+                        .height(90.dp)
+                        .background(color = gray050, shape = RoundedCornerShape(size = 10.8.dp))
+                        .padding(start = 19.79992.dp, end = 19.80008.dp)
+                )
+                Column() {
+                    Text(
+                        text = drug.drugName,
+                        fontSize = 14.sp,
+                        fontFamily = pretendard,
+                        fontWeight = FontWeight(700),
+                        color = Color(0xFF000000),
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Row() {
+                        Image(
+                            imageVector = ImageVector.vectorResource(R.drawable.ic_rating_star),
+                            contentDescription = "별점",
+                            modifier = Modifier.size(12.dp)
+                        )
+                        WidthSpacer(4.dp)
+                        Text(
+                            text = "0.0", /*아직 별점 데이터 없음. 향후 추가 예정*/
+                            style = TextStyle(
+                                fontSize = 12.sp,
+                                fontFamily = pretendard,
+                                fontWeight = FontWeight(500),
+                                color = gray800,
+                            )
+                        )
+                        WidthSpacer(2.dp)
+                        Text(
+                            text = "(0)", /*아직 별점 데이터 없음. 향후 추가 예정*/
+                            style = TextStyle(
+                                fontSize = 12.sp,
+                                fontFamily = pretendard,
+                                fontWeight = FontWeight(400),
+                                color = gray800,
+                            )
+                        )
+                        WidthSpacer(4.dp)
+                        Box(
+                            modifier = Modifier
+                                .padding(1.dp)
+                                .width(2.dp)
+                                .height(2.dp)
+                                .background(color = gray500)
+                        )
+                        WidthSpacer(4.dp)
+                        Text(
+                            text = "${drug.manufacturer}",
+                            fontSize = 12.sp,
+                            fontFamily = pretendard,
+                            fontWeight = FontWeight(400),
+                            color = gray500
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(6.dp))
+                    drug.ingredients.forEach { ingredient ->
+                        Text(
+                            text = "- ${ingredient.name} (${ingredient.dose})" + if (ingredient.main) " [주성분]" else "",
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                }
+            }
+            HeightSpacer(14.dp)
+            HeightSpacer(14.dp)
+
+        }
     }
 }

@@ -7,6 +7,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.pilltip.pilltip.model.search.LogViewModel
+import com.pilltip.pilltip.model.search.SearchHiltViewModel
 import com.pilltip.pilltip.model.signUp.SignUpViewModel
 import com.pilltip.pilltip.view.auth.IdPage
 import com.pilltip.pilltip.view.auth.InterestPage
@@ -24,7 +25,8 @@ import com.pilltip.pilltip.view.search.SearchResultsPage
 fun NavGraph(startPage: String) {
     val navController = rememberNavController()
     val signUpViewModel: SignUpViewModel = hiltViewModel()
-    val searchViewModel: LogViewModel = viewModel()
+    val searchHiltViewModel: SearchHiltViewModel = hiltViewModel()
+    val logViewModel: LogViewModel = viewModel()
     NavHost(
         navController = navController,
         startDestination = startPage
@@ -64,10 +66,16 @@ fun NavGraph(startPage: String) {
         /*Search*/
 
         composable("SearchPage"){
-            SearchPage(navController, searchViewModel)
+            SearchPage(navController, logViewModel, searchHiltViewModel)
         }
-        composable("SearchResultsPage"){
-            SearchResultsPage(navController)
+        composable("SearchResultsPage/{query}") { backStackEntry ->
+            val query = backStackEntry.arguments?.getString("query") ?: ""
+            SearchResultsPage(
+                navController = navController,
+                logViewModel = logViewModel,
+                searchViewModel = searchHiltViewModel,
+                initialQuery = query
+            )
         }
 
     }
