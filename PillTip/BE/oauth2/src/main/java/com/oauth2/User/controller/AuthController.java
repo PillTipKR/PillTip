@@ -48,6 +48,15 @@ public class AuthController {
         return ResponseEntity.ok(ApiResponse.success("Signup successful", signupResponse));
     }
 
+    // 중복 체크 API
+    @PostMapping("/check-duplicate")
+    public ResponseEntity<ApiResponse<Boolean>> checkDuplicate(@RequestBody DuplicateCheckRequest request) {
+        boolean isDuplicate = userService.checkDuplicate(request.getValue(), request.getType());
+        String message = isDuplicate ? "이미 사용 중인 " + request.getType() + "입니다." : "사용 가능한 " + request.getType() + "입니다.";
+        return ResponseEntity.ok(ApiResponse.success(message, !isDuplicate));
+    }
+
+    // ------------------------------------------------------------ jwt 토큰 필요 ------------------------------------------------------------
     // 로그인 해야만 접근, 현재 로그인한 사용자 정보 조회
     @GetMapping("/me")
     public ResponseEntity<ApiResponse<UserResponse>> getCurrentUser(@AuthenticationPrincipal User user) {
@@ -90,14 +99,6 @@ public class AuthController {
         return ResponseEntity.ok(ApiResponse.success("Profile photo updated successfully", new UserResponse(updatedUser)));
     }
 
-    // 중복 체크 API
-    @PostMapping("/check-duplicate")
-    public ResponseEntity<ApiResponse<Boolean>> checkDuplicate(@RequestBody DuplicateCheckRequest request) {
-        boolean isDuplicate = userService.checkDuplicate(request.getValue(), request.getType());
-        String message = isDuplicate ? "이미 사용 중인 " + request.getType() + "입니다." : "사용 가능한 " + request.getType() + "입니다.";
-        return ResponseEntity.ok(ApiResponse.success(message, !isDuplicate));
-    }
-
     // 토큰 갱신 API
     @PostMapping("/refresh")
     // 헤더에 Refresh-Token 헤더가 있는 경우 토큰 갱신
@@ -109,5 +110,17 @@ public class AuthController {
             return ResponseEntity.status(401)
                 .body(ApiResponse.error("Token refresh failed: " + e.getMessage()));
         }
+    }
+
+    // 회원 탈퇴 API
+    @DeleteMapping("/delete-account")
+    public ResponseEntity<ApiResponse<Void>> deleteAccount(@AuthenticationPrincipal User user) {
+        if (user == null) {
+            return ResponseEntity.badRequest()
+                .body(ApiResponse.error("User not authenticated"));
+        }
+        
+        userService.deleteAccount(user.getId());
+        return ResponseEntity.ok(ApiResponse.success("Account deleted successfully", null));
     }
 } 
