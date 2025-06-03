@@ -36,7 +36,7 @@ public class AuthController {
         return ResponseEntity.ok(ApiResponse.success("Login successful", loginResponse));
     }
 
-    // ID/PW 회원가입
+    // 회원가입
     @PostMapping("/signup")
     public ResponseEntity<ApiResponse<SignupResponse>> signup(@RequestBody SignupRequest request) {
         User user = signupService.signup(request);
@@ -62,7 +62,7 @@ public class AuthController {
     public ResponseEntity<ApiResponse<UserResponse>> getCurrentUser(@AuthenticationPrincipal User user) {
         if (user == null) {
             return ResponseEntity.badRequest()
-                .body(ApiResponse.error("User not authenticated"));
+                .body(ApiResponse.error("User not authenticated", null));
         }
         
         User currentUser = userService.getCurrentUser(user.getId());
@@ -74,7 +74,7 @@ public class AuthController {
     public ResponseEntity<ApiResponse<UserResponse>> agreeToTerms(@AuthenticationPrincipal User user) {
         if (user == null) {
             return ResponseEntity.badRequest()
-                .body(ApiResponse.error("User not authenticated"));
+                .body(ApiResponse.error("User not authenticated", null));
         }
         
         User updatedUser = userService.agreeToTerms(user);
@@ -108,7 +108,7 @@ public class AuthController {
             return ResponseEntity.ok(ApiResponse.success("Token refreshed successfully", loginResponse));
         } catch (RuntimeException e) {
             return ResponseEntity.status(401)
-                .body(ApiResponse.error("Token refresh failed: " + e.getMessage()));
+                .body(ApiResponse.error("Token refresh failed: " + e.getMessage(), null));
         }
     }
 
@@ -117,7 +117,7 @@ public class AuthController {
     public ResponseEntity<ApiResponse<Void>> deleteAccount(@AuthenticationPrincipal User user) {
         if (user == null) {
             return ResponseEntity.badRequest()
-                .body(ApiResponse.error("User not authenticated"));
+                .body(ApiResponse.error("User not authenticated", null));
         }
         
         userService.deleteAccount(user.getId());

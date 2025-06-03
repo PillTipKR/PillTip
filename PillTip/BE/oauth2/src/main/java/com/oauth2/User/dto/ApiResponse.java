@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 
 @Getter
 @NoArgsConstructor
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonInclude(JsonInclude.Include.ALWAYS)
 public class ApiResponse<T> {
     // 응답 결과
     private String status; // "success" 또는 "error"
@@ -33,7 +33,7 @@ public class ApiResponse<T> {
     }
 
     // 실패 응답, 커스템 메세지 포함
-    public static <T> ApiResponse<T> error(String message) {
-        return new ApiResponse<>("error", message, null);
+    public static <T> ApiResponse<T> error(String message, T data) {
+        return new ApiResponse<>("error", message, data);
     }
 } 

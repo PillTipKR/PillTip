@@ -38,13 +38,9 @@ public class SecurityConfig {
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             // 인증 없이 접근 가능한 경로 설정
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/", "/error", "/oauth2/**", "/login/**", "/css/**", "/js/**", "/images/**", "/static/**", "/webjars/**", "/favicon.ico", "/api/auth/signup", "/api/auth/login", "/api/auth/check-duplicate").permitAll()
+                .requestMatchers("/", "/error", "/oauth2/**", "/login/**", "/css/**", "/js/**", "/images/**", "/static/**", "/webjars/**", "/favicon.ico", "/api/auth/signup", "/api/auth/login", "/api/auth/check-duplicate", "/api/auth/refresh").permitAll()
                 // 나머지 경로는 인증 필요
                 .anyRequest().authenticated()
-            )
-            // OAuth2 로그인 설정
-            .oauth2Login(oauth2 -> oauth2
-                .defaultSuccessUrl("/")
             )
             // JWT 인증 필터를 사용자 정보 엔드포인트 이전에 추가
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
