@@ -39,6 +39,10 @@ class SignUpViewModel @Inject constructor(
         _signUpData.value = _signUpData.value.copy(loginType = type)
     }
 
+    fun updateProvider(provider: String) {
+        _signUpData.value = _signUpData.value.copy(provider = provider)
+    }
+
     fun updateloginId(id: String) {
         _signUpData.value = _signUpData.value.copy(loginId = id)
     }
@@ -94,6 +98,9 @@ class SignUpViewModel @Inject constructor(
     // 로그인 타입
     fun getLoginType(): LoginType = _signUpData.value.loginType
 
+    //프로바이더
+    fun getProvider(): String = _signUpData.value.provider
+
     // 사용자 ID
     fun getloginId(): String = _signUpData.value.loginId
 
@@ -134,6 +141,8 @@ class SignUpViewModel @Inject constructor(
         val data = _signUpData.value
         Log.d(tag, """
         - loginType: ${data.loginType}
+        - token: ${data.token}
+        - provider: ${data.provider}
         - userId: ${data.loginId}
         - password: ${data.password}
         - term: ${data.term}
@@ -145,7 +154,6 @@ class SignUpViewModel @Inject constructor(
         - weight: ${data.weight}
         - interest: ${data.interest}
         - phone: ${data.phone}
-        - token: ${data.token}
     """.trimIndent())
     }
 
@@ -190,7 +198,7 @@ class SignUpViewModel @Inject constructor(
     ) {
         viewModelScope.launch {
             try {
-                val success = authRepository.submitTerms(token, _signUpData.value.term)
+                val success = authRepository.submitTerms(token)
                 if (success) {
                     onSuccess()
                 } else {

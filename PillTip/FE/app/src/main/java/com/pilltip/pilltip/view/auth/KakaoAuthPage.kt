@@ -41,6 +41,7 @@ fun KakaoAuthPage(
         if (user != null && token != null) {
             signUpViewModel.updateLoginType(LoginType.SOCIAL)
             signUpViewModel.updateToken(token)
+            signUpViewModel.updateProvider("kakao")
             Log.d("accessToken: ", signUpViewModel.getToken())
             termsOfService = true
         }

@@ -1,10 +1,13 @@
 package com.pilltip.pilltip
 
+import android.content.Context
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
 import androidx.compose.ui.platform.LocalContext
 import com.google.firebase.FirebaseApp
 import com.google.firebase.appcheck.FirebaseAppCheck
@@ -13,17 +16,26 @@ import com.google.firebase.auth.FirebaseAuth
 import com.kakao.sdk.common.KakaoSdk
 import com.kakao.sdk.common.util.Utility
 import com.kakao.vectormap.KakaoMapSdk
+import com.pilltip.pilltip.model.UserInfoManager
+import com.pilltip.pilltip.model.signUp.ServerAuthAPI
+import com.pilltip.pilltip.model.signUp.TokenManager
 import com.pilltip.pilltip.nav.NavGraph
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+    @Inject
+    lateinit var serverAuthAPI: ServerAuthAPI
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
             val context = LocalContext.current
             Log.d("KeyHash", "${Utility.getKeyHash(this)}")
+
             FirebaseApp.initializeApp(context)
             FirebaseAppCheck.getInstance().installAppCheckProviderFactory(
                 DebugAppCheckProviderFactory.getInstance()
@@ -35,8 +47,36 @@ class MainActivity : ComponentActivity() {
             Log.d("KakaoKey", kakaoKey)
             KakaoSdk.init(this, kakaoKey)
             KakaoMapSdk.init(this, kakaoKey)
-            NavGraph(startPage = "PillMainPage")
+
+            val startDestination by produceState(initialValue = "SplashPage", context, serverAuthAPI) {
+                value = withContext(Dispatchers.IO) {
+                    val accessToken = TokenManager.getAccessToken(context)
+                    Log.d("accessToken: ", accessToken.toString())
+                    if (accessToken != null && isAccessTokenValid(serverAuthAPI, accessToken, context)) {
+                        "PillMainPage"
+                    } else {
+                        "SplashPage"
+                    }
+                }
+            }
+            NavGraph(startPage = startDestination)
         }
     }
+
 }
 
+suspend fun isAccessTokenValid(api: ServerAuthAPI, accessToken: String, context: Context): Boolean {
+    return try {
+        val response = api.getMyInfo("Bearer $accessToken")
+        if (response.isSuccessful && response.body()?.status == "success") {
+            response.body()?.data?.let {
+                UserInfoManager.saveUserData(context, it)
+            }
+            true
+        } else {
+            false
+        }
+    } catch (e: Exception) {
+        false
+    }
+}
