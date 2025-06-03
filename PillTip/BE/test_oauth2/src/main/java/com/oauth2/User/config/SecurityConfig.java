@@ -4,7 +4,6 @@
 package com.oauth2.User.config;
 
 import com.oauth2.User.security.JwtAuthenticationFilter;
-import com.oauth2.User.service.CustomOAuth2UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -21,18 +20,16 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @RequiredArgsConstructor // 생성자 주입 설정
 public class SecurityConfig {
     // 커스텀 OAuth2 사용자 서비스 및 JWT 인증 필터를 주입받음
-    private final CustomOAuth2UserService customOAuth2UserService;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @Bean
-    // 비밀번호 암호화 방식으로 BCrypt를 사용하는 PasswordEncoder 빈 등록
     public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder(); // 비밀번호 암호화
+        return new BCryptPasswordEncoder();
     }
 
     @Bean
     // 스프링 시큐리티 필터 체인을 구성하는 메서드
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
             // csrf 공격 방어 비활성화, REST API는 상태를 저장하지 않으므로
             .csrf(csrf -> csrf.disable())
@@ -41,15 +38,13 @@ public class SecurityConfig {
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             // 인증 없이 접근 가능한 경로 설정
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/", "/login/**", "/oauth2/**", "/api/auth/login", "/api/auth/signup").permitAll()
+                .requestMatchers("/", "/error", "/oauth2/**", "/login/**", "/css/**", "/js/**", "/images/**", "/static/**", "/webjars/**", "/favicon.ico").permitAll()
                 // 나머지 경로는 인증 필요
                 .anyRequest().authenticated()
             )
             // OAuth2 로그인 설정
             .oauth2Login(oauth2 -> oauth2
-                // 사용자 정보 엔드포인트 설정, 커스텀 OAuth2 사용자 서비스 설정
-                .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService)
-                )
+                .defaultSuccessUrl("/")
             )
             // JWT 인증 필터를 사용자 정보 엔드포인트 이전에 추가
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

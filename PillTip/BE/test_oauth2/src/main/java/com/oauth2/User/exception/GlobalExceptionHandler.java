@@ -1,6 +1,6 @@
-package com.oauth2.exception;
+package com.oauth2.User.exception;
 
-import com.oauth2.dto.ApiResponse;
+import com.oauth2.User.dto.ApiResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
