@@ -14,7 +14,6 @@ public class SignupRequest {
     private LoginType loginType;
     private String loginId;
     private String password;
-    private boolean terms;
     private String nickname;
     private String token;      // OAuth2 access token
     private String provider;   // "google" 또는 "kakao"

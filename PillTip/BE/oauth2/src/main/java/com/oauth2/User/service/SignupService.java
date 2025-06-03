@@ -41,10 +41,10 @@ public class SignupService {
                 .socialId(oauth2UserInfo.getSocialId())
                 .userEmail(oauth2UserInfo.getEmail())  // null 가능
                 .nickname(oauth2UserInfo.getName() != null ? 
-                         oauth2UserInfo.getName() : 
-                         generateRandomNickname())  // 이름이 없으면 랜덤 닉네임 생성
+                        oauth2UserInfo.getName() : 
+                        generateRandomNickname())  // 이름이 없으면 랜덤 닉네임 생성
                 .profilePhoto(oauth2UserInfo.getProfileImage())  // null 가능
-                .terms(request.isTerms())
+                .terms(false)
                 .build();
         } else {
             user = createUser(request);
@@ -112,7 +112,7 @@ public class SignupService {
                         passwordEncoder.encode(request.getPassword()) : null)
                 .nickname(request.getNickname())
                 .profilePhoto(null)
-                .terms(request.isTerms())
+                .terms(false)
                 .build();
     }
 
