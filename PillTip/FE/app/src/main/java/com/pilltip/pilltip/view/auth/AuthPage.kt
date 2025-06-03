@@ -95,6 +95,7 @@ import com.pilltip.pilltip.model.signUp.KaKaoLoginViewModel
 import com.pilltip.pilltip.model.signUp.LoginType
 import com.pilltip.pilltip.model.signUp.PhoneAuthViewModel
 import com.pilltip.pilltip.model.signUp.SignUpViewModel
+import com.pilltip.pilltip.model.signUp.TokenManager
 import com.pilltip.pilltip.ui.theme.gray500
 import com.pilltip.pilltip.ui.theme.gray600
 import com.pilltip.pilltip.ui.theme.gray700
@@ -926,14 +927,7 @@ fun InterestPage(
                     viewModel.logSignUpData()
                     viewModel.completeSignUp(
                         onSuccess = { accessToken, refreshToken ->
-                            val sharedPreferences =
-                                context.getSharedPreferences("user", Context.MODE_PRIVATE)
-                            with(sharedPreferences.edit()) {
-                                putString("accessToken", accessToken)
-                                putString("refreshToken", refreshToken)
-                                apply()
-                            }
-
+                            TokenManager.saveTokens(context, accessToken, refreshToken)
                             viewModel.submitTerms(
                                 token = accessToken,
                                 onSuccess = {
