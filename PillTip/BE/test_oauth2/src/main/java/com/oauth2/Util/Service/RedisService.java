@@ -1,4 +1,4 @@
-package com.oauth2.Search.Service;
+package com.oauth2.Util.Service;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;

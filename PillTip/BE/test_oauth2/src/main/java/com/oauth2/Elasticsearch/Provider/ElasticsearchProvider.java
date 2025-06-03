@@ -3,8 +3,8 @@ package com.oauth2.Elasticsearch.Provider;
 import co.elastic.clients.elasticsearch._types.mapping.TypeMapping;
 import co.elastic.clients.elasticsearch.indices.IndexSettings;
 import com.oauth2.Elasticsearch.Dto.ElasticsearchDTO;
-import com.oauth2.Elasticsearch.Util.Provider.CommonSettingsProvider;
-import com.oauth2.Elasticsearch.Util.Provider.IndexMappingProvider;
+import com.oauth2.Util.Provider.CommonSettingsProvider;
+import com.oauth2.Util.Provider.IndexMappingProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -34,6 +34,7 @@ public class ElasticsearchProvider implements IndexMappingProvider<Elasticsearch
     public TypeMapping getMapping() {
         return new TypeMapping.Builder()
                 .properties("type", p -> p.keyword(k -> k)) // drugName, ingredient 등
+                .properties("id", p -> p.keyword(k -> k.index(false)))
                 .properties("value", p -> p
                         .text(t -> t
                                 .fields("edge", f -> f.text(edge -> edge.analyzer(settingsProvider.getAutoEdgeNGramAnalyzer())))
