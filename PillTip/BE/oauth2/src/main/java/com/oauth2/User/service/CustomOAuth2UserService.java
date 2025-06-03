@@ -76,7 +76,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                 .loginType(LoginType.SOCIAL)  // 모든 소셜 로그인은 LoginType.SOCIAL 사용
                 .socialId(getSocialId(registrationId, attributes))
                 .userEmail((String) attributes.get("email"))
-                .nickname(name)
+                .nickname(nickname)
                 .profilePhoto((String) attributes.get("picture"))
                 .terms(true)
                 .build();
