@@ -38,7 +38,7 @@ public class SecurityConfig {
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             // 인증 없이 접근 가능한 경로 설정
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/", "/error", "/oauth2/**", "/login/**", "/css/**", "/js/**", "/images/**", "/static/**", "/webjars/**", "/favicon.ico").permitAll()
+                .requestMatchers("/", "/error", "/oauth2/**", "/login/**", "/css/**", "/js/**", "/images/**", "/static/**", "/webjars/**", "/favicon.ico", "/api/auth/signup", "/api/auth/login", "/api/auth/check-duplicate").permitAll()
                 // 나머지 경로는 인증 필요
                 .anyRequest().authenticated()
             )
