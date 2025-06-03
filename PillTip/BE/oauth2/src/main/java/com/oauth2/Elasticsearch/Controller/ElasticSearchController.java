@@ -48,7 +48,7 @@ public class ElasticSearchController {
             @RequestParam(defaultValue = "0") int page) throws IOException {
         if (user == null) {
             return ResponseEntity.badRequest()
-                .body(ApiResponse.error("User not authenticated"));
+                .body(ApiResponse.error("User not authenticated", null));
         }
         List<String> filter = List.of();
         ElasticQuery eq = new ElasticQuery(input, drug, index, filter, pageSize, page);
@@ -63,7 +63,7 @@ public class ElasticSearchController {
             @RequestParam(defaultValue = "0") int page) throws IOException {
         if (user == null) {
             return ResponseEntity.badRequest()
-                .body(ApiResponse.error("User not authenticated"));
+                .body(ApiResponse.error("User not authenticated", null));
         }
         List<String> filter = List.of();
         ElasticQuery eq = new ElasticQuery(input, manufacturer, index, filter, pageSize, page);
@@ -78,7 +78,7 @@ public class ElasticSearchController {
             @RequestParam(defaultValue = "0") int page) throws IOException {
         if (user == null) {
             return ResponseEntity.badRequest()
-                .body(ApiResponse.error("User not authenticated"));
+                .body(ApiResponse.error("User not authenticated", null));
         }
         List<String> filter = List.of();
         ElasticQuery eq = new ElasticQuery(input, ingredient, index, filter, pageSize, page);

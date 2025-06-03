@@ -12,6 +12,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import io.jsonwebtoken.ExpiredJwtException;
+import org.springframework.security.authentication.BadCredentialsException;
 
 import java.time.LocalDateTime;
 import java.util.Date;
@@ -97,12 +99,12 @@ public class TokenService {
      * 리프레시 토큰을 사용하여 새로운 액세스 토큰과 리프레시 토큰을 발급
      * @param refreshToken 기존 리프레시 토큰
      * @return 갱신된 토큰 정보를 담은 UserToken 객체
-     * @throws RuntimeException 토큰이 유효하지 않거나 찾을 수 없는 경우
+     * @throws BadCredentialsException 토큰이 유효하지 않거나 찾을 수 없는 경우
      */
     public TokenRefreshResult refreshTokens(String refreshToken) {
         // 리프레시 토큰 유효성 검증
         if (!validateToken(refreshToken)) {
-            throw new RuntimeException("Invalid refresh token");
+            throw new BadCredentialsException("유효하지 않은 리프레시 토큰입니다.");
         }
 
         // 리프레시 토큰에서 사용자 ID 추출
@@ -111,11 +113,11 @@ public class TokenService {
         
         // 사용자 ID로 토큰 조회
         UserToken userToken = userTokenRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("Token not found"));
+                .orElseThrow(() -> new BadCredentialsException("토큰을 찾을 수 없습니다."));
 
         // 리프레시 토큰 일치 여부 검증
         if (!userToken.getRefreshToken().equals(refreshToken)) {
-            throw new RuntimeException("Invalid refresh token");
+            throw new BadCredentialsException("유효하지 않은 리프레시 토큰입니다.");
         }
 
         // Refresh Token이 만료된 경우 새로운 토큰 발급
@@ -161,9 +163,10 @@ public class TokenService {
     }
 
     /**
-     * 토큰의 유효성을 검증
+     * 리프레시 토큰의 유효성을 검증
      * @param token 검증할 토큰
      * @return 토큰이 유효하면 true, 아니면 false
+     * @throws BadCredentialsException 토큰이 만료되었거나 유효하지 않은 경우
      */
     public boolean validateToken(String token) {
         try {
@@ -171,8 +174,10 @@ public class TokenService {
                 .setSigningKey(secretKey)
                 .parseClaimsJws(token);
             return true;
+        } catch (ExpiredJwtException e) {
+            throw new BadCredentialsException("토큰이 만료되었습니다.");
         } catch (Exception e) {
-            return false;
+            throw new BadCredentialsException("유효하지 않은 토큰입니다.");
         }
     }
 
@@ -180,7 +185,7 @@ public class TokenService {
      * 토큰에서 Claims를 추출
      * @param token JWT 토큰
      * @return 토큰의 Claims
-     * @throws RuntimeException 토큰이 유효하지 않은 경우
+     * @throws BadCredentialsException 토큰이 유효하지 않은 경우
      */
     private Claims getClaimsFromToken(String token) {
         try {
@@ -188,9 +193,11 @@ public class TokenService {
                 .setSigningKey(secretKey)
                 .parseClaimsJws(token)
                 .getBody();
-        } catch (Exception e) {
-            throw new RuntimeException("Invalid token");
-        }
+            } catch (ExpiredJwtException e) {
+                throw new BadCredentialsException("토큰이 만료되었습니다.");
+            } catch (Exception e) {
+                throw new BadCredentialsException("유효하지 않은 토큰입니다.");
+            }
     }
 
     /**

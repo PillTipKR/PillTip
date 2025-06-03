@@ -30,7 +30,7 @@ public class DetailPageController {
             @RequestParam long id) throws IOException {
         if (user == null) {
             return ResponseEntity.badRequest()
-                .body(ApiResponse.error("User not authenticated"));
+                .body(ApiResponse.error("User not authenticated", null));
         }
         
         SearchIndexDTO searchIndexDTO = drugDetailService.getDetailFromElasticsearch(id);

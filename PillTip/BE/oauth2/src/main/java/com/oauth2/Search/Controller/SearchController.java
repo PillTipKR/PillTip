@@ -43,7 +43,7 @@ public class SearchController {
             @RequestParam(defaultValue = "0") int page) throws IOException {
         if (user == null) {
             return ResponseEntity.badRequest()
-                .body(ApiResponse.error("User not authenticated"));
+                .body(ApiResponse.error("User not authenticated", null));
         }
         List<SearchIndexDTO> result = searchService.getDrugSearch(input, drug, pageSize, page);
         return ResponseEntity.ok(ApiResponse.success(result));
@@ -56,7 +56,7 @@ public class SearchController {
             @RequestParam(defaultValue = "0") int page) throws IOException {
         if (user == null) {
             return ResponseEntity.badRequest()
-                .body(ApiResponse.error("User not authenticated"));
+                .body(ApiResponse.error("User not authenticated", null));
         }
         List<SearchIndexDTO> result = searchService.getDrugSearch(input, manufacturer, pageSize, page);
         return ResponseEntity.ok(ApiResponse.success(result));
@@ -69,7 +69,7 @@ public class SearchController {
             @RequestParam(defaultValue="0") int page) throws IOException {
         if (user == null) {
             return ResponseEntity.badRequest()
-                .body(ApiResponse.error("User not authenticated"));
+                .body(ApiResponse.error("User not authenticated", null));
         }
         List<SearchIndexDTO> result = searchService.getDrugSearch(input, ingredient, pageSize, page);
         return ResponseEntity.ok(ApiResponse.success(result));
