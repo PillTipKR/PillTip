@@ -46,19 +46,19 @@ public class DrugDetailService {
         Optional<Drug> drug = drugRepository.findById(id);
         List<DrugEffect> drugEffectList = drugEffectRepository.findByDrugId(id);
         List<DrugStorageCondition> drugStorageConditions = conditionRepository.findByDrugId(id);
-        return drug.map(value -> DrugDetail.builder()
-                .id(id)
-                .name(searchIndexDTO.drugName())
-                .manufacturer(searchIndexDTO.manufacturer())
-                .ingredients(searchIndexDTO.ingredients())
-                .packaging(value.getPackaging())
-                .form(value.getForm())
-                .tag(value.getTag())
-                .atcCode(value.getAtcCode())
-                .approvalDate(value.getApprovalDate())
-                .effectDetails(drugEffectList)
-                .storageDetails(drugStorageConditions)
-                .build()).orElse(null);
+        return drug.map(value -> new DrugDetail(
+                id,
+                searchIndexDTO.drugName(),
+                searchIndexDTO.manufacturer(),
+                searchIndexDTO.ingredients(),
+                value.getForm(),
+                value.getPackaging(),
+                value.getAtcCode(),
+                value.getTag(),
+                value.getApprovalDate(),
+                drugStorageConditions,
+                drugEffectList
+        )).orElse(null);
     }
 
 
