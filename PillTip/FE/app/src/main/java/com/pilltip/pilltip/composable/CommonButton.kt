@@ -64,7 +64,7 @@ fun NextButton(
         Text(
             text = text,
             fontFamily = pretendard,
-            color = Color.White,
+            color = textColor,
             fontWeight = FontWeight.SemiBold,
             fontSize = 18.sp,
             modifier = Modifier.fillMaxWidth(),
