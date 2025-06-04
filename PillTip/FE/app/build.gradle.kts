@@ -72,6 +72,9 @@ dependencies {
     //Hilt-Dagger
     implementation (libs.hilt.android)
     implementation(libs.firebase.auth.ktx)
+    implementation(libs.androidx.datastore.core.android)
+    implementation("androidx.datastore:datastore-preferences:1.0.0")
+
     ksp (libs.hilt.compiler)
     implementation(libs.androidx.hilt.navigation.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
@@ -88,6 +91,10 @@ dependencies {
 
     /*Status Bar*/
     implementation("com.google.accompanist:accompanist-systemuicontroller:0.30.1")
+
+    //직렬화
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
+
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)

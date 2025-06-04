@@ -95,6 +95,7 @@ import com.pilltip.pilltip.model.signUp.KaKaoLoginViewModel
 import com.pilltip.pilltip.model.signUp.LoginType
 import com.pilltip.pilltip.model.signUp.PhoneAuthViewModel
 import com.pilltip.pilltip.model.signUp.SignUpViewModel
+import com.pilltip.pilltip.model.signUp.TokenManager
 import com.pilltip.pilltip.ui.theme.gray500
 import com.pilltip.pilltip.ui.theme.gray600
 import com.pilltip.pilltip.ui.theme.gray700
@@ -159,6 +160,7 @@ fun SelectPage(
         if (user != null && token != null) {
             signUpViewModel.updateLoginType(LoginType.SOCIAL)
             signUpViewModel.updateToken(token)
+            signUpViewModel.updateProvider("kakao")
             Log.d("accessToken: ", signUpViewModel.getToken())
             termsOfService = true
         }
@@ -917,6 +919,7 @@ fun InterestPage(
         }
         Spacer(modifier = Modifier.weight(1f))
         NextButton(
+            text = "저장하기",
             mModifier = buttonModifier,
             buttonColor = if (selectedKeywords.isNotEmpty()) Color(0xFF397CDB) else Color(0xFFCADCF5),
             onClick = {
@@ -925,14 +928,7 @@ fun InterestPage(
                     viewModel.logSignUpData()
                     viewModel.completeSignUp(
                         onSuccess = { accessToken, refreshToken ->
-                            val sharedPreferences =
-                                context.getSharedPreferences("user", Context.MODE_PRIVATE)
-                            with(sharedPreferences.edit()) {
-                                putString("accessToken", accessToken)
-                                putString("refreshToken", refreshToken)
-                                apply()
-                            }
-
+                            TokenManager.saveTokens(context, accessToken, refreshToken)
                             viewModel.submitTerms(
                                 token = accessToken,
                                 onSuccess = {

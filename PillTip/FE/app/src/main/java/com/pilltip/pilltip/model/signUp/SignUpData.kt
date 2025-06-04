@@ -4,32 +4,33 @@ data class SignUpData(
     val loginType: LoginType = LoginType.IDPW,
     val loginId: String = "",
     val password: String = "",
-    val term: Boolean = false,
+    val token: String = "", // 소셜 로그인 시 access token
+    val provider: String = "", // 소셜 로그인 시 kakao, google
     val nickname: String = "",
+    val term: Boolean = false,
     val gender: String = "",
     val birthDate: String = "", // YYYY-MM-DD
     val age: Int = 0,
     val height: Int = 0,
     val weight: Int = 0,
-    val interest: String = "",
     val phone: String = "",
-    val token: String = "" // 소셜 로그인 시 access token
+    val interest: String = ""
 )
 
 data class SignUpRequest(
     val loginType: String,
     val loginId: String?, // token일 시 null
     val password: String?,  // token일 시 null
-//    val term: Boolean,
+    val token: String?,  // id/pw일 시 null
+    val provider: String?, // id/pw일 시 null
     val nickname: String,
     val gender: String,
     val birthDate: String,
     val age: Int,
     val height: Int,
     val weight: Int,
-    val interest: String?,
     val phone: String,
-    val token: String?  // id/pw일 시 null
+    val interest: String,
 )
 
 data class SignUpResponse(
@@ -47,4 +48,16 @@ data class TermsRequest(
     val termsOfService: Boolean,
     val privacyPolicy: Boolean,
     val marketingConsent: Boolean
+)
+
+/* 로그인 유효성 검증 */
+data class AuthMeResponse(
+    val status: String,
+    val data: UserData?
+)
+
+data class UserData(
+    val nickname: String,
+    val profilePhoto: String?,
+    val terms: Boolean
 )
