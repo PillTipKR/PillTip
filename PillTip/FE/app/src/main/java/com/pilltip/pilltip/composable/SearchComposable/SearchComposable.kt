@@ -66,6 +66,7 @@ import com.pilltip.pilltip.ui.theme.gray700
 import com.pilltip.pilltip.ui.theme.gray800
 import com.pilltip.pilltip.ui.theme.pretendard
 import com.pilltip.pilltip.ui.theme.primaryColor
+import kotlinx.coroutines.flow.distinctUntilChanged
 
 @Composable
 fun PillSearchField(
@@ -287,8 +288,9 @@ fun AutoCompleteList(
 
     LaunchedEffect(listState) {
         snapshotFlow { listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index }
-            .collect { index ->
-                if (index == searched.lastIndex) {
+            .distinctUntilChanged()
+            .collect { lastVisibleIndex ->
+                if (lastVisibleIndex != null && lastVisibleIndex >= searched.size - 3) {
                     onLoadMore()
                 }
             }
