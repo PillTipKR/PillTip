@@ -11,7 +11,7 @@ interface AutoCompleteApi {
     suspend fun getAutoCompleteDatas(
         @Query("input") input: String,
         @Query("page") page: Int
-    ): List<SearchData>
+    ): SearchResponse
 }
 
 interface AutoCompleteRepository {
@@ -22,7 +22,7 @@ class AutoCompleteRepositoryImpl(
     private val api: AutoCompleteApi
 ) : AutoCompleteRepository {
     override suspend fun getAutoComplete(query: String, page: Int): List<SearchData> {
-        return api.getAutoCompleteDatas(query, page)
+        return api.getAutoCompleteDatas(query, page).data
     }
 }
 
