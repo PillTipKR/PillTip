@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
 @Transactional
 public class UserProfileService {
     private final UserProfileRepository userProfileRepository;
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper;
 
     public UserProfile addTakingPill(User user, TakingPillRequest request) {
         UserProfile userProfile = userProfileRepository.findByUserId(user.getId())
