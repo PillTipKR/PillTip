@@ -22,12 +22,15 @@ import com.oauth2.User.dto.DuplicateCheckRequest;
 import com.oauth2.User.dto.TakingPillRequest;
 import com.oauth2.User.entity.UserProfile;
 import com.oauth2.User.service.UserProfileService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
 public class AuthController {
 
+    private static final Logger logger = LoggerFactory.getLogger(AuthController.class);
     private final UserService userService;
     private final SignupService signupService;
     private final TokenService tokenService;
@@ -133,8 +136,17 @@ public class AuthController {
     public ResponseEntity<ApiResponse<UserProfile>> addTakingPill(
             @AuthenticationPrincipal User user,
             @RequestBody TakingPillRequest request) {
-        UserProfile userProfile = userProfileService.addTakingPill(user, request);
-        return ResponseEntity.ok(ApiResponse.success("Taking pill added successfully", userProfile));
+        logger.info("Received addTakingPill request for user: {}", user.getId());
+        logger.debug("TakingPillRequest details: {}", request);
+        
+        try {
+            UserProfile userProfile = userProfileService.addTakingPill(user, request);
+            logger.info("Successfully added taking pill for user: {}", user.getId());
+            return ResponseEntity.ok(ApiResponse.success("Taking pill added successfully", userProfile));
+        } catch (Exception e) {
+            logger.error("Error adding taking pill for user: {} - Error: {}", user.getId(), e.getMessage(), e);
+            throw e;
+        }
     }
 
     // 복용 중인 약 삭제
@@ -142,8 +154,17 @@ public class AuthController {
     public ResponseEntity<ApiResponse<UserProfile>> deleteTakingPill(
             @AuthenticationPrincipal User user,
             @RequestParam String medicationId) {
-        UserProfile userProfile = userProfileService.deleteTakingPill(user, medicationId);
-        return ResponseEntity.ok(ApiResponse.success("Taking pill deleted successfully", userProfile));
+        logger.info("Received deleteTakingPill request for user: {}", user.getId());
+        logger.debug("Medication ID to delete: {}", medicationId);
+        
+        try {
+            UserProfile userProfile = userProfileService.deleteTakingPill(user, medicationId);
+            logger.info("Successfully deleted taking pill for user: {}", user.getId());
+            return ResponseEntity.ok(ApiResponse.success("Taking pill deleted successfully", userProfile));
+        } catch (Exception e) {
+            logger.error("Error deleting taking pill for user: {} - Error: {}", user.getId(), e.getMessage(), e);
+            throw e;
+        }
     }
 
     // 복용 중인 약 수정
@@ -151,16 +172,33 @@ public class AuthController {
     public ResponseEntity<ApiResponse<UserProfile>> updateTakingPill(
             @AuthenticationPrincipal User user,
             @RequestBody TakingPillRequest request) {
-        UserProfile userProfile = userProfileService.updateTakingPill(user, request);
-        return ResponseEntity.ok(ApiResponse.success("Taking pill updated successfully", userProfile));
+        logger.info("Received updateTakingPill request for user: {}", user.getId());
+        logger.debug("TakingPillRequest details: {}", request);
+        
+        try {
+            UserProfile userProfile = userProfileService.updateTakingPill(user, request);
+            logger.info("Successfully updated taking pill for user: {}", user.getId());
+            return ResponseEntity.ok(ApiResponse.success("Taking pill updated successfully", userProfile));
+        } catch (Exception e) {
+            logger.error("Error updating taking pill for user: {} - Error: {}", user.getId(), e.getMessage(), e);
+            throw e;
+        }
     }
 
     // 복용 중인 약 조회
     @GetMapping("/taking-pill")
     public ResponseEntity<ApiResponse<UserProfile>> getTakingPill(
             @AuthenticationPrincipal User user) {
-        UserProfile userProfile = userProfileService.getTakingPill(user);
-        return ResponseEntity.ok(ApiResponse.success("Taking pill retrieved successfully", userProfile));
+        logger.info("Received getTakingPill request for user: {}", user.getId());
+        
+        try {
+            UserProfile userProfile = userProfileService.getTakingPill(user);
+            logger.info("Successfully retrieved taking pill for user: {}", user.getId());
+            return ResponseEntity.ok(ApiResponse.success("Taking pill retrieved successfully", userProfile));
+        } catch (Exception e) {
+            logger.error("Error retrieving taking pill for user: {} - Error: {}", user.getId(), e.getMessage(), e);
+            throw e;
+        }
     }
 
     // 임신 여부 업데이트
