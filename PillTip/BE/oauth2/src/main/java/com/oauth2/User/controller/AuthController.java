@@ -19,6 +19,9 @@ import com.oauth2.User.entity.UserToken;
 import com.oauth2.User.service.TokenService;
 import com.oauth2.User.dto.SignupResponse;
 import com.oauth2.User.dto.DuplicateCheckRequest;
+import com.oauth2.User.dto.TakingPillRequest;
+import com.oauth2.User.entity.UserProfile;
+import com.oauth2.User.service.UserProfileService;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -28,6 +31,7 @@ public class AuthController {
     private final UserService userService;
     private final SignupService signupService;
     private final TokenService tokenService;
+    private final UserProfileService userProfileService;
 
     // ID/PW 로그인
     @PostMapping("/login")
@@ -122,5 +126,49 @@ public class AuthController {
         
         userService.deleteAccount(user.getId());
         return ResponseEntity.ok(ApiResponse.success("Account deleted successfully", null));
+    }
+
+    // 복용 중인 약 추가
+    @PostMapping("/taking-pill")
+    public ResponseEntity<ApiResponse<UserProfile>> addTakingPill(
+            @AuthenticationPrincipal User user,
+            @RequestBody TakingPillRequest request) {
+        UserProfile userProfile = userProfileService.addTakingPill(user, request);
+        return ResponseEntity.ok(ApiResponse.success("Taking pill added successfully", userProfile));
+    }
+
+    // 복용 중인 약 삭제
+    @DeleteMapping("/taking-pill")
+    public ResponseEntity<ApiResponse<UserProfile>> deleteTakingPill(
+            @AuthenticationPrincipal User user,
+            @RequestParam String medicationId) {
+        UserProfile userProfile = userProfileService.deleteTakingPill(user, medicationId);
+        return ResponseEntity.ok(ApiResponse.success("Taking pill deleted successfully", userProfile));
+    }
+
+    // 복용 중인 약 수정
+    @PutMapping("/taking-pill")
+    public ResponseEntity<ApiResponse<UserProfile>> updateTakingPill(
+            @AuthenticationPrincipal User user,
+            @RequestBody TakingPillRequest request) {
+        UserProfile userProfile = userProfileService.updateTakingPill(user, request);
+        return ResponseEntity.ok(ApiResponse.success("Taking pill updated successfully", userProfile));
+    }
+
+    // 복용 중인 약 조회
+    @GetMapping("/taking-pill")
+    public ResponseEntity<ApiResponse<UserProfile>> getTakingPill(
+            @AuthenticationPrincipal User user) {
+        UserProfile userProfile = userProfileService.getTakingPill(user);
+        return ResponseEntity.ok(ApiResponse.success("Taking pill retrieved successfully", userProfile));
+    }
+
+    // 임신 여부 업데이트
+    @PutMapping("/pregnant")
+    public ResponseEntity<ApiResponse<UserProfile>> updatePregnant(
+            @AuthenticationPrincipal User user,
+            @RequestParam boolean pregnant) {
+        UserProfile userProfile = userProfileService.updatePregnant(user, pregnant);
+        return ResponseEntity.ok(ApiResponse.success("Pregnant updated successfully", userProfile));
     }
 } 
