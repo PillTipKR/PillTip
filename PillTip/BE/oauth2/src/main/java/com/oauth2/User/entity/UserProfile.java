@@ -8,6 +8,7 @@ import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -50,6 +51,7 @@ public class UserProfile {
     private String healthStatus;
 
     @Column(name = "taking_pills", columnDefinition = "TEXT")
+    @Setter
     private String takingPills;
 
     @Column(name = "disease_info", columnDefinition = "TEXT")
@@ -57,6 +59,10 @@ public class UserProfile {
 
     @Column(name = "allergy_info", columnDefinition = "TEXT")
     private String allergyInfo;
+
+    @Setter
+    @Column(name = "pregnant", columnDefinition = "boolean default false")
+    private boolean pregnant;
 
     @Builder
     public UserProfile(User user, Integer age, Gender gender, BigDecimal height, BigDecimal weight,
