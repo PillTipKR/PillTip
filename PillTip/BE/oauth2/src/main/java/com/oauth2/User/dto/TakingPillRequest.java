@@ -36,4 +36,4 @@ public class TakingPillRequest {
     private Boolean withMeal;
     
     private String notes;
-} 
+}

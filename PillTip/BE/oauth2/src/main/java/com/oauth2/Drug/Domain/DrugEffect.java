@@ -28,4 +28,4 @@ public class DrugEffect {
         EFFECT, USAGE, CAUTION
     }
     // getter, setter 생략
-} 
+}

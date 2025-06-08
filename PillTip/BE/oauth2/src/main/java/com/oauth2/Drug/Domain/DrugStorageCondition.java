@@ -31,4 +31,4 @@ public class DrugStorageCondition {
         TEMPERATURE, CONTAINER, HUMID, LIGHT, PLACE
     }
     // getter, setter 생략
-} 
+}

@@ -19,4 +19,4 @@ public interface DrugRepository extends JpaRepository<Drug, Long> {
     Optional<Drug> findDrugWithAllRelations(@Param("id") long id);
 
 
-} 
+}

@@ -47,4 +47,4 @@ public class Drug {
 
 
     // getter, setter 생략
-} 
+}
