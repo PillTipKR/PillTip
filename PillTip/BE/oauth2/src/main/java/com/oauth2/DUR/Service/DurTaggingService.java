@@ -30,7 +30,6 @@ public class DurTaggingService {
         // 효능군 정보: className → 약물 ID 목록
         Map<String, List<Long>> classToDrugIdsMap = new HashMap<>();
 
-
         // 1. 복용 중인 약 정보 JSON 문자열 → DTO 리스트로 변환
         String pillsJson = user.getUserProfile().getTakingPills();
         List<TakingPillRequest> pillRequests = new ArrayList<>();
@@ -186,7 +185,7 @@ public class DurTaggingService {
             DurTagDto dur = new DurTagDto(
                     drug.id(),
                     drug.drugName(),
-                    drug.ingredients(),
+                    drug.ingredient(),
                     drug.manufacturer(),
                     tags
             );

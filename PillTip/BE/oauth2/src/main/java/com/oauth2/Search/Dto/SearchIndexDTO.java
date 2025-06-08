@@ -5,6 +5,6 @@ import java.util.List;
 public record SearchIndexDTO (
         Long id,
         String drugName,
-        List<IngredientDetail> ingredients,
+        List<IngredientDetail> ingredient,
         String manufacturer
 ) {}
