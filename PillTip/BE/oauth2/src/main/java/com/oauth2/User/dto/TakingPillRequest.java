@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 @Setter
 public class TakingPillRequest {
     @JsonProperty("medication_id")
-    private String medicationId;
+    private Long medicationId;
     
     @JsonProperty("medication_name")
     private String medicationName;

@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 public record EffectDetail (
-    DrugEffect.Type Type,
-    String effect
+        DrugEffect.Type Type,
+        String effect
 ){}
+

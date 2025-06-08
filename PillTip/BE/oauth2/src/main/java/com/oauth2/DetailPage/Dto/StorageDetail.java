@@ -6,6 +6,7 @@ import lombok.Setter;
 
 public record StorageDetail (
     DrugStorageCondition.Category category,
-    String description,
-    String iconUrl
+    String value,
+    boolean active
 ){}
+

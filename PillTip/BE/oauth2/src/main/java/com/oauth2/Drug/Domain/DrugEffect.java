@@ -13,8 +13,9 @@ public class DrugEffect {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
-    private Long drugId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "drug_Id")
+    private Drug drug;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
