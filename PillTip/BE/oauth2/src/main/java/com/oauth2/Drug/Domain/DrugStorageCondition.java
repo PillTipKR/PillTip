@@ -13,8 +13,9 @@ public class DrugStorageCondition {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
-    private Long drugId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "drug_Id")
+    private Drug drug;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -22,10 +23,12 @@ public class DrugStorageCondition {
 
     @Column(nullable = false)
     private String value;
-    private String iconUrl;
+
+    @Column(nullable = false)
+    private boolean active;
 
     public enum Category {
         TEMPERATURE, CONTAINER, HUMID, LIGHT, PLACE
     }
     // getter, setter 생략
-} 
+}

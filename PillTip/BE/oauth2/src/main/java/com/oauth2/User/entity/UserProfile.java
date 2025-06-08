@@ -81,3 +81,4 @@ public class UserProfile {
         this.allergyInfo = allergyInfo;
     }
 }
+

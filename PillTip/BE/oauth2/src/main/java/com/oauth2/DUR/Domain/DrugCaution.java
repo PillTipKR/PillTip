@@ -1,4 +1,4 @@
-package com.oauth2.Drug.Domain;
+package com.oauth2.DUR.Domain;
 
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -14,32 +14,26 @@ public class DrugCaution {
     private Long cautionId;
 
     @Column(nullable = false)
-    private Long ingredientId;
+    private Long drugId;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private ConditionType conditionType;
 
     @Column(columnDefinition = "TEXT")
-    private String conditionValue; //조건
-
-    @Column(columnDefinition = "TEXT")
-    private String dosageForm; //제형
+    private String conditionValue; //조건(금기/주의 내용)
 
     @Column(columnDefinition = "TEXT")
     private String note; //비고
 
-    @Column(columnDefinition = "TEXT")
-    private String approvalInfo; //허가사항
-
     //PERIOD : 투여기간 주의
     //PREGNANCY : 임부금기
     //AGE: 연령금기
-    //ELDER: 노인주의
+    //ELDER: 노인주의 - 노인(65세 이상)
     //LACTATION: 수유부주의
     public enum ConditionType {
         PERIOD, PREGNANCY, AGE,
         ELDER, LACTATION, OVERDOSE
     }
 
-} 
+}

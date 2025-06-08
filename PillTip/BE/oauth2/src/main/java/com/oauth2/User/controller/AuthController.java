@@ -209,4 +209,4 @@ public class AuthController {
         UserProfile userProfile = userProfileService.updatePregnant(user, pregnant);
         return ResponseEntity.ok(ApiResponse.success("Pregnant updated successfully", userProfile));
     }
-} 
+}

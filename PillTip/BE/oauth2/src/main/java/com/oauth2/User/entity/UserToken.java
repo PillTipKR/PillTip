@@ -66,3 +66,4 @@ public class UserToken {
         this.accessTokenExpiry = accessTokenExpiry;
     }
 }
+

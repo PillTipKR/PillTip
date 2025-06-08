@@ -6,4 +6,4 @@ import java.util.List;
 
 public interface DrugStorageConditionRepository extends JpaRepository<DrugStorageCondition, Long> {
     List<DrugStorageCondition> findByDrugId(Long drugId);
-} 
+}

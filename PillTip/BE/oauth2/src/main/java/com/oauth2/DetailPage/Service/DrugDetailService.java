@@ -5,27 +5,24 @@ import co.elastic.clients.elasticsearch.core.SearchRequest;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.elasticsearch.core.search.Hit;
 import com.oauth2.DetailPage.Dto.DrugDetail;
+import com.oauth2.DetailPage.Dto.EffectDetail;
+import com.oauth2.DetailPage.Dto.StorageDetail;
 import com.oauth2.Drug.Domain.Drug;
-import com.oauth2.Drug.Domain.DrugEffect;
-import com.oauth2.Drug.Domain.DrugStorageCondition;
-import com.oauth2.Drug.Repository.DrugEffectRepository;
 import com.oauth2.Drug.Repository.DrugRepository;
-import com.oauth2.Drug.Repository.DrugStorageConditionRepository;
 import com.oauth2.Search.Dto.SearchIndexDTO;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
 public class DrugDetailService {
 
     private final DrugRepository drugRepository;
-    private final DrugEffectRepository drugEffectRepository;
-    private final DrugStorageConditionRepository conditionRepository;
     private final ElasticsearchClient elasticsearchClient;
 
     @Value("${elastic.drug.id}")
@@ -34,18 +31,10 @@ public class DrugDetailService {
     @Value("${elastic.allSearch}")
     private String allSearch;
 
-    public DrugDetailService(DrugRepository drugRepository, DrugEffectRepository drugEffectRepository, DrugStorageConditionRepository conditionRepository, ElasticsearchClient elasticsearchClient) {
-        this.drugRepository = drugRepository;
-        this.drugEffectRepository = drugEffectRepository;
-        this.conditionRepository = conditionRepository;
-        this.elasticsearchClient = elasticsearchClient;
-    }
-
     public DrugDetail getDetail(SearchIndexDTO searchIndexDTO) {
         long id = searchIndexDTO.id();
-        Optional<Drug> drug = drugRepository.findById(id);
-        List<DrugEffect> drugEffectList = drugEffectRepository.findByDrugId(id);
-        List<DrugStorageCondition> drugStorageConditions = conditionRepository.findByDrugId(id);
+        // 한 번의 쿼리로 Drug과 관련된 DrugEffect, DrugStorageCondition을 가져옵니다.
+        Optional<Drug> drug = drugRepository.findDrugWithAllRelations(id);
         return drug.map(value -> DrugDetail.builder()
                 .id(id)
                 .name(searchIndexDTO.drugName())
@@ -56,8 +45,16 @@ public class DrugDetailService {
                 .tag(value.getTag())
                 .atcCode(value.getAtcCode())
                 .approvalDate(value.getApprovalDate())
-                .effectDetails(drugEffectList)
-                .storageDetails(drugStorageConditions)
+                .effectDetails(
+                        drug.get().getDrugEffects().stream()
+                                .map(e -> new EffectDetail(e.getType(), e.getContent()))
+                                .toList()
+                )
+                .storageDetails(
+                        drug.get().getStorageConditions().stream()
+                                .map(s -> new StorageDetail(s.getCategory(), s.getValue(), s.isActive()))
+                                .toList()
+                )
                 .build()).orElse(null);
     }
 

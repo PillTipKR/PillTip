@@ -10,4 +10,4 @@ import lombok.Setter;
 public class DuplicateCheckRequest {
     private String value; // 체크할 값 (아이디, 닉네임, 전화번호)
     private String type; // 체크 타입 (loginId, nickname, phoneNumber)
-} 
+}

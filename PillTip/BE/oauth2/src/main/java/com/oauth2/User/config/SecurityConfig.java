@@ -9,6 +9,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -32,13 +33,17 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
             // csrf 공격 방어 비활성화, REST API는 상태를 저장하지 않으므로
-            .csrf(csrf -> csrf.disable())
+            .csrf(AbstractHttpConfigurer::disable)
             // 세션 관리 정책 설정, 세션을 사용하지 않으므로 STATELESS로 설정(jwt 사용)
             .sessionManagement(session -> session
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             // 인증 없이 접근 가능한 경로 설정
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/", "/error", "/oauth2/**", "/login/**", "/css/**", "/js/**", "/images/**", "/static/**", "/webjars/**", "/favicon.ico", "/api/auth/signup", "/api/auth/login", "/api/auth/check-duplicate", "/api/auth/refresh").permitAll()
+                .requestMatchers("/", "/error", "/oauth2/**", "/login/**",
+                        "/css/**", "/js/**", "/images/**",
+                        "/static/**", "/webjars/**", "/favicon.ico",
+                        "/api/auth/signup", "/api/auth/login", "/api/auth/check-duplicate",
+                        "/api/auth/refresh").permitAll()
                 // 나머지 경로는 인증 필요
                 .anyRequest().authenticated()
             )
@@ -47,4 +52,4 @@ public class SecurityConfig {
 
         return http.build();
     }
-} 
+}

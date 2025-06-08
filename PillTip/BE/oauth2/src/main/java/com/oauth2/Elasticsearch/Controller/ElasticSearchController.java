@@ -46,14 +46,7 @@ public class ElasticSearchController {
             @AuthenticationPrincipal User user,
             @RequestParam String input,
             @RequestParam(defaultValue = "0") int page) throws IOException {
-        if (user == null) {
-            return ResponseEntity.badRequest()
-                .body(ApiResponse.error("User not authenticated", null));
-        }
-        List<String> filter = List.of();
-        ElasticQuery eq = new ElasticQuery(input, drug, index, filter, pageSize, page);
-        List<ElasticsearchDTO> result = elasticsearchService.getMatchingFromElasticsearch(eq, ElasticsearchDTO.class);
-        return ResponseEntity.ok(ApiResponse.success(result));
+        return getApiResponseResponseEntity(user, input, page, drug);
     }
 
     @GetMapping("/manufacturers")
@@ -61,14 +54,7 @@ public class ElasticSearchController {
             @AuthenticationPrincipal User user,
             @RequestParam String input,
             @RequestParam(defaultValue = "0") int page) throws IOException {
-        if (user == null) {
-            return ResponseEntity.badRequest()
-                .body(ApiResponse.error("User not authenticated", null));
-        }
-        List<String> filter = List.of();
-        ElasticQuery eq = new ElasticQuery(input, manufacturer, index, filter, pageSize, page);
-        List<ElasticsearchDTO> result = elasticsearchService.getMatchingFromElasticsearch(eq, ElasticsearchDTO.class);
-        return ResponseEntity.ok(ApiResponse.success(result));
+        return getApiResponseResponseEntity(user, input, page, manufacturer);
     }
 
     @GetMapping("/ingredients")
@@ -76,13 +62,22 @@ public class ElasticSearchController {
             @AuthenticationPrincipal User user,
             @RequestParam String input,
             @RequestParam(defaultValue = "0") int page) throws IOException {
+        return getApiResponseResponseEntity(user, input, page, ingredient);
+    }
+
+
+    private ResponseEntity<ApiResponse<List<ElasticsearchDTO>>> getApiResponseResponseEntity(
+            @AuthenticationPrincipal User user,
+            @RequestParam String input,
+            @RequestParam(defaultValue = "0") int page, String field) throws IOException {
         if (user == null) {
             return ResponseEntity.badRequest()
-                .body(ApiResponse.error("User not authenticated", null));
+                    .body(ApiResponse.error("User not authenticated", null));
         }
         List<String> filter = List.of();
-        ElasticQuery eq = new ElasticQuery(input, ingredient, index, filter, pageSize, page);
+        ElasticQuery eq = new ElasticQuery(input, field, index, filter, pageSize, page);
         List<ElasticsearchDTO> result = elasticsearchService.getMatchingFromElasticsearch(eq, ElasticsearchDTO.class);
         return ResponseEntity.ok(ApiResponse.success(result));
     }
+
 }
