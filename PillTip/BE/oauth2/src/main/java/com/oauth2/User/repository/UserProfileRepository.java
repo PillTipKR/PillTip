@@ -12,4 +12,4 @@ public interface UserProfileRepository extends JpaRepository<UserProfile, Long> 
     
     // SELECT * FROM user_profile WHERE user_id = ?
     Optional<UserProfile> findByUserId(Long userId);
-} 
+}

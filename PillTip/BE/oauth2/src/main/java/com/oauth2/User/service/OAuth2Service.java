@@ -114,4 +114,4 @@ public class OAuth2Service {
         JsonNode field = node.get(fieldName);
         return field != null && !field.isNull() ? field.asText() : null;
     }
-} 
+}
