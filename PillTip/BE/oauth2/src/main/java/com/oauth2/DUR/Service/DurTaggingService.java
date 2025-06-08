@@ -5,8 +5,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.oauth2.DUR.Dto.DurDetail;
 import com.oauth2.DUR.Dto.DurTagDto;
-import com.oauth2.Drug.Domain.Drug;
-import com.oauth2.Drug.Repository.DrugRepository;
 import com.oauth2.Search.Dto.SearchIndexDTO;
 import com.oauth2.User.dto.TakingPillRequest;
 import com.oauth2.User.entity.User;
@@ -25,7 +23,6 @@ public class DurTaggingService {
 
     private final StringRedisTemplate redisTemplate;
     private final ObjectMapper objectMapper;
-    private final DrugRepository drugRepository;
 
     public List<DurTagDto> generateTagsForDrugs(User user, List<SearchIndexDTO> drugs) throws JsonProcessingException {
         List<DurTagDto> result = new ArrayList<>();

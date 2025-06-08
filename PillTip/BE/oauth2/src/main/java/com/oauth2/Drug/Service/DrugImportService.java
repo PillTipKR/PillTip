@@ -224,7 +224,7 @@ public class DrugImportService {
                     continue;
                 }
                 // 긍정/부정 연결어 패턴\\
-                String regex = "보관(?:(?:하지 ?않(?:고|으며|게|을 것|말 것|는다|도록|말고|아야 한다)?)|하지 말 것|하지 말아야 한다|하면 안된다|하지 말고|하며|하고|하도록|한다|할 것|하여야 한다)?";
+                String regex = "보관(?:하지 ?않(?:고|으며|게|을 것|말 것|는다|도록|말고|아야 한다)?|하지 말 것|하지 말아야 한다|하면 안된다|하지 말고|하며|하고|하도록|한다|할 것|하여야 한다)?";
                 Pattern pattern = Pattern.compile(regex);
                 Matcher matcher = pattern.matcher(line);
                 int lastPos = 0;

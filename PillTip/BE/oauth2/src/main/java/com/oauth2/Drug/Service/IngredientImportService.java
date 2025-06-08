@@ -18,9 +18,6 @@ import java.util.Optional;
 public class IngredientImportService {
 
     private final IngredientRepository ingredientRepository;
-    private final DrugCautionRepository ducationRepository;
-    private final DrugTherapeuticDupRepository drugTherapeuticDupRepository;
-    private final DrugInteractionRepository interactionRepository;
 
     public void importIngredientsFromCsv(MultipartFile file) {
         try (CSVReader reader = new CSVReader(new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8))) {

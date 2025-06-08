@@ -17,7 +17,6 @@ import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -144,7 +143,7 @@ public class DrugCautionService {
                         .withIgnoreEmptyLines()
                         .withAllowMissingColumnNames()
                         .withTrim()
-                        .parse(reader);
+                        .parse(reader)
         ) {
             for (CSVRecord record : csvParser) {
                 String productName = record.get(0).trim();       // 첫 번째 컬럼
@@ -166,14 +165,14 @@ public class DrugCautionService {
                         .withIgnoreEmptyLines()
                         .withAllowMissingColumnNames()
                         .withTrim()
-                        .parse(reader);
+                        .parse(reader)
         ) {
             for (CSVRecord record : csvParser) {
                 String productName = record.get(1).trim();       // 첫 번째 컬럼
                 String conditionValue = record.get(4).trim();    // "1세 미만" 등
                 String note = record.get(5).trim();              // 위험성
 
-                saveCaution(productName, DrugCaution.ConditionType.OVERDOSE, conditionValue, null);
+                saveCaution(productName, DrugCaution.ConditionType.OVERDOSE, conditionValue, note);
             }
         }
     }
@@ -186,14 +185,14 @@ public class DrugCautionService {
                         .withIgnoreEmptyLines()
                         .withAllowMissingColumnNames()
                         .withTrim()
-                        .parse(reader);
+                        .parse(reader)
         ) {
             for (CSVRecord record : csvParser) {
                 String productName = record.get(0).trim();       // 첫 번째 컬럼
                 String conditionValue = record.get(4).trim();    // "1세 미만" 등
                 String note = "";              // 위험성
 
-                saveCaution(productName, DrugCaution.ConditionType.PERIOD, conditionValue, null);
+                saveCaution(productName, DrugCaution.ConditionType.PERIOD, conditionValue, note);
             }
         }
     }
@@ -223,9 +222,6 @@ public class DrugCautionService {
     }
 
 
-    public List<DrugCaution> findAll() {
-        return drugCautionRepository.findAll();
-    }
     public DrugCaution save(DrugCaution drugCaution) {
         return drugCautionRepository.save(drugCaution);
     }

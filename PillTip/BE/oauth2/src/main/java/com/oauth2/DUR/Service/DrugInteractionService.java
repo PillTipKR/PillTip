@@ -12,7 +12,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -102,10 +101,6 @@ public class DrugInteractionService {
         }
     }
 
-
-    public List<DrugInteraction> findAll() {
-        return drugInteractionRepository.findAll();
-    }
     public DrugInteraction save(DrugInteraction drugInteraction) {
         return drugInteractionRepository.save(drugInteraction);
     }
