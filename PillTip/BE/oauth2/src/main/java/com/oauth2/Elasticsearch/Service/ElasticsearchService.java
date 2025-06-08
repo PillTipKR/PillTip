@@ -39,6 +39,7 @@ public class ElasticsearchService {
 
     private NestedQuery nestedQuery(String field, String value) {
         String nestedPath = field.split("\\.")[0]; // e.g., "ingredient"
+        System.out.println(nestedPath);
         return NestedQuery.of(q -> q
                 .path(nestedPath)
                 .query(nq -> nq
@@ -82,38 +83,38 @@ public class ElasticsearchService {
                                 field[0] = autocompleteField;
                             }
 
-                        b.minimumShouldMatch("1");
+                            b.minimumShouldMatch("1");
 
                         if (field[0].startsWith("ingredient.")) {
-                                // ingredient.name.edge 등과 같이 nested 하위 필드면 nested 쿼리 삽입
-                                b = b.should(sh -> sh.nested(nestedQuery(field[0], input)));
-                            } else {
-                                        b=b.should(sh -> sh.prefix(p -> p
-                                        .field(field[0] + ".edge")
-                                        .value(input)
-                                        .boost(90.0f)
+                            b = b
+                                .should(sh -> sh.nested(nestedQuery(field[0] + ".edge", input)))
+                                .should(sh -> sh.nested(nestedQuery(field[0] + ".gram", input)));
+                        }
+                        else {
+                                b=b.should(sh -> sh.prefix(p -> p
+                                    .field(field[0] + ".edge")
+                                    .value(input)
+                                    .boost(90.0f)
                                 ))
-                                        .should(sh -> sh.match(p -> p
-                                                .field(field[0] + ".gram")
-                                                .query(input)
-                                                .boost(5.0f)
-                                        ))
-                                        .should(sh -> sh.fuzzy(f -> f
-                                                        .field(field[0])
-                                                        .value(input)
-                                                        .fuzziness("AUTO")
-                                                        .boost(1.0f)
-                                                )
-                                        );
-                            }
-                                    return b;
-                            }
-                    )
+                                .should(sh -> sh.match(p -> p
+                                    .field(field[0] + ".gram")
+                                    .query(input)
+                                    .boost(5.0f)
+                                ))
+                                .should(sh -> sh.fuzzy(f -> f
+                                    .field(field[0])
+                                    .value(input)
+                                    .fuzziness("AUTO")
+                                    .boost(1.0f)
+                                ));
+                        }
+
+                        return b;
+                    })
             );
             return s;
         });
         SearchResponse<T> response = elasticsearchClient.search(searchRequest,dtoClass);
-
         return response.hits().hits().stream()
                 .map(Hit::source)
                 .filter(Objects::nonNull)

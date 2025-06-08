@@ -23,8 +23,9 @@ public class AutocompleteSeeder implements CommandLineRunner {
     public void run(String... args) throws Exception {
         if(seed) {
             dataSyncService.loadAll();
-            durRedisLoader.loadAll();
             System.out.println("Index injection complete");
+            durRedisLoader.loadAll();
+            System.out.println("DUR Redis injection complete");
         }
     }
 }
