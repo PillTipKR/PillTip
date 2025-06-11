@@ -140,13 +140,11 @@ public class DurTaggingService {
                 Map<String, String> value = objectMapper.readValue(ageJson, new TypeReference<>() {
                 });
                 String raw = value.getOrDefault("conditionValue", "");
-                if (isUserInRestrictedAge(user.getUserProfile().getBirthDate(), raw)) {
-                    tags.add(new DurDetail(
-                            "연령금기",
-                            raw,
-                            isUserInRestrictedAge(user.getUserProfile().getBirthDate(), raw)
-                    ));
-                }
+                tags.add(new DurDetail(
+                        "연령금기",
+                        raw,
+                        isUserInRestrictedAge(user.getUserProfile().getBirthDate(), raw)
+                ));
             }
 
             // 효능군 중복주의 검사
