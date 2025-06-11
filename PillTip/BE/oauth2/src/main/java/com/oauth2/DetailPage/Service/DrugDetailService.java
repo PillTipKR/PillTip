@@ -61,7 +61,7 @@ public class DrugDetailService {
                                 .map(s -> new StorageDetail(s.getCategory(), s.getValue(), s.isActive()))
                                 .toList()
                 )
-                .durTagDtos(durTagDto.tag())
+                .durTags(durTagDto.durTags())
                 .build()).orElse(null);
     }
 

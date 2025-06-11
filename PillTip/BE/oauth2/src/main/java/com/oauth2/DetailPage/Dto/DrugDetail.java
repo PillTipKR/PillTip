@@ -21,5 +21,5 @@ public record DrugDetail (
     Date approvalDate,
     List<StorageDetail> storageDetails,
     List<EffectDetail> effectDetails,
-    List<DurDetail> durTagDtos
+    List<DurDetail> durTags
 ) {}

@@ -26,7 +26,7 @@ public class DurTaggingService {
 
     public List<DurTagDto> generateTagsForDrugs(User user, List<SearchIndexDTO> drugs) throws JsonProcessingException {
         List<DurTagDto> result = new ArrayList<>();
-        boolean isElderly = user.getUserProfile().getAge() <= 65;
+        boolean isElderly = user.getUserProfile().getAge() >= 65;
         // 효능군 정보: className → 약물 ID 목록
         Map<String, List<Long>> classToDrugIdsMap = new HashMap<>();
 
