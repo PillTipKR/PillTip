@@ -9,6 +9,6 @@ public record DurTagDto (
         String drugName,
         List<IngredientDetail> ingredients,
         String manufacturer,
-        List<DurDetail> tag
+        List<DurDetail> durTags
 )
 {}

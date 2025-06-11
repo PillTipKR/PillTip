@@ -26,7 +26,7 @@ public class DurTaggingService {
 
     public List<DurTagDto> generateTagsForDrugs(User user, List<SearchIndexDTO> drugs) throws JsonProcessingException {
         List<DurTagDto> result = new ArrayList<>();
-        boolean isElderly = user.getUserProfile().getAge() <= 65;
+        boolean isElderly = user.getUserProfile().getAge() >= 65;
         // 효능군 정보: className → 약물 ID 목록
         Map<String, List<Long>> classToDrugIdsMap = new HashMap<>();
 
@@ -140,13 +140,11 @@ public class DurTaggingService {
                 Map<String, String> value = objectMapper.readValue(ageJson, new TypeReference<>() {
                 });
                 String raw = value.getOrDefault("conditionValue", "");
-                if (isUserInRestrictedAge(user.getUserProfile().getBirthDate(), raw)) {
-                    tags.add(new DurDetail(
-                            "연령금기",
-                            raw,
-                            isUserInRestrictedAge(user.getUserProfile().getBirthDate(), raw)
-                    ));
-                }
+                tags.add(new DurDetail(
+                        "연령금기",
+                        raw,
+                        isUserInRestrictedAge(user.getUserProfile().getBirthDate(), raw)
+                ));
             }
 
             // 효능군 중복주의 검사
