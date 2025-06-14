@@ -43,4 +43,4 @@ public class UserLocation {
         this.latitude = latitude;
         this.longitude = longitude;
     }
-} 
+}

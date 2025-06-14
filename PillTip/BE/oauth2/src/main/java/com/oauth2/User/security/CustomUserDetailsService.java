@@ -40,4 +40,4 @@ public class CustomUserDetailsService implements UserDetailsService {
                 Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER")) // 사용자 권한
         );
     }
-} 
+}

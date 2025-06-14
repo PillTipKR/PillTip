@@ -13,13 +13,9 @@ public class AllSearchProvider implements IndexMappingProvider<IngredientDetail>
 
     @Value("${elastic.allSearch}")
     private String index;
-    @Value("${elastic.nGramAnalyzer}")
-    private String autoNGramAnalyzer;
-    @Value("${elastic.edgeNGramAnalyzer}")
-    private String autoEdgeNGramAnalyzer;
     @Value("${elastic.drug.id}")
     private String id;
-    @Value("${elastic.drug.ingredient}")
+    @Value("${elastic.drug.ingredient.index}")
     private String ingredient;
     @Value("${elastic.drug.drug}")
     private String drugName;
@@ -50,15 +46,15 @@ public class AllSearchProvider implements IndexMappingProvider<IngredientDetail>
                         .keyword(k -> k.index(true))
                 )
                 .properties(drugName, p -> p
-                        .text(t -> t.fields("edge", f->f.text(edge -> edge.analyzer(autoEdgeNGramAnalyzer)))
-                                .fields("gram", f->f.text(gram->gram.analyzer(autoNGramAnalyzer))))
+                        .text(t -> t.fields("edge", f->f.text(edge -> edge.analyzer(settingsProvider.getAutoEdgeNGramAnalyzer())))
+                                .fields("gram", f->f.text(gram->gram.analyzer(settingsProvider.getAutoNGramAnalyzer()))))
                 )
                 .properties(ingredient, p -> p
                         .nested(n -> n
                                 .properties("name", np -> np
                                         .text(t -> t
-                                                .fields("edge", f -> f.text(edge -> edge.analyzer(autoEdgeNGramAnalyzer)))
-                                                .fields("gram", f -> f.text(gram -> gram.analyzer(autoNGramAnalyzer)))
+                                                .fields("edge", f -> f.text(edge -> edge.analyzer(settingsProvider.getAutoEdgeNGramAnalyzer())))
+                                                .fields("gram", f -> f.text(gram -> gram.analyzer(settingsProvider.getAutoNGramAnalyzer())))
                                         )
                                 )
                                 .properties("dose", d -> d.text(t->t))
@@ -67,8 +63,8 @@ public class AllSearchProvider implements IndexMappingProvider<IngredientDetail>
                         )
                 )
                 .properties(manufacturer, p -> p
-                        .text(t -> t.fields("edge", f->f.text(edge -> edge.analyzer(autoEdgeNGramAnalyzer)))
-                                .fields("gram", f->f.text(gram->gram.analyzer(autoNGramAnalyzer))))
+                        .text(t -> t.fields("edge", f->f.text(edge -> edge.analyzer(settingsProvider.getAutoEdgeNGramAnalyzer())))
+                                .fields("gram", f->f.text(gram->gram.analyzer(settingsProvider.getAutoNGramAnalyzer()))))
                 )
                 .build();
     }

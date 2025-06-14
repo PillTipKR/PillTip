@@ -1,4 +1,4 @@
-package com.oauth2.Drug.Domain;
+package com.oauth2.DUR.Domain;
 
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -14,16 +14,17 @@ public class DrugTherapeuticDup {
     private Long id;
 
     @Column(nullable = false, columnDefinition = "TEXT")
-    private String className;
+    private String category; // 효능군명
 
     @Column(nullable = false, columnDefinition = "TEXT")
-    private String category;
+    private String className; // 분류명
 
     @Column(nullable = false)
-    private Long ingredientId;
+    private Long drugId; // 약품 ID (약 이름으로 매핑)
 
     @Column(nullable = false, columnDefinition = "TEXT")
-    private String note;
+    private String note; // 중복내용
 
-
+    @Column(columnDefinition = "TEXT")
+    private String remark; // 비고
 }

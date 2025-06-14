@@ -203,4 +203,4 @@ public class SignupService {
     private String generateRandomNickname() {
         return "user_" + System.currentTimeMillis();
     }
-} 
+}

@@ -13,4 +13,4 @@ public class OAuth2UserInfo {
     private final String name;
     private final String profileImage;
     private final String provider;
-} 
+}

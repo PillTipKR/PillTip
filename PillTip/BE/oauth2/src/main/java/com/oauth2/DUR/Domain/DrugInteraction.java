@@ -1,4 +1,4 @@
-package com.oauth2.Drug.Domain;
+package com.oauth2.DUR.Domain;
 
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -13,8 +13,8 @@ public class DrugInteraction {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long interactionId;
 
-    private Long groupId1;
-    private Long groupId2;
+    private Long drugId1;
+    private Long drugId2;
 
     @Column(columnDefinition = "TEXT")
     private String reason;
@@ -22,3 +22,5 @@ public class DrugInteraction {
     @Column(columnDefinition = "TEXT")
     private String note;
 }
+
+

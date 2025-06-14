@@ -1,4 +1,4 @@
-package com.oauth2.Util.Service;
+package com.oauth2.Elasticsearch.Service;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch.core.IndexRequest;
@@ -23,11 +23,6 @@ import java.util.*;
 @RequiredArgsConstructor
 public class DataSyncService {
 
-
-    @Value("${redis.drug.drug}")
-    private String hashDrug;
-    @Value("${redis.drug.manufacturer}")
-    private String hashMaufacturer;
     @Value("${elastic.autocomplete.index}")
     private String autocomplete;
     @Value("${elastic.allSearch}")
@@ -43,20 +38,10 @@ public class DataSyncService {
     private String ingredientName;
 
 
-    private final RedisService redisService;
     private final DrugRepository drugRepository;
     private final ElasticsearchClient elasticsearchClient;
     private final IngredientRepository ingredientRepository;
     private final DrugIngredientRepository drugIngredientRepository;
-
-    private void syncDataWithRedis() {
-        List<Drug> drugs = drugRepository.findAll();
-        for (Drug drug : drugs) {
-            String drugId = String.valueOf(drug.getId());
-            redisService.addAutocompleteSuggestion(drugId, hashDrug,drug.getName());
-            redisService.addAutocompleteSuggestion(drugId, hashMaufacturer, drug.getManufacturer());
-        }
-    }
 
     private void syncTextToElasticsearch() throws IOException {
         List<Drug> drugs = drugRepository.findAll();
@@ -109,17 +94,19 @@ public class DataSyncService {
                     ingredientComps.add(isidto);
                 }
             }
-            ingredientComps.sort(Collections.reverseOrder());
-            ingredientComps.get(0).setMain(true);
-            SearchIndexDTO dto = getSearchIndexDTO(drug, ingredientComps);
+            if(!ingredientComps.isEmpty()) {
+                ingredientComps.sort(Collections.reverseOrder());
+                ingredientComps.get(0).setMain(true);
+                SearchIndexDTO dto = getSearchIndexDTO(drug, ingredientComps);
 
-            IndexRequest<SearchIndexDTO> indexRequest = new IndexRequest.Builder<SearchIndexDTO>()
-                    .index(search)
-                    .id(String.valueOf(dto.id()))
-                    .document(dto)
-                    .build();
+                IndexRequest<SearchIndexDTO> indexRequest = new IndexRequest.Builder<SearchIndexDTO>()
+                        .index(search)
+                        .id(String.valueOf(dto.id()))
+                        .document(dto)
+                        .build();
 
-            elasticsearchClient.index(indexRequest);
+                elasticsearchClient.index(indexRequest);
+            }
         }
     }
 
@@ -132,18 +119,16 @@ public class DataSyncService {
                     ingredientComp.isMain());
             ingredientDetails.add(ingredientDetail);
         }
-        SearchIndexDTO dto = new SearchIndexDTO(
+        return new SearchIndexDTO(
                 drug.getId(),
                 drug.getName(),
                 ingredientDetails,
                 drug.getManufacturer()
         );
-        return dto;
     }
 
     public void loadAll() throws IOException {
         syncDrugsToElasticsearch();
-        syncDataWithRedis();
         syncTextToElasticsearch();
     }
 }
