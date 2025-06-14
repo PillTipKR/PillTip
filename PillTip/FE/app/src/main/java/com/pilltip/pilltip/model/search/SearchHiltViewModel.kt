@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pilltip.pilltip.model.AuthInterceptor
+import com.pilltip.pilltip.model.signUp.NetworkModule
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -16,6 +17,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import okhttp3.OkHttpClient
+import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import javax.inject.Inject
@@ -25,7 +27,8 @@ import javax.inject.Singleton
 @HiltViewModel
 class SearchHiltViewModel @Inject constructor(
     private val repository: AutoCompleteRepository,
-    private val drugSearchRepo: DrugSearchRepository
+    private val drugSearchRepo: DrugSearchRepository,
+    private val drugDetailRepo: DrugDetailRepository
 ) : ViewModel() {
 
     /* 약품명 자동 완성 API*/
@@ -85,11 +88,36 @@ class SearchHiltViewModel @Inject constructor(
             }
         }
     }
+
+    /* 약품 상세 페이지 API */
+    private val _drugDetail = MutableStateFlow<DetailDrugData?>(null)
+    val drugDetail: StateFlow<DetailDrugData?> = _drugDetail.asStateFlow()
+
+    fun fetchDrugDetail(id: Long) {
+        Log.d("DrugDetail", "Fetching detail for drug ID: $id")
+        viewModelScope.launch {
+            try {
+                _isLoading.value = true
+//                val detail = drugDetailRepo.getDetail(id)
+//                Log.d("DrugDetail", "Fetched drug detail: $detail")
+                _drugDetail.value = drugDetailRepo.getDetail(id)
+            } catch (e: Exception) {
+                Log.e("DrugDetail", "상세정보 API 실패: ${e.message}")
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
 }
 
 @Module
 @InstallIn(SingletonComponent::class)
 object RepositoryModule {
+    val client = OkHttpClient.Builder()
+        .addInterceptor(HttpLoggingInterceptor().apply {
+            level = HttpLoggingInterceptor.Level.BODY
+        })
+        .build()
 
     @Provides
     @Singleton
@@ -130,5 +158,15 @@ object RepositoryModule {
     @Provides
     fun provideDrugSearchRepository(api: DrugSearchApi): DrugSearchRepository {
         return DrugSearchRepositoryImpl(api)
+    }
+
+    @Provides
+    fun provideDrugDetailApi(@Named("SearchRetrofit") retrofit: Retrofit): DrugDetailApi {
+        return retrofit.create(DrugDetailApi::class.java)
+    }
+
+    @Provides
+    fun provideDrugDetailRepository(api: DrugDetailApi): DrugDetailRepository {
+        return DrugDetailRepositoryImpl(api)
     }
 }

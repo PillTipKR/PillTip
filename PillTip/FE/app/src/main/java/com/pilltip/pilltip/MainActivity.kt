@@ -9,6 +9,8 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
 import androidx.compose.ui.platform.LocalContext
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.firebase.FirebaseApp
 import com.google.firebase.appcheck.FirebaseAppCheck
 import com.google.firebase.appcheck.debug.DebugAppCheckProviderFactory
@@ -17,7 +19,10 @@ import com.kakao.sdk.common.KakaoSdk
 import com.kakao.sdk.common.util.Utility
 import com.kakao.vectormap.KakaoMapSdk
 import com.pilltip.pilltip.model.UserInfoManager
+import com.pilltip.pilltip.model.search.LogViewModel
+import com.pilltip.pilltip.model.search.SearchHiltViewModel
 import com.pilltip.pilltip.model.signUp.ServerAuthAPI
+import com.pilltip.pilltip.model.signUp.SignUpViewModel
 import com.pilltip.pilltip.model.signUp.TokenManager
 import com.pilltip.pilltip.nav.NavGraph
 import dagger.hilt.android.AndroidEntryPoint
@@ -33,6 +38,9 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
+            val searchHiltViewModel: SearchHiltViewModel = hiltViewModel()
+            val signUpViewModel: SignUpViewModel = hiltViewModel()
+            val logViewModel: LogViewModel = viewModel()
             val context = LocalContext.current
             Log.d("KeyHash", "${Utility.getKeyHash(this)}")
 
@@ -59,7 +67,12 @@ class MainActivity : ComponentActivity() {
                     }
                 }
             }
-            NavGraph(startPage = startDestination)
+            NavGraph(
+                startPage = startDestination,
+                signUpViewModel = signUpViewModel,
+                searchHiltViewModel = searchHiltViewModel,
+                logViewModel = logViewModel
+            )
         }
     }
 

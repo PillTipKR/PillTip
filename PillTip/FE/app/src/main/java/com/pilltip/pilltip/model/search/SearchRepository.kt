@@ -34,7 +34,7 @@ interface DrugSearchApi {
     suspend fun searchDrugs(
         @Query("input") input: String,
         @Query("page") page: Int
-    ): List<DrugSearchResult>
+    ): DrugSearchResponse
 }
 
 interface DrugSearchRepository {
@@ -45,6 +45,26 @@ class DrugSearchRepositoryImpl(
     private val api: DrugSearchApi
 ) : DrugSearchRepository {
     override suspend fun search(query: String, page: Int): List<DrugSearchResult> {
-        return api.searchDrugs(query, page)
+        return api.searchDrugs(query, page).data
+    }
+}
+
+/**
+ * 약품 상세 페이지 API
+ * */
+interface DrugDetailApi {
+    @GET("/api/detailPage")
+    suspend fun getDrugDetail(@Query("id") id: Long): DetailDrugResponse
+}
+
+interface DrugDetailRepository {
+    suspend fun getDetail(id: Long): DetailDrugData
+}
+
+class DrugDetailRepositoryImpl(
+    private val api: DrugDetailApi
+) : DrugDetailRepository {
+    override suspend fun getDetail(id: Long): DetailDrugData {
+        return api.getDrugDetail(id).data
     }
 }

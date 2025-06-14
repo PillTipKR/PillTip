@@ -1,5 +1,6 @@
 package com.pilltip.pilltip.composable.SearchComposable
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -24,6 +25,7 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Card
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -37,6 +39,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.SpanStyle
@@ -54,9 +57,11 @@ import com.pilltip.pilltip.R
 import com.pilltip.pilltip.composable.HeightSpacer
 import com.pilltip.pilltip.composable.WidthSpacer
 import com.pilltip.pilltip.composable.noRippleClickable
+import com.pilltip.pilltip.model.UserInfoManager
 import com.pilltip.pilltip.model.search.DrugSearchResult
 import com.pilltip.pilltip.model.search.SearchData
 import com.pilltip.pilltip.model.search.LogViewModel
+import com.pilltip.pilltip.model.search.SearchHiltViewModel
 import com.pilltip.pilltip.ui.theme.gray050
 import com.pilltip.pilltip.ui.theme.gray100
 import com.pilltip.pilltip.ui.theme.gray200
@@ -70,7 +75,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 
 @Composable
 fun PillSearchField(
-    initialQuery: String ="",
+    initialQuery: String = "",
     navController: NavController,
     nowTyping: (String) -> Unit,
     searching: (String) -> Unit,
@@ -298,108 +303,157 @@ fun AutoCompleteList(
 }
 
 @Composable
-fun DrugSearchResultList(drugs: List<DrugSearchResult>) {
-    LazyColumn(modifier = Modifier
-        .fillMaxSize()
-        .padding(horizontal = 22.dp, vertical = 16.dp)) {
+fun DrugSearchResultList(
+    searchViewModel: SearchHiltViewModel,
+    drugs: List<DrugSearchResult>,
+    navController: NavController
+) {
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(gray050)
+            .padding(horizontal = 22.dp, vertical = 16.dp)
+    ) {
         items(drugs) { drug ->
-            DrugSearchResultCard(drug)
+            DrugSearchResultCard(
+                drug,
+                onClick = {
+                    Log.d("DrugDetail", "Clicked drug ID: ${drug.id}, name: ${drug.drugName}")
+                    searchViewModel.fetchDrugDetail(drug.id)
+                    navController.navigate("DetailPage")
+                }
+            )
             Spacer(modifier = Modifier.height(8.dp))
         }
     }
 }
 
 @Composable
-fun DrugSearchResultCard(drug: DrugSearchResult) {
-    Card(modifier = Modifier.fillMaxWidth().height(202.dp)) {
-        Column(
-            modifier = Modifier.padding(
-                top = 22.dp,
-                bottom = 16.dp,
-                start = 20.dp,
-                end = 20.dp
-            )
-        ) {
-            Row() {
-                Image(
-                    imageVector = ImageVector.vectorResource(R.drawable.logo_pilltip_blue_pill),
-                    contentDescription = "기본 이미지",
-                    Modifier
-                        .border(
-                            width = 0.6.dp,
-                            color = gray200,
-                            shape = RoundedCornerShape(size = 10.8.dp)
-                        )
-                        .width(90.dp)
-                        .height(90.dp)
-                        .background(color = gray050, shape = RoundedCornerShape(size = 10.8.dp))
-                        .padding(start = 19.79992.dp, end = 19.80008.dp)
-                )
-                Column() {
-                    Text(
-                        text = drug.drugName,
-                        fontSize = 14.sp,
-                        fontFamily = pretendard,
-                        fontWeight = FontWeight(700),
-                        color = Color(0xFF000000),
+fun DrugSearchResultCard(
+    drug: DrugSearchResult,
+    onClick: () -> Unit
+) {
+    val nickname = UserInfoManager.getUserData(LocalContext.current)?.nickname
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .noRippleClickable { onClick() }
+            .border(width = 0.5.dp, color = gray200, shape = RoundedCornerShape(size = 14.dp))
+            .background(color = Color(0xFFFFFFFF), shape = RoundedCornerShape(size = 14.dp))
+            .padding(top = 22.dp, bottom = 16.dp, start = 20.dp, end = 20.dp)
+    ) {
+        Row() {
+            Image(
+                imageVector = ImageVector.vectorResource(R.drawable.logo_pilltip_blue_pill),
+                contentDescription = "기본 이미지",
+                Modifier
+                    .border(
+                        width = 0.6.dp,
+                        color = gray200,
+                        shape = RoundedCornerShape(size = 10.8.dp)
                     )
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Row() {
-                        Image(
-                            imageVector = ImageVector.vectorResource(R.drawable.ic_rating_star),
-                            contentDescription = "별점",
-                            modifier = Modifier.size(12.dp)
+                    .width(90.dp)
+                    .height(90.dp)
+                    .background(color = gray050, shape = RoundedCornerShape(size = 10.8.dp))
+                    .padding(start = 19.79992.dp, end = 19.80008.dp)
+            )
+            WidthSpacer(14.dp)
+            Column() {
+                Text(
+                    text = drug.drugName,
+                    fontSize = 14.sp,
+                    fontFamily = pretendard,
+                    fontWeight = FontWeight(700),
+                    color = Color(0xFF000000),
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Image(
+                        imageVector = ImageVector.vectorResource(R.drawable.ic_rating_star),
+                        contentDescription = "별점",
+                        modifier = Modifier.size(12.dp)
+                    )
+                    WidthSpacer(4.dp)
+                    Text(
+                        text = "0.0", /*아직 별점 데이터 없음. 향후 추가 예정*/
+                        style = TextStyle(
+                            fontSize = 12.sp,
+                            fontFamily = pretendard,
+                            fontWeight = FontWeight(500),
+                            color = gray800,
                         )
-                        WidthSpacer(4.dp)
-                        Text(
-                            text = "0.0", /*아직 별점 데이터 없음. 향후 추가 예정*/
-                            style = TextStyle(
-                                fontSize = 12.sp,
-                                fontFamily = pretendard,
-                                fontWeight = FontWeight(500),
-                                color = gray800,
-                            )
-                        )
-                        WidthSpacer(2.dp)
-                        Text(
-                            text = "(0)", /*아직 별점 데이터 없음. 향후 추가 예정*/
-                            style = TextStyle(
-                                fontSize = 12.sp,
-                                fontFamily = pretendard,
-                                fontWeight = FontWeight(400),
-                                color = gray800,
-                            )
-                        )
-                        WidthSpacer(4.dp)
-                        Box(
-                            modifier = Modifier
-                                .padding(1.dp)
-                                .width(2.dp)
-                                .height(2.dp)
-                                .background(color = gray500)
-                        )
-                        WidthSpacer(4.dp)
-                        Text(
-                            text = "${drug.manufacturer}",
+                    )
+                    WidthSpacer(2.dp)
+                    Text(
+                        text = "(0)", /*아직 별점 데이터 없음. 향후 추가 예정*/
+                        style = TextStyle(
                             fontSize = 12.sp,
                             fontFamily = pretendard,
                             fontWeight = FontWeight(400),
-                            color = gray500
+                            color = gray800,
                         )
-                    }
-
-                    Spacer(modifier = Modifier.height(6.dp))
+                    )
+                    WidthSpacer(4.dp)
+                    Box(
+                        modifier = Modifier
+                            .padding(1.dp)
+                            .width(2.dp)
+                            .height(2.dp)
+                            .background(color = gray500)
+                    )
+                    WidthSpacer(4.dp)
+                    Text(
+                        text = "${drug.manufacturer}",
+                        fontSize = 12.sp,
+                        fontFamily = pretendard,
+                        fontWeight = FontWeight(400),
+                        color = gray500
+                    )
+                }
+                Spacer(modifier = Modifier.height(6.dp))
                     drug.ingredients.forEach { ingredient ->
                         Text(
                             text = "- ${ingredient.name} (${ingredient.dose})" + if (ingredient.main) " [주성분]" else "",
                             style = MaterialTheme.typography.bodySmall
                         )
                     }
-                }
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    text = "후기 0개",
+                    style = TextStyle(
+                        fontSize = 12.sp,
+                        fontFamily = pretendard,
+                        fontWeight = FontWeight(400),
+                        color = gray500,
+                    )
+                )
             }
-            HeightSpacer(14.dp)
-            HeightSpacer(14.dp)
-
+        }
+        HeightSpacer(14.dp)
+        HorizontalDivider(thickness = 0.5.dp, color = gray200)
+        HeightSpacer(14.dp)
+        Row(
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Image(
+                imageVector = ImageVector.vectorResource(R.drawable.ic_search_dur_alert),
+                contentDescription = "DUR 알림",
+                modifier = Modifier.size(20.dp)
+            )
+            WidthSpacer(8.dp)
+            Text(
+                text = "$nickname 님은 섭취에 주의가 필요한 약품이에요!",
+                style = TextStyle(
+                    fontSize = 12.sp,
+                    fontFamily = pretendard,
+                    fontWeight = FontWeight(500),
+                    color = gray800,
+                )
+            )
         }
     }
+
 }

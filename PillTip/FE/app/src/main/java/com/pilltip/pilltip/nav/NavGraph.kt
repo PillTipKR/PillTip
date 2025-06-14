@@ -18,15 +18,18 @@ import com.pilltip.pilltip.view.auth.ProfilePage
 import com.pilltip.pilltip.view.auth.SelectPage
 import com.pilltip.pilltip.view.auth.SplashPage
 import com.pilltip.pilltip.view.main.PillMainPage
+import com.pilltip.pilltip.view.search.DetailPage
 import com.pilltip.pilltip.view.search.SearchPage
 import com.pilltip.pilltip.view.search.SearchResultsPage
 
 @Composable
-fun NavGraph(startPage: String) {
+fun NavGraph(
+    startPage: String,
+    signUpViewModel: SignUpViewModel = hiltViewModel(),
+    searchHiltViewModel: SearchHiltViewModel = hiltViewModel(),
+    logViewModel: LogViewModel = viewModel()
+) {
     val navController = rememberNavController()
-    val signUpViewModel: SignUpViewModel = hiltViewModel()
-    val searchHiltViewModel: SearchHiltViewModel = hiltViewModel()
-    val logViewModel: LogViewModel = viewModel()
     NavHost(
         navController = navController,
         startDestination = startPage
@@ -75,6 +78,12 @@ fun NavGraph(startPage: String) {
                 logViewModel = logViewModel,
                 searchViewModel = searchHiltViewModel,
                 initialQuery = query
+            )
+        }
+        composable("DetailPage"){
+            DetailPage(
+                navController,
+                searchHiltViewModel
             )
         }
 
