@@ -3,8 +3,11 @@ package com.oauth2.DUR.Service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.oauth2.DUR.Dto.DurDetail;
+import com.oauth2.DUR.Dto.DurDto;
 import com.oauth2.DUR.Dto.DurTagDto;
+import com.oauth2.DUR.Dto.SearchDurDto;
+import com.oauth2.Drug.Domain.Drug;
+import com.oauth2.Drug.Repository.DrugRepository;
 import com.oauth2.Search.Dto.SearchIndexDTO;
 import com.oauth2.User.dto.TakingPillRequest;
 import com.oauth2.User.entity.User;
@@ -23,186 +26,104 @@ public class DurTaggingService {
 
     private final StringRedisTemplate redisTemplate;
     private final ObjectMapper objectMapper;
+    private final DrugRepository drugRepository;
 
-    public List<DurTagDto> generateTagsForDrugs(User user, List<SearchIndexDTO> drugs) throws JsonProcessingException {
-        List<DurTagDto> result = new ArrayList<>();
+    public List<SearchDurDto> generateTagsForDrugs(User user, List<SearchIndexDTO> drugs) throws JsonProcessingException {
+        List<SearchDurDto> result = new ArrayList<>();
         boolean isElderly = user.getUserProfile().getAge() >= 65;
-        // 효능군 정보: className → 약물 ID 목록
         Map<String, List<Long>> classToDrugIdsMap = new HashMap<>();
+        Set<String> userInteraction = new HashSet<>();
 
-        // 1. 복용 중인 약 정보 JSON 문자열 → DTO 리스트로 변환
         String pillsJson = user.getUserProfile().getTakingPills();
-        List<TakingPillRequest> pillRequests = new ArrayList<>();
-        if (pillsJson != null && !pillsJson.isEmpty())
-            pillRequests = objectMapper.readValue(pillsJson, new TypeReference<>() {
-            });
+        List<TakingPillRequest> pillRequests = (pillsJson != null && !pillsJson.isEmpty())
+                ? objectMapper.readValue(pillsJson, new TypeReference<>() {}) : new ArrayList<>();
 
-        // 2. 내가 복용 중인 약물 ID 목록
-        Set<Long> userDrugIds = pillRequests.stream()
-                .map(TakingPillRequest::getMedicationId)
-                .collect(Collectors.toSet());
-
-        Set<String> userDrugNames = pillRequests.stream()
-                .map(TakingPillRequest::getMedicationName)
-                .collect(Collectors.toSet());
-
-
-        //사용자 복약정보에서 정보 들고오기
+        Set<Long> userDrugIds = pillRequests.stream().map(TakingPillRequest::getMedicationId).collect(Collectors.toSet());
         for (Long userDrugId : userDrugIds) {
+            Optional<Drug> userDrug = drugRepository.findById(userDrugId);
+            if (userDrug.isEmpty()) continue;
+            String drugName = userDrug.get().getName();
 
-            String key = "DUR:THERAPEUTIC_DUP:" + userDrugId;
-            String json = redisTemplate.opsForValue().get(key);
-            if (json == null) continue;
+            List<String> contraList = redisTemplate.opsForList().range("DUR:INTERACT:" + drugName, 0, -1);
+            if(contraList != null)
+                userInteraction.add(drugName);
 
-            Map<String, String> value = objectMapper.readValue(json, new TypeReference<>() {});
-            String className = value.getOrDefault("className", "").trim();
-
-            if (!className.isBlank()) {
-                classToDrugIdsMap.computeIfAbsent(className, k -> new ArrayList<>()).add(userDrugId);
+            Map<String, String> value = readJsonFromRedis("DUR:THERAPEUTIC_DUP:" + userDrugId);
+            if (value != null) {
+                String className = value.getOrDefault("className", "").trim();
+                if (!className.isBlank()) {
+                    classToDrugIdsMap.computeIfAbsent(className, k -> new ArrayList<>()).add(userDrugId);
+                }
             }
         }
 
         for (SearchIndexDTO drug : drugs) {
             Long drugId = drug.id();
             String drugName = drug.drugName();
-            List<DurDetail> tags = new ArrayList<>();
+            List<DurTagDto> tags = new ArrayList<>();
 
-            Map<String, List<String>> contraMap = new HashMap<>();
+            List<String> contraList = redisTemplate.opsForList().range("DUR:INTERACT:" + drugName, 0, -1);
+            if(contraList != null)
+                tags.add(buildContraTag(drug, userInteraction));
 
-            List<String> contraList = redisTemplate.opsForList()
-                    .range("DUR:INTERACT:" + drugName, 0, -1);
+            tags.add(buildDurTag("임부금기", readJsonFromRedis("DUR:PREGNANCY:" + drugId), user.getUserProfile().isPregnant()));
+            tags.add(buildDurTag("노인금기", readJsonFromRedis("DUR:ELDER:" + drugId), isElderly));
 
-            if(contraList != null) {
-                for (String contraStr : contraList) {
-                    contraMap.computeIfAbsent(contraStr, k -> new ArrayList<>()).add(drugName);
-                }
+            Map<String, String> ageValue = readJsonFromRedis("DUR:AGE:" + drugId);
+            boolean showAgeTag = ageValue != null && isUserInRestrictedAge(user.getUserProfile().getBirthDate(), ageValue.get("conditionValue"));
+            tags.add(buildDurTag("연령금기", ageValue, showAgeTag));
 
-                // contraMap의 key가 userDrugIds에 존재하는 경우에만 해당 key와 value를 matchedContraMap에 저장
-                for (Map.Entry<String, List<String>> entry : contraMap.entrySet()) {
-                    String otherName = entry.getKey();
-                    String reason = "";
+            Map<String, String> therValue = readJsonFromRedis("DUR:THERAPEUTIC_DUP:" + drugId);
+            boolean isDup = therValue != null && classToDrugIdsMap.containsKey(therValue.get("className"));
+            tags.add(buildDurTag("효능군중복주의", therValue, isDup));
 
-                    // Redis에서 note 불러오기
-                    String detailKey = "DUR:INTERACT_DETAIL:" + drugName + ":" + otherName;
-                    String detailJson = redisTemplate.opsForValue().get(detailKey);
-
-                    if (detailJson != null) {
-                        Map<String, String> detail = objectMapper.readValue(detailJson, new TypeReference<>() {
-                        });
-                        reason = detail.getOrDefault("reason", "");
-                    }
-
-
-                    // 태그 생성
-                    tags.add(new DurDetail(
-                            "병용금기",
-                            reason.isBlank() ?
-                                    "(" + drugName + " + " + otherName + ")" :
-                                    "(" + drugName + " + " + otherName + "): " + reason,
-                            userDrugNames.contains(otherName)
-                    ));
-
-                }
-            }
-
-            // 2. 임부금기
-            String pregKey = "DUR:PREGNANCY:" + drugId;
-            String pregJson = redisTemplate.opsForValue().get(pregKey);
-            if (pregJson != null) {
-                Map<String, String> value = objectMapper.readValue(pregJson, new TypeReference<>() {
-                });
-                tags.add(new DurDetail(
-                        "임부금기",
-                        value.get("conditionValue"),
-                        user.getUserProfile().isPregnant()
-                ));
-            }
-
-
-            // 3. 노인주의
-            String elderKey = "DUR:ELDER:" + drugId;
-            String elderJson = redisTemplate.opsForValue().get(elderKey);
-            if (elderJson != null) {
-                Map<String, String> value = objectMapper.readValue(elderJson, new TypeReference<>() {
-                });
-                tags.add(new DurDetail(
-                        "노인주의",
-                        value.get("conditionValue"),
-                        isElderly
-                ));
-            }
-
-
-            // 4. 연령금기
-            String ageKey = "DUR:AGE:" + drugId;
-            String ageJson = redisTemplate.opsForValue().get(ageKey);
-            if (ageJson != null) {
-                Map<String, String> value = objectMapper.readValue(ageJson, new TypeReference<>() {
-                });
-                String raw = value.getOrDefault("conditionValue", "");
-                tags.add(new DurDetail(
-                        "연령금기",
-                        raw,
-                        isUserInRestrictedAge(user.getUserProfile().getBirthDate(), raw)
-                ));
-            }
-
-            // 효능군 중복주의 검사
-            String therKey = "DUR:THERAPEUTIC_DUP:" + drugId;
-            String therJson = redisTemplate.opsForValue().get(therKey);
-            if (therJson != null) {
-
-                Map<String, String> value = objectMapper.readValue(therJson, new TypeReference<>() {});
-                String className = value.getOrDefault("className", "").trim();
-                List<Long> sameClassDrugs = classToDrugIdsMap.getOrDefault(className, List.of());
-
-                String category = value.getOrDefault("category", "");
-                String remark = value.getOrDefault("remark", "");
-                String note = value.getOrDefault("note", "");
-
-                StringBuilder tagBuilder = new StringBuilder();
-                tagBuilder.append(className);
-                if (!category.isBlank()) tagBuilder.append(" (").append(category).append(")");
-                if ((!remark.isBlank() && !remark.equals("없음"))
-                        || (!note.isBlank() && !note.equals("없음"))) {
-                    tagBuilder.append(" - ");
-                    if (!remark.isBlank() && !remark.equals("없음")) tagBuilder.append(remark);
-                    if (!note.isBlank() && !note.equals("없음")) {
-                        if (!remark.isBlank()) tagBuilder.append(", ");
-                        tagBuilder.append(note);
-                    }
-                }
-
-                tags.add(new DurDetail(
-                        "효능군중복주의",
-                        tagBuilder.toString(),
-                        !sameClassDrugs.isEmpty()
-                ));
-            }
-
-            DurTagDto dur = new DurTagDto(
-                    drug.id(),
-                    drug.drugName(),
-                    drug.ingredient(),
-                    drug.manufacturer(),
-                    tags
-            );
-            result.add(dur);
+            result.add(new SearchDurDto(drug.id(), drug.drugName(), drug.ingredient(), drug.manufacturer(), tags));
         }
         return result;
     }
 
+    private Map<String, String> readJsonFromRedis(String key) throws JsonProcessingException {
+        String json = redisTemplate.opsForValue().get(key);
+        return (json != null) ? objectMapper.readValue(json, new TypeReference<>() {}) : null;
+    }
+
+    private DurTagDto buildDurTag(String tagName, Map<String, String> valueMap, boolean shouldTag) {
+        List<DurDto> list = new ArrayList<>();
+        if (shouldTag && valueMap != null && !valueMap.isEmpty()) {
+            list.add(new DurDto(
+                    valueMap.getOrDefault("category", ""),
+                    valueMap.getOrDefault("conditionValue", valueMap.getOrDefault("remark", "")),
+                    valueMap.getOrDefault("note", "")
+            ));
+        }
+        return new DurTagDto(tagName, list, shouldTag && !list.isEmpty());
+    }
+
+    private DurTagDto buildContraTag(SearchIndexDTO drug, Set<String> userInteraction) throws JsonProcessingException {
+        List<DurDto> tagDesc = new ArrayList<>();
+        String drugName = drug.drugName();
+
+        for (String otherName : userInteraction) {
+            String detailKey = "DUR:INTERACT_DETAIL:" + drugName + ":" + otherName;
+            Map<String, String> detail = readJsonFromRedis(detailKey);
+            if(detail != null) {
+                tagDesc.add(new DurDto(
+                        otherName,
+                        detail.getOrDefault("reason", ""),
+                        detail.getOrDefault("note", "")
+                ));
+            }
+        }
+        return new DurTagDto("병용금기", tagDesc, !tagDesc.isEmpty());
+    }
 
     private boolean isUserInRestrictedAge(LocalDate birthDate, String conditionValue) {
         if (conditionValue == null || birthDate == null || conditionValue.isBlank()) return false;
         LocalDate today = LocalDate.now();
-
         int age = Period.between(birthDate, today).getYears();
-        int ageInMonths = Period.between(birthDate, today).getYears() * 12
-                + Period.between(birthDate, today).getMonths();
+        int ageInMonths = age * 12 + Period.between(birthDate, today).getMonths();
 
         String[] parts = conditionValue.split("\\s*,\\s*");
-
         for (String part : parts) {
             int limit;
             try {
@@ -211,26 +132,15 @@ public class DurTaggingService {
                 continue;
             }
 
-            if (part.contains("개월 미만")) {
-                if (ageInMonths < limit) return true;
-            } else if (part.contains("개월 이하")) {
-                if (ageInMonths <= limit) return true;
-            } else if (part.contains("개월 초과")) {
-                if (ageInMonths > limit) return true;
-            } else if (part.contains("개월 이상")) {
-                if (ageInMonths >= limit) return true;
-            } else if (part.contains("세 미만")) {
-                if (age < limit) return true;
-            } else if (part.contains("세 이하")) {
-                if (age <= limit) return true;
-            } else if (part.contains("세 초과")) {
-                if (age > limit) return true;
-            } else if (part.contains("세 이상")) {
-                if (age >= limit) return true;
-            }
+            if (part.contains("개월 미만") && ageInMonths < limit) return true;
+            if (part.contains("개월 이하") && ageInMonths <= limit) return true;
+            if (part.contains("개월 초과") && ageInMonths > limit) return true;
+            if (part.contains("개월 이상") && ageInMonths >= limit) return true;
+            if (part.contains("세 미만") && age < limit) return true;
+            if (part.contains("세 이하") && age <= limit) return true;
+            if (part.contains("세 초과") && age > limit) return true;
+            if (part.contains("세 이상") && age >= limit) return true;
         }
-
         return false;
     }
-
 }

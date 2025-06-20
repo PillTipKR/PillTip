@@ -49,7 +49,8 @@ public class DurRedisLoader {
             String key1 = "DUR:INTERACT_DETAIL:" + drugIdNameMap.get(di.getDrugId1()) + ":" + drugIdNameMap.get(di.getDrugId2());
 
             Map<String, String> value = Map.of(
-                    "reason", di.getNote() == null ? "" : di.getReason()
+                    "reason", di.getReason() == null ? "" : di.getReason(),
+                    "note", di.getNote() == null || di.getNote().equals("없음") ? "" : di.getNote()
             );
 
             String json = objectMapper.writeValueAsString(value);
