@@ -39,7 +39,6 @@ public class ElasticsearchService {
 
     private NestedQuery nestedQuery(String field, String value) {
         String nestedPath = field.split("\\.")[0]; // e.g., "ingredient"
-        System.out.println(nestedPath);
         return NestedQuery.of(q -> q
                 .path(nestedPath)
                 .query(nq -> nq

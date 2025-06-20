@@ -4,7 +4,7 @@ import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.elasticsearch.core.search.Hit;
-import com.oauth2.DUR.Dto.DurTagDto;
+import com.oauth2.DUR.Dto.SearchDurDto;
 import com.oauth2.DUR.Service.DurTaggingService;
 import com.oauth2.DetailPage.Dto.DrugDetail;
 import com.oauth2.DetailPage.Dto.EffectDetail;
@@ -37,15 +37,15 @@ public class DrugDetailService {
     private String allSearch;
 
     public DrugDetail getDetail(User user, Long id) throws IOException {
-        DurTagDto durTagDto = durTaggingService.generateTagsForDrugs(user, getDetailFromElasticsearch(id)).get(0);
+        SearchDurDto searchDurDto = durTaggingService.generateTagsForDrugs(user, getDetailFromElasticsearch(id)).get(0);
 
         // 한 번의 쿼리로 Drug과 관련된 DrugEffect, DrugStorageCondition을 가져옵니다.
         Optional<Drug> drug = drugRepository.findDrugWithAllRelations(id);
         return drug.map(value -> DrugDetail.builder()
                 .id(id)
-                .name(durTagDto.drugName())
-                .manufacturer(durTagDto.manufacturer())
-                .ingredients(durTagDto.ingredients())
+                .name(searchDurDto.drugName())
+                .manufacturer(searchDurDto.manufacturer())
+                .ingredients(searchDurDto.ingredients())
                 .packaging(value.getPackaging())
                 .form(value.getForm())
                 .tag(value.getTag())
@@ -61,7 +61,7 @@ public class DrugDetailService {
                                 .map(s -> new StorageDetail(s.getCategory(), s.getValue(), s.isActive()))
                                 .toList()
                 )
-                .durTags(durTagDto.durTags())
+                .durTags(searchDurDto.durTags())
                 .build()).orElse(null);
     }
 

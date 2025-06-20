@@ -1,6 +1,6 @@
 package com.oauth2.Search.Controller;
 
-import com.oauth2.DUR.Dto.DurTagDto;
+import com.oauth2.DUR.Dto.SearchDurDto;
 import com.oauth2.DUR.Service.DurTaggingService;
 import com.oauth2.Search.Dto.SearchIndexDTO;
 import com.oauth2.Search.Service.SearchService;
@@ -37,7 +37,7 @@ public class SearchController {
     private final DurTaggingService durTaggingService;
 
     @GetMapping("/drugs")
-    public ResponseEntity<ApiResponse<List<DurTagDto>>> getDrugSearch(
+    public ResponseEntity<ApiResponse<List<SearchDurDto>>> getDrugSearch(
             @AuthenticationPrincipal User user,
             @RequestParam String input,
             @RequestParam(defaultValue = "0") int page) throws IOException {
@@ -45,7 +45,7 @@ public class SearchController {
     }
 
     @GetMapping("/manufacturers")
-    public ResponseEntity<ApiResponse<List<DurTagDto>>> getManufacturerSearch(
+    public ResponseEntity<ApiResponse<List<SearchDurDto>>> getManufacturerSearch(
             @AuthenticationPrincipal User user,
             @RequestParam String input,
             @RequestParam(defaultValue = "0") int page) throws IOException {
@@ -53,14 +53,14 @@ public class SearchController {
     }
 
     @GetMapping("/ingredients")
-    public ResponseEntity<ApiResponse<List<DurTagDto>>> getIngredientSearch(
+    public ResponseEntity<ApiResponse<List<SearchDurDto>>> getIngredientSearch(
             @AuthenticationPrincipal User user,
             @RequestParam String input,
             @RequestParam(defaultValue="0") int page) throws IOException {
         return getTagSearch(user,input,page,ingredient);
     }
 
-    private ResponseEntity<ApiResponse<List<DurTagDto>>> getTagSearch(
+    private ResponseEntity<ApiResponse<List<SearchDurDto>>> getTagSearch(
             @AuthenticationPrincipal User user,
             @RequestParam String input,
             @RequestParam(defaultValue = "0") int page, String field) throws IOException {
@@ -69,7 +69,7 @@ public class SearchController {
                     .body(ApiResponse.error("User not authenticated", null));
         }
         List<SearchIndexDTO> searchIndexDTOList = searchService.getDrugSearch(input, field, pageSize, page);
-         List<DurTagDto> result = durTaggingService.generateTagsForDrugs(
+         List<SearchDurDto> result = durTaggingService.generateTagsForDrugs(
                 user, searchIndexDTOList);
         return ResponseEntity.ok(ApiResponse.success(result));
     }
