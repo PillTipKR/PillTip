@@ -12,6 +12,7 @@ import com.pilltip.pilltip.model.signUp.SignUpViewModel
 import com.pilltip.pilltip.view.auth.IdPage
 import com.pilltip.pilltip.view.auth.InterestPage
 import com.pilltip.pilltip.view.auth.KakaoAuthPage
+import com.pilltip.pilltip.view.auth.LoginPage
 import com.pilltip.pilltip.view.auth.PasswordPage
 import com.pilltip.pilltip.view.auth.PhoneAuthPage
 import com.pilltip.pilltip.view.auth.ProfilePage
@@ -43,6 +44,9 @@ fun NavGraph(
         }
         composable("KakaoAuthPage") {
             KakaoAuthPage(navController, signUpViewModel)
+        }
+        composable("LoginPage"){
+            LoginPage(navController, signUpViewModel)
         }
         composable("IDPage"){
             IdPage(navController = navController, signUpViewModel)

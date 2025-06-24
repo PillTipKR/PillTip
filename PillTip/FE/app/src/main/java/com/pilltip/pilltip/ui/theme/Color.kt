@@ -7,6 +7,7 @@ val primaryColor050 = Color(0xFFF1F6FE)
 val secondaryColor = Color(0xFFFFE039)
 val backgroundColor = Color(0xFFF9FAFB)
 
+val gray900 = Color(0xFF161414)
 val gray800 = Color(0xFF323439)
 val gray700 = Color(0xFF686D78)
 var gray600 = Color(0xFF858C9A)
