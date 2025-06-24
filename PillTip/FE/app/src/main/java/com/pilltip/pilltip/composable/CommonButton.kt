@@ -132,7 +132,6 @@ fun BackButton(
     @DrawableRes iconDrawable: Int = 0,
     navigationTo: () -> Unit,
 ) {
-    HeightSpacer(50.dp)
     Row(
         modifier = Modifier
             .background(color = Color.White)

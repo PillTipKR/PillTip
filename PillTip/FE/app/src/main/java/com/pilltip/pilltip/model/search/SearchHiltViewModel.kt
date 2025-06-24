@@ -55,14 +55,17 @@ class SearchHiltViewModel @Inject constructor(
                     currentQuery = query
                     _autoComplete.value = emptyList()
                 }
-                try {
-                    val newResults = repository.getAutoComplete(currentQuery, currentPage)
-                    _autoComplete.value = _autoComplete.value + newResults
-                    currentPage++
+                val newResults = try {
+                    repository.getAutoComplete(currentQuery, currentPage)
                 } catch (e: Exception) {
                     Log.e("AutoComplete", "자동완성 API 호출 실패: ${e.message}")
+                    emptyList()
                 }
 
+                if (newResults.isNotEmpty()) {
+                    _autoComplete.value += newResults
+                    currentPage++
+                }
             } finally {
                 _isAutoCompleteLoading.value = false
             }

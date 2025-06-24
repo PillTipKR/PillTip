@@ -244,7 +244,7 @@ fun SingleLineTitleText(titleText: String = "", padding: Dp = 24.dp) {
     Text(
         text = titleText,
         fontFamily = pretendard,
-        fontWeight = FontWeight.Bold,
+        fontWeight = FontWeight.W700,
         fontSize = 22.sp,
         color = gray800,
         modifier = Modifier
