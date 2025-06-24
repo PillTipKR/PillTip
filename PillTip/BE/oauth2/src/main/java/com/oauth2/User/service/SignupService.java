@@ -144,27 +144,29 @@ public class SignupService {
                 .nutrient(false)
                 .build();
 
-        String[] interestArray = request.getInterest().split(",");
-        for (String interestItem : interestArray) {
-            switch (interestItem.trim().toLowerCase()) {
-                case "diet":
-                    userInterests.setDiet(true);
-                    break;
-                case "health":
-                    userInterests.setHealth(true);
-                    break;
-                case "muscle":
-                    userInterests.setMuscle(true);
-                    break;
-                case "aging":
-                    userInterests.setAging(true);
-                    break;
-                case "nutrient":
-                    userInterests.setNutrient(true);
-                    break;
+        String interest = request.getInterest();
+        if (interest != null && !interest.trim().isEmpty()) {
+            String[] interestArray = interest.split(",");
+            for (String interestItem : interestArray) {
+                switch (interestItem.trim().toLowerCase()) {
+                    case "diet":
+                        userInterests.setDiet(true);
+                        break;
+                    case "health":
+                        userInterests.setHealth(true);
+                        break;
+                    case "muscle":
+                        userInterests.setMuscle(true);
+                        break;
+                    case "aging":
+                        userInterests.setAging(true);
+                        break;
+                    case "nutrient":
+                        userInterests.setNutrient(true);
+                        break;
+                }
             }
         }
-
         return userInterests;
     }
 
@@ -201,4 +203,4 @@ public class SignupService {
     private String generateRandomNickname() {
         return "user_" + System.currentTimeMillis();
     }
-} 
+}

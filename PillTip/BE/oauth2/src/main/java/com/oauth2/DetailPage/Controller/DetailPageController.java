@@ -2,7 +2,6 @@ package com.oauth2.DetailPage.Controller;
 
 import com.oauth2.DetailPage.Dto.DrugDetail;
 import com.oauth2.DetailPage.Service.DrugDetailService;
-import com.oauth2.Search.Dto.SearchIndexDTO;
 import com.oauth2.User.dto.ApiResponse;
 import com.oauth2.User.entity.User;
 import org.springframework.http.ResponseEntity;
@@ -30,11 +29,10 @@ public class DetailPageController {
             @RequestParam long id) throws IOException {
         if (user == null) {
             return ResponseEntity.badRequest()
-                .body(ApiResponse.error("User not authenticated"));
+                .body(ApiResponse.error("User not authenticated", null));
         }
-        
-        SearchIndexDTO searchIndexDTO = drugDetailService.getDetailFromElasticsearch(id);
-        DrugDetail detail = drugDetailService.getDetail(searchIndexDTO);
+
+        DrugDetail detail = drugDetailService.getDetail(user, id);
         return ResponseEntity.ok(ApiResponse.success(detail));
     }
 }

@@ -1,7 +1,7 @@
 package com.oauth2.Util.Seeder;
 
-import com.oauth2.Util.Service.DataSyncService;
-import com.oauth2.Util.Service.DurRedisLoader;
+import com.oauth2.DUR.Service.DurRedisLoader;
+import com.oauth2.Elasticsearch.Service.DataSyncService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
@@ -23,8 +23,9 @@ public class AutocompleteSeeder implements CommandLineRunner {
     public void run(String... args) throws Exception {
         if(seed) {
             dataSyncService.loadAll();
-            //durRedisLoader.loadAll();
             System.out.println("Index injection complete");
+            durRedisLoader.loadAll();
+            System.out.println("DUR Redis injection complete");
         }
     }
 }

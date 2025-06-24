@@ -1,16 +1,20 @@
-package com.oauth2.Drug.DrugImport.Service;
+package com.oauth2.Drug.Service;
 
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.sql.Date;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.oauth2.Drug.Repository.DrugRepository;
-import com.oauth2.Drug.Service.*;
+import com.opencsv.CSVReader;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,6 +23,7 @@ import com.oauth2.Drug.Domain.DrugEffect;
 import com.oauth2.Drug.Domain.DrugIngredient;
 import com.oauth2.Drug.Domain.DrugStorageCondition;
 import com.oauth2.Drug.Domain.Ingredient;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 public class DrugImportService {
@@ -45,7 +50,7 @@ public class DrugImportService {
             String content = Files.readString(Paths.get(filePath));
             String[] lines = content.split("\n"); // 전체 내용에서 라인별로 나누기
             StringBuilder currentBlock = new StringBuilder(); // 현재 블럭을 저장할 변수
-
+            System.out.println("약품DB 삽입 시작");
             for (String line : lines) {
                 line = line.trim(); // 공백 제거
 
@@ -186,21 +191,21 @@ public class DrugImportService {
         String filteredCaution = filterContent(caution.toString());
         if (!filteredEffect.isEmpty()) {
             DrugEffect de = new DrugEffect();
-            de.setDrugId(drug.getId());
+            de.setDrug(drug);
             de.setType(DrugEffect.Type.EFFECT);
             de.setContent(filteredEffect.trim());
             drugEffectService.save(de);
         }
         if (!filteredUsage.isEmpty()) {
             DrugEffect de = new DrugEffect();
-            de.setDrugId(drug.getId());
+            de.setDrug(drug);
             de.setType(DrugEffect.Type.USAGE);
             de.setContent(filteredUsage.trim());
             drugEffectService.save(de);
         }
         if (!filteredCaution.isEmpty()) {
             DrugEffect de = new DrugEffect();
-            de.setDrugId(drug.getId());
+            de.setDrug(drug);
             de.setType(DrugEffect.Type.CAUTION);
             de.setContent(filteredCaution.trim());
             drugEffectService.save(de);
@@ -215,11 +220,11 @@ public class DrugImportService {
                 if (line.contains("닿지 않는 곳에 보관")) continue;
                 if (!line.contains("보관") && !line.contains("바꾸어 넣지")) continue;
                 if (line.contains("바꾸어 넣지") || line.contains("원래의 용기") || line.contains("원래 용기") || line.contains("다른 용기")) {
-                    saveStorageCondition("용기변화x",drug, DrugStorageCondition.Category.CONTAINER,false);
+                    saveStorageCondition("용기변화",drug, DrugStorageCondition.Category.CONTAINER,false);
                     continue;
                 }
                 // 긍정/부정 연결어 패턴\\
-                String regex = "보관(?:(?:하지 ?않(?:고|으며|게|을 것|말 것|는다|도록|말고|아야 한다)?)|하지 말 것|하지 말아야 한다|하면 안된다|하지 말고|하며|하고|하도록|한다|할 것|하여야 한다)?";
+                String regex = "보관(?:하지 ?않(?:고|으며|게|을 것|말 것|는다|도록|말고|아야 한다)?|하지 말 것|하지 말아야 한다|하면 안된다|하지 말고|하며|하고|하도록|한다|할 것|하여야 한다)?";
                 Pattern pattern = Pattern.compile(regex);
                 Matcher matcher = pattern.matcher(line);
                 int lastPos = 0;
@@ -288,7 +293,7 @@ public class DrugImportService {
 
         // 직사광선
         if (((part.contains("직사광선") || part.contains("직사일광")) && part.contains("피하여")) || part.contains("차광")) {
-            saveStorageCondition("직사광선x",drug, DrugStorageCondition.Category.LIGHT,isNegative);
+            saveStorageCondition("직사광선",drug, DrugStorageCondition.Category.LIGHT,isNegative);
         }
     }
 
@@ -305,9 +310,10 @@ public class DrugImportService {
     private void saveStorageCondition(String q, Drug drug,
                                       DrugStorageCondition.Category category, boolean isNegative){
         DrugStorageCondition cond = new DrugStorageCondition();
-        cond.setDrugId(drug.getId());
+        cond.setDrug(drug);
         cond.setCategory(category);
-        cond.setValue(isNegative ? q+"x" : q);
+        cond.setValue(q);
+        cond.setActive(!isNegative && !q.equals("직사광선") && !q.equals("용기변화"));
         drugStorageConditionService.save(cond);
     }
 
@@ -359,5 +365,29 @@ public class DrugImportService {
         }
 
         return amount;
+    }
+
+    public void importImageFromCsv(MultipartFile file) {
+        try (CSVReader reader = new CSVReader(new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8))) {
+            String[] line;
+            reader.readNext(); // skip header
+            List<Drug> drugList = new ArrayList<>();
+
+            while ((line = reader.readNext()) != null) {
+                String nameKr = line[1].trim();
+                String imageUrl = line[5].trim().toLowerCase();
+
+                List<Drug> drugs = drugRepository.findByNameContaining(nameKr);
+                if (!drugs.isEmpty()) {
+                    Drug drug = drugs.get(0);
+                    drug.setImage(imageUrl);
+                    drugList.add(drug);
+                }
+            }
+
+            drugRepository.saveAll(drugList);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }

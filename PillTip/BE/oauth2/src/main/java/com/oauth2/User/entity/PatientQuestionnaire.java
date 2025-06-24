@@ -34,4 +34,4 @@ public class PatientQuestionnaire {
 
     @Column(columnDefinition = "TEXT")
     private String notes; // 추가 메모
-} 
+}

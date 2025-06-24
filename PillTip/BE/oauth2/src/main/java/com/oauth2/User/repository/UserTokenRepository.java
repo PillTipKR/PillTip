@@ -19,4 +19,4 @@ public interface UserTokenRepository extends JpaRepository<UserToken, Long> {
     @Modifying
     @Query("UPDATE UserToken ut SET ut.accessToken = :accessToken, ut.accessTokenExpiry = :accessTokenExpiry WHERE ut.userId = :userId")
     void updateAccessToken(@Param("accessToken") String accessToken, @Param("accessTokenExpiry") LocalDateTime accessTokenExpiry);
-} 
+}
