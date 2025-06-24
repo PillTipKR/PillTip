@@ -5,8 +5,14 @@ import android.annotation.SuppressLint
 import android.app.Activity
 import android.util.Log
 import android.widget.Toast
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -24,7 +30,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.BasicTextField
@@ -61,10 +69,12 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.pilltip.pilltip.R
 import com.pilltip.pilltip.composable.AppBar
@@ -252,14 +262,14 @@ fun SelectPage(
 fun LoginPage(
     navController: NavController,
     viewModel: SignUpViewModel
-){
+) {
     val context = LocalContext.current
-    var id by remember { mutableStateOf("")}
+    var id by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     Column(
         modifier = WhiteScreenModifier
             .padding(horizontal = 22.dp)
-    ){
+    ) {
         BackButton(
             navigationTo = ({ navController.navigate("SelectPage") }),
             horizontalPadding = 0.dp
@@ -299,7 +309,7 @@ fun LoginPage(
         HeightSpacer(12.dp)
         RoundTextField(
             text = id,
-            textChange = {id = it},
+            textChange = { id = it },
             placeholder = "아이디 입력",
             isLogin = true
         )
@@ -316,15 +326,89 @@ fun LoginPage(
         HeightSpacer(12.dp)
         RoundTextField(
             text = password,
-            textChange = {password = it},
+            textChange = { password = it },
             placeholder = "비밀번호 입력",
             isLogin = true
         )
+        HeightSpacer(28.dp)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = "아이디 찾기",
+                style = TextStyle(
+                    fontSize = 12.sp,
+                    fontFamily = pretendard,
+                    fontWeight = FontWeight(500),
+                    color = gray500,
+                    textAlign = TextAlign.Center,
+                ),
+                modifier = Modifier.noRippleClickable {
+                    navController.navigate("FindMyInfoPage/FIND_ID") {
+                        popUpTo(
+                            "LoginPage"
+                        ) { inclusive = true }
+                    }
+                }
+            )
+            Image(
+                imageVector = ImageVector.vectorResource(R.drawable.ic_login_vertical_divider),
+                contentDescription = "디바이더",
+                modifier = Modifier.padding(horizontal = 14.dp)
+            )
+            Text(
+                text = "비밀번호 찾기",
+                style = TextStyle(
+                    fontSize = 12.sp,
+                    fontFamily = pretendard,
+                    fontWeight = FontWeight(500),
+                    color = gray500,
+                    textAlign = TextAlign.Center,
+                ),
+                modifier = Modifier.noRippleClickable {
+                    navController.navigate("FindMyInfoPage/FIND_PW") {
+                        popUpTo(
+                            "LoginPage"
+                        ) { inclusive = true }
+                    }
+                }
+            )
+            Image(
+                imageVector = ImageVector.vectorResource(R.drawable.ic_login_vertical_divider),
+                contentDescription = "디바이더",
+                modifier = Modifier.padding(horizontal = 14.dp)
+            )
+            Text(
+                text = "회원가입",
+                style = TextStyle(
+                    fontSize = 12.sp,
+                    fontFamily = pretendard,
+                    fontWeight = FontWeight(500),
+                    color = gray500,
+                    textAlign = TextAlign.Center,
+                ),
+                modifier = Modifier.noRippleClickable {
+                    navController.navigate("SelectPage") {
+                        popUpTo(
+                            0
+                        ) { inclusive = true }
+                    }
+                }
+            )
+        }
         Spacer(modifier = Modifier.weight(1f))
         NextButton(
-            mModifier = buttonModifier,
+            mModifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 16.dp)
+                .padding(bottom = 46.dp)
+                .height(58.dp),
             text = "로그인",
-            buttonColor = if (id.isNotEmpty() && password.isNotEmpty()) Color(0xFF348ADF) else Color(0xFFCADCF5),
+            buttonColor = if (id.isNotEmpty() && password.isNotEmpty()) Color(0xFF348ADF) else Color(
+                0xFFCADCF5
+            ),
             onClick = {
                 viewModel.login(
                     loginId = id,
@@ -341,6 +425,199 @@ fun LoginPage(
             }
         )
     }
+}
+
+@Composable
+fun FindMyInfoPage(
+    navController: NavController,
+    mode: String
+) {
+    var step by remember { mutableStateOf(1) }
+    var name by remember { mutableStateOf("") }
+    var phoneNumber by remember { mutableStateOf("") }
+    var isNameFocus by remember { mutableStateOf(false) }
+    var isPhoneFocus by remember { mutableStateOf(false) }
+
+    val nameOffsetY by animateDpAsState(
+        targetValue = if (step == 1) 0.dp else 80.dp, // 아래로 이동
+        animationSpec = tween(durationMillis = 500),
+        label = "nameOffset"
+    )
+
+    Column(
+        modifier = WhiteScreenModifier,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        BackButton(horizontalPadding = 22.dp) {
+            navController.navigate("LoginPage") {
+                popUpTo(0) { inclusive = true }
+            }
+        }
+        HeightSpacer(74.dp)
+        SingleLineTitleText(
+            if (step == 1) "이름을 입력해주세요" else "휴대폰 번호를 입력해주세요",
+            padding = 22.dp
+        )
+        HeightSpacer(56.dp)
+        Box(modifier = Modifier.fillMaxWidth()) {
+            if (step >= 1) {
+                Column(
+                    modifier = Modifier
+                        .offset(y = nameOffsetY)
+                        .fillMaxWidth()
+                ) {
+                    LabelText(labelText = if (name.isNotEmpty()) "이름" else "")
+                    PlaceholderTextField(
+                        placeHolder = "이름",
+                        inputText = name,
+                        inputType = InputType.TEXT,
+                        onTextChanged = { name = it },
+                        onFocusChanged = { isNameFocus = it }
+                    )
+                    HeightSpacer(14.dp)
+                    HighlightingLine(text = phoneNumber, isFocused = isNameFocus)
+                    HeightSpacer(14.dp)
+                }
+            }
+
+            androidx.compose.animation.AnimatedVisibility(
+                visible = step == 2,
+                enter = fadeIn(tween(300)) + slideInVertically(initialOffsetY = { -20 }),
+                exit = fadeOut(tween(300)) + slideOutVertically(targetOffsetY = { -20 })
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                ) {
+                    LabelText(labelText = if (phoneNumber.isNotEmpty()) "휴대폰 번호" else "")
+                    PlaceholderTextField(
+                        placeHolder = "휴대폰 번호",
+                        inputText = phoneNumber,
+                        inputType = InputType.NUMBER,
+                        onTextChanged = { phoneNumber = it },
+                        onFocusChanged = { isPhoneFocus = it }
+                    )
+                    HeightSpacer(14.dp)
+                    HighlightingLine(text = phoneNumber, isFocused = isPhoneFocus)
+                    HeightSpacer(14.dp)
+                }
+            }
+        }
+        Spacer(modifier = Modifier.weight(1f))
+        NextButton(
+            mModifier = buttonModifier,
+            text = if (step == 1) "다음" else "확인",
+            buttonColor = if ((step == 1 && name.isNotEmpty()) || (step == 2 && phoneNumber.isNotEmpty()))
+                Color(0xFF397CDB) else Color(0xFFCADCF5),
+            onClick = {
+                if (step == 1 && name.isNotEmpty()) {
+                    step = 2
+                } else if (step == 2 && phoneNumber.isNotEmpty()) {
+                    if (mode == "FIND_ID") {
+                        navController.navigate("ShowFoundIdPage/${name}/${phoneNumber}")
+                    } else if (mode == "FIND_PW") {
+                        navController.navigate("VerifyPwResetCodePage/${name}/${phoneNumber}")
+                    }
+                }
+            }
+        )
+    }
+}
+
+@Composable
+fun ShowFoundIdPage(
+    navController: NavController
+) {
+    Column(
+        modifier = WhiteScreenModifier,
+    ) {
+        BackButton(horizontalPadding = 22.dp) {
+            navController.navigate("LoginPage") { popUpTo(0) { inclusive = true } }
+        }
+        Spacer(modifier = Modifier.weight(1f))
+        Box(
+            modifier = Modifier.fillMaxWidth(),
+            contentAlignment = Alignment.Center
+        ) {
+            Image(
+                imageVector = ImageVector.vectorResource(R.drawable.ic_details_blue_common_pills),
+                contentDescription = "아이디 찾기",
+                modifier = Modifier.size(70.dp)
+            )
+        }
+        HeightSpacer(24.dp)
+        Text(
+            text = "고객님의 아이디는",
+            style = TextStyle(
+                fontSize = 22.sp,
+                lineHeight = 30.8.sp,
+                fontFamily = pretendard,
+                fontWeight = FontWeight(600),
+                color = Color(0xFF010913),
+                textAlign = TextAlign.Center,
+            ),
+            modifier = Modifier.fillMaxWidth()
+        )
+        Text(
+            text = "000000",
+            style = TextStyle(
+                fontSize = 22.sp,
+                lineHeight = 30.8.sp,
+                fontFamily = pretendard,
+                fontWeight = FontWeight(700),
+                color = primaryColor,
+                textAlign = TextAlign.Center,
+            ),
+            modifier = Modifier.fillMaxWidth()
+        )
+        Text(
+            text = "입니다!",
+            style = TextStyle(
+                fontSize = 22.sp,
+                lineHeight = 30.8.sp,
+                fontFamily = pretendard,
+                fontWeight = FontWeight(600),
+                color = primaryColor,
+                textAlign = TextAlign.Center,
+            ),
+            modifier = Modifier.fillMaxWidth()
+        )
+        Spacer(modifier = Modifier.weight(1f))
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            NextButton(
+                mModifier = Modifier
+                    .weight(1f)
+                    .padding(vertical = 16.dp)
+                    .padding(start = 22.dp, bottom = 46.dp, end = 5.dp)
+                    .height(58.dp),
+                text = "비밀번호 찾기",
+                buttonColor = Color(0xFFF3F4F8),
+                onClick = {
+
+                }
+            )
+            NextButton(
+                mModifier = Modifier
+                    .weight(1f)
+                    .padding(vertical = 16.dp)
+                    .padding(start = 5.dp, bottom = 46.dp, end = 22.dp)
+                    .height(58.dp),
+                text = "다음",
+                buttonColor = primaryColor,
+                onClick = {
+
+                }
+            )
+        }
+    }
+}
+
+@Preview
+@Composable
+fun preview() {
+    ShowFoundIdPage(navController = rememberNavController())
 }
 
 /**
@@ -1004,7 +1281,9 @@ fun InterestPage(
         )
         HeightSpacer(40.dp)
         FlowRow(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp),
             horizontalArrangement = Arrangement.spacedBy(4.dp),
             verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {

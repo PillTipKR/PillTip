@@ -9,6 +9,7 @@ import androidx.navigation.compose.rememberNavController
 import com.pilltip.pilltip.model.search.LogViewModel
 import com.pilltip.pilltip.model.search.SearchHiltViewModel
 import com.pilltip.pilltip.model.signUp.SignUpViewModel
+import com.pilltip.pilltip.view.auth.FindMyInfoPage
 import com.pilltip.pilltip.view.auth.IdPage
 import com.pilltip.pilltip.view.auth.InterestPage
 import com.pilltip.pilltip.view.auth.KakaoAuthPage
@@ -47,6 +48,10 @@ fun NavGraph(
         }
         composable("LoginPage"){
             LoginPage(navController, signUpViewModel)
+        }
+        composable("FindMyInfoPage/{mode}") { backStackEntry ->
+            val mode = backStackEntry.arguments?.getString("mode") ?: "FIND_ID"
+            FindMyInfoPage(navController = navController, mode = mode)
         }
         composable("IDPage"){
             IdPage(navController = navController, signUpViewModel)
