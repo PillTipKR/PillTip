@@ -22,6 +22,11 @@ interface ServerAuthAPI {
     @POST("api/auth/signup")
     suspend fun signUp(@Body request: SignUpRequest): Response<SignUpResponse>
 
+    @POST("api/auth/login")
+    suspend fun login(
+        @Body request: LoginRequest
+    ): Response<LoginResponse>
+
     @POST("api/auth/terms")
     suspend fun submitTerms(
         @Header("Authorization") token: String,

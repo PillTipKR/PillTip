@@ -44,6 +44,18 @@ data class SignUpTokenData(
     val refreshToken: String
 )
 
+/* ID 로그인 */
+data class LoginRequest(
+    val loginId: String,
+    val password: String
+)
+
+data class LoginResponse(
+    val status: String,
+    val message: String,
+    val data: SignUpTokenData
+)
+
 data class TermsRequest(
     val termsOfService: Boolean,
     val privacyPolicy: Boolean,

@@ -44,6 +44,8 @@ import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.pilltip.pilltip.R
@@ -53,6 +55,7 @@ import com.pilltip.pilltip.composable.PillTipDatePicker
 import com.pilltip.pilltip.composable.WheelColumn
 import com.pilltip.pilltip.composable.WidthSpacer
 import com.pilltip.pilltip.composable.noRippleClickable
+import com.pilltip.pilltip.ui.theme.gray050
 import com.pilltip.pilltip.ui.theme.gray200
 import com.pilltip.pilltip.ui.theme.gray500
 import com.pilltip.pilltip.ui.theme.gray800
@@ -110,31 +113,39 @@ fun ProfileStepDescription(
 }
 
 @Composable
-fun NicknameField(
-    nickname: String,
-    nicknameChange: (String) -> Unit
+fun RoundTextField(
+    text: String,
+    textChange: (String) -> Unit,
+    placeholder : String,
+    isLogin : Boolean
 ) {
     val keyboardController = LocalSoftwareKeyboardController.current
     val focusRequester = remember { FocusRequester() }
     var isFocused by remember { mutableStateOf(false) }
+    var isVisible by remember { mutableStateOf(true) }
     BasicTextField(
-        value = nickname,
+        value = text,
         onValueChange = {
-            if (it.length <= 15) nicknameChange(it)
+            if (it.length <= 20) textChange(it)
         },
         modifier = Modifier
             .border(
                 width = 1.dp,
-                color = gray200,
+                color = if(isLogin && text.isEmpty()) gray050 else gray200,
                 shape = RoundedCornerShape(size = 12.dp)
             )
             .fillMaxWidth()
             .height(51.dp)
+            .background(
+                color = if(isLogin && text.isEmpty()) gray050 else Color.White,
+                shape = RoundedCornerShape(size = 12.dp)
+            )
             .padding(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 16.dp)
             .focusRequester(focusRequester)
             .onFocusChanged { focusState ->
                 isFocused = focusState.isFocused
             },
+        visualTransformation = if (isVisible && placeholder == "비밀번호 입력") PasswordVisualTransformation() else VisualTransformation.None,
         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
         keyboardActions = KeyboardActions(
             onDone = { keyboardController?.hide() }
@@ -152,9 +163,9 @@ fun NicknameField(
                     .height(22.dp),
                 contentAlignment = Alignment.CenterStart
             ) {
-                if (nickname.isEmpty()) {
+                if (text.isEmpty()) {
                     Text(
-                        text = "닉네임을 입력해주세요",
+                        text = placeholder,
                         style = TextStyle(
                             fontSize = 16.sp,
                             fontFamily = pretendard,
@@ -162,6 +173,21 @@ fun NicknameField(
                             color = gray500
                         )
                     )
+                }
+                if(text.isNotEmpty() && placeholder == "비밀번호 입력"){
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.End,
+                        verticalAlignment = Alignment.CenterVertically
+                    ){
+                        Image(
+                            imageVector = ImageVector.vectorResource(R.drawable.btn_login_visiblility),
+                            contentDescription = "비밀번호 확인",
+                            modifier = Modifier.noRippleClickable {
+                                isVisible = !isVisible
+                            }
+                        )
+                    }
                 }
                 innerTextField()
             }
