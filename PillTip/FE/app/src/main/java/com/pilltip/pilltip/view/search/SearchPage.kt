@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
@@ -248,7 +249,7 @@ fun SearchResultsPage(
             contentAlignment = Alignment.Center
         ) {
             PillSearchField(
-                initialQuery,
+                inputText,
                 navController = navController,
                 nowTyping = {
                     inputText = it
@@ -259,8 +260,10 @@ fun SearchResultsPage(
                     if (!hasUserTyped) hasUserTyped = true
                 },
                 onNavigateToResult = { query ->
+                    inputText = query
                     logViewModel.addSearchQuery(query)
                     searchViewModel.fetchDrugSearch(query)
+                    hasUserTyped = false
                     isDropdownExpanded = false
                 }
             )
@@ -270,6 +273,7 @@ fun SearchResultsPage(
                 onDismissRequest = { isDropdownExpanded = false },
                 modifier = Modifier
                     .width(dropdownWidth)
+                    .heightIn(max = 400.dp)
                     .background(Color.White)
             ) {
                 when {
@@ -319,8 +323,16 @@ fun SearchResultsPage(
                                 },
                                 onClick = {
                                     inputText = result.value
+                                    hasUserTyped = false
                                     searchViewModel.fetchDrugSearch(result.value)
+                                    logViewModel.addSearchQuery(result.value)
                                     isDropdownExpanded = false
+                                    navController.navigate("SearchResultsPage/${inputText}"){
+                                        popUpTo("SearchPage") {
+                                            inclusive = false
+                                        }
+                                        launchSingleTop = true
+                                    }
                                 }
                             )
                         }

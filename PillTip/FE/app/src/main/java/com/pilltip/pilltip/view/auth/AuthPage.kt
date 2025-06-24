@@ -3,7 +3,6 @@ package com.pilltip.pilltip.view.auth
 
 import android.annotation.SuppressLint
 import android.app.Activity
-import android.content.Context
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.animation.core.animateFloatAsState
@@ -19,18 +18,19 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -57,7 +57,6 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.vectorResource
-import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -72,9 +71,9 @@ import com.pilltip.pilltip.composable.AppBar
 import com.pilltip.pilltip.composable.AuthComposable.AgeField
 import com.pilltip.pilltip.composable.AuthComposable.BodyProfile
 import com.pilltip.pilltip.composable.AuthComposable.LoginButton
-import com.pilltip.pilltip.composable.AuthComposable.NicknameField
 import com.pilltip.pilltip.composable.AuthComposable.ProfileGenderPick
 import com.pilltip.pilltip.composable.AuthComposable.ProfileStepDescription
+import com.pilltip.pilltip.composable.AuthComposable.RoundTextField
 import com.pilltip.pilltip.composable.BackButton
 import com.pilltip.pilltip.composable.DoubleLineTitleText
 import com.pilltip.pilltip.composable.Guideline
@@ -82,15 +81,13 @@ import com.pilltip.pilltip.composable.HeightSpacer
 import com.pilltip.pilltip.composable.HighlightingLine
 import com.pilltip.pilltip.composable.LabelText
 import com.pilltip.pilltip.composable.NextButton
-import com.pilltip.pilltip.composable.PillTipDatePicker
 import com.pilltip.pilltip.composable.PlaceholderTextField
-import com.pilltip.pilltip.composable.SelectButton
 import com.pilltip.pilltip.composable.SingleLineTitleText
 import com.pilltip.pilltip.composable.TagButton
-import com.pilltip.pilltip.composable.TitleDescription
 import com.pilltip.pilltip.composable.WhiteScreenModifier
 import com.pilltip.pilltip.composable.WidthSpacer
 import com.pilltip.pilltip.composable.buttonModifier
+import com.pilltip.pilltip.composable.noRippleClickable
 import com.pilltip.pilltip.model.signUp.KaKaoLoginViewModel
 import com.pilltip.pilltip.model.signUp.LoginType
 import com.pilltip.pilltip.model.signUp.PhoneAuthViewModel
@@ -99,6 +96,8 @@ import com.pilltip.pilltip.model.signUp.TokenManager
 import com.pilltip.pilltip.ui.theme.gray500
 import com.pilltip.pilltip.ui.theme.gray600
 import com.pilltip.pilltip.ui.theme.gray700
+import com.pilltip.pilltip.ui.theme.gray800
+import com.pilltip.pilltip.ui.theme.gray900
 import com.pilltip.pilltip.ui.theme.pretendard
 import com.pilltip.pilltip.ui.theme.primaryColor
 import com.pilltip.pilltip.view.auth.logic.InputType
@@ -227,6 +226,17 @@ fun SelectPage(
             fontColor = primaryColor,
             onClick = { navController.navigate("IDPage") }
         )
+        HeightSpacer(14.dp)
+        HorizontalDivider()
+        HeightSpacer(14.dp)
+        Text(
+            text = "로그인",
+            fontSize = 16.sp,
+            fontFamily = pretendard,
+            fontWeight = FontWeight(500),
+            color = Color.Black,
+            modifier = Modifier.noRippleClickable { navController.navigate("LoginPage") }
+        )
     }
 
     if (termsOfService) {
@@ -234,6 +244,101 @@ fun SelectPage(
             signUpViewModel,
             navController,
             onDismiss = { termsOfService = false }
+        )
+    }
+}
+
+@Composable
+fun LoginPage(
+    navController: NavController,
+    viewModel: SignUpViewModel
+){
+    val context = LocalContext.current
+    var id by remember { mutableStateOf("")}
+    var password by remember { mutableStateOf("") }
+    Column(
+        modifier = WhiteScreenModifier
+            .padding(horizontal = 22.dp)
+    ){
+        BackButton(
+            navigationTo = ({ navController.navigate("SelectPage") }),
+            horizontalPadding = 0.dp
+        )
+        HeightSpacer(56.dp)
+        Text(
+            text = "안녕하세요\n필팁입니다 :)",
+            style = TextStyle(
+                fontSize = 28.sp,
+                lineHeight = 39.2.sp,
+                fontFamily = pretendard,
+                fontWeight = FontWeight(700),
+                color = gray900,
+                letterSpacing = 0.28.sp,
+            )
+        )
+        HeightSpacer(12.dp)
+        Text(
+            text = "로그인 후 이용 부탁드려요!",
+            style = TextStyle(
+                fontSize = 16.sp,
+                fontFamily = pretendard,
+                fontWeight = FontWeight(500),
+                color = gray500,
+            )
+        )
+        HeightSpacer(40.dp)
+        Text(
+            text = "아이디",
+            style = TextStyle(
+                fontSize = 16.sp,
+                fontFamily = pretendard,
+                fontWeight = FontWeight(600),
+                color = gray800,
+            )
+        )
+        HeightSpacer(12.dp)
+        RoundTextField(
+            text = id,
+            textChange = {id = it},
+            placeholder = "아이디 입력",
+            isLogin = true
+        )
+        HeightSpacer(20.dp)
+        Text(
+            text = "비밀번호",
+            style = TextStyle(
+                fontSize = 16.sp,
+                fontFamily = pretendard,
+                fontWeight = FontWeight(600),
+                color = gray800,
+            )
+        )
+        HeightSpacer(12.dp)
+        RoundTextField(
+            text = password,
+            textChange = {password = it},
+            placeholder = "비밀번호 입력",
+            isLogin = true
+        )
+        Spacer(modifier = Modifier.weight(1f))
+        NextButton(
+            mModifier = buttonModifier,
+            text = "로그인",
+            buttonColor = if (id.isNotEmpty() && password.isNotEmpty()) Color(0xFF348ADF) else Color(0xFFCADCF5),
+            onClick = {
+                viewModel.login(
+                    loginId = id,
+                    password = password,
+                    onSuccess = { accessToken, refreshToken ->
+                        TokenManager.saveTokens(context, accessToken, refreshToken)
+                        Log.d("Login", "로그인 성공! 액세스토큰: $accessToken")
+                        navController.navigate("PillMainPage")
+                    },
+                    onFailure = { error ->
+                        Log.e("Login", "로그인 실패", error)
+                    }
+                )
+            }
         )
     }
 }
@@ -796,9 +901,11 @@ fun ProfilePage(
         HeightSpacer(36.dp)
         ProfileStepDescription("닉네임")
         HeightSpacer(12.dp)
-        NicknameField(
+        RoundTextField(
             nickname,
-            nicknameChange = { nickname = it }
+            textChange = { nickname = it },
+            "닉네임을 입력해주세요",
+            false
         )
         HeightSpacer(28.dp)
         ProfileStepDescription("성별")
@@ -872,7 +979,6 @@ fun InterestPage(
     val selectedKeywords = remember { mutableStateListOf<String>() }
     val allKeywords = List(20) { index -> "키워드~${index + 1}" }
     val context = LocalContext.current
-
 
     Column(
         modifier = WhiteScreenModifier,
