@@ -52,6 +52,23 @@ class AuthRepository @Inject constructor(
         }
     }
 
+    suspend fun login(loginId: String, password: String): Pair<Boolean, SignUpTokenData?> {
+        val request = LoginRequest(loginId = loginId, password = password)
+        return try {
+            val response = authApi.login(request)
+            if (response.isSuccessful && response.body()?.status == "success") {
+                Pair(true, response.body()?.data)
+            } else {
+                val errorBody = response.errorBody()?.string()
+                Log.e("Login", "로그인 실패 - 코드: ${response.code()}, 바디: $errorBody")
+                Pair(false, null)
+            }
+        } catch (e: Exception) {
+            Log.e("Login", "네트워크 오류", e)
+            Pair(false, null)
+        }
+    }
+
     fun formatPhoneForServer(phone: String): String {
         return when {
             phone.length == 11 -> "${phone.substring(0,3)}-${phone.substring(3,7)}-${phone.substring(7)}"

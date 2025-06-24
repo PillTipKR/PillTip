@@ -24,7 +24,6 @@ class SignUpViewModel @Inject constructor(
     private val _signUpData = mutableStateOf(SignUpData())
     val signUpData: State<SignUpData> = _signUpData
 
-
     private val _isLoading = mutableStateOf(false)
     val isLoading: State<Boolean> = _isLoading
 
@@ -206,6 +205,31 @@ class SignUpViewModel @Inject constructor(
                 }
             } catch (e: Exception) {
                 onFailure(e)
+            }
+        }
+    }
+
+    fun login(
+        loginId: String,
+        password: String,
+        onSuccess: (accessToken: String, refreshToken: String) -> Unit,
+        onFailure: (Throwable?) -> Unit
+    ) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            try {
+                val (result, tokenData) = authRepository.login(loginId, password)
+                if (result && tokenData != null) {
+                    _accessToken.value = tokenData.accessToken
+                    _refreshToken.value = tokenData.refreshToken
+                    onSuccess(tokenData.accessToken, tokenData.refreshToken)
+                } else {
+                    onFailure(null)
+                }
+            } catch (e: Exception) {
+                onFailure(e)
+            } finally {
+                _isLoading.value = false
             }
         }
     }
