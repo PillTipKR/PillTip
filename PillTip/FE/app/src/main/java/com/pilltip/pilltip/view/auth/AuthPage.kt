@@ -614,12 +614,6 @@ fun ShowFoundIdPage(
     }
 }
 
-@Preview
-@Composable
-fun preview() {
-    ShowFoundIdPage(navController = rememberNavController())
-}
-
 /**
  * 아이디 입력 페이지입니다.
  * @param SignUpViewModel로, SignIn Data를 관리합니다.
