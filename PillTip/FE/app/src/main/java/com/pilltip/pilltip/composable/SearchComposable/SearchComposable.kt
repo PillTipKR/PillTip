@@ -75,6 +75,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 
 @Composable
 fun PillSearchField(
+    modifier: Modifier = Modifier,
     initialQuery: String = "",
     navController: NavController,
     nowTyping: (String) -> Unit,
@@ -85,7 +86,7 @@ fun PillSearchField(
     val keyboardController = LocalSoftwareKeyboardController.current
 
     Row(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .height(52.dp),
         verticalAlignment = Alignment.CenterVertically
