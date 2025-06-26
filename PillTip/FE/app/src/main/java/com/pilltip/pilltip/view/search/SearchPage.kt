@@ -1,7 +1,9 @@
 package com.pilltip.pilltip.view.search
 
+import android.content.Intent
 import android.graphics.drawable.Icon
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
@@ -27,6 +29,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -68,13 +71,16 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
@@ -87,9 +93,13 @@ import com.pilltip.pilltip.R
 import com.pilltip.pilltip.composable.HeightSpacer
 import com.pilltip.pilltip.composable.NextButton
 import com.pilltip.pilltip.composable.SearchComposable.AutoCompleteList
+import com.pilltip.pilltip.composable.SearchComposable.DashedBorderBox
 import com.pilltip.pilltip.composable.SearchComposable.DrugSearchResultList
+import com.pilltip.pilltip.composable.SearchComposable.ExpandableInfoBox
+import com.pilltip.pilltip.composable.SearchComposable.ExportAndCopy
 import com.pilltip.pilltip.composable.SearchComposable.PillSearchField
 import com.pilltip.pilltip.composable.SearchComposable.SearchTag
+import com.pilltip.pilltip.composable.SearchComposable.shareText
 import com.pilltip.pilltip.composable.WidthSpacer
 import com.pilltip.pilltip.composable.noRippleClickable
 import com.pilltip.pilltip.model.UserInfoManager
@@ -97,7 +107,9 @@ import com.pilltip.pilltip.model.search.DetailDrugData
 import com.pilltip.pilltip.model.search.LogViewModel
 import com.pilltip.pilltip.model.search.SearchHiltViewModel
 import com.pilltip.pilltip.ui.theme.gray050
+import com.pilltip.pilltip.ui.theme.gray100
 import com.pilltip.pilltip.ui.theme.gray200
+import com.pilltip.pilltip.ui.theme.gray400
 import com.pilltip.pilltip.ui.theme.gray500
 import com.pilltip.pilltip.ui.theme.gray700
 import com.pilltip.pilltip.ui.theme.gray800
@@ -657,7 +669,7 @@ fun DetailPage(
 
                     HorizontalPager(
                         state = pagerState,
-                        modifier = Modifier.fillMaxSize()
+                        modifier = Modifier.fillMaxWidth().wrapContentHeight()
                     ) { page ->
                         when (page) {
                             0 -> DrugInfoTab(navController, detail)
@@ -681,9 +693,15 @@ fun DetailPage(
 //                }
                 }
                 Column(
-                    modifier = Modifier.align(Alignment.BottomCenter),
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .shadow(
+                            elevation = 20.dp,
+                            shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
+                            clip = false
+                        ),
                     horizontalAlignment = Alignment.CenterHorizontally
-                ){
+                ) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -692,7 +710,7 @@ fun DetailPage(
                             .padding(start = 22.dp, top = 12.dp, end = 22.dp, bottom = 12.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.Center
-                    ){
+                    ) {
                         Text(
                             text = "12명이 해당 약품을 복약 중이에요",
                             style = TextStyle(
@@ -703,6 +721,11 @@ fun DetailPage(
                             )
                         )
                     }
+                    HorizontalDivider(
+                        modifier = Modifier.fillMaxWidth(),
+                        thickness = 2.dp,
+                        color = gray200
+                    )
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -714,7 +737,8 @@ fun DetailPage(
                                 .weight(1f)
                                 .padding(vertical = 16.dp)
                                 .padding(start = 22.dp, bottom = 46.dp, end = 5.dp)
-                                .height(58.dp),
+                                .height(58.dp)
+                                .border(1.dp, primaryColor, shape = RoundedCornerShape(size = 16.dp)),
                             text = "복약정보 저장",
                             buttonColor = Color.White,
                             textColor = primaryColor,
@@ -737,7 +761,6 @@ fun DetailPage(
                         )
                     }
                 }
-
             }
         }
     }
@@ -748,27 +771,134 @@ fun DrugInfoTab(
     navController: NavController,
     detail: DetailDrugData
 ) {
+    val context = LocalContext.current
+    val nickname = UserInfoManager.getUserData(context)?.nickname
+    val clipboardManager = LocalClipboardManager.current
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .heightIn(min = 300.dp)
             .padding(horizontal = 22.dp, vertical = 30.dp)
     ) {
-        Text("약품 상세 페이지")
-        detail.ingredients.forEach {
-            Text("- ${it.name} (${it.dose}) ${if (it.main) "[주성분]" else ""}")
+        Text(
+            text = "${nickname}님 AI 맞춤 안내",
+            style = TextStyle(
+                fontSize = 16.sp,
+                fontFamily = pretendard,
+                fontWeight = FontWeight(600),
+                color = primaryColor,
+            )
+        )
+        HeightSpacer(8.dp)
+        Text(
+            text = "입력해주신 정보를 바탕으로 작성되었어요!",
+            style = TextStyle(
+                fontSize = 12.sp,
+                fontFamily = pretendard,
+                fontWeight = FontWeight(500),
+                color = gray500,
+            )
+        )
+        HeightSpacer(12.dp)
+        DashedBorderBox(
+            onRegisterClick = {}
+        )
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(vertical = 10.dp),
+            horizontalArrangement = Arrangement.End
+        ){
+            Text(
+                text = "도움이 되었나요?",
+                style = TextStyle(
+                    fontSize = 10.sp,
+                    fontFamily = pretendard,
+                    fontWeight = FontWeight(500),
+                    color = gray400,
+                    textDecoration = TextDecoration.Underline,
+                )
+            )
         }
-        Text("성분:")
-        detail.ingredients.forEach {
-            Text("- ${it.name} (${it.dose}) ${if (it.main) "[주성분]" else ""}")
+        HeightSpacer(42.dp)
+        ExportAndCopy(
+            headerText = "효능/효과",
+            onCopyClicked = {
+                val text = detail.effect.let { "[${it.Type}] ${it.effect}" }
+                clipboardManager.setText(AnnotatedString(text))
+                Toast.makeText(context, "복사되었습니다", Toast.LENGTH_SHORT).show()
+            },
+            onExportClicked = {
+                val text = detail.effect.let { "[${it.Type}] ${it.effect}" }
+                shareText(context, "효능/효과", text)
+            }
+        )
+        ExpandableInfoBox(
+            item = detail.effect,
+            collapsedHeight = 186.dp
+        ) { effect ->
+            Text("[${effect.Type}] ${effect.effect}")
         }
-
-        HeightSpacer(16.dp)
-
-        Text("효능/용법/주의사항:")
-        detail.effectDetails.forEach {
-            Text("[${it.Type}] ${it.effect}")
+        HeightSpacer(42.dp)
+        ExportAndCopy(
+            headerText = "상세성분",
+            onCopyClicked = {
+                val text = detail.ingredients.joinToString("\n") {
+                    "- ${it.name} (${it.dose}) ${if (it.main) "[주성분]" else ""}"
+                }
+                clipboardManager.setText(AnnotatedString(text))
+                Toast.makeText(context, "복사되었습니다", Toast.LENGTH_SHORT).show()
+            },
+            onExportClicked = {
+                val text = detail.ingredients.joinToString("\n") {
+                    "- ${it.name} (${it.dose}) ${if (it.main) "[주성분]" else ""}"
+                }
+                shareText(context, "상세성분", text)
+            }
+        )
+        ExpandableInfoBox(
+            items = detail.ingredients
+        ) { ingredient ->
+            Text("- ${ingredient.name} (${ingredient.dose}) ${if (ingredient.main) "[주성분]" else ""}")
         }
+        HeightSpacer(42.dp)
+        ExportAndCopy(
+            headerText = "용량/용법",
+            onCopyClicked = {
+                val text = "[${detail.usage.Type}] ${detail.usage.effect}"
+                clipboardManager.setText(AnnotatedString(text))
+                Toast.makeText(context, "복사되었습니다", Toast.LENGTH_SHORT).show()
+            },
+            onExportClicked = {
+                val text = "[${detail.usage.Type}] ${detail.usage.effect}"
+                shareText(context, "용량/용법", text)
+            }
+        )
+        ExpandableInfoBox(
+            item = detail.usage,
+            collapsedHeight = 186.dp
+        ) { effect ->
+            Text("[${effect.Type}] ${effect.effect}")
+        }
+        HeightSpacer(42.dp)
+        ExportAndCopy(
+            headerText = "주의사항",
+            onCopyClicked = {
+                val text = "[${detail.caution.Type}] ${detail.caution.effect}"
+                clipboardManager.setText(AnnotatedString(text))
+                Toast.makeText(context, "복사되었습니다", Toast.LENGTH_SHORT).show()
+            },
+            onExportClicked = {
+                val text = "[${detail.caution.Type}] ${detail.caution.effect}"
+                shareText(context, "주의사항", text)
+            }
+        )
+        ExpandableInfoBox(
+            item = detail.caution,
+            collapsedHeight = 186.dp
+        ) { effect ->
+            Text("[${effect.Type}] ${effect.effect}")
+        }
+        HeightSpacer(100.dp)
     }
 }
 
@@ -812,7 +942,7 @@ fun StorageInfoTab(
                 .padding(start = 16.dp, top = 20.dp, end = 16.dp, bottom = 20.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceAround
-        ){
+        ) {
             Text(
                 text = "서늘/건조",
                 style = TextStyle(

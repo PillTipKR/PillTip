@@ -116,19 +116,16 @@ class SearchHiltViewModel @Inject constructor(
 @Module
 @InstallIn(SingletonComponent::class)
 object RepositoryModule {
-    val client = OkHttpClient.Builder()
-        .addInterceptor(HttpLoggingInterceptor().apply {
-            level = HttpLoggingInterceptor.Level.BODY
-        })
-        .build()
-
     @Provides
     @Singleton
     fun provideOkHttpClient(
         @ApplicationContext context: Context
     ): OkHttpClient {
         return OkHttpClient.Builder()
-            .addInterceptor(AuthInterceptor(context)) // AccessToken 자동 주입
+            .addInterceptor(AuthInterceptor(context))
+            .addInterceptor(HttpLoggingInterceptor().apply {
+                level = HttpLoggingInterceptor.Level.BODY
+            })
             .build()
     }
 
