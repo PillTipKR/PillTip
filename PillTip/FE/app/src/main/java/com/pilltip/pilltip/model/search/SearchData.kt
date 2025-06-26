@@ -58,7 +58,9 @@ data class DetailDrugData(
     val tag: String,
     val approvalDate: String,
     val storageDetails: List<StorageDetail>,
-    val effectDetails: List<EffectDetail>,
+    val effect: EffectDetail,
+    val usage: EffectDetail,
+    val caution: EffectDetail,
     val durTags: List<DurTag>
 )
 
