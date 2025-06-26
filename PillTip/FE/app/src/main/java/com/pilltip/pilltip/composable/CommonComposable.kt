@@ -199,19 +199,21 @@ fun Guideline(description: String, isValid: Boolean) {
 fun DoubleLineTitleText(
     upperTextLine: String = "Upper TextLine",
     lowerTextLine: String = "Lower TextLine",
-    padding: Dp = 24.dp
+    padding: Dp = 24.dp,
+    textHeight : Dp = 40.dp,
+    fontSize : Int = 28
 ) {
     Text(
         text = upperTextLine,
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = padding)
-            .height(40.dp)
+            .height(textHeight)
             .wrapContentHeight(Alignment.CenterVertically),
         style = TextStyle(
             fontFamily = pretendard,
             fontWeight = FontWeight.Bold,
-            fontSize = 28.sp,
+            fontSize = fontSize.sp,
             letterSpacing = (-0.3).sp,
             platformStyle = PlatformTextStyle(
                 includeFontPadding = false
@@ -221,11 +223,11 @@ fun DoubleLineTitleText(
     Text(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(start = 24.dp, end = 24.dp)
-            .height(40.dp)
+            .padding(horizontal = padding)
+            .height(textHeight)
             .wrapContentHeight(Alignment.CenterVertically),
         text = lowerTextLine,
-        fontSize = 28.sp,
+        fontSize = fontSize.sp,
         fontFamily = pretendard,
         fontWeight = FontWeight.Bold,
         color = Color(0xFF000000),

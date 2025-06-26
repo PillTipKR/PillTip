@@ -266,6 +266,7 @@ fun ProfileGenderPick(
 
 @Composable
 fun AgeField(
+    placeholder: String = "생년월일을 입력해주세요",
     ageChange: (Int, Int, Int) -> Unit,
 ) {
     var selectedYear by remember { mutableStateOf(0) }
@@ -292,7 +293,7 @@ fun AgeField(
         ) {
             if (selectedYear == 0 && selectedMonth == 0 && selectedDay == 0)
                 Text(
-                    text = "생년월일을 입력해주세요",
+                    text = placeholder,
                     fontSize = 16.sp,
                     fontFamily = pretendard,
                     fontWeight = FontWeight.W400,
