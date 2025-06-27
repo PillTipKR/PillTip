@@ -42,9 +42,9 @@ fun DosagePage(
     var selectedMinute by remember { mutableStateOf<Int?>(null) }
 
     Column(
-        modifier = WhiteScreenModifier
+        modifier = WhiteScreenModifier.padding(horizontal = 22.dp)
     ) {
-        BackButton { navController.navigate("DetailPage") }
+        BackButton(horizontalPadding = 0.dp) { navController.navigate("DetailPage") }
         HeightSpacer(62.dp)
         Text(
             text = "Q.",
