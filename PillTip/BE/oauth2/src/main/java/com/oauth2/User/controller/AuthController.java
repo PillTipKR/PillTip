@@ -5,6 +5,7 @@ package com.oauth2.User.controller;
 
 import com.oauth2.User.dto.ApiResponse;
 import com.oauth2.User.dto.LoginRequest;
+import com.oauth2.User.dto.SocialLoginRequest;
 import com.oauth2.User.dto.SignupRequest;
 import com.oauth2.User.dto.UserResponse;
 import com.oauth2.User.entity.User;
@@ -41,6 +42,13 @@ public class AuthController {
     public ResponseEntity<ApiResponse<LoginResponse>> login(@RequestBody LoginRequest request) {
         LoginResponse loginResponse = userService.login(request);
         return ResponseEntity.ok(ApiResponse.success("Login successful", loginResponse));
+    }
+
+    // 소셜 로그인
+    @PostMapping("/socialLogin")
+    public ResponseEntity<ApiResponse<LoginResponse>> socialLogin(@RequestBody SocialLoginRequest request) {
+        LoginResponse loginResponse = userService.socialLogin(request);
+        return ResponseEntity.ok(ApiResponse.success("Social login successful", loginResponse));
     }
 
     // 회원가입

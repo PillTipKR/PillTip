@@ -4,6 +4,8 @@ package com.oauth2.User.service;
 
 import com.oauth2.User.dto.LoginRequest;
 import com.oauth2.User.dto.LoginResponse;
+import com.oauth2.User.dto.SocialLoginRequest;
+import com.oauth2.User.dto.OAuth2UserInfo;
 import com.oauth2.User.entity.LoginType;
 import com.oauth2.User.entity.User;
 import com.oauth2.User.entity.UserToken;
@@ -22,6 +24,7 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final TokenService tokenService;
     private final UserProfileRepository userProfileRepository;
+    private final OAuth2Service oauth2Service;
 
     // ID/PW 로그인
     public LoginResponse login(LoginRequest request) {
@@ -45,20 +48,46 @@ public class UserService {
     }
 
     // 소셜 로그인
-    public LoginResponse socialLogin(String socialId, LoginType loginType) {
-        User user = userRepository.findBySocialId(socialId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
-        if (user.getLoginType() != loginType) {
-            throw new RuntimeException("Invalid login type");
-        }
-
-        UserToken userToken = tokenService.generateTokens(user.getId());
+    public LoginResponse socialLogin(SocialLoginRequest request) {
+        System.out.println("=== Social Login Debug ===");
+        System.out.println("Provider: " + request.getProvider());
+        System.out.println("Token: " + request.getToken().substring(0, Math.min(request.getToken().length(), 20)) + "...");
         
-        return LoginResponse.builder()
-                .accessToken(userToken.getAccessToken())
-                .refreshToken(userToken.getRefreshToken())
-                .build();
+        try {
+            // OAuth2 서버에서 사용자 정보 가져오기
+            System.out.println("Calling OAuth2 service to get user info...");
+            OAuth2UserInfo oauth2UserInfo = oauth2Service.getUserInfo(
+                request.getProvider(),
+                request.getToken()
+            );
+            System.out.println("OAuth2 User Info - Social ID: " + oauth2UserInfo.getSocialId());
+            System.out.println("OAuth2 User Info - Email: " + oauth2UserInfo.getEmail());
+            System.out.println("OAuth2 User Info - Name: " + oauth2UserInfo.getName());
+            
+            // 소셜 ID로 사용자 조회
+            System.out.println("Searching user by social ID: " + oauth2UserInfo.getSocialId());
+            User user = userRepository.findBySocialId(oauth2UserInfo.getSocialId())
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+            System.out.println("User found - ID: " + user.getId() + ", Nickname: " + user.getNickname() + ", LoginType: " + user.getLoginType());
+
+            if (user.getLoginType() != LoginType.SOCIAL) {
+                System.out.println("Error: User login type is not SOCIAL");
+                throw new RuntimeException("This account is not a social account");
+            }
+
+            System.out.println("Generating tokens for user...");
+            UserToken userToken = tokenService.generateTokens(user.getId());
+            System.out.println("Tokens generated successfully");
+            
+            return LoginResponse.builder()
+                    .accessToken(userToken.getAccessToken())
+                    .refreshToken(userToken.getRefreshToken())
+                    .build();
+        } catch (Exception e) {
+            System.out.println("Error in socialLogin: " + e.getMessage());
+            e.printStackTrace();
+            throw e;
+        }
     }
 
     // 토큰 갱신
