@@ -1,6 +1,7 @@
 package com.pilltip.pilltip.view.search
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -26,16 +27,19 @@ import com.pilltip.pilltip.ui.theme.primaryColor
 fun DosagePage(
     navController: NavController
 ) {
+    var name by remember { mutableStateOf("") }
     var startYear by remember { mutableStateOf(0) }
     var startMonth by remember { mutableStateOf(0) }
     var startDay by remember { mutableStateOf(0) }
     var endYear by remember { mutableStateOf(0) }
     var endMonth by remember { mutableStateOf(0) }
     var endDay by remember { mutableStateOf(0) }
+    var selectedTimeText by remember { mutableStateOf("") }
+
     Column(
-        modifier = WhiteScreenModifier
+        modifier = WhiteScreenModifier.padding(horizontal = 22.dp)
     ) {
-        BackButton { navController.navigate("DetailPage") }
+        BackButton(horizontalPadding = 0.dp) { navController.navigate("DetailPage") }
         HeightSpacer(62.dp)
         Text(
             text = "Q.",
@@ -50,7 +54,7 @@ fun DosagePage(
         DoubleLineTitleText("복약 일정이", "어떻게 되시나요?", textHeight = 33.8.dp, fontSize = 26)
         HeightSpacer(52.dp)
         Text(
-            text = "복약 일수",
+            text = "일정명",
             style = TextStyle(
                 fontSize = 16.sp,
                 fontFamily = pretendard,
@@ -58,6 +62,24 @@ fun DosagePage(
                 color = gray800,
             )
         )
+        HeightSpacer(12.dp)
+        RoundTextField(
+            name,
+            textChange = { name = it },
+            "예 : 혈압약, 꼭 먹기 등",
+            false
+        )
+        HeightSpacer(28.dp)
+        Text(
+            text = "복약 일정",
+            style = TextStyle(
+                fontSize = 16.sp,
+                fontFamily = pretendard,
+                fontWeight = FontWeight(600),
+                color = gray800,
+            )
+        )
+        HeightSpacer(12.dp)
         AgeField("복약 시작일") { selectedYear, selectedMonth, selectedDay ->
             startYear = selectedYear
             startMonth = selectedMonth
