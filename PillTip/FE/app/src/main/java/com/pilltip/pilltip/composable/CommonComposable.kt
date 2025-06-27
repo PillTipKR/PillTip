@@ -72,6 +72,8 @@ import com.pilltip.pilltip.ui.theme.gray800
 import com.pilltip.pilltip.ui.theme.pretendard
 import com.pilltip.pilltip.ui.theme.primaryColor
 import com.pilltip.pilltip.view.auth.logic.InputType
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.filter
 import java.time.LocalDate
 import java.time.YearMonth
 import kotlin.math.abs
@@ -438,6 +440,16 @@ fun PillTipDatePicker(
         }
     }
 
+    var selectedDayIndex by remember { mutableStateOf(0) }
+
+    LaunchedEffect(dayListState) {
+        snapshotFlow { dayListState.isScrollInProgress }
+            .filter { !it }
+            .collect {
+                selectedDayIndex = dayListState.firstVisibleItemIndex
+            }
+    }
+
     LaunchedEffect(year, month) {
         yearMonth = YearMonth.of(year, month)
         if (day > daysInMonth) {
@@ -526,6 +538,7 @@ fun WheelColumn(
     selected: Int,
     state: LazyListState,
     label: String,
+    itemToString: (T) -> String = { it.toString() }, // 기본은 toString()
     modifier: Modifier = Modifier
 ) {
     LazyColumn(
