@@ -1,5 +1,6 @@
 package com.pilltip.pilltip.view.search
 
+import android.util.Log
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
@@ -18,6 +19,7 @@ import com.pilltip.pilltip.composable.AuthComposable.RoundTextField
 import com.pilltip.pilltip.composable.BackButton
 import com.pilltip.pilltip.composable.DoubleLineTitleText
 import com.pilltip.pilltip.composable.HeightSpacer
+import com.pilltip.pilltip.composable.SearchComposable.TimeField
 import com.pilltip.pilltip.composable.WhiteScreenModifier
 import com.pilltip.pilltip.ui.theme.gray800
 import com.pilltip.pilltip.ui.theme.pretendard
@@ -27,6 +29,7 @@ import com.pilltip.pilltip.ui.theme.primaryColor
 fun DosagePage(
     navController: NavController
 ) {
+
     var name by remember { mutableStateOf("") }
     var startYear by remember { mutableStateOf(0) }
     var startMonth by remember { mutableStateOf(0) }
@@ -34,7 +37,9 @@ fun DosagePage(
     var endYear by remember { mutableStateOf(0) }
     var endMonth by remember { mutableStateOf(0) }
     var endDay by remember { mutableStateOf(0) }
-    var selectedTimeText by remember { mutableStateOf("") }
+    var selectedAmPm by remember { mutableStateOf<String?>(null) }
+    var selectedHour by remember { mutableStateOf<Int?>(null) }
+    var selectedMinute by remember { mutableStateOf<Int?>(null) }
 
     Column(
         modifier = WhiteScreenModifier.padding(horizontal = 22.dp)
@@ -89,6 +94,14 @@ fun DosagePage(
             endYear = selectedYear
             endMonth = selectedMonth
             endDay = selectedDay
+        }
+
+        HeightSpacer(12.dp)
+
+        TimeField { amPm, hour, minute ->
+            selectedAmPm = amPm
+            selectedHour = hour
+            selectedMinute = minute
         }
     }
 }
