@@ -743,7 +743,7 @@ fun DetailPage(
                             buttonColor = Color.White,
                             textColor = primaryColor,
                             onClick = {
-
+                                navController.navigate("DosagePage")
                             }
                         )
                         NextButton(
