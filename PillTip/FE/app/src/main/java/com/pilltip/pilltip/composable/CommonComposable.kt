@@ -459,8 +459,8 @@ fun PillTipDatePicker(
         }
     }
 
-    LaunchedEffect(year, month, day) {
-        val safeDay = day.coerceAtMost(YearMonth.of(year, month).lengthOfMonth())
+    LaunchedEffect(year, month, selectedDayIndex) {
+        val safeDay = (selectedDayIndex + 1).coerceAtMost(YearMonth.of(year, month).lengthOfMonth())
         onDateSelected(LocalDate.of(year, month, safeDay))
     }
 
@@ -500,7 +500,7 @@ fun PillTipDatePicker(
             )
             WheelColumn(
                 items = (1..daysInMonth).toList(),
-                selected = day,
+                selected = selectedDayIndex + 1,
                 state = dayListState,
                 label = "일",
                 modifier = Modifier.weight(1f)
@@ -535,9 +535,9 @@ fun PillTipDatePicker(
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun WheelColumn(
-    items: List<Int>,
-    selected: Int,
+fun <T> WheelColumn(
+    items: List<T>,
+    selected: T,
     state: LazyListState,
     label: String,
     itemToString: (T) -> String = { it.toString() }, // 기본은 toString()
@@ -593,7 +593,8 @@ fun WheelColumn(
                     }
             ) {
                 Text(
-                    text = "$item$label",
+                    text = "${itemToString(item)}$label",
+                    fontFamily = pretendard,
                     fontSize = 23.sp,
                     fontWeight = fontWeight,
                     color = Color.Black
