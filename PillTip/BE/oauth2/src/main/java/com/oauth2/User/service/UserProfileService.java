@@ -9,6 +9,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -21,27 +22,43 @@ public class UserProfileService {
     private final ObjectMapper objectMapper;
 
     public UserProfile addTakingPill(User user, TakingPillRequest request) {
+        // 요청 데이터 검증
+        validateTakingPillRequest(request);
+        
         UserProfile userProfile = userProfileRepository.findByUserId(user.getId())
             .orElseThrow(() -> new RuntimeException("User profile not found"));
 
         List<TakingPillRequest> takingPills = getTakingPillsList(userProfile);
+        
+        // 기존에 같은 약품이 있는지 확인
+        boolean exists = takingPills.stream()
+            .anyMatch(pill -> pill.getMedicationId().equals(request.getMedicationId()));
+        
+        if (exists) {
+            throw new RuntimeException("이미 복용 중인 약품입니다.");
+        }
+        
         takingPills.add(request);
         return saveTakingPills(userProfile, takingPills);
     }
 
     public UserProfile deleteTakingPill(User user, String medicationId) {
+        Long medId = Long.parseLong(medicationId);
         UserProfile userProfile = userProfileRepository.findByUserId(user.getId())
             .orElseThrow(() -> new RuntimeException("User profile not found"));
 
         List<TakingPillRequest> takingPills = getTakingPillsList(userProfile);
         takingPills = takingPills.stream()
-            .filter(pill -> !pill.getMedicationId().equals(medicationId))
+            .filter(pill -> !pill.getMedicationId().equals(medId))
             .collect(Collectors.toList());
         
         return saveTakingPills(userProfile, takingPills);
     }
 
     public UserProfile updateTakingPill(User user, TakingPillRequest request) {
+        // 요청 데이터 검증
+        validateTakingPillRequest(request);
+        
         UserProfile userProfile = userProfileRepository.findByUserId(user.getId())
             .orElseThrow(() -> new RuntimeException("User profile not found"));
 
@@ -85,6 +102,64 @@ public class UserProfileService {
             return userProfileRepository.save(userProfile);
         } catch (Exception e) {
             throw new RuntimeException("Failed to save taking pills", e);
+        }
+    }
+
+    // 요청 데이터 검증 메서드
+    private void validateTakingPillRequest(TakingPillRequest request) {
+        if (request.getMedicationId() == null) {
+            throw new RuntimeException("약품 ID는 필수입니다.");
+        }
+        
+        if (request.getMedicationName() == null || request.getMedicationName().trim().isEmpty()) {
+            throw new RuntimeException("약품 이름은 필수입니다.");
+        }
+        
+        if (request.getStartDate() == null) {
+            throw new RuntimeException("시작일은 필수입니다.");
+        }
+        
+        if (request.getEndDate() == null) {
+            throw new RuntimeException("종료일은 필수입니다.");
+        }
+        
+        if (request.getStartDate().isAfter(request.getEndDate())) {
+            throw new RuntimeException("시작일은 종료일보다 이전이어야 합니다.");
+        }
+        
+        if (request.getAlertName() == null || request.getAlertName().trim().isEmpty()) {
+            throw new RuntimeException("알림명은 필수입니다.");
+        }
+        
+        if (!request.isValidDaysOfWeek()) {
+            throw new RuntimeException("유효하지 않은 요일 정보입니다.");
+        }
+        
+        if (request.getDosageSchedules() == null || request.getDosageSchedules().isEmpty()) {
+            throw new RuntimeException("복용 스케줄은 최소 1개 이상 필요합니다.");
+        }
+        
+        // 복용 스케줄 검증
+        for (TakingPillRequest.DosageSchedule schedule : request.getDosageSchedules()) {
+            if (!schedule.isValidDosageAmount()) {
+                throw new RuntimeException("복용량은 0.25 이상이어야 합니다.");
+            }
+            
+            if (!schedule.isValidHour()) {
+                throw new RuntimeException("시간은 0-12 사이의 값이어야 합니다.");
+            }
+            
+            if (!schedule.isValidMinute()) {
+                throw new RuntimeException("분은 0-59 사이의 값이어야 합니다.");
+            }
+            
+            if (!schedule.isValidPeriod()) {
+                throw new RuntimeException("기간은 AM 또는 PM이어야 합니다.");
+            }
+            
+            if (schedule.getDosageUnit() == null || schedule.getDosageUnit().trim().isEmpty()) {
+                throw new RuntimeException("복용 단위는 필수입니다.");
+            }
         }
     }
 }

@@ -21,6 +21,7 @@ import com.pilltip.pilltip.view.auth.SelectPage
 import com.pilltip.pilltip.view.auth.SplashPage
 import com.pilltip.pilltip.view.main.PillMainPage
 import com.pilltip.pilltip.view.search.DetailPage
+import com.pilltip.pilltip.view.search.DosagePage
 import com.pilltip.pilltip.view.search.SearchPage
 import com.pilltip.pilltip.view.search.SearchResultsPage
 
@@ -94,6 +95,9 @@ fun NavGraph(
                 navController,
                 searchHiltViewModel
             )
+        }
+        composable("DosagePage"){
+            DosagePage(navController)
         }
 
     }
