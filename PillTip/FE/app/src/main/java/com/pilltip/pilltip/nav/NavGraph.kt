@@ -20,6 +20,8 @@ import com.pilltip.pilltip.view.auth.ProfilePage
 import com.pilltip.pilltip.view.auth.SelectPage
 import com.pilltip.pilltip.view.auth.SplashPage
 import com.pilltip.pilltip.view.main.PillMainPage
+import com.pilltip.pilltip.view.questionnaire.AreYouPage
+import com.pilltip.pilltip.view.questionnaire.QuestionnaireSearchPage
 import com.pilltip.pilltip.view.search.DetailPage
 import com.pilltip.pilltip.view.search.DosagePage
 import com.pilltip.pilltip.view.search.SearchPage
@@ -38,47 +40,45 @@ fun NavGraph(
         startDestination = startPage
     ) {
         /*SignIn Flow*/
-        composable("SplashPage"){
+        composable("SplashPage") {
             SplashPage(navController)
         }
-        composable("SelectPage"){
+        composable("SelectPage") {
             SelectPage(navController, signUpViewModel)
         }
         composable("KakaoAuthPage") {
             KakaoAuthPage(navController, signUpViewModel)
         }
-        composable("LoginPage"){
+        composable("LoginPage") {
             LoginPage(navController, signUpViewModel)
         }
         composable("FindMyInfoPage/{mode}") { backStackEntry ->
             val mode = backStackEntry.arguments?.getString("mode") ?: "FIND_ID"
             FindMyInfoPage(navController = navController, mode = mode)
         }
-        composable("IDPage"){
+        composable("IDPage") {
             IdPage(navController = navController, signUpViewModel)
         }
-        composable("PasswordPage"){
+        composable("PasswordPage") {
             PasswordPage(navController = navController, signUpViewModel)
         }
-        composable("PhoneAuthPage"){
+        composable("PhoneAuthPage") {
             PhoneAuthPage(navController = navController, signUpViewModel)
         }
-        composable("ProfilePage"){
+        composable("ProfilePage") {
             ProfilePage(navController, signUpViewModel)
         }
-        composable("InterestPage"){
+        composable("InterestPage") {
             InterestPage(navController = navController, signUpViewModel)
         }
 
         /* Main */
-
-        composable("PillMainPage"){
+        composable("PillMainPage") {
             PillMainPage(navController)
         }
 
-        /*Search*/
-
-        composable("SearchPage"){
+        /* Search */
+        composable("SearchPage") {
             SearchPage(navController, logViewModel, searchHiltViewModel)
         }
         composable("SearchResultsPage/{query}") { backStackEntry ->
@@ -90,15 +90,56 @@ fun NavGraph(
                 initialQuery = query
             )
         }
-        composable("DetailPage"){
+        composable("DetailPage") {
             DetailPage(
                 navController,
                 searchHiltViewModel
             )
         }
-        composable("DosagePage"){
+        composable("DosagePage") {
             DosagePage(navController)
         }
 
+        /* questionnaire */
+        composable("AreYouPage/{query}") { backStackEntry ->
+            val query = backStackEntry.arguments?.getString("query") ?: ""
+
+            val (mode, title) = when (query) {
+                "약" -> "drug" to "복용 중인 약이\n있으신가요?"
+                "알러지" -> "allergy" to "알러지가\n있으신가요?"
+                else -> "etc" to "혹시 기저질환이\n있으신가요?"
+            }
+
+            val (onYesClicked, onNoClicked) = when (query) {
+                "약" -> ({
+                    navController.navigate("QuestionnaireSearchPage")
+                }) to {
+                    navController.navigate("AreYouPage/알러지")
+                }
+
+                "알러지" -> ({
+                    navController.navigate("NextPage/$mode/yes")
+                }) to {
+                    navController.navigate("AreYouPage/기저질환")
+                }
+
+                else -> ({
+                    navController.navigate("NextPage/$mode/yes")
+                }) to {
+                    navController.navigate("FinalPage")
+                }
+            }
+
+            AreYouPage(
+                navController = navController,
+                mode = mode,
+                title = title,
+                onYesClicked = onYesClicked,
+                onNoClicked = onNoClicked
+            )
+        }
+        composable("QuestionnaireSearchPage") {
+            QuestionnaireSearchPage(navController, logViewModel, searchHiltViewModel)
+        }
     }
 }

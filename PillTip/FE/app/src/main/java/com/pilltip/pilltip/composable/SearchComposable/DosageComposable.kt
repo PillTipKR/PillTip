@@ -3,6 +3,7 @@ package com.pilltip.pilltip.composable.SearchComposable
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,6 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
@@ -29,6 +31,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -45,17 +48,18 @@ import com.pilltip.pilltip.ui.theme.gray200
 import com.pilltip.pilltip.ui.theme.gray500
 import com.pilltip.pilltip.ui.theme.pretendard
 import com.pilltip.pilltip.ui.theme.primaryColor
+import com.pilltip.pilltip.ui.theme.primaryColor050
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
 
 @Composable
 fun TimeField(
     placeholder: String = "시간을 선택해주세요",
-    timeChange: (String, Int, Int) -> Unit  // ✅ isAm: "오전"/"오후"
+    timeChange: (String, Int, Int) -> Unit
 ) {
     var selectedHour by remember { mutableStateOf<Int?>(null) }
     var selectedMinute by remember { mutableStateOf<Int?>(null) }
-    var selectedAmPm by remember { mutableStateOf<String?>(null) } // ✅ "오전"/"오후" 저장
+    var selectedAmPm by remember { mutableStateOf<String?>(null) }
     var showSheet by remember { mutableStateOf(false) }
 
     Box(
@@ -295,6 +299,44 @@ fun PillTipTimePicker(
                     )
                 )
         )
+    }
+}
+
+@Composable
+fun DayField(
+    selectedDays: List<Boolean>,
+    onDayToggle: (Int) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val daysOfWeek = listOf("월", "화", "수", "목", "금", "토", "일")
+
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        daysOfWeek.forEachIndexed { index, day ->
+            val isSelected = selectedDays[index]
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .border(
+                        width = 1.2.dp,
+                        color = if (isSelected) primaryColor else gray500,
+                        shape = CircleShape
+                    )
+                    .noRippleClickable { onDayToggle(index) },
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = day,
+                    fontFamily = pretendard,
+                    color = if (isSelected) primaryColor else gray500,
+                    fontWeight = FontWeight.Medium,
+                    fontSize = 14.sp
+                )
+            }
+        }
     }
 }
 

@@ -802,7 +802,9 @@ fun DrugInfoTab(
         )
         HeightSpacer(12.dp)
         DashedBorderBox(
-            onRegisterClick = {}
+            onRegisterClick = {
+                navController.navigate("AreYouPage/약")
+            }
         )
         Row(
             modifier = Modifier.fillMaxWidth().padding(vertical = 10.dp),
