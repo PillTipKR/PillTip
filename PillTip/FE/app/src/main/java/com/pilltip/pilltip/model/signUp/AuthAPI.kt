@@ -27,6 +27,11 @@ interface ServerAuthAPI {
         @Body request: LoginRequest
     ): Response<LoginResponse>
 
+    @POST("api/auth/social-login")
+    suspend fun socialLogin(
+        @Body request: SocialLoginRequest
+    ): Response<LoginResponse>
+
     @POST("api/auth/terms")
     suspend fun submitTerms(
         @Header("Authorization") token: String,

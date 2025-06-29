@@ -36,8 +36,11 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Card
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
@@ -293,7 +296,8 @@ fun AutoCompleteList(
     query: String,
     searched: List<SearchData>,
     onClick: (SearchData) -> Unit,
-    onLoadMore: () -> Unit
+    onLoadMore: () -> Unit,
+    onAddClick: ((SearchData) -> Unit)? = null
 ) {
     val listState = rememberLazyListState()
 
@@ -314,7 +318,17 @@ fun AutoCompleteList(
                         .height(36.dp)
                 )
                 Spacer(modifier = Modifier.width(14.dp))
-                HighlightedText(fullText = item.value, keyword = query)
+
+                Box(modifier = Modifier.weight(1f)) {
+                    HighlightedText(fullText = item.value, keyword = query)
+                }
+                onAddClick?.let { addClick ->
+                    Image(
+                        imageVector = ImageVector.vectorResource(R.drawable.btn_questionnaire_add),
+                        contentDescription = "추가 버튼",
+                        modifier = Modifier.noRippleClickable { addClick(item) }
+                    )
+                }
             }
         }
     }
