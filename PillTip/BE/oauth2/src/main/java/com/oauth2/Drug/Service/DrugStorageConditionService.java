@@ -19,6 +19,10 @@ public class DrugStorageConditionService {
     public DrugStorageCondition save(DrugStorageCondition drugStorageCondition) {
         return drugStorageConditionRepository.save(drugStorageCondition);
     }
+
+    public List<DrugStorageCondition> findByDrugId(long id) {
+        return drugStorageConditionRepository.findByDrugId(id);
+    }
     public void delete(Long id) {
         drugStorageConditionRepository.deleteById(id);
     }
