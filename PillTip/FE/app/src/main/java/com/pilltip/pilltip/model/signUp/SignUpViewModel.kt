@@ -33,6 +33,9 @@ class SignUpViewModel @Inject constructor(
     private val _refreshToken = mutableStateOf("")
     val refreshToken: State<String> = _refreshToken
 
+    private val _userData = mutableStateOf<UserData?>(null)
+    val userData: State<UserData?> = _userData
+
     /*값 업데이트*/
     fun updateLoginType(type: LoginType) {
         _signUpData.value = _signUpData.value.copy(loginType = type)
@@ -91,50 +94,6 @@ class SignUpViewModel @Inject constructor(
     fun updateToken(token: String) {
         _signUpData.value = _signUpData.value.copy(token = token)
     }
-
-    /*값 읽기*/
-
-    // 로그인 타입
-    fun getLoginType(): LoginType = _signUpData.value.loginType
-
-    //프로바이더
-    fun getProvider(): String = _signUpData.value.provider
-
-    // 사용자 ID
-    fun getloginId(): String = _signUpData.value.loginId
-
-    // 비밀번호
-    fun getPassword(): String = _signUpData.value.password
-
-    // 닉네임
-    fun getNickname(): String = _signUpData.value.nickname
-
-    // 성별
-    fun getGender(): String = _signUpData.value.gender
-
-    // 생년월일
-    fun getBirthDate(): String = _signUpData.value.birthDate
-
-    // 나이
-    fun getAge(): Int = _signUpData.value.age
-
-    // 키
-    fun getHeight(): Int = _signUpData.value.height
-
-    // 몸무게
-    fun getWeight(): Int = _signUpData.value.weight
-
-    // 관심사
-    fun getInterest(): String = _signUpData.value.interest
-
-    // 전화번호
-    fun getPhone(): String = _signUpData.value.phone
-
-    // 토큰
-    fun getToken(): String = _signUpData.value.token
-
-    // 약관 동의 여부
-    fun isAgreedToTerms(): Boolean = _signUpData.value.term
 
     fun logSignUpData(tag: String = "SignUpData") {
         val data = _signUpData.value
@@ -230,6 +189,41 @@ class SignUpViewModel @Inject constructor(
                 onFailure(e)
             } finally {
                 _isLoading.value = false
+            }
+        }
+    }
+
+    fun socialLogin(
+        token: String,
+        provider: String,
+        onSuccess: (accessToken: String, refreshToken: String) -> Unit,
+        onFailure: (Throwable?) -> Unit
+    ) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            try {
+                val (result, tokenData) = authRepository.socialLogin(token, provider)
+                if (result && tokenData != null) {
+                    _accessToken.value = tokenData.accessToken
+                    _refreshToken.value = tokenData.refreshToken
+                    onSuccess(tokenData.accessToken, tokenData.refreshToken)
+                } else {
+                    onFailure(null)
+                }
+            } catch (e: Exception) {
+                onFailure(e)
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
+    fun fetchMyInfo(token: String, onSuccess: (UserData) -> Unit) {
+        viewModelScope.launch {
+            val info = authRepository.getMyInfo(token)
+            info?.let {
+                _userData.value = it
+                onSuccess(it)
             }
         }
     }

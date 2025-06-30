@@ -3,6 +3,7 @@ package com.pilltip.pilltip.view.auth
 
 import android.annotation.SuppressLint
 import android.app.Activity
+import android.icu.text.ListFormatter.Width
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
@@ -35,6 +36,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -69,6 +71,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -98,6 +101,8 @@ import com.pilltip.pilltip.composable.WhiteScreenModifier
 import com.pilltip.pilltip.composable.WidthSpacer
 import com.pilltip.pilltip.composable.buttonModifier
 import com.pilltip.pilltip.composable.noRippleClickable
+import com.pilltip.pilltip.model.HandleBackPressToExitApp
+import com.pilltip.pilltip.model.UserInfoManager
 import com.pilltip.pilltip.model.signUp.KaKaoLoginViewModel
 import com.pilltip.pilltip.model.signUp.LoginType
 import com.pilltip.pilltip.model.signUp.PhoneAuthViewModel
@@ -119,8 +124,8 @@ import kotlinx.coroutines.delay
 @Composable
 fun SplashPage(navController: NavController) {
     var visible by remember { mutableStateOf(false) }
-
     val systemUiController = rememberSystemUiController()
+    HandleBackPressToExitApp(navController)
     SideEffect {
         systemUiController.isNavigationBarVisible = false
     }
@@ -159,6 +164,7 @@ fun SelectPage(
     signUpViewModel: SignUpViewModel,
     kakaoViewModel: KaKaoLoginViewModel = hiltViewModel(),
 ) {
+    HandleBackPressToExitApp(navController)
     val systemUiController = rememberSystemUiController()
     val user by kakaoViewModel.user
     val context = LocalContext.current
@@ -170,7 +176,6 @@ fun SelectPage(
             signUpViewModel.updateLoginType(LoginType.SOCIAL)
             signUpViewModel.updateToken(token)
             signUpViewModel.updateProvider("kakao")
-            Log.d("accessToken: ", signUpViewModel.getToken())
             termsOfService = true
         }
     }
@@ -237,16 +242,29 @@ fun SelectPage(
             onClick = { navController.navigate("IDPage") }
         )
         HeightSpacer(14.dp)
-        HorizontalDivider()
-        HeightSpacer(14.dp)
-        Text(
-            text = "로그인",
-            fontSize = 16.sp,
-            fontFamily = pretendard,
-            fontWeight = FontWeight(500),
-            color = Color.Black,
-            modifier = Modifier.noRippleClickable { navController.navigate("LoginPage") }
-        )
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = "기존 계정이 있으신가요?",
+                style = TextStyle(
+                    fontSize = 14.sp,
+                    fontFamily = pretendard,
+                    fontWeight = FontWeight(500),
+                    color = Color(0xFF949BA8),
+                    textAlign = TextAlign.Center,
+                )
+            )
+            WidthSpacer(10.dp)
+            Text(
+                text = "로그인",
+                fontSize = 14.sp,
+                fontFamily = pretendard,
+                fontWeight = FontWeight(600),
+                color = primaryColor,
+                textDecoration = TextDecoration.Underline,
+                modifier = Modifier.noRippleClickable { navController.navigate("LoginPage") }
+            )
+        }
+
     }
 
     if (termsOfService) {
@@ -261,11 +279,39 @@ fun SelectPage(
 @Composable
 fun LoginPage(
     navController: NavController,
-    viewModel: SignUpViewModel
+    viewModel: SignUpViewModel,
+    kakaoViewModel: KaKaoLoginViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
     var id by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    val user by kakaoViewModel.user
+    val token = kakaoViewModel.getAccessToken()
+
+    LaunchedEffect(user) {
+        if (user != null && token != null) {
+            viewModel.socialLogin(
+                token = token,
+                provider = "KAKAO",
+                onSuccess = { accessToken, refreshToken ->
+                    viewModel.fetchMyInfo(accessToken) { userData ->
+                        TokenManager.saveTokens(context, accessToken, refreshToken)
+                        Log.d("Login", "로그인 성공! 액세스토큰: $accessToken")
+                        UserInfoManager.saveUserData(context, userData)
+                        Toast.makeText(context, "${userData.nickname}님, 반가워요!", Toast.LENGTH_SHORT).show()
+                        navController.navigate("PillMainPage") {
+                            popUpTo(0) { inclusive = true }
+                        }
+                    }
+
+                },
+                onFailure = { error ->
+                    Log.e("SocialLogin", "실패: ${error?.message}")
+                }
+            )
+        }
+    }
+
     Column(
         modifier = WhiteScreenModifier
             .padding(horizontal = 22.dp)
@@ -349,7 +395,7 @@ fun LoginPage(
                     navController.navigate("FindMyInfoPage/FIND_ID") {
                         popUpTo(
                             "LoginPage"
-                        ) { inclusive = true }
+                        ) { inclusive = false }
                     }
                 }
             )
@@ -371,7 +417,7 @@ fun LoginPage(
                     navController.navigate("FindMyInfoPage/FIND_PW") {
                         popUpTo(
                             "LoginPage"
-                        ) { inclusive = true }
+                        ) { inclusive = false }
                     }
                 }
             )
@@ -393,10 +439,53 @@ fun LoginPage(
                     navController.navigate("SelectPage") {
                         popUpTo(
                             0
-                        ) { inclusive = true }
+                        ) { inclusive = false }
                     }
                 }
             )
+        }
+        HeightSpacer(16.dp)
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .padding(vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            HorizontalDivider(thickness = 1.5.dp, color = Color(0xFFE2E4EC), modifier = Modifier.weight(1f))
+            Text(
+                text = "간편 로그인",
+                style = TextStyle(
+                    fontSize = 14.sp,
+                    fontFamily = pretendard,
+                    fontWeight = FontWeight(600),
+                    color = Color(0xFFAFB8C1),
+                ),
+                modifier = Modifier.padding(horizontal = 12.dp)
+            )
+            HorizontalDivider(thickness = 1.5.dp, color = Color(0xFFE2E4EC), modifier = Modifier.weight(1f))
+        }
+        HeightSpacer(20.dp)
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center
+        ) {
+            Box(
+                modifier = Modifier
+                    .width(52.dp)
+                    .height(52.dp)
+                    .background(color = Color(0xFFFDE500), shape = RoundedCornerShape(size = 100.dp)),
+                contentAlignment = Alignment.Center
+            ) {
+                Image(
+                    imageVector = ImageVector.vectorResource(R.drawable.ic_kakao_login),
+                    contentDescription = "카카오 로고",
+                    modifier = Modifier
+                        .size(18.dp)
+                        .noRippleClickable {
+                            kakaoViewModel.kakaoLogin(context)
+                        }
+                )
+            }
         }
         Spacer(modifier = Modifier.weight(1f))
         NextButton(
@@ -414,11 +503,17 @@ fun LoginPage(
                     loginId = id,
                     password = password,
                     onSuccess = { accessToken, refreshToken ->
-                        TokenManager.saveTokens(context, accessToken, refreshToken)
-                        Log.d("Login", "로그인 성공! 액세스토큰: $accessToken")
-                        navController.navigate("PillMainPage")
+                        viewModel.fetchMyInfo(accessToken) { userData ->
+                            TokenManager.saveTokens(context, accessToken, refreshToken)
+                            UserInfoManager.saveUserData(context, userData)
+                            Toast.makeText(context, "${userData.nickname}님, 반가워요!", Toast.LENGTH_SHORT).show()
+                            navController.navigate("PillMainPage") {
+                                popUpTo(0) { inclusive = true }
+                            }
+                        }
                     },
                     onFailure = { error ->
+                        Toast.makeText(context, "아이디 또는 비밀번호가 일치하지 않습니다", Toast.LENGTH_SHORT).show()
                         Log.e("Login", "로그인 실패", error)
                     }
                 )
@@ -450,7 +545,10 @@ fun FindMyInfoPage(
     ) {
         BackButton(horizontalPadding = 22.dp) {
             navController.navigate("LoginPage") {
-                popUpTo(0) { inclusive = true }
+                popUpTo("SelectPage") {
+                    inclusive = false
+                }
+                launchSingleTop = true
             }
         }
         HeightSpacer(74.dp)
@@ -1185,11 +1283,12 @@ fun ProfilePage(
         HeightSpacer(28.dp)
         ProfileStepDescription("연령")
         HeightSpacer(12.dp)
-        AgeField { selectedYear, selectedMonth, selectedDay ->
+        AgeField(
+         ageChange = { selectedYear, selectedMonth, selectedDay ->
             year = selectedYear
             month = selectedMonth
             day = selectedDay
-        }
+        })
         HeightSpacer(28.dp)
         Row {
             ProfileStepDescription("연령")
@@ -1319,7 +1418,9 @@ fun InterestPage(
                                         "약관 전송 실패: ${error?.message ?: "알 수 없는 오류"}",
                                         Toast.LENGTH_SHORT
                                     ).show()
-                                    navController.navigate("PillMainPage")
+                                    navController.navigate("PillMainPage")  {
+                                        popUpTo(0) { inclusive = true }
+                                    }
                                 }
                             )
                         },
@@ -1329,7 +1430,9 @@ fun InterestPage(
                                 error?.message ?: "회원가입에 실패했습니다.",
                                 Toast.LENGTH_SHORT
                             ).show()
-                            navController.navigate("PillMainPage")
+                            navController.navigate("PillMainPage")  {
+                                popUpTo(0) { inclusive = true }
+                            }
                         }
                     )
                 }

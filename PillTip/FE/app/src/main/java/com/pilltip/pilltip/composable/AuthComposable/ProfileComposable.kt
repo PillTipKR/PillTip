@@ -44,6 +44,7 @@ import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
@@ -67,12 +68,12 @@ import java.time.LocalDate
 @Composable
 fun LoginButton(
     text: String,
-    sourceImage : Int,
+    sourceImage: Int,
     borderColor: Color,
     backgroundColor: Color,
     fontColor: Color,
     onClick: () -> Unit
-){
+) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -82,11 +83,14 @@ fun LoginButton(
             .padding(start = 0.dp, top = 16.dp, end = 0.dp, bottom = 16.dp)
             .noRippleClickable { onClick() },
         contentAlignment = Alignment.Center
-    ){
+    ) {
         Row(
             verticalAlignment = Alignment.CenterVertically
-        ){
-            Image(imageVector = ImageVector.vectorResource(sourceImage), contentDescription = "Login icon image")
+        ) {
+            Image(
+                imageVector = ImageVector.vectorResource(sourceImage),
+                contentDescription = "Login icon image"
+            )
             WidthSpacer(12.dp)
             Text(
                 text = text,
@@ -116,8 +120,9 @@ fun ProfileStepDescription(
 fun RoundTextField(
     text: String,
     textChange: (String) -> Unit,
-    placeholder : String,
-    isLogin : Boolean
+    placeholder: String,
+    isLogin: Boolean,
+    keyboardType: KeyboardType = KeyboardType.Text
 ) {
     val keyboardController = LocalSoftwareKeyboardController.current
     val focusRequester = remember { FocusRequester() }
@@ -131,13 +136,15 @@ fun RoundTextField(
         modifier = Modifier
             .border(
                 width = 1.dp,
-                color = if(isLogin && text.isEmpty()) gray050 else gray200,
+                color = if (isLogin){ if(text.isEmpty())gray050 else Color.White} else{
+                    if(text.isEmpty()) gray050 else primaryColor
+                },
                 shape = RoundedCornerShape(size = 12.dp)
             )
             .fillMaxWidth()
             .height(51.dp)
             .background(
-                color = if(isLogin && text.isEmpty()) gray050 else Color.White,
+                color = if (isLogin && text.isEmpty()) gray050 else Color.White,
                 shape = RoundedCornerShape(size = 12.dp)
             )
             .padding(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 16.dp)
@@ -146,7 +153,10 @@ fun RoundTextField(
                 isFocused = focusState.isFocused
             },
         visualTransformation = if (isVisible && placeholder == "비밀번호 입력") PasswordVisualTransformation() else VisualTransformation.None,
-        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+        keyboardOptions = KeyboardOptions(
+            imeAction = ImeAction.Done,
+            keyboardType = keyboardType
+        ),
         keyboardActions = KeyboardActions(
             onDone = { keyboardController?.hide() }
         ),
@@ -174,12 +184,12 @@ fun RoundTextField(
                         )
                     )
                 }
-                if(text.isNotEmpty() && placeholder == "비밀번호 입력"){
+                if (text.isNotEmpty() && placeholder == "비밀번호 입력") {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.End,
                         verticalAlignment = Alignment.CenterVertically
-                    ){
+                    ) {
                         Image(
                             imageVector = ImageVector.vectorResource(R.drawable.btn_login_visiblility),
                             contentDescription = "비밀번호 확인",
@@ -268,6 +278,11 @@ fun ProfileGenderPick(
 fun AgeField(
     placeholder: String = "생년월일을 입력해주세요",
     ageChange: (Int, Int, Int) -> Unit,
+    modifier: Modifier = Modifier,
+    displayYear: Int = 0,
+    displayMonth: Int = 0,
+    displayDay: Int = 0,
+    onBeforeOpen: () -> Boolean = { true }
 ) {
     var selectedYear by remember { mutableStateOf(0) }
     var selectedMonth by remember { mutableStateOf(0) }
@@ -275,23 +290,26 @@ fun AgeField(
     var showSheet by remember { mutableStateOf(false) }
 
     Box(
-        modifier = Modifier
+        modifier = modifier
             .border(
                 width = 1.dp,
                 color = gray200,
                 shape = RoundedCornerShape(size = 12.dp)
             )
-            .fillMaxWidth()
             .height(51.dp)
             .padding(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 16.dp)
-            .noRippleClickable { showSheet = true }
+            .noRippleClickable {
+                if (onBeforeOpen()) {
+                    showSheet = true
+                }
+            }
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            if (selectedYear == 0 && selectedMonth == 0 && selectedDay == 0)
+            if (displayYear == 0 && displayMonth == 0 && displayDay == 0)
                 Text(
                     text = placeholder,
                     fontSize = 16.sp,
@@ -299,13 +317,15 @@ fun AgeField(
                     fontWeight = FontWeight.W400,
                     color = gray500,
                 )
-            else Text(
-                text = "%04d년 %02d월 %02d일".format(selectedYear, selectedMonth, selectedDay),
-                fontSize = 16.sp,
-                fontFamily = pretendard,
-                fontWeight = FontWeight.W400,
-                color = Color.Black,
-            )
+            else
+                Text(
+                    text = "%04d년 %02d월 %02d일".format(displayYear, displayMonth, displayDay),
+                    fontSize = 16.sp,
+                    fontFamily = pretendard,
+                    fontWeight = FontWeight.W400,
+                    color = Color.Black,
+                )
+
             Image(
                 imageVector = ImageVector.vectorResource(R.drawable.btn_right_gray_arrow),
                 contentDescription = "Age BottomSheet 표출",
@@ -313,6 +333,7 @@ fun AgeField(
             )
         }
     }
+
     if (showSheet) {
         AgeBottomSheet(
             selectedValue = { year, month, day ->

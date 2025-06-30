@@ -50,6 +50,12 @@ data class LoginRequest(
     val password: String
 )
 
+/* Social 로그인 */
+data class SocialLoginRequest(
+    val token: String,
+    val provider: String
+)
+
 data class LoginResponse(
     val status: String,
     val message: String,

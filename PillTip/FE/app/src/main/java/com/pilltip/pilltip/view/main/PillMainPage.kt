@@ -43,6 +43,7 @@ import com.pilltip.pilltip.composable.MainComposable.LogoField
 import com.pilltip.pilltip.composable.MainComposable.MainSearchField
 import com.pilltip.pilltip.composable.MainComposable.SmallTabCard
 import com.pilltip.pilltip.composable.WidthSpacer
+import com.pilltip.pilltip.model.HandleBackPressToExitApp
 import com.pilltip.pilltip.ui.theme.backgroundColor
 import com.pilltip.pilltip.ui.theme.gray800
 import com.pilltip.pilltip.ui.theme.pretendard
@@ -53,6 +54,8 @@ fun PillMainPage(
 ) {
     var selectedTab by remember { mutableStateOf(BottomTab.Home) }
     val systemUiController = rememberSystemUiController()
+    HandleBackPressToExitApp(navController)
+
     SideEffect {
         systemUiController.setStatusBarColor(
             color = Color.Transparent,
