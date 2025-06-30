@@ -28,7 +28,9 @@ import javax.inject.Singleton
 class SearchHiltViewModel @Inject constructor(
     private val repository: AutoCompleteRepository,
     private val drugSearchRepo: DrugSearchRepository,
-    private val drugDetailRepo: DrugDetailRepository
+    private val drugDetailRepo: DrugDetailRepository,
+    private val dosageRegisterRepo: DosageRegisterRepository,
+    private val dosageSummaryRepo: DosageSummaryRepository
 ) : ViewModel() {
 
     /* 약품명 자동 완성 API*/
@@ -111,6 +113,45 @@ class SearchHiltViewModel @Inject constructor(
             }
         }
     }
+
+    /* 복약 등록 API */
+    private val _registerResult = MutableStateFlow<RegisterDosageResponse?>(null)
+    val registerResult: StateFlow<RegisterDosageResponse?> = _registerResult.asStateFlow()
+
+    // 단일 복약 상세 객체 저장
+    private val _pillDetail = MutableStateFlow<TakingPillDetailData?>(null)
+    val pillDetail: StateFlow<TakingPillDetailData?> = _pillDetail.asStateFlow()
+
+    fun registerDosage(request: RegisterDosageRequest) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            try {
+                val response = dosageRegisterRepo.registerDosage(request)
+                _registerResult.value = response
+                _pillDetail.value = response.data
+                Log.d("DosageRegister", "등록 완료된 복약 정보: ${response.data}")
+            } catch (e: Exception) {
+                Log.e("DosageRegister", "복약 등록 실패: ${e.message}")
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
+    /* 복약 리스트 불러오기 */
+    private val _pillSummaryList = MutableStateFlow<List<TakingPillSummary>>(emptyList())
+    val pillSummaryList: StateFlow<List<TakingPillSummary>> = _pillSummaryList.asStateFlow()
+
+    fun fetchDosageSummary() {
+        viewModelScope.launch {
+            try {
+                val list = dosageSummaryRepo.getDosageSummary()
+                _pillSummaryList.value = list
+            } catch (e: Exception) {
+                Log.e("DosageSummary", "불러오기 실패: ${e.message}")
+            }
+        }
+    }
 }
 
 @Module
@@ -168,5 +209,25 @@ object RepositoryModule {
     @Provides
     fun provideDrugDetailRepository(api: DrugDetailApi): DrugDetailRepository {
         return DrugDetailRepositoryImpl(api)
+    }
+
+    @Provides
+    fun provideDosageRegisterApi(@Named("SearchRetrofit") retrofit: Retrofit): DosageRegisterApi {
+        return retrofit.create(DosageRegisterApi::class.java)
+    }
+
+    @Provides
+    fun provideDosageRegisterRepository(api: DosageRegisterApi): DosageRegisterRepository {
+        return DosageRegisterRepositoryImpl(api)
+    }
+
+    @Provides
+    fun provideDosageSummaryApi(retrofit: Retrofit): DosageSummaryApi {
+        return retrofit.create(DosageSummaryApi::class.java)
+    }
+
+    @Provides
+    fun provideDosageSummaryRepository(api: DosageSummaryApi): DosageSummaryRepository {
+        return DosageSummaryRepositoryImpl(api)
     }
 }

@@ -1,6 +1,8 @@
 package com.pilltip.pilltip.model.search
 
+import retrofit2.http.Body
 import retrofit2.http.GET
+import retrofit2.http.POST
 import retrofit2.http.Query
 
 /**
@@ -66,5 +68,49 @@ class DrugDetailRepositoryImpl(
 ) : DrugDetailRepository {
     override suspend fun getDetail(id: Long): DetailDrugData {
         return api.getDrugDetail(id).data
+    }
+}
+
+/**
+ * 복약 등록 API
+ *
+ */
+interface DosageRegisterApi {
+    @POST("api/auth/taking-pill")
+    suspend fun registerDosage(
+        @Body request: RegisterDosageRequest
+    ): RegisterDosageResponse
+}
+
+interface DosageRegisterRepository {
+    suspend fun registerDosage(request: RegisterDosageRequest): RegisterDosageResponse
+}
+
+class DosageRegisterRepositoryImpl(
+    private val api: DosageRegisterApi
+) : DosageRegisterRepository {
+    override suspend fun registerDosage(request: RegisterDosageRequest): RegisterDosageResponse {
+        return api.registerDosage(request)
+    }
+}
+
+/**
+ * 복약 리스트 불러오기 API
+ */
+
+interface DosageSummaryApi {
+    @GET("/api/auth/taking-pill")
+    suspend fun getDosageSummary(): TakingPillSummaryResponse
+}
+
+interface DosageSummaryRepository {
+    suspend fun getDosageSummary(): List<TakingPillSummary>
+}
+
+class DosageSummaryRepositoryImpl(
+    private val api: DosageSummaryApi
+) : DosageSummaryRepository {
+    override suspend fun getDosageSummary(): List<TakingPillSummary> {
+        return api.getDosageSummary().data.takingPills
     }
 }
