@@ -116,6 +116,9 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                 .galleryPermission(false)
                 .phonePermission(false)
                 .smsPermission(false)
+                .filePermission(false)
+                .sensitiveInfoPermission(false)
+                .medicalInfoPermission(false)
                 .build();
 
         // UserLocation 생성
