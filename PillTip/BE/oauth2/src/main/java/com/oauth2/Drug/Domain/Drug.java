@@ -15,7 +15,7 @@ public class Drug {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @Column(columnDefinition = "TEXT", nullable = false)
     private String name;
     private String code;
 
@@ -26,8 +26,11 @@ public class Drug {
     @Column(columnDefinition = "TEXT",nullable=false)
     private String packaging;
 
+    @Column(columnDefinition = "TEXT")
     private String form;
+
     private String atcCode;
+    private String validTerm;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
