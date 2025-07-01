@@ -89,7 +89,7 @@ dependencies {
     implementation (libs.kotlinx.coroutines.android)
     implementation (libs.kotlinx.coroutines.play.services)
 
-    /*Status Bar*/
+    /*Status Bar & HorizontalPager*/
     implementation("com.google.accompanist:accompanist-systemuicontroller:0.30.1")
 
     //직렬화

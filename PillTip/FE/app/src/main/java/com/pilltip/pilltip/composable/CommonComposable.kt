@@ -44,7 +44,9 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
@@ -72,6 +74,8 @@ import com.pilltip.pilltip.ui.theme.gray800
 import com.pilltip.pilltip.ui.theme.pretendard
 import com.pilltip.pilltip.ui.theme.primaryColor
 import com.pilltip.pilltip.view.auth.logic.InputType
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.filter
 import java.time.LocalDate
 import java.time.YearMonth
 import kotlin.math.abs
@@ -199,19 +203,21 @@ fun Guideline(description: String, isValid: Boolean) {
 fun DoubleLineTitleText(
     upperTextLine: String = "Upper TextLine",
     lowerTextLine: String = "Lower TextLine",
-    padding: Dp = 24.dp
+    padding: Dp = 24.dp,
+    textHeight : Dp = 40.dp,
+    fontSize : Int = 28
 ) {
     Text(
         text = upperTextLine,
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = padding)
-            .height(40.dp)
+            .height(textHeight)
             .wrapContentHeight(Alignment.CenterVertically),
         style = TextStyle(
             fontFamily = pretendard,
             fontWeight = FontWeight.Bold,
-            fontSize = 28.sp,
+            fontSize = fontSize.sp,
             letterSpacing = (-0.3).sp,
             platformStyle = PlatformTextStyle(
                 includeFontPadding = false
@@ -221,11 +227,11 @@ fun DoubleLineTitleText(
     Text(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(start = 24.dp, end = 24.dp)
-            .height(40.dp)
+            .padding(horizontal = padding)
+            .height(textHeight)
             .wrapContentHeight(Alignment.CenterVertically),
         text = lowerTextLine,
-        fontSize = 28.sp,
+        fontSize = fontSize.sp,
         fontFamily = pretendard,
         fontWeight = FontWeight.Bold,
         color = Color(0xFF000000),
@@ -244,7 +250,7 @@ fun SingleLineTitleText(titleText: String = "", padding: Dp = 24.dp) {
     Text(
         text = titleText,
         fontFamily = pretendard,
-        fontWeight = FontWeight.Bold,
+        fontWeight = FontWeight.W700,
         fontSize = 22.sp,
         color = gray800,
         modifier = Modifier
@@ -436,6 +442,16 @@ fun PillTipDatePicker(
         }
     }
 
+    var selectedDayIndex by remember { mutableStateOf(0) }
+
+    LaunchedEffect(dayListState) {
+        snapshotFlow { dayListState.isScrollInProgress }
+            .filter { !it }
+            .collect {
+                selectedDayIndex = dayListState.firstVisibleItemIndex
+            }
+    }
+
     LaunchedEffect(year, month) {
         yearMonth = YearMonth.of(year, month)
         if (day > daysInMonth) {
@@ -443,8 +459,8 @@ fun PillTipDatePicker(
         }
     }
 
-    LaunchedEffect(year, month, day) {
-        val safeDay = day.coerceAtMost(YearMonth.of(year, month).lengthOfMonth())
+    LaunchedEffect(year, month, selectedDayIndex) {
+        val safeDay = (selectedDayIndex + 1).coerceAtMost(YearMonth.of(year, month).lengthOfMonth())
         onDateSelected(LocalDate.of(year, month, safeDay))
     }
 
@@ -484,7 +500,7 @@ fun PillTipDatePicker(
             )
             WheelColumn(
                 items = (1..daysInMonth).toList(),
-                selected = day,
+                selected = selectedDayIndex + 1,
                 state = dayListState,
                 label = "일",
                 modifier = Modifier.weight(1f)
@@ -519,11 +535,12 @@ fun PillTipDatePicker(
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun WheelColumn(
-    items: List<Int>,
-    selected: Int,
+fun <T> WheelColumn(
+    items: List<T>,
+    selected: T,
     state: LazyListState,
     label: String,
+    itemToString: (T) -> String = { it.toString() }, // 기본은 toString()
     modifier: Modifier = Modifier
 ) {
     LazyColumn(
@@ -576,7 +593,8 @@ fun WheelColumn(
                     }
             ) {
                 Text(
-                    text = "$item$label",
+                    text = "${itemToString(item)}$label",
+                    fontFamily = pretendard,
                     fontSize = 23.sp,
                     fontWeight = fontWeight,
                     color = Color.Black

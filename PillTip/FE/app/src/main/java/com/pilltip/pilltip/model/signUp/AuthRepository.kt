@@ -69,6 +69,39 @@ class AuthRepository @Inject constructor(
         }
     }
 
+    suspend fun socialLogin(token: String, provider: String): Pair<Boolean, SignUpTokenData?> {
+        val request = SocialLoginRequest(token = token, provider = provider)
+        return try {
+            val response = authApi.socialLogin(request)
+            if (response.isSuccessful && response.body()?.status == "success") {
+                Pair(true, response.body()?.data)
+            } else {
+                val errorBody = response.errorBody()?.string()
+                Log.e("SocialLogin", "실패 - 코드: ${response.code()}, 바디: $errorBody")
+                Pair(false, null)
+            }
+        } catch (e: Exception) {
+            Log.e("SocialLogin", "네트워크 오류", e)
+            Pair(false, null)
+        }
+    }
+
+    suspend fun getMyInfo(token: String): UserData? {
+        return try {
+            val response = authApi.getMyInfo("Bearer $token")
+            if (response.isSuccessful) {
+                response.body()?.data
+            } else {
+                val errorBody = response.errorBody()?.string()
+                Log.e("AuthMe", "실패 - 코드: ${response.code()}, 바디: $errorBody")
+                null
+            }
+        } catch (e: Exception) {
+            Log.e("AuthMe", "네트워크 오류", e)
+            null
+        }
+    }
+
     fun formatPhoneForServer(phone: String): String {
         return when {
             phone.length == 11 -> "${phone.substring(0,3)}-${phone.substring(3,7)}-${phone.substring(7)}"

@@ -1,6 +1,8 @@
 package com.pilltip.pilltip.composable
 
 import androidx.annotation.DrawableRes
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -9,8 +11,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -19,6 +23,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -132,7 +137,6 @@ fun BackButton(
     @DrawableRes iconDrawable: Int = 0,
     navigationTo: () -> Unit,
 ) {
-    HeightSpacer(50.dp)
     Row(
         modifier = Modifier
             .background(color = Color.White)
@@ -261,5 +265,42 @@ fun TagButton(
             fontWeight = FontWeight(500),
             color = textColor
         )
+    }
+}
+
+@Composable
+fun IosButton(
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+) {
+    val thumbOffset by animateDpAsState(
+        targetValue = if (checked) 13.dp else 0.dp,
+        animationSpec = tween(durationMillis = 250)
+    )
+    Box(
+        modifier = Modifier
+            .padding(0.64516.dp)
+            .width(34.dp)
+            .height(20.dp)
+            .background(
+                color = if (checked) Color(0xFF32D74B) else Color(0xFFEAEAEA),
+                shape = RoundedCornerShape(30.dp)
+            )
+            .noRippleClickable { onCheckedChange(!checked) },
+    ) {
+
+        Box(
+            modifier = Modifier
+                .size(21.dp)
+                .padding(1.dp)
+                .offset(x = thumbOffset),
+            contentAlignment = Alignment.Center
+        ) {
+            Image(
+                imageVector = ImageVector.vectorResource(id = R.drawable.btn_image),
+                contentDescription = "Custom Thumb",
+                modifier = Modifier.fillMaxSize()
+            )
+        }
     }
 }

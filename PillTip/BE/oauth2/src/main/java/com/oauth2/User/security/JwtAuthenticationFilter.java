@@ -35,15 +35,32 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
+        
+        // JWT 토큰 검증이 필요 없는 경로들
+        String requestURI = request.getRequestURI();
+        System.out.println("Request URI: " + requestURI); // 디버깅 로그
+        
+        if (requestURI.equals("/api/auth/signup") || 
+            requestURI.equals("/api/auth/login") || 
+            requestURI.equals("/api/auth/check-duplicate") ||
+            requestURI.equals("/api/auth/refresh") ||
+            requestURI.startsWith("/oauth2/")) {
+            System.out.println("Skipping JWT validation for: " + requestURI); // 디버깅 로그
+            filterChain.doFilter(request, response);
+            return;
+        }
+        
         try {
             // 요청 헤더에서 JWT 토큰 추출
             String jwt = getJwtFromRequest(request);
+            System.out.println("JWT Token: " + (jwt != null ? jwt.substring(0, Math.min(jwt.length(), 20)) + "..." : "null")); // 디버깅 로그
 
             // JWT 토큰이 유효한 경우 사용자 ID를 추출
             if (jwt != null) {
                 try {
                     // 토큰에서 사용자 ID 추출
                     Long userId = tokenService.getUserIdFromToken(jwt);
+                    System.out.println("User ID from token: " + userId); // 디버깅 로그
                     
                     // DB에서 토큰 정보 조회
                     UserToken userToken = userTokenRepository.findById(userId)
@@ -69,7 +86,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                     // 인증 토큰을 컨텍스트에 설정
                     SecurityContextHolder.getContext().setAuthentication(authentication);
+                    System.out.println("Authentication successful for user: " + user.getNickname()); // 디버깅 로그
                 } catch (RuntimeException e) {
+                    System.out.println("Authentication failed: " + e.getMessage()); // 디버깅 로그
                     SecurityContextHolder.clearContext();
                     throw new BadCredentialsException(e.getMessage());
                 }
@@ -89,6 +108,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 ApiResponse.error(ex.getMessage(), errorType)
             ));
         } catch (Exception e) {
+            System.out.println("Unexpected error: " + e.getMessage()); // 디버깅 로그
             SecurityContextHolder.clearContext();
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.setContentType("application/json;charset=UTF-8");
