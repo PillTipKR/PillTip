@@ -4,7 +4,9 @@ package com.oauth2.User.repository;
 
 import com.oauth2.User.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 
+import java.util.List;
 import java.util.Optional;
 
 // DB에서 User table 접근
@@ -18,4 +20,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findBySocialId(String socialId);
     // SELECT * FROM users WHERE login_id = ?
     Optional<User> findByLoginId(String loginId);
+
+    @Query("SELECT u FROM User u WHERE u.userProfile.takingPills IS NOT NULL")
+    List<User> findAllWithMedicationInfo();
 }
