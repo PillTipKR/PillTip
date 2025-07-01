@@ -119,6 +119,7 @@ fun ProfileStepDescription(
 
 @Composable
 fun RoundTextField(
+    modifier: Modifier = Modifier,
     text: String,
     textChange: (String) -> Unit,
     placeholder: String,
@@ -134,7 +135,7 @@ fun RoundTextField(
         onValueChange = {
             if (it.length <= 20) textChange(it)
         },
-        modifier = Modifier
+        modifier = modifier
             .border(
                 width = 1.dp,
                 color = if (isLogin){ if(text.isEmpty())gray050 else Color.White} else{

@@ -135,7 +135,7 @@ fun BackButton(
     horizontalPadding: Dp = 18.dp,
     verticalPadding: Dp = 18.dp,
     @DrawableRes iconDrawable: Int = 0,
-    navigationTo: () -> Unit,
+    navigationTo: () -> Unit
 ) {
     Row(
         modifier = Modifier
@@ -170,7 +170,8 @@ fun BackButton(
             Image(
                 imageVector = ImageVector.vectorResource(id = iconDrawable),
                 contentDescription = "logo",
-                modifier = Modifier
+                modifier = Modifier.noRippleClickable {
+                }
             )
         } else {
             Box(modifier = Modifier.width(20.dp))
@@ -283,7 +284,7 @@ fun IosButton(
             .width(34.dp)
             .height(20.dp)
             .background(
-                color = if (checked) Color(0xFF32D74B) else Color(0xFFEAEAEA),
+                color = if (checked) primaryColor else Color(0xFFEAEAEA),
                 shape = RoundedCornerShape(30.dp)
             )
             .noRippleClickable { onCheckedChange(!checked) },

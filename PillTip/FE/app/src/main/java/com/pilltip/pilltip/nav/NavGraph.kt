@@ -30,6 +30,7 @@ import com.pilltip.pilltip.view.questionnaire.EssentialPage
 import com.pilltip.pilltip.view.questionnaire.QuestionnairePage
 import com.pilltip.pilltip.view.questionnaire.QuestionnaireSearchPage
 import com.pilltip.pilltip.view.search.DetailPage
+import com.pilltip.pilltip.view.search.DosageAlarmPage
 import com.pilltip.pilltip.view.search.DosagePage
 import com.pilltip.pilltip.view.search.SearchPage
 import com.pilltip.pilltip.view.search.SearchResultsPage
@@ -116,11 +117,18 @@ fun NavGraph(
             DosagePage(navController, searchHiltViewModel, drugId, drugName)
         }
 
+        composable("DosageAlarmPage") {
+            DosageAlarmPage(
+                navController = navController,
+                searchViewModel = searchHiltViewModel
+            )
+        }
+
         /* questionnaire */
-        composable("QuestionnairePage"){
+        composable("QuestionnairePage") {
             QuestionnairePage(navController)
         }
-        composable("EssentialPage"){
+        composable("EssentialPage") {
             EssentialPage(navController)
         }
         composable("AreYouPage/{query}") { backStackEntry ->
@@ -165,6 +173,6 @@ fun NavGraph(
         }
 
         /* mypage */
-        composable("MyDrugInfoPage"){ MyDrugInfoPage(navController, searchHiltViewModel) }
+        composable("MyDrugInfoPage") { MyDrugInfoPage(navController, searchHiltViewModel) }
     }
 }
