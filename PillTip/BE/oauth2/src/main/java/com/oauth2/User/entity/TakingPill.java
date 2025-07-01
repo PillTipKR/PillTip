@@ -50,8 +50,8 @@ public class TakingPill {
     private List<DosageSchedule> dosageSchedules = new ArrayList<>();
 
     @Builder
-    public TakingPill(User user, Long medicationId, String medicationName, LocalDate startDate,
-                      LocalDate endDate, String alertName, String daysOfWeek) {
+    public TakingPill(User user, Long medicationId, String medicationName, LocalDate startDate, 
+                     LocalDate endDate, String alertName, String daysOfWeek) {
         this.user = user;
         this.medicationId = medicationId;
         this.medicationName = medicationName;
@@ -60,4 +60,4 @@ public class TakingPill {
         this.alertName = alertName;
         this.daysOfWeek = daysOfWeek;
     }
-}
+} 

@@ -39,7 +39,7 @@ public class QuestionnaireController {
                 .body(ApiResponse.error("Failed to retrieve permissions: " + e.getMessage(), null));
         }
     }
-
+  
     //동의사항 수정
     @PutMapping("/permissions/multi")
     public ResponseEntity<ApiResponse<UserPermissionsResponse>> updateMedicalPermissions(
@@ -59,7 +59,6 @@ public class QuestionnaireController {
                 .body(ApiResponse.error("Failed to update medical permissions: " + e.getMessage(), null));
         }
     }
-
     //동의사항 수정 (여러개 수정)
     @PutMapping("/permissions/{permissionType}")
     public ResponseEntity<ApiResponse<UserPermissionsResponse>> updatePermission(
@@ -84,7 +83,6 @@ public class QuestionnaireController {
                 .body(ApiResponse.error("Failed to update permission: " + e.getMessage(), null));
         }
     }
-
     //문진표 기능 사용 가능 여부 확인
     @GetMapping("/available")
     public ResponseEntity<ApiResponse<Boolean>> isQuestionnaireAvailable(
