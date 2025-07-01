@@ -459,7 +459,6 @@ fun PillTipDatePicker(
         }
     }
 
-
     LaunchedEffect(year, month, selectedDayIndex) {
         val safeDay = (selectedDayIndex + 1).coerceAtMost(YearMonth.of(year, month).lengthOfMonth())
         onDateSelected(LocalDate.of(year, month, safeDay))

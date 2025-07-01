@@ -3,6 +3,8 @@ package com.pilltip.pilltip.view.questionnaire
 import android.annotation.SuppressLint
 import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Image
@@ -57,7 +59,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.vectorResource
@@ -68,12 +72,14 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import androidx.navigation.NavController
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.pilltip.pilltip.R
 import com.pilltip.pilltip.composable.BackButton
 import com.pilltip.pilltip.composable.HeightSpacer
 import com.pilltip.pilltip.composable.NextButton
+import com.pilltip.pilltip.composable.QuestionnaireComposable.InformationBox
 import com.pilltip.pilltip.composable.SearchComposable.AutoCompleteList
 import com.pilltip.pilltip.composable.SearchComposable.PillSearchField
 import com.pilltip.pilltip.composable.SearchComposable.SearchTag
@@ -91,11 +97,270 @@ import com.pilltip.pilltip.ui.theme.gray800
 import com.pilltip.pilltip.ui.theme.pretendard
 import com.pilltip.pilltip.ui.theme.primaryColor
 import com.pilltip.pilltip.ui.theme.primaryColor050
+import com.pilltip.pilltip.view.auth.logic.EssentialTerms
+import com.pilltip.pilltip.view.auth.logic.OptionalTerms
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
+
+@Composable
+fun QuestionnairePage(
+    navController: NavController
+) {
+    val scrollState = rememberScrollState()
+
+    Box(
+        modifier = WhiteScreenModifier
+            .fillMaxSize()
+            .statusBarsPadding()
+    ) {
+        Box(
+            modifier = Modifier
+                .background(Color.White)
+                .zIndex(1f)
+                .align(Alignment.TopStart)
+        ) {
+            BackButton(
+                horizontalPadding = 22.dp,
+                verticalPadding = 0.dp
+            ) {
+                navController.popBackStack()
+            }
+        }
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(scrollState)
+                .padding(horizontal = 22.dp)
+                .padding(top = 80.dp, bottom = 100.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Box(
+                modifier = Modifier
+                    .border(
+                        width = 1.4.dp,
+                        color = primaryColor,
+                        shape = RoundedCornerShape(100.dp)
+                    )
+                    .background(Color.White, RoundedCornerShape(100.dp))
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+            ) {
+                Image(
+                    imageVector = ImageVector.vectorResource(R.drawable.logo_pilltip_typo),
+                    contentDescription = "필팁 문진표 로고",
+                    modifier = Modifier
+                        .width(30.dp)
+                        .height(10.dp)
+                )
+            }
+
+            HeightSpacer(18.dp)
+            InformationBox(
+                header = "스마트 문진표",
+                headerSize = 30,
+                headerColor = primaryColor,
+                desc = "손으로 적는 기존의 문진은 그만\n이제 간편한 문진의 시작"
+            )
+
+            HeightSpacer(56.dp)
+            InformationBox(
+                header = "언제 어느 곳에서든",
+                desc = "내 정보를 바탕으로\n자동으로 문진표를 작성해요"
+            )
+
+            HeightSpacer(56.dp)
+            InformationBox(
+                header = "간편한 정보 선택",
+                desc = "문진표 제출 시, 제공할 정보를\n간편하게 선택할 수 있어요"
+            )
+
+            HeightSpacer(56.dp)
+            InformationBox(
+                header = "개인정보 걱정마세요",
+                desc = "문진표는 일정 기간이 지나면\n자동 삭제되니 유출 걱정없어요"
+            )
+        }
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .shadow(
+                    elevation = 20.dp,
+                    clip = false
+                )
+                .align(Alignment.BottomCenter)
+                .background(Color.White),
+            contentAlignment = Alignment.Center
+        ) {
+            NextButton(
+                mModifier = buttonModifier,
+                text = "작성하기",
+                onClick = {
+                    navController.navigate("EssentialPage")
+                }
+            )
+        }
+    }
+}
+
+@Composable
+fun EssentialPage(
+    navController: NavController
+) {
+    var isEssentialChecked by remember { mutableStateOf(false) }
+    var isOptionalChecked by remember { mutableStateOf(false) }
+    var isEssentialExpanded by remember { mutableStateOf(false) }
+    var isOptionalExpanded by remember { mutableStateOf(false) }
+
+    val essentialRotation by animateFloatAsState(
+        targetValue = if (isEssentialExpanded) 90f else 0f,
+        animationSpec = tween(durationMillis = 600),
+        label = "essential_arrow_rotation"
+    )
+
+    val optionalRotation by animateFloatAsState(
+        targetValue = if (isOptionalExpanded) 90f else 0f,
+        animationSpec = tween(durationMillis = 600),
+        label = "optional_arrow_rotation"
+    )
+    Column(
+        modifier = WhiteScreenModifier
+            .statusBarsPadding()
+            .padding(horizontal = 22.dp)
+    ) {
+        BackButton(
+            horizontalPadding = 0.dp,
+            verticalPadding = 0.dp
+        ) {
+            navController.popBackStack()
+        }
+        HeightSpacer(62.dp)
+        Image(
+            imageVector = ImageVector.vectorResource(R.drawable.ic_details_blue_common_pills),
+            contentDescription = "문진표 방패 이미지",
+            modifier = Modifier
+                .size(32.dp)
+                .padding(1.dp)
+        )
+        HeightSpacer(12.dp)
+        Text(
+            text = "추가 동의가 필요해요.",
+            fontSize = 26.sp,
+            lineHeight = 33.8.sp,
+            fontFamily = pretendard,
+            fontWeight = FontWeight(700),
+            color = gray800
+        )
+        HeightSpacer(12.dp)
+        Text(
+            text = "모든 정보는 암호화되어 안전하게 보관돼요",
+            fontSize = 14.sp,
+            lineHeight = 19.6.sp,
+            fontFamily = pretendard,
+            fontWeight = FontWeight(600),
+            color = gray400,
+        )
+        HeightSpacer(34.dp)
+        Row(
+            modifier = Modifier.padding(vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Image(
+                imageVector =
+                    if (!isEssentialChecked)
+                        ImageVector.vectorResource(R.drawable.btn_gray_checkmark)
+                    else
+                        ImageVector.vectorResource(R.drawable.btn_blue_checkmark),
+                contentDescription = "checkBtn",
+                modifier = Modifier
+                    .size(20.dp, 20.dp)
+                    .noRippleClickable { isEssentialChecked = !isEssentialChecked }
+            )
+            WidthSpacer(8.dp)
+            Text(
+                text = "[필수] 서비스 이용약관",
+                style = TextStyle(
+                    fontSize = 14.sp,
+                    fontFamily = pretendard,
+                    fontWeight = FontWeight(500),
+                    color = Color(0xFF686D78),
+                ),
+                modifier = Modifier.noRippleClickable {
+                    isEssentialChecked = !isEssentialChecked
+                }
+            )
+            Spacer(modifier = Modifier.weight(1f))
+            Image(
+                imageVector = ImageVector.vectorResource(R.drawable.btn_announce_arrow),
+                contentDescription = "description",
+                modifier = Modifier
+                    .noRippleClickable {
+                        isEssentialExpanded = !isEssentialExpanded
+                    }
+                    .graphicsLayer(rotationZ = essentialRotation)
+            )
+        }
+        AnimatedVisibility(visible = isEssentialExpanded) {
+            EssentialTerms()
+        }
+        Row(
+            modifier = Modifier.padding(vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Image(
+                imageVector =
+                    if (!isOptionalChecked)
+                        ImageVector.vectorResource(R.drawable.btn_gray_checkmark)
+                    else
+                        ImageVector.vectorResource(R.drawable.btn_blue_checkmark),
+                contentDescription = "checkBtn",
+                modifier = Modifier
+                    .size(20.dp, 20.dp)
+                    .noRippleClickable { isOptionalChecked = !isOptionalChecked }
+            )
+            WidthSpacer(8.dp)
+            Text(
+                text = "[필수] 의료법에 관한 정보 수집 및 이용 동의서",
+                style = TextStyle(
+                    fontSize = 14.sp,
+                    fontFamily = pretendard,
+                    fontWeight = FontWeight(500),
+                    color = Color(0xFF686D78),
+                ),
+                modifier = Modifier.noRippleClickable { isOptionalChecked = !isOptionalChecked }
+            )
+            Spacer(modifier = Modifier.weight(1f))
+            Image(
+                imageVector = ImageVector.vectorResource(R.drawable.btn_announce_arrow),
+                contentDescription = "grayCheck",
+                modifier = Modifier
+                    .noRippleClickable {
+                        isOptionalExpanded = !isOptionalExpanded
+                    }
+                    .graphicsLayer(rotationZ = optionalRotation)
+            )
+        }
+        AnimatedVisibility(visible = isOptionalExpanded) {
+            OptionalTerms()
+        }
+        Spacer(modifier = Modifier.weight(1f))
+        NextButton(
+            mModifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 16.dp)
+                .padding(bottom = 46.dp)
+                .height(58.dp),
+            buttonColor = if (isEssentialChecked && isOptionalChecked) primaryColor else Color(
+                0xFFCADCF5
+            ),
+            text = "동의하기",
+            onClick = {
+                if (isEssentialChecked && isOptionalChecked) navController.navigate("AreYouPage/약")
+            }
+        )
+    }
+}
 
 @Composable
 fun AreYouPage(
