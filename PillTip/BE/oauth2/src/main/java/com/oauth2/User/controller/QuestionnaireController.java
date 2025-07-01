@@ -21,7 +21,7 @@ public class QuestionnaireController {
 
     private static final Logger logger = LoggerFactory.getLogger(QuestionnaireController.class);
     private final UserPermissionsService userPermissionsService;
-
+    //동의사항 조회
     @GetMapping("/permissions")
     public ResponseEntity<ApiResponse<UserPermissionsResponse>> getUserPermissions(
             @AuthenticationPrincipal User user) {
@@ -38,7 +38,7 @@ public class QuestionnaireController {
                 .body(ApiResponse.error("Failed to retrieve permissions: " + e.getMessage(), null));
         }
     }
-
+    //동의사항 수정
     @PutMapping("/permissions/multi")
     public ResponseEntity<ApiResponse<UserPermissionsResponse>> updateMedicalPermissions(
             @AuthenticationPrincipal User user,
@@ -57,7 +57,7 @@ public class QuestionnaireController {
                 .body(ApiResponse.error("Failed to update medical permissions: " + e.getMessage(), null));
         }
     }
-
+    //동의사항 수정 (여러개 수정)
     @PutMapping("/permissions/{permissionType}")
     public ResponseEntity<ApiResponse<UserPermissionsResponse>> updatePermission(
             @AuthenticationPrincipal User user,
@@ -81,7 +81,7 @@ public class QuestionnaireController {
                 .body(ApiResponse.error("Failed to update permission: " + e.getMessage(), null));
         }
     }
-
+    //문진표 기능 사용 가능 여부 확인
     @GetMapping("/available")
     public ResponseEntity<ApiResponse<Boolean>> isQuestionnaireAvailable(
             @AuthenticationPrincipal User user) {
