@@ -38,6 +38,7 @@ public class AuthController {
     private final TokenService tokenService;
     private final UserProfileService userProfileService;
 
+
     // ID/PW 로그인
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<LoginResponse>> login(@RequestBody LoginRequest request) {
@@ -88,6 +89,19 @@ public class AuthController {
         User currentUser = userService.getCurrentUser(user.getId());
         return ResponseEntity.status(200)
             .body(ApiResponse.success(new UserResponse(currentUser)));
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<ApiResponse<String>> Logout(@AuthenticationPrincipal User user) {
+        if (user == null) {
+            return ResponseEntity.status(401)
+                    .body(ApiResponse.error("User not authenticated", null));
+        }
+
+        User currentUser = userService.getCurrentUser(user.getId());
+        currentUser.getFCMToken().setLoggedIn(false);
+        return ResponseEntity.status(200)
+                .body(ApiResponse.success("로그아웃 되었습니다."));
     }
 
     // 이용약관 동의

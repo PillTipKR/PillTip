@@ -12,7 +12,7 @@ import com.google.firebase.FirebaseOptions;
 @Configuration
 public class FirebaseConfig {
 
-    @Value("${firebaseJson}")
+    @Value("${firebase.json}")
     private String firebaseJson;
 
     @PostConstruct
