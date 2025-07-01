@@ -28,6 +28,7 @@ public class TakingPillDetailResponse {
         private LocalDate endDate;                    // 복약 종료날짜
         private String alertName;                     // 알림명
         private List<String> daysOfWeek;              // 복용 요일
+        private Double dosageAmount;                  // 복용량
         private List<DosageScheduleDetail> dosageSchedules; // 복용 스케줄
     }
 
@@ -39,7 +40,7 @@ public class TakingPillDetailResponse {
         private Integer hour;           // 시간 (0-12)
         private Integer minute;         // 분 (0-59)
         private String period;          // 기간 (AM/PM)
-        private Double dosageAmount;    // 복용량
         private String dosageUnit;      // 복용 단위
+        private boolean alarmOnOff;     // 알림 여부
     }
 } 

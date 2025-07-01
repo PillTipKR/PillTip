@@ -7,12 +7,16 @@ import com.oauth2.User.dto.UserPermissionsRequest;
 import com.oauth2.User.dto.UserPermissionsResponse;
 import com.oauth2.User.entity.User;
 import com.oauth2.User.service.UserPermissionsService;
+import com.oauth2.User.dto.PatientQuestionnaireRequest;
+import com.oauth2.User.entity.PatientQuestionnaire;
+import com.oauth2.User.service.PatientQuestionnaireService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import com.fasterxml.jackson.core.JsonProcessingException;
 
 @RestController
 @RequestMapping("/api/questionnaire")
@@ -21,7 +25,7 @@ public class QuestionnaireController {
 
     private static final Logger logger = LoggerFactory.getLogger(QuestionnaireController.class);
     private final UserPermissionsService userPermissionsService;
-
+    private final PatientQuestionnaireService patientQuestionnaireService;
     //동의사항 조회
     @GetMapping("/permissions")
     public ResponseEntity<ApiResponse<UserPermissionsResponse>> getUserPermissions(
@@ -100,6 +104,59 @@ public class QuestionnaireController {
             logger.error("Error checking questionnaire availability for user: {} - Error: {}", user.getId(), e.getMessage(), e);
             return ResponseEntity.status(400)
                 .body(ApiResponse.error("Failed to check questionnaire availability: " + e.getMessage(), null));
+        }
+    }
+    // 문진표 작성
+    @PostMapping("")
+    public ResponseEntity<ApiResponse<PatientQuestionnaire>> createQuestionnaire(
+            @AuthenticationPrincipal User user,
+            @RequestBody PatientQuestionnaireRequest request) {
+        logger.info("Received createQuestionnaire request for user: {}", user.getId());
+        try {
+            PatientQuestionnaire questionnaire = patientQuestionnaireService.createQuestionnaire(user, request);
+            logger.info("Successfully created questionnaire for user: {}", user.getId());
+            return ResponseEntity.status(201)
+                .body(ApiResponse.success("Questionnaire created successfully", questionnaire));
+        } catch (JsonProcessingException e) {
+            logger.error("Error serializing questionnaire info for user: {} - Error: {}", user.getId(), e.getMessage(), e);
+            return ResponseEntity.status(400)
+                .body(ApiResponse.error("Failed to serialize questionnaire info: " + e.getMessage(), null));
+        } catch (Exception e) {
+            logger.error("Error creating questionnaire for user: {} - Error: {}", user.getId(), e.getMessage(), e);
+            return ResponseEntity.status(400)
+                .body(ApiResponse.error("Failed to create questionnaire: " + e.getMessage(), null));
+        }
+    }
+    // 문진표 리스트 조회
+    @GetMapping("/list")
+    public ResponseEntity<ApiResponse<java.util.List<com.oauth2.User.dto.PatientQuestionnaireSummaryResponse>>> getUserQuestionnaireList(
+            @AuthenticationPrincipal User user) {
+        java.util.List<com.oauth2.User.dto.PatientQuestionnaireSummaryResponse> list = patientQuestionnaireService.getUserQuestionnaireSummaries(user);
+        return ResponseEntity.ok(ApiResponse.success("문진표 리스트 조회 성공", list));
+    }
+    // 문진표 삭제
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponse<java.util.List<com.oauth2.User.dto.PatientQuestionnaireSummaryResponse>>> deleteQuestionnaire(
+            @AuthenticationPrincipal User user,
+            @PathVariable Integer id) {
+        java.util.List<com.oauth2.User.dto.PatientQuestionnaireSummaryResponse> list = patientQuestionnaireService.deleteQuestionnaireAndReturnList(user, id);
+        return ResponseEntity.ok(ApiResponse.success("문진표 삭제 성공", list));
+    }
+    // 문진표 수정
+    @PutMapping("/{id}")
+    public ResponseEntity<ApiResponse<PatientQuestionnaire>> updateQuestionnaire(
+            @AuthenticationPrincipal User user,
+            @PathVariable Integer id,
+            @RequestBody PatientQuestionnaireRequest request) {
+        try {
+            PatientQuestionnaire updated = patientQuestionnaireService.updateQuestionnaire(user, id, request);
+            return ResponseEntity.ok(ApiResponse.success("문진표 수정 성공", updated));
+        } catch (JsonProcessingException e) {
+            return ResponseEntity.status(400)
+                .body(ApiResponse.error("Failed to serialize questionnaire info: " + e.getMessage(), null));
+        } catch (Exception e) {
+            return ResponseEntity.status(400)
+                .body(ApiResponse.error("Failed to update questionnaire: " + e.getMessage(), null));
         }
     }
 } 

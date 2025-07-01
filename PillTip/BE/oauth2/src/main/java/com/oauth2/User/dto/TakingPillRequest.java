@@ -27,8 +27,17 @@ public class TakingPillRequest {
     @JsonProperty("end_date")
     private LocalDate endDate; // YYYY-MM-DD
     
-    @JsonProperty("alert_name")
-    private String alertName; // 알림명 (아침약, 꼭 먹기! 등)
+    @JsonProperty("alarm_name")
+    private String alarmName; // 알림명 (아침약, 꼭 먹기! 등)
+    
+    @JsonProperty("dosage_amount")
+    private Double dosageAmount; // 복용량 (0.25부터 가능)
+
+    // 복용량 검증 메서드
+    @JsonIgnore
+    public boolean isValidDosageAmount() {
+        return dosageAmount != null && dosageAmount >= 0.25;
+    }
     
     @JsonProperty("days_of_week")
     private List<String> daysOfWeek; // 요일 리스트 (MON, TUE, WED, THU, FRI, SAT, SUN) 또는 ["EVERYDAY"]
@@ -64,20 +73,17 @@ public class TakingPillRequest {
         @JsonProperty("minute")
         private Integer minute; // 0-59
         
-        // 
         @JsonProperty("period")
         private String period; // AM/PM
         
-        @JsonProperty("dosage_amount")
-        private Double dosageAmount; // 복용량 (0.25부터 가능)
+        @JsonProperty("alarm_on_off")
+        private boolean alarmOnOff; // 알림 여부
         
         @JsonProperty("dosage_unit")
-        private String dosageUnit; // 단위 (회, 정, 포 등)
+        private String dosageUnit; // 복용 단위
         
-        // 복용량 검증 메서드
-        @JsonIgnore
-        public boolean isValidDosageAmount() {
-            return dosageAmount != null && dosageAmount >= 0.25;
+        public String getDosageUnit() {
+            return dosageUnit;
         }
         
         // 시간 검증 메서드

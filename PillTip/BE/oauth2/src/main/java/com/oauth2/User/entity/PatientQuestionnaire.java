@@ -43,4 +43,16 @@ public class PatientQuestionnaire {
 
     @Column(columnDefinition = "TEXT")
     private String notes; // 추가 메모
+
+    @Column(name = "medication_info", columnDefinition = "TEXT")
+    private String medicationInfo;
+
+    @Column(name = "allergy_info", columnDefinition = "TEXT")
+    private String allergyInfo;
+
+    @Column(name = "chronic_disease_info", columnDefinition = "TEXT")
+    private String chronicDiseaseInfo;
+
+    @Column(name = "surgery_history_info", columnDefinition = "TEXT")
+    private String surgeryHistoryInfo;
 }
