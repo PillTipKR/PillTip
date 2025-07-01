@@ -43,6 +43,7 @@ public class QuestionnaireController {
                 .body(ApiResponse.error("Failed to retrieve permissions: " + e.getMessage(), null));
         }
     }
+  
     //동의사항 수정
     @PutMapping("/permissions/multi")
     public ResponseEntity<ApiResponse<UserPermissionsResponse>> updateMedicalPermissions(

@@ -28,7 +28,7 @@ public class DrugStorageCondition {
     private boolean active;
 
     public enum Category {
-        TEMPERATURE, CONTAINER, HUMID, LIGHT, PLACE
+        TEMPERATURE, CONTAINER, HUMID, LIGHT
     }
     // getter, setter 생략
 }
