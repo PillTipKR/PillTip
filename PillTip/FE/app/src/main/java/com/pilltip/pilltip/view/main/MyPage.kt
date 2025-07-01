@@ -39,11 +39,9 @@ import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
 import com.pilltip.pilltip.R
 import com.pilltip.pilltip.composable.BackButton
 import com.pilltip.pilltip.composable.HeightSpacer
@@ -51,14 +49,11 @@ import com.pilltip.pilltip.composable.IosButton
 import com.pilltip.pilltip.composable.MainComposable.DrugSummaryCard
 import com.pilltip.pilltip.composable.MainComposable.ProfileTagButton
 import com.pilltip.pilltip.composable.WhiteScreenModifier
-import com.pilltip.pilltip.composable.WidthSpacer
 import com.pilltip.pilltip.composable.noRippleClickable
 import com.pilltip.pilltip.model.UserInfoManager
 import com.pilltip.pilltip.model.search.SearchHiltViewModel
 import com.pilltip.pilltip.ui.theme.gray200
 import com.pilltip.pilltip.ui.theme.pretendard
-import com.pilltip.pilltip.ui.theme.primaryColor
-import com.pilltip.pilltip.ui.theme.primaryColor050
 
 @Composable
 fun MyPage(
@@ -66,6 +61,7 @@ fun MyPage(
     searchHiltViewModel: SearchHiltViewModel
 ) {
     val screenWidth = LocalConfiguration.current.screenWidthDp.dp
+    var toggle by remember { mutableStateOf(true) }
     val nickname = UserInfoManager.getUserData(LocalContext.current)?.nickname
 
     Column(
@@ -121,11 +117,10 @@ fun MyPage(
             // TODO: navController.navigate(...)
         }
 
-        // 푸시알람 동의 - 스위치
         MyPageToggleItem(
             text = "푸시알람 동의",
-            isChecked = true,
-            onCheckedChange = { /* TODO */ }
+            isChecked = toggle,
+            onCheckedChange = { toggle = !toggle }
         )
 
         MyPageMenuItem(text = "앱 이용 약관") { /* TODO */ }
@@ -217,13 +212,20 @@ fun MyDrugInfoPage(
     val pillList by viewModel.pillSummaryList.collectAsState()
     var expanded by remember { mutableStateOf(false) }
     var sortOption by remember { mutableStateOf("최신순") }
+    val pillDetail by viewModel.pillDetail.collectAsState()
+
+    LaunchedEffect(pillDetail) {
+        if (pillDetail != null) {
+            navController.navigate("DosagePage/${pillDetail!!.medicationId}/${pillDetail!!.medicationName}")
+        }
+    }
 
     LaunchedEffect(Unit) {
         viewModel.fetchDosageSummary()
     }
 
     Column(
-        modifier = WhiteScreenModifier.padding(horizontal = 22.dp)
+        modifier = WhiteScreenModifier.statusBarsPadding().padding(horizontal = 22.dp)
     ) {
         BackButton(
             title = "내 복약정보 관리",
@@ -238,12 +240,12 @@ fun MyDrugInfoPage(
             ProfileTagButton(
                 text = "처방약만",
                 selected = firstSelected,
-                onClick = {firstSelected = !firstSelected}
+                onClick = { firstSelected = !firstSelected }
             )
             ProfileTagButton(
                 text = "복약 중인 약만",
                 selected = secondSelected,
-                onClick = {secondSelected = !secondSelected}
+                onClick = { secondSelected = !secondSelected }
             )
             Image(
                 imageVector = ImageVector.vectorResource(R.drawable.ic_login_vertical_divider),
@@ -295,7 +297,11 @@ fun MyDrugInfoPage(
                 modifier = Modifier.fillMaxHeight()
             ) {
                 items(pillList) { pill ->
-                    DrugSummaryCard(pill = pill)
+                    DrugSummaryCard(
+                        pill = pill,
+                        onDelete = { viewModel.deletePill(it.medicationId) },
+                        onEdit = { viewModel.fetchTakingPillDetail(it.medicationId) }
+                    )
                 }
             }
         }

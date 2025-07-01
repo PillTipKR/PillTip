@@ -153,3 +153,12 @@ data class TakingPillSummary(
     val endDate: String
 )
 
+/**
+ * 복약 세부 데이터 불러오기
+ */
+
+data class TakingPillDetailResponse(
+    val status: String,
+    val message: String,
+    val data: TakingPillDetailData
+)

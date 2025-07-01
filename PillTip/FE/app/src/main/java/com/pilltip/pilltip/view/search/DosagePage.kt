@@ -1,6 +1,7 @@
 package com.pilltip.pilltip.view.search
 
 import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -26,6 +27,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -58,6 +60,7 @@ import com.pilltip.pilltip.composable.noRippleClickable
 import com.pilltip.pilltip.model.search.DosageSchedule
 import com.pilltip.pilltip.model.search.RegisterDosageRequest
 import com.pilltip.pilltip.model.search.SearchHiltViewModel
+import com.pilltip.pilltip.model.search.TakingPillDetailData
 import com.pilltip.pilltip.ui.theme.gray800
 import com.pilltip.pilltip.ui.theme.pretendard
 import com.pilltip.pilltip.ui.theme.primaryColor
@@ -72,6 +75,7 @@ fun DosagePage(
     drugId: Long,
     drugName: String
 ) {
+    val editingPill by searchViewModel.pillDetail.collectAsState()
     val context = LocalContext.current
     var name by remember { mutableStateOf("") }
     var startYear by remember { mutableStateOf(0) }
@@ -92,13 +96,43 @@ fun DosagePage(
             && dosageList.all {
         it.amPm != null && it.hour != null && it.minute != null && it.dose != null
     }
+    val isEditMode = editingPill != null
+    BackHandler {
+        searchViewModel.clearPillDetail()
+        navController.popBackStack()
+    }
+
+    LaunchedEffect(isEditMode ) {
+        editingPill?.let {
+            name = it.alertName
+            val start = LocalDate.parse(it.startDate)
+            val end = LocalDate.parse(it.endDate)
+            startYear = start.year
+            startMonth = start.monthValue
+            startDay = start.dayOfMonth
+            endYear = end.year
+            endMonth = end.monthValue
+            endDay = end.dayOfMonth
+            selectedDays = listOf("MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN").map { day ->
+                it.daysOfWeek.contains(day)
+            }
+            dosageList = it.dosageSchedules.map { s ->
+                DosageEntry(
+                    amPm = if (s.period == "AM") "AM" else "PM",
+                    hour = s.hour,
+                    minute = s.minute,
+                    dose = s.dosageAmount.toInt(),
+                    doseCount = s.dosageUnit
+                )
+            }.toMutableList()
+        }
+    }
 
     LaunchedEffect(dosageList.size) {
         while (dropdownStates.size < dosageList.size) {
             dropdownStates.add(false)
         }
     }
-
 
     Box(
         modifier = WhiteScreenModifier.navigationBarsPadding()
@@ -108,7 +142,14 @@ fun DosagePage(
                 .padding(horizontal = 22.dp)
                 .verticalScroll(scrollState)
         ) {
-            BackButton(horizontalPadding = 0.dp) { navController.navigate("DetailPage") }
+            BackButton(horizontalPadding = 0.dp) {
+                if(isEditMode){
+                    searchViewModel.clearPillDetail()
+                    navController.popBackStack()
+                } else{
+                    navController.navigate("DetailPage")
+                }
+            }
             HeightSpacer(62.dp)
             Text(
                 text = "Q.",
@@ -269,6 +310,9 @@ fun DosagePage(
                             .padding(start = 16.dp, top = 16.dp, end = 12.dp, bottom = 16.dp)
                     ){
                         TimeField(
+                            initialAmPm = entry.amPm,
+                            initialHour = entry.hour,
+                            initialMinute = entry.minute,
                             timeChange = { amPm, hour, minute ->
                                 dosageList = dosageList.toMutableList().apply {
                                     this[index] = entry.copy(amPm = amPm, hour = hour, minute = minute)
@@ -375,6 +419,7 @@ fun DosagePage(
                 }
             }
             HeightSpacer(100.dp)
+
         }
         NextButton(
             mModifier = Modifier
@@ -385,39 +430,45 @@ fun DosagePage(
             text = "등록하기",
             buttonColor = if (isFormValid) Color(0xFF348ADF) else primaryColor
         ) {
-            if (isFormValid) {
-                val daysOfWeekLabels = listOf("MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN")
-                val selectedWeekdays = daysOfWeekLabels.filterIndexed { i, _ -> selectedDays[i] }
+            val daysOfWeekLabels = listOf("MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN")
+            val selectedWeekdays = daysOfWeekLabels.filterIndexed { i, _ -> selectedDays[i] }
 
-                val request = RegisterDosageRequest(
-                    medication_id = drugId,
-                    medication_name = drugName,
-                    start_date = "%04d-%02d-%02d".format(startYear, startMonth, startDay),
-                    end_date = "%04d-%02d-%02d".format(endYear, endMonth, endDay),
-                    alert_name = name,
-                    days_of_week = selectedWeekdays,
-                    dosage_schedules = dosageList.map {
-                        DosageSchedule(
-                            hour = it.hour!!,
-                            minute = it.minute!!,
-                            period = mapPeriod(it.amPm!!),
-                            dosage_amount = it.dose!!.toDouble(),
-                            dosage_unit = it.doseCount
-                        )
-                    }
-                )
-
-                searchViewModel.registerDosage(request)
-
-                Toast.makeText(context, "복약 일정이 등록되었어요!", Toast.LENGTH_SHORT).show()
-
-                navController.navigate("DetailPage") {
-                    popUpTo(navController.previousBackStackEntry?.destination?.route ?: "") {
-                        inclusive = true
-                    }
+            val request = RegisterDosageRequest(
+                medication_id = drugId,
+                medication_name = drugName,
+                start_date = "%04d-%02d-%02d".format(startYear, startMonth, startDay),
+                end_date = "%04d-%02d-%02d".format(endYear, endMonth, endDay),
+                alert_name = name,
+                days_of_week = selectedWeekdays,
+                dosage_schedules = dosageList.map {
+                    DosageSchedule(
+                        hour = it.hour!!,
+                        minute = it.minute!!,
+                        period = mapPeriod(it.amPm!!),
+                        dosage_amount = it.dose!!.toDouble(),
+                        dosage_unit = it.doseCount
+                    )
                 }
+            )
+            if (isEditMode) {
+                searchViewModel.modifyDosage(editingPill!!.medicationId, request)
+                Toast.makeText(context, "복약 일정이 수정되었어요!", Toast.LENGTH_SHORT).show()
+                searchViewModel.clearPillDetail()
+                navController.popBackStack()
             } else {
-                Toast.makeText(context, "모든 항목을 올바르게 입력해주세요.", Toast.LENGTH_SHORT).show()
+                if (isFormValid) {
+                    searchViewModel.registerDosage(request)
+
+                    Toast.makeText(context, "복약 일정이 등록되었어요!", Toast.LENGTH_SHORT).show()
+
+                    navController.navigate("DetailPage") {
+                        popUpTo(navController.previousBackStackEntry?.destination?.route ?: "") {
+                            inclusive = true
+                        }
+                    }
+                } else {
+                    Toast.makeText(context, "모든 항목을 올바르게 입력해주세요.", Toast.LENGTH_SHORT).show()
+                }
             }
         }
     }

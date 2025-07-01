@@ -55,12 +55,23 @@ import kotlinx.coroutines.launch
 @Composable
 fun TimeField(
     placeholder: String = "시간을 선택해주세요",
+    initialAmPm: String?,
+    initialHour: Int?,
+    initialMinute: Int?,
     timeChange: (String, Int, Int) -> Unit
 ) {
     var selectedHour by remember { mutableStateOf<Int?>(null) }
     var selectedMinute by remember { mutableStateOf<Int?>(null) }
     var selectedAmPm by remember { mutableStateOf<String?>(null) }
     var showSheet by remember { mutableStateOf(false) }
+
+    LaunchedEffect(initialHour, initialMinute, initialAmPm) {
+        if (selectedHour == null && initialHour != null) {
+            selectedHour = initialHour
+            selectedMinute = initialMinute
+            selectedAmPm = initialAmPm
+        }
+    }
 
     Box(
         modifier = Modifier
@@ -71,7 +82,7 @@ fun TimeField(
             )
             .fillMaxWidth()
             .height(51.dp)
-            .padding(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 16.dp)
+            .padding(horizontal = 16.dp, vertical = 16.dp)
             .noRippleClickable { showSheet = true }
     ) {
         Row(
