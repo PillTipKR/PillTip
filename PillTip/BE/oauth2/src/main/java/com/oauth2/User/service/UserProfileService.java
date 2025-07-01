@@ -92,8 +92,10 @@ public class UserProfileService {
             .map(pill -> TakingPillSummaryResponse.TakingPillSummary.builder()
                 .medicationId(pill.getMedicationId())
                 .medicationName(pill.getMedicationName())
+                .alarmName(pill.getAlarmName())
                 .startDate(pill.getStartDate())
                 .endDate(pill.getEndDate())
+                .dosageAmount(pill.getDosageAmount())
                 .build())
             .collect(Collectors.toList());
         
@@ -119,15 +121,16 @@ public class UserProfileService {
                 .medicationName(pill.getMedicationName())
                 .startDate(pill.getStartDate())
                 .endDate(pill.getEndDate())
-                .alertName(pill.getAlertName())
+                .alertName(pill.getAlarmName())
                 .daysOfWeek(pill.getDaysOfWeek())
+                .dosageAmount(pill.getDosageAmount())
                 .dosageSchedules(pill.getDosageSchedules().stream()
                     .map(schedule -> TakingPillDetailResponse.DosageScheduleDetail.builder()
                         .hour(schedule.getHour())
                         .minute(schedule.getMinute())
                         .period(schedule.getPeriod())
-                        .dosageAmount(schedule.getDosageAmount())
                         .dosageUnit(schedule.getDosageUnit())
+                        .alarmOnOff(schedule.isAlarmOnOff())
                         .build())
                     .collect(Collectors.toList()))
                 .build())
@@ -160,15 +163,16 @@ public class UserProfileService {
             .medicationName(targetPill.getMedicationName())
             .startDate(targetPill.getStartDate())
             .endDate(targetPill.getEndDate())
-            .alertName(targetPill.getAlertName())
+            .alertName(targetPill.getAlarmName())
             .daysOfWeek(targetPill.getDaysOfWeek())
+            .dosageAmount(targetPill.getDosageAmount())
             .dosageSchedules(targetPill.getDosageSchedules().stream()
                 .map(schedule -> TakingPillDetailResponse.DosageScheduleDetail.builder()
                     .hour(schedule.getHour())
                     .minute(schedule.getMinute())
                     .period(schedule.getPeriod())
-                    .dosageAmount(schedule.getDosageAmount())
                     .dosageUnit(schedule.getDosageUnit())
+                    .alarmOnOff(schedule.isAlarmOnOff())
                     .build())
                 .collect(Collectors.toList()))
             .build();
@@ -226,7 +230,7 @@ public class UserProfileService {
             throw new RuntimeException("시작일은 종료일보다 이전이어야 합니다.");
         }
         
-        if (request.getAlertName() == null || request.getAlertName().trim().isEmpty()) {
+        if (request.getAlarmName() == null || request.getAlarmName().trim().isEmpty()) {
             throw new RuntimeException("알림명은 필수입니다.");
         }
         
@@ -240,24 +244,14 @@ public class UserProfileService {
         
         // 복용 스케줄 검증
         for (TakingPillRequest.DosageSchedule schedule : request.getDosageSchedules()) {
-            if (!schedule.isValidDosageAmount()) {
-                throw new RuntimeException("복용량은 0.25 이상이어야 합니다.");
-            }
-            
             if (!schedule.isValidHour()) {
                 throw new RuntimeException("시간은 0-12 사이의 값이어야 합니다.");
             }
-            
             if (!schedule.isValidMinute()) {
                 throw new RuntimeException("분은 0-59 사이의 값이어야 합니다.");
             }
-            
             if (!schedule.isValidPeriod()) {
                 throw new RuntimeException("기간은 AM 또는 PM이어야 합니다.");
-            }
-            
-            if (schedule.getDosageUnit() == null || schedule.getDosageUnit().trim().isEmpty()) {
-                throw new RuntimeException("복용 단위는 필수입니다.");
             }
         }
     }

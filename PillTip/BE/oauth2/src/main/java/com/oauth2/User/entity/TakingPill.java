@@ -39,11 +39,14 @@ public class TakingPill {
     @Column(name = "end_date", nullable = false)
     private LocalDate endDate;
 
-    @Column(name = "alert_name", nullable = false)
-    private String alertName;
+    @Column(name = "alarm_name", nullable = false)
+    private String alarmName;
 
     @Column(name = "days_of_week", nullable = false)
     private String daysOfWeek; // JSON 형태로 저장 (["MON", "TUE", "WED"])
+
+    @Column(name = "dosage_amount", nullable = false)
+    private Double dosageAmount; // 복용량 (0.25부터 가능)
 
     @JsonManagedReference
     @OneToMany(mappedBy = "takingPill", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
@@ -51,13 +54,14 @@ public class TakingPill {
 
     @Builder
     public TakingPill(User user, Long medicationId, String medicationName, LocalDate startDate, 
-                     LocalDate endDate, String alertName, String daysOfWeek) {
+                     LocalDate endDate, String alarmName, String daysOfWeek, Double dosageAmount) {
         this.user = user;
         this.medicationId = medicationId;
         this.medicationName = medicationName;
         this.startDate = startDate;
         this.endDate = endDate;
-        this.alertName = alertName;
+        this.alarmName = alarmName;
         this.daysOfWeek = daysOfWeek;
+        this.dosageAmount = dosageAmount;
     }
 } 

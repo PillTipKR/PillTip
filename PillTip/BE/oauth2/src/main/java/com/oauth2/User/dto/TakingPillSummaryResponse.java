@@ -24,7 +24,9 @@ public class TakingPillSummaryResponse {
     public static class TakingPillSummary {
         private Long medicationId;        // 약 ID
         private String medicationName;    // 약 이름
+        private String alarmName;         // 알림명
         private LocalDate startDate;      // 복약 시작날짜
         private LocalDate endDate;        // 복약 종료날짜
+        private Double dosageAmount;      // 복용량
     }
 } 
