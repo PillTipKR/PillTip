@@ -40,7 +40,8 @@ public class UserService {
         }
 
         UserToken userToken = tokenService.generateTokens(user.getId());
-        
+        user.getFCMToken().setLoggedIn(true);
+
         return LoginResponse.builder()
                 .accessToken(userToken.getAccessToken())
                 .refreshToken(userToken.getRefreshToken())
@@ -78,7 +79,8 @@ public class UserService {
             System.out.println("Generating tokens for user...");
             UserToken userToken = tokenService.generateTokens(user.getId());
             System.out.println("Tokens generated successfully");
-            
+            user.getFCMToken().setLoggedIn(true);
+
             return LoginResponse.builder()
                     .accessToken(userToken.getAccessToken())
                     .refreshToken(userToken.getRefreshToken())
@@ -99,6 +101,7 @@ public class UserService {
         // 사용자 정보 조회
         User user = userRepository.findById(userToken.getUserId())
                 .orElseThrow(() -> new RuntimeException("User not found"));
+        user.getFCMToken().setLoggedIn(true);
 
         return LoginResponse.builder()
                 .accessToken(userToken.getAccessToken())

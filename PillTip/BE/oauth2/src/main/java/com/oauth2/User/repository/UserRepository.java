@@ -21,6 +21,13 @@ public interface UserRepository extends JpaRepository<User, Long> {
     // SELECT * FROM users WHERE login_id = ?
     Optional<User> findByLoginId(String loginId);
 
-    @Query("SELECT u FROM User u WHERE u.userProfile.takingPills IS NOT NULL")
-    List<User> findAllWithMedicationInfo();
+    @Query("""
+    SELECT u FROM User u
+    JOIN FETCH u.FCMToken t
+    JOIN FETCH u.userProfile p
+    WHERE p.takingPills IS NOT NULL
+      AND t.loggedIn = true
+    """)
+    List<User> findAllActiveUsersWithPillInfo();
+
 }

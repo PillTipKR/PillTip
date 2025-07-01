@@ -26,7 +26,7 @@ public class DrugAlarmScheduler {
         LocalTime now = LocalTime.now();
         ObjectMapper mapper = new ObjectMapper();
 
-        List<User> users = userRepository.findAllWithMedicationInfo();
+        List<User> users = userRepository.findAllActiveUsersWithPillInfo();
 
         for (User user : users) {
             String json = user.getUserProfile().getTakingPills(); // 복약 정보가 저장된 JSON 문자열

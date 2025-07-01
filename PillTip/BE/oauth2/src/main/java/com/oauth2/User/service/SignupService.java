@@ -66,7 +66,7 @@ public class SignupService {
 
         UserToken userToken = tokenService.generateTokens(user.getId());
         user.setUserToken(userToken);
-        
+        user.getFCMToken().setLoggedIn(true);
         return userRepository.save(user);
     }
 
