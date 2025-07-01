@@ -1,8 +1,11 @@
 package com.pilltip.pilltip.model.search
 
 import retrofit2.http.Body
+import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.POST
+import retrofit2.http.PUT
+import retrofit2.http.Path
 import retrofit2.http.Query
 
 /**
@@ -112,5 +115,73 @@ class DosageSummaryRepositoryImpl(
 ) : DosageSummaryRepository {
     override suspend fun getDosageSummary(): List<TakingPillSummary> {
         return api.getDosageSummary().data.takingPills
+    }
+}
+
+/**
+ * 복약 데이터 삭제 API
+ */
+
+interface DosageDeleteApi {
+    @DELETE("/api/auth/taking-pill/{medicationId}")
+    suspend fun deleteTakingPill(
+        @Path("medicationId") medicationId: Long
+    ): TakingPillSummaryResponse
+}
+
+interface DosageDeleteRepository {
+    suspend fun deleteTakingPill(medicationId: Long): List<TakingPillSummary>
+}
+
+class DosageDeleteRepositoryImpl(
+    private val api: DosageDeleteApi
+) : DosageDeleteRepository {
+    override suspend fun deleteTakingPill(medicationId: Long): List<TakingPillSummary> {
+        return api.deleteTakingPill(medicationId).data.takingPills
+    }
+}
+/**
+ * 복약 세부 데이터 불러오기 API
+ */
+
+interface DosageDetailApi {
+    @GET("/api/auth/taking-pill/{medicationId}")
+    suspend fun getDosageDetail(
+        @Path("medicationId") medicationId: Long
+    ): TakingPillDetailResponse
+}
+
+interface DosageDetailRepository {
+    suspend fun getDosageDetail(medicationId: Long): TakingPillDetailData
+}
+
+class DosageDetailRepositoryImpl(
+    private val api: DosageDetailApi
+) : DosageDetailRepository {
+    override suspend fun getDosageDetail(medicationId: Long): TakingPillDetailData {
+        return api.getDosageDetail(medicationId).data
+    }
+}
+
+/**
+ * 복약 데이터 수정 API
+ */
+interface DosageModifyApi {
+    @PUT("/api/auth/taking-pill/{medicationId}")
+    suspend fun updateDosage(
+        @Path("medicationId") medicationId: Long,
+        @Body request: RegisterDosageRequest
+    ): TakingPillSummaryResponse
+}
+
+interface DosageModifyRepository {
+    suspend fun updateDosage(medicationId: Long, request: RegisterDosageRequest): List<TakingPillSummary>
+}
+
+class DosageModifyRepositoryImpl(
+    private val api: DosageModifyApi
+) : DosageModifyRepository {
+    override suspend fun updateDosage(medicationId: Long, request: RegisterDosageRequest): List<TakingPillSummary> {
+        return api.updateDosage(medicationId, request).data.takingPills
     }
 }

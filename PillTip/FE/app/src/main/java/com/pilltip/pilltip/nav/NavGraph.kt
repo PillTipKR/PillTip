@@ -82,7 +82,7 @@ fun NavGraph(
 
         /* Main */
         composable("PillMainPage") {
-            PillMainPage(navController, myPageNavController, searchHiltViewModel)
+            PillMainPage(navController, searchHiltViewModel)
         }
 
         /* Search */
@@ -163,19 +163,8 @@ fun NavGraph(
         composable("QuestionnaireSearchPage") {
             QuestionnaireSearchPage(navController, logViewModel, searchHiltViewModel)
         }
-    }
-}
 
-@Composable
-fun MyPageNavHost(
-    navController: NavHostController,
-    searchHiltViewModel: SearchHiltViewModel,
-) {
-    NavHost(
-        navController = navController,
-        startDestination = "MyPage"
-    ) {
-        composable("MyPage") { MyPage(navController, searchHiltViewModel) }
+        /* mypage */
         composable("MyDrugInfoPage"){ MyDrugInfoPage(navController, searchHiltViewModel) }
     }
 }

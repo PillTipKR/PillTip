@@ -2,6 +2,8 @@ package com.pilltip.pilltip.model.search
 
 import android.content.Context
 import android.util.Log
+import androidx.compose.runtime.State
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pilltip.pilltip.model.AuthInterceptor
@@ -30,7 +32,11 @@ class SearchHiltViewModel @Inject constructor(
     private val drugSearchRepo: DrugSearchRepository,
     private val drugDetailRepo: DrugDetailRepository,
     private val dosageRegisterRepo: DosageRegisterRepository,
-    private val dosageSummaryRepo: DosageSummaryRepository
+    private val dosageSummaryRepo: DosageSummaryRepository,
+    private val dosageDetailRepo: DosageDetailRepository,
+    private val dosageDeleteRepo: DosageDeleteRepository,
+    private val dosageModifyRepo: DosageModifyRepository
+
 ) : ViewModel() {
 
     /* 약품명 자동 완성 API*/
@@ -152,6 +158,49 @@ class SearchHiltViewModel @Inject constructor(
             }
         }
     }
+
+    /* 복약 등록 삭제 */
+    fun deletePill(medicationId: Long) {
+        viewModelScope.launch {
+            try {
+                _pillSummaryList.value = dosageDeleteRepo.deleteTakingPill(medicationId)
+            } catch (e: Exception) {
+                Log.e("DosageDelete", "삭제 실패: ${e.message}")
+            }
+        }
+    }
+
+    /* 복약 세부 데이터 */
+    fun fetchTakingPillDetail(medicationId: Long) {
+        viewModelScope.launch {
+            try {
+                _pillDetail.value = dosageDetailRepo.getDosageDetail(medicationId)
+            } catch (e: Exception) {
+                _pillDetail.value = null
+                Log.e("DosageDetail", "상세 조회 실패: ${e.message}")
+            }
+        }
+    }
+
+    /* 복약 데이터 수정 */
+    fun modifyDosage(medicationId: Long, request: RegisterDosageRequest) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            try {
+                val updatedList = dosageModifyRepo.updateDosage(medicationId, request)
+                _pillSummaryList.value = updatedList
+                Log.d("DosageModify", "수정 완료. 복약 목록 업데이트됨.")
+            } catch (e: Exception) {
+                Log.e("DosageModify", "수정 실패: ${e.message}")
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+    fun clearPillDetail() {
+        _pillDetail.value = null
+    }
+
 }
 
 @Module
@@ -222,12 +271,40 @@ object RepositoryModule {
     }
 
     @Provides
-    fun provideDosageSummaryApi(retrofit: Retrofit): DosageSummaryApi {
+    fun provideDosageSummaryApi(@Named("SearchRetrofit") retrofit: Retrofit): DosageSummaryApi {
         return retrofit.create(DosageSummaryApi::class.java)
     }
 
     @Provides
     fun provideDosageSummaryRepository(api: DosageSummaryApi): DosageSummaryRepository {
         return DosageSummaryRepositoryImpl(api)
+    }
+
+    @Provides
+    fun provideDosageDeleteApi(@Named("SearchRetrofit") retrofit: Retrofit): DosageDeleteApi {
+        return retrofit.create(DosageDeleteApi::class.java)
+    }
+
+    @Provides
+    fun provideDosageDeleteRepository(api: DosageDeleteApi): DosageDeleteRepository {
+        return DosageDeleteRepositoryImpl(api)
+    }
+
+    @Provides
+    fun provideDosageDetailApi(@Named("SearchRetrofit") retrofit: Retrofit): DosageDetailApi =
+        retrofit.create(DosageDetailApi::class.java)
+
+    @Provides
+    fun provideDosageDetailRepository(api: DosageDetailApi): DosageDetailRepository =
+        DosageDetailRepositoryImpl(api)
+
+    @Provides
+    fun provideDosageModifyApi(@Named("SearchRetrofit") retrofit: Retrofit): DosageModifyApi {
+        return retrofit.create(DosageModifyApi::class.java)
+    }
+
+    @Provides
+    fun provideDosageModifyRepository(api: DosageModifyApi): DosageModifyRepository {
+        return DosageModifyRepositoryImpl(api)
     }
 }

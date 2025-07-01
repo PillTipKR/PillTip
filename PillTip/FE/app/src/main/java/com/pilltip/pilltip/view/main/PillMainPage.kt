@@ -31,10 +31,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import androidx.navigation.NavHostController
-import androidx.navigation.compose.rememberNavController
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.pilltip.pilltip.R
 import com.pilltip.pilltip.composable.HeightSpacer
@@ -47,7 +44,6 @@ import com.pilltip.pilltip.composable.MainComposable.SmallTabCard
 import com.pilltip.pilltip.composable.WidthSpacer
 import com.pilltip.pilltip.model.HandleBackPressToExitApp
 import com.pilltip.pilltip.model.search.SearchHiltViewModel
-import com.pilltip.pilltip.nav.MyPageNavHost
 import com.pilltip.pilltip.ui.theme.backgroundColor
 import com.pilltip.pilltip.ui.theme.gray800
 import com.pilltip.pilltip.ui.theme.pretendard
@@ -55,7 +51,6 @@ import com.pilltip.pilltip.ui.theme.pretendard
 @Composable
 fun PillMainPage(
     navController: NavController,
-    myPageNavController: NavHostController,
     searchHiltViewModel: SearchHiltViewModel
 ) {
     var selectedTab by remember { mutableStateOf(BottomTab.Home) }
@@ -88,7 +83,7 @@ fun PillMainPage(
                 BottomTab.Interaction -> InteractionPage()
                 BottomTab.Chart -> ChartPage()
                 BottomTab.Calendar -> CalendarPage()
-                BottomTab.MyPage -> MyPageNavHost(myPageNavController, searchHiltViewModel)
+                BottomTab.MyPage -> MyPage(navController, searchHiltViewModel)
             }
         }
     }
