@@ -34,6 +34,8 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-json'
 	implementation 'com.opencsv:opencsv:5.8'
 	implementation 'org.apache.commons:commons-csv:1.10.0'
+	implementation 'org.springframework.boot:spring-boot-starter-web-services'
+	implementation("com.google.firebase:firebase-admin:9.5.0")
 
 	implementation 'org.springframework.boot:spring-boot-starter-data-elasticsearch'
 	implementation 'co.elastic.clients:elasticsearch-java:8.11.1'

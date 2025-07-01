@@ -40,6 +40,7 @@ out/
 
 ### application.properties 파일 ###
 application.properties
+firebasefbsvc*
 
 # macOS ###
 # macOS Finder files

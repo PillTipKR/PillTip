@@ -76,6 +76,10 @@ public class User {
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
     private UserToken userToken;
 
+    @JsonManagedReference
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
+    private FCMToken FCMToken;
+
     // 유저 문진표 1대 N 관계
     @JsonManagedReference
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)

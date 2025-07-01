@@ -81,11 +81,11 @@ public class TakingPillRequest {
         
         @JsonProperty("dosage_unit")
         private String dosageUnit; // 복용 단위
-        
+
         public String getDosageUnit() {
             return dosageUnit;
         }
-        
+
         // 시간 검증 메서드
         @JsonIgnore
         public boolean isValidHour() {
@@ -104,4 +104,13 @@ public class TakingPillRequest {
             return "AM".equals(period) || "PM".equals(period);
         }
     }
+
+    // 내부 구현
+    public boolean matchesToday(LocalDate now) {
+        if (startDate.isAfter(now) || endDate.isBefore(now)) return false;
+        if (daysOfWeek.contains(EVERYDAY)) return true;
+        String today = now.getDayOfWeek().name().substring(0, 3);
+        return daysOfWeek.contains(today);
+    }
+
 }
