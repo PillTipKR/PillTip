@@ -21,6 +21,7 @@ public class QuestionnaireController {
 
     private static final Logger logger = LoggerFactory.getLogger(QuestionnaireController.class);
     private final UserPermissionsService userPermissionsService;
+
     //동의사항 조회
     @GetMapping("/permissions")
     public ResponseEntity<ApiResponse<UserPermissionsResponse>> getUserPermissions(
@@ -38,6 +39,7 @@ public class QuestionnaireController {
                 .body(ApiResponse.error("Failed to retrieve permissions: " + e.getMessage(), null));
         }
     }
+  
     //동의사항 수정
     @PutMapping("/permissions/multi")
     public ResponseEntity<ApiResponse<UserPermissionsResponse>> updateMedicalPermissions(
