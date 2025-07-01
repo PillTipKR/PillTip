@@ -59,6 +59,7 @@ import com.pilltip.pilltip.composable.noRippleClickable
 import com.pilltip.pilltip.ui.theme.gray050
 import com.pilltip.pilltip.ui.theme.gray200
 import com.pilltip.pilltip.ui.theme.gray500
+import com.pilltip.pilltip.ui.theme.gray600
 import com.pilltip.pilltip.ui.theme.gray800
 import com.pilltip.pilltip.ui.theme.pretendard
 import com.pilltip.pilltip.ui.theme.primaryColor
@@ -312,10 +313,10 @@ fun AgeField(
             if (displayYear == 0 && displayMonth == 0 && displayDay == 0)
                 Text(
                     text = placeholder,
-                    fontSize = 16.sp,
+                    fontSize = 14.sp,
                     fontFamily = pretendard,
                     fontWeight = FontWeight.W400,
-                    color = gray500,
+                    color = gray600,
                 )
             else
                 Text(

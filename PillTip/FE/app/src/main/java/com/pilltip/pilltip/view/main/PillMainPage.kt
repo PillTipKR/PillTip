@@ -2,7 +2,6 @@ package com.pilltip.pilltip.view.main
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -44,13 +43,15 @@ import com.pilltip.pilltip.composable.MainComposable.MainSearchField
 import com.pilltip.pilltip.composable.MainComposable.SmallTabCard
 import com.pilltip.pilltip.composable.WidthSpacer
 import com.pilltip.pilltip.model.HandleBackPressToExitApp
+import com.pilltip.pilltip.model.search.SearchHiltViewModel
 import com.pilltip.pilltip.ui.theme.backgroundColor
 import com.pilltip.pilltip.ui.theme.gray800
 import com.pilltip.pilltip.ui.theme.pretendard
 
 @Composable
 fun PillMainPage(
-    navController: NavController
+    navController: NavController,
+    searchHiltViewModel: SearchHiltViewModel
 ) {
     var selectedTab by remember { mutableStateOf(BottomTab.Home) }
     val systemUiController = rememberSystemUiController()
@@ -82,7 +83,7 @@ fun PillMainPage(
                 BottomTab.Interaction -> InteractionPage()
                 BottomTab.Chart -> ChartPage()
                 BottomTab.Calendar -> CalendarPage()
-                BottomTab.MyPage -> MyPage()
+                BottomTab.MyPage -> MyPage(navController, searchHiltViewModel)
             }
         }
     }
@@ -172,8 +173,10 @@ fun HomePage(
     AnnouncementCard("필팁은 여러분의 가장 안전한 복약도우미입니다. 더욱 노력하겠습니다.")
     HeightSpacer(34.dp)
     Row(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 22.dp)
-    ){
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 22.dp)
+    ) {
         Text(
             text = "통계/ 리뷰",
             fontSize = 16.sp,
@@ -207,9 +210,4 @@ fun ChartPage() {
 @Composable
 fun CalendarPage() {
     Text("캘린더 화면")
-}
-
-@Composable
-fun MyPage() {
-    Text("마이페이지")
 }

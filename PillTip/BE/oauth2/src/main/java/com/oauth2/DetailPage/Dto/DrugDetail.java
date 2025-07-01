@@ -10,16 +10,22 @@ import java.util.List;
 
 @Builder
 public record DrugDetail (
-    Long id,
-    String name,
-    String manufacturer,
-    List<IngredientDetail> ingredients,
-    String form,
-    String packaging,
-    String atcCode,
-    Drug.Tag tag,
-    Date approvalDate,
-    List<StorageDetail> storageDetails,
-    List<EffectDetail> effectDetails,
-    List<DurTagDto> durTags
+        Long id,
+        String name,
+        String manufacturer,
+        List<IngredientDetail> ingredients,
+        String form,
+        String packaging,
+        String atcCode,
+        Drug.Tag tag,
+        Date approvalDate,
+        StorageDetail container,
+        StorageDetail temperature,
+        StorageDetail light,
+        StorageDetail humid,
+        EffectDetail effect,
+        EffectDetail usage,
+        EffectDetail caution,
+        List<DurTagDto> durTags,
+        String gptExplain
 ) {}

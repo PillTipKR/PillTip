@@ -86,3 +86,79 @@ data class DurDto(
     val reason: String,
     val note: String
 )
+
+/**
+ * 복약 등록
+ */
+data class RegisterDosageRequest(
+    val medication_id: Long,
+    val medication_name: String,
+    val start_date: String, // yyyy-MM-dd
+    val end_date: String,
+    val alert_name: String,
+    val days_of_week: List<String>,
+    val dosage_schedules: List<DosageSchedule>
+)
+
+data class DosageSchedule(
+    val hour: Int,
+    val minute: Int,
+    val period: String, // AM or PM
+    val dosage_amount: Double,
+    val dosage_unit: String
+)
+
+data class RegisterDosageResponse(
+    val status: String,
+    val message: String,
+    val data: TakingPillDetailData
+)
+
+data class TakingPillDetailData(
+    val medicationId: Long,
+    val medicationName: String,
+    val startDate: String,
+    val endDate: String,
+    val alertName: String,
+    val daysOfWeek: List<String>,
+    val dosageSchedules: List<DosageScheduleDetail>
+)
+
+data class DosageScheduleDetail(
+    val hour: Int,
+    val minute: Int,
+    val period: String,
+    val dosageAmount: Double,
+    val dosageUnit: String
+)
+
+/**
+ * 복약 리스트 불러오기
+ */
+
+data class TakingPillSummaryResponse(
+    val status: String,
+    val message: String,
+    val data: TakingPillSummaryData
+)
+
+data class TakingPillSummaryData(
+    val takingPills: List<TakingPillSummary>
+)
+
+data class TakingPillSummary(
+    val medicationId: Long,
+    val medicationName: String,
+    val startDate: String, // yyyy-MM-dd
+    val endDate: String
+)
+
+/**
+ * 복약 세부 데이터 불러오기
+ */
+
+data class TakingPillDetailResponse(
+    val status: String,
+    val message: String,
+    val data: TakingPillDetailData
+)

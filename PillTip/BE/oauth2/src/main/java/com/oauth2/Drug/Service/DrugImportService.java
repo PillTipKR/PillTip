@@ -1,19 +1,21 @@
 package com.oauth2.Drug.Service;
 
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Date;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import com.oauth2.Drug.Repository.DrugRepository;
+import com.oauth2.Drug.Repository.DrugStorageConditionRepository;
 import com.opencsv.CSVReader;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -45,87 +47,45 @@ public class DrugImportService {
         this.drugRepository = drugRepository;
     }
 
-    public void importFromFile(String filePath) {
-        try {
-            String content = Files.readString(Paths.get(filePath));
-            String[] lines = content.split("\n"); // 전체 내용에서 라인별로 나누기
-            StringBuilder currentBlock = new StringBuilder(); // 현재 블럭을 저장할 변수
-            System.out.println("약품DB 삽입 시작");
-            for (String line : lines) {
-                line = line.trim(); // 공백 제거
 
-                if (line.contains("제품명:")) {
-                    // 이전 블럭이 비어있지 않으면 현재까지의 블럭 처리
-                    if (!currentBlock.isEmpty()) {
-                        try {
-                            importSingleDrug(currentBlock.toString()); // 현재 블럭 데이터 처리
-                        } catch (Exception e) {
-                            System.out.println("약 데이터 저장 실패: " + e.getMessage());
-                        }
-                    }
 
-                    currentBlock.setLength(0); // 현재 블럭 초기화
-                    currentBlock.append(line); // 새로운 블럭 첫 줄 추가
-                } else {
-                    // '제품명:'이 포함되지 않으면 현재 블럭에 해당 라인 추가
-                    currentBlock.append("\n").append(line);
-                }
+    public void importFromFile(String filePath) throws IOException {
+        String allText = Files.readString(Path.of(filePath));
+        String[] blocks = allText.split("(?=ITEM_SEQ :)"); // ITEM_SEQ : 로 시작하는 줄마다 분리
+        for (String block : blocks) {
+            if (!block.trim().isEmpty()) {
+                importFromBlock(block.trim());
             }
-
-            // 마지막 블럭 처리 (루프 끝에서 남아있는 블럭 처리)
-            if (!currentBlock.isEmpty()) {
-                try {
-                    importSingleDrug(currentBlock.toString());
-                } catch (Exception e) {
-                    System.out.println("약 데이터 저장 실패: " + e.getMessage());
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
         }
     }
 
-    @Transactional
-    public void importSingleDrug(String block) {
-        // 1. 기본 정보 파싱
-        String[] lines = block.split("\n");
-        String name = null, code = null, manufacturer = null, approvalDate = null, packaging = null, form = null, atcCode = null, tag = null;
-        String ingredientLine = null;
-        StringBuilder effect = new StringBuilder();
-        StringBuilder usage = new StringBuilder();
-        StringBuilder caution = new StringBuilder();
-        String section = "";
-        for (String line : lines) {
-            line = line.trim();
-            if (line.contains("제품명:")) name = line.split("제품명:", 2)[1].trim();
-            else if (line.contains("품목일련번호:")) code = line.split("품목일련번호:", 2)[1].trim();
-            else if (line.contains("제조사:")) manufacturer = line.split("제조사:", 2)[1].trim();
-            else if (line.contains("허가일자:")) approvalDate = line.split("허가일자:", 2)[1].trim();
-            else if (line.contains("포장단위:")) packaging = line.split("포장단위:", 2)[1].trim();
-            else if (line.contains("제형:")) form = line.split("제형:", 2)[1].trim();
-            else if (line.contains("ATC 코드:")) atcCode = line.split("ATC 코드:", 2)[1].trim();
-            else if (line.contains("의약품 분류:")) tag = line.split("의약품 분류:", 2)[1].trim();
-            else if (line.contains("약품 성분 및 용량:")) ingredientLine = line.split("약품 성분 및 용량:", 2)[1].trim();
-            else if (line.startsWith("[효능효과]")) section = "effect";
-            else if (line.startsWith("[용법용량]")) section = "usage";
-            else if (line.startsWith("[사용상의주의사항]") || line.startsWith("[사용상주의사항]")) section = "caution";
-            else {
-                switch (section) {
-                    case "effect" -> effect.append(line).append("\n");
-                    case "usage" -> usage.append(line).append("\n");
-                    case "caution" -> caution.append(line).append("\n");
-                }
-            }
-        }
+    public void importFromBlock(String block) {
+        Map<String, String> data = parseKeyValue(block);  // 라벨:값 구조 파싱
+        String name = data.get("ITEM_NAME");
+        String code = data.get("ITEM_SEQ");
+        String manufacturer = data.get("ENTP_NAME");
+        String packaging = data.get("PACK_UNIT");
+        String form = data.get("CHART");
+        String atcCode = data.get("ATC_CODE");
+        String approvalDate = data.get("ITEM_PERMIT_DATE");
+        String tag = data.get("ETC_OTC_CODE");
+        String ingredientLine = data.get("MATERIAL_NAME");
+        String storageMethod = data.get("STORAGE_METHOD");
+        String validFrom = data.get("VALID_TERM");
+
+        String effect = extractBetween(block, "EE_DOC_DATA :", "UD_DOC_DATA :");
+        String usage = extractBetween(block, "UD_DOC_DATA :", "NB_DOC_DATA :");
+        String caution = extractBetween(block, "NB_DOC_DATA :", "MAIN_ITEM_INGR :");
         // name이 없으면 Drug 저장 건너뜀
         if (name == null || name.isEmpty()) {
             System.out.println("제품명 누락 블록 건너뜀: " + block);
             return;
         }
-        // 이미 존재하는 약이면 스킵
-        if(drugRepository.findByName(name).isPresent()) return;
 
-        // 2. Drug 저장 (제품명 기준 중복 체크)
+        // 이미 존재하는 약이면 스킵
+        if (drugRepository.findByName(name).isPresent()) return;
+
+        // Drug 저장
         Optional<Drug> drugOpt = drugService.findByName(name);
         Drug drug;
         if (drugOpt.isPresent()) {
@@ -138,7 +98,8 @@ public class DrugImportService {
             drug.setPackaging(packaging);
             drug.setForm(form);
             drug.setAtcCode(atcCode);
-            // approvalDate 파싱 및 세팅
+            drug.setValidTerm(validFrom);
+
             if (approvalDate != null && approvalDate.matches("\\d{8}")) {
                 try {
                     LocalDate localDate = LocalDate.parse(approvalDate, DateTimeFormatter.ofPattern("yyyyMMdd"));
@@ -147,22 +108,30 @@ public class DrugImportService {
                     System.out.println("허가일자 파싱 오류: " + approvalDate);
                 }
             }
-            if (tag != null) drug.setTag(tag.equals("일반의약품")? Drug.Tag.COMMON: Drug.Tag.EXPERT);
+
+            if (tag != null) {
+                drug.setTag(tag.equals("일반의약품") ? Drug.Tag.COMMON : Drug.Tag.EXPERT);
+            }
+
             drug = drugService.save(drug);
         }
-        // 3. 성분 파싱 및 저장
+
+        // 성분 파싱 및 저장
         if (ingredientLine != null && !ingredientLine.isEmpty()) {
             String[] ingredients = ingredientLine.split(";");
             for (String ing : ingredients) {
                 String[] parts = ing.split("\\|");
                 String nameKr = null, amount = "", unit = null;
+
                 for (String part : parts) {
                     part = part.trim();
                     if (part.startsWith("성분명 :")) nameKr = part.replace("성분명 :", "").trim();
                     else if (part.startsWith("분량 :")) amount = part.replace("분량 :", "").trim();
                     else if (part.startsWith("단위 :")) unit = part.replace("단위 :", "").trim();
                 }
+
                 if (nameKr == null) continue;
+
                 Optional<Ingredient> ingOpt = ingredientService.findByNameKr(nameKr);
                 Ingredient ingredient;
                 if (ingOpt.isPresent()) {
@@ -174,21 +143,22 @@ public class DrugImportService {
                     ingredient = ingredientService.save(ingredient);
                 }
 
-                // DrugIngredient 매핑 저장
                 DrugIngredient di = new DrugIngredient();
                 DrugIngredient.DrugIngredientId diId = new DrugIngredient.DrugIngredientId();
+                parseIngredientAmount(di, amount);
                 diId.setDrugId(drug.getId());
                 diId.setIngredientId(ingredient.getId());
                 di.setId(diId);
-                parseIngredientAmount(di, amount);
                 di.setUnit(unit);
                 drugIngredientService.save(di);
             }
         }
-        // 4. DrugEffect 저장 (표 등 긴 데이터 방지)
-        String filteredEffect = filterContent(effect.toString());
-        String filteredUsage = filterContent(usage.toString());
-        String filteredCaution = filterContent(caution.toString());
+
+        // 효과/용법/주의사항 저장
+        String filteredEffect = filterContent(effect);
+        String filteredUsage = filterContent(usage);
+        String filteredCaution = filterContent(caution);
+
         if (!filteredEffect.isEmpty()) {
             DrugEffect de = new DrugEffect();
             de.setDrug(drug);
@@ -210,92 +180,59 @@ public class DrugImportService {
             de.setContent(filteredCaution.trim());
             drugEffectService.save(de);
         }
-        // 5. 보관 방법 파싱 및 저장
-        if (!filteredCaution.isEmpty()) {
-            // 개행 문자 처리 로직 개선
-            String[] cautionLines = filteredCaution.split("\\n");
-            for (String cautionLine : cautionLines) {
-                String line = cautionLine.trim();
-                // 보관 관련 키워드 포함 여부 검사
-                if (line.contains("닿지 않는 곳에 보관")) continue;
-                if (!line.contains("보관") && !line.contains("바꾸어 넣지")) continue;
-                if (line.contains("바꾸어 넣지") || line.contains("원래의 용기") || line.contains("원래 용기") || line.contains("다른 용기")) {
-                    saveStorageCondition("용기변화",drug, DrugStorageCondition.Category.CONTAINER,false);
-                    continue;
-                }
-                // 긍정/부정 연결어 패턴\\
-                String regex = "보관(?:하지 ?않(?:고|으며|게|을 것|말 것|는다|도록|말고|아야 한다)?|하지 말 것|하지 말아야 한다|하면 안된다|하지 말고|하며|하고|하도록|한다|할 것|하여야 한다)?";
-                Pattern pattern = Pattern.compile(regex);
-                Matcher matcher = pattern.matcher(line);
-                int lastPos = 0;
-                boolean lastNegative = false; // 기본값
-                while (matcher.find()) {
-                    String part = line.substring(lastPos, matcher.start());
-                    //System.out.println(matcher.group());
-                    boolean isNegative = matcher.group().contains("보관하지") || matcher.group().contains("보관하면 안된다") || lastNegative;
-                    // 키워드별 저장
-                    makeStoreRule(drug, part, isNegative);
-                    lastPos = matcher.end();
-                    String matched = matcher.group();
-                    lastNegative = matched.startsWith("보관하지") || matched.startsWith("보관하면 안된다");
-                }
+
+        /*
+        - 온도조건: 실온에서 보관한다.
+        - 용기: 밀봉용기
+        - 습도: 정보 없음
+        - 차광: 정보 없음
+        */
+        DrugStorageCondition temperature = new DrugStorageCondition();
+        DrugStorageCondition pack = new DrugStorageCondition();
+        DrugStorageCondition humid = new DrugStorageCondition();
+        DrugStorageCondition light = new DrugStorageCondition();
+
+
+        temperature.setCategory(DrugStorageCondition.Category.TEMPERATURE);
+        pack.setCategory(DrugStorageCondition.Category.CONTAINER);
+        light.setCategory(DrugStorageCondition.Category.LIGHT);
+        humid.setCategory(DrugStorageCondition.Category.HUMID);
+        pack.setDrug(drug);
+        light.setDrug(drug);
+        temperature.setDrug(drug);
+        humid.setDrug(drug);
+
+        List<String> storage = parseStorageMethod(storageMethod);
+        for(String s : storage) {
+            if(s.contains("용기")) {
+                pack.setValue(s);
+                pack.setActive(true);
             }
+            if(s.contains("광")) {
+                light.setValue(s);
+                light.setActive(true);
+            }
+
+            Matcher m = Pattern.compile("(\\d+)+℃").matcher(s);
+            if(s.contains("실온") || m.find() || s.contains("고온") || s.contains("저온")) {
+                temperature.setValue(s);
+                temperature.setActive(true);
+            }
+
+            if(s.contains("건냉") || s.contains("건조") || s.contains("습기")){
+                humid.setValue(s);
+                humid.setActive(true);
+
+            }
+
         }
+
+        drugStorageConditionService.save(temperature);
+        drugStorageConditionService.save(pack);
+        drugStorageConditionService.save(humid);
+        drugStorageConditionService.save(light);
     }
 
-    private void makeStoreRule(Drug drug, String part, boolean isNegative) {
-        // 보관 용기 파싱
-        if (part.contains("밀폐용기") || part.contains("밀페하여")) {
-            saveStorageCondition("밀폐용기",drug, DrugStorageCondition.Category.CONTAINER,isNegative);
-        }
-        // 보관 장소 파싱
-        if (part.contains("밀폐된 장소")) {
-            saveStorageCondition("밀폐된 장소",drug, DrugStorageCondition.Category.PLACE,isNegative);
-        }
-        if (part.contains("서늘한 곳")) {
-            saveStorageCondition("서늘한 곳",drug, DrugStorageCondition.Category.PLACE,isNegative);
-        }
-
-        // 온도 파싱
-        Matcher m = Pattern.compile("(\\d+)+℃").matcher(part);
-        while (m.find()) {
-            String tempStr = m.group(1);
-            int temp = Integer.parseInt(tempStr);
-            String tempType = (temp >= 40) ? "고온" : (temp <= 10 ? "저온" : "실온");
-            saveStorageCondition(tempType,drug, DrugStorageCondition.Category.TEMPERATURE,isNegative);
-        }
-        if (part.contains("고온")) {
-            saveStorageCondition("고온",drug, DrugStorageCondition.Category.TEMPERATURE,isNegative);
-        }
-        if (part.contains("실온")) {
-            saveStorageCondition("실온",drug, DrugStorageCondition.Category.TEMPERATURE,isNegative);
-        }
-        if (part.contains("저온")) {
-            saveStorageCondition("저온",drug, DrugStorageCondition.Category.TEMPERATURE,isNegative);
-        }
-        if (part.contains("냉장")) {
-            saveStorageCondition("냉장",drug, DrugStorageCondition.Category.TEMPERATURE,isNegative);
-        }
-        if (part.contains("냉동")) {
-            saveStorageCondition("냉동",drug, DrugStorageCondition.Category.TEMPERATURE,isNegative);
-        }
-        if (part.contains("얼리지")) {
-            saveStorageCondition("냉동x",drug, DrugStorageCondition.Category.TEMPERATURE,isNegative);
-        }
-
-        // 습도 파싱
-        if (part.contains("건조")) {
-            saveStorageCondition("건조",drug, DrugStorageCondition.Category.HUMID,isNegative);
-        }
-        if (part.contains("습기가 적은")) {
-            saveStorageCondition("습기가 적은",drug, DrugStorageCondition.Category.HUMID,isNegative);
-        }
-
-        // 직사광선
-        if (((part.contains("직사광선") || part.contains("직사일광")) && part.contains("피하여")) || part.contains("차광")) {
-            saveStorageCondition("직사광선",drug, DrugStorageCondition.Category.LIGHT,isNegative);
-        }
-    }
 
     private String filterContent(String content) {
         // 개행 정리 + 앞뒤 공백 제거
@@ -304,17 +241,6 @@ public class DrugImportService {
                 .replaceAll(" +", " ")              // 중복 공백 제거
                 .replaceAll("={60,}","")
                 .trim();
-    }
-
-
-    private void saveStorageCondition(String q, Drug drug,
-                                      DrugStorageCondition.Category category, boolean isNegative){
-        DrugStorageCondition cond = new DrugStorageCondition();
-        cond.setDrug(drug);
-        cond.setCategory(category);
-        cond.setValue(q);
-        cond.setActive(!isNegative && !q.equals("직사광선") && !q.equals("용기변화"));
-        drugStorageConditionService.save(cond);
     }
 
     private void parseIngredientAmount(DrugIngredient di,String amount) {
@@ -367,6 +293,48 @@ public class DrugImportService {
         return amount;
     }
 
+
+    private Map<String, String> parseKeyValue(String content) {
+        Map<String, String> result = new LinkedHashMap<>();
+        String[] lines = content.split("\\r?\\n");
+        String currentKey = null;
+        StringBuilder valueBuffer = new StringBuilder();
+
+        for (String line : lines) {
+            if (line.contains(" : ")) {
+                if (currentKey != null) {
+                    result.put(currentKey.trim(), valueBuffer.toString().trim());
+                }
+                String[] parts = line.split(":", 2);
+                currentKey = parts[0].trim();
+                valueBuffer = new StringBuilder(parts[1].trim());
+            } else if (currentKey != null) {
+                valueBuffer.append(" ").append(line.trim());
+            }
+        }
+
+        if (currentKey != null) {
+            result.put(currentKey.trim(), valueBuffer.toString().trim());
+        }
+        return result;
+    }
+
+    private List<String> parseStorageMethod(String raw) {
+        if (raw == null || raw.isBlank()) return List.of();
+        return Arrays.stream(raw.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .collect(Collectors.toList());
+    }
+
+
+    private String extractBetween(String text, String startLabel, String endLabel) {
+        int start = text.indexOf(startLabel);
+        int end = text.indexOf(endLabel);
+        if (start == -1 || end == -1 || end <= start) return "";
+        return text.substring(start + startLabel.length(), end).trim();
+    }
+
     public void importImageFromCsv(MultipartFile file) {
         try (CSVReader reader = new CSVReader(new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8))) {
             String[] line;
@@ -390,4 +358,5 @@ public class DrugImportService {
             e.printStackTrace();
         }
     }
+
 }

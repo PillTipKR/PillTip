@@ -7,9 +7,11 @@ import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @Getter
+@Setter
 @NoArgsConstructor
 @Table(name = "user_permissions")
 public class UserPermissions {
@@ -41,9 +43,19 @@ public class UserPermissions {
     @Column(name = "file_permission", nullable = false)
     private boolean filePermission; // 유저 파일 동의
 
+    // 문진표 관련 동의
+    // 민감정보 수집 동의
+    @Column(name = "sensitive_info_permission", nullable = false)
+    private boolean sensitiveInfoPermission; // 유저 민감정보 수집 동의
+
+    // 의약법 관련 동의
+    @Column(name = "medical_info_permission", nullable = false)
+    private boolean medicalInfoPermission; // 유저 의약법 동의
+
     @Builder
     public UserPermissions(User user, boolean locationPermission, boolean cameraPermission,
-                          boolean galleryPermission, boolean phonePermission, boolean smsPermission, boolean filePermission) {
+                          boolean galleryPermission, boolean phonePermission, boolean smsPermission, boolean filePermission,
+                          boolean sensitiveInfoPermission, boolean medicalInfoPermission) {
         this.user = user;
         this.locationPermission = locationPermission;
         this.cameraPermission = cameraPermission;
@@ -51,5 +63,7 @@ public class UserPermissions {
         this.phonePermission = phonePermission;
         this.smsPermission = smsPermission;
         this.filePermission = filePermission;
+        this.sensitiveInfoPermission = sensitiveInfoPermission;
+        this.medicalInfoPermission = medicalInfoPermission;
     }
 }

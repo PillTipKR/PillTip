@@ -3,9 +3,12 @@ package com.pilltip.pilltip.nav
 import androidx.compose.runtime.Composable
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.pilltip.pilltip.model.search.LogViewModel
 import com.pilltip.pilltip.model.search.SearchHiltViewModel
 import com.pilltip.pilltip.model.signUp.SignUpViewModel
@@ -19,8 +22,12 @@ import com.pilltip.pilltip.view.auth.PhoneAuthPage
 import com.pilltip.pilltip.view.auth.ProfilePage
 import com.pilltip.pilltip.view.auth.SelectPage
 import com.pilltip.pilltip.view.auth.SplashPage
+import com.pilltip.pilltip.view.main.MyDrugInfoPage
+import com.pilltip.pilltip.view.main.MyPage
 import com.pilltip.pilltip.view.main.PillMainPage
 import com.pilltip.pilltip.view.questionnaire.AreYouPage
+import com.pilltip.pilltip.view.questionnaire.EssentialPage
+import com.pilltip.pilltip.view.questionnaire.QuestionnairePage
 import com.pilltip.pilltip.view.questionnaire.QuestionnaireSearchPage
 import com.pilltip.pilltip.view.search.DetailPage
 import com.pilltip.pilltip.view.search.DosagePage
@@ -35,6 +42,7 @@ fun NavGraph(
     logViewModel: LogViewModel = viewModel()
 ) {
     val navController = rememberNavController()
+    val myPageNavController = rememberNavController()
     NavHost(
         navController = navController,
         startDestination = startPage
@@ -74,7 +82,7 @@ fun NavGraph(
 
         /* Main */
         composable("PillMainPage") {
-            PillMainPage(navController)
+            PillMainPage(navController, searchHiltViewModel)
         }
 
         /* Search */
@@ -96,11 +104,25 @@ fun NavGraph(
                 searchHiltViewModel
             )
         }
-        composable("DosagePage") {
-            DosagePage(navController)
+        composable(
+            route = "DosagePage/{drugId}/{drugName}",
+            arguments = listOf(
+                navArgument("drugId") { type = NavType.LongType },
+                navArgument("drugName") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val drugId = backStackEntry.arguments?.getLong("drugId") ?: 0L
+            val drugName = backStackEntry.arguments?.getString("drugName") ?: ""
+            DosagePage(navController, searchHiltViewModel, drugId, drugName)
         }
 
         /* questionnaire */
+        composable("QuestionnairePage"){
+            QuestionnairePage(navController)
+        }
+        composable("EssentialPage"){
+            EssentialPage(navController)
+        }
         composable("AreYouPage/{query}") { backStackEntry ->
             val query = backStackEntry.arguments?.getString("query") ?: ""
 
@@ -141,5 +163,8 @@ fun NavGraph(
         composable("QuestionnaireSearchPage") {
             QuestionnaireSearchPage(navController, logViewModel, searchHiltViewModel)
         }
+
+        /* mypage */
+        composable("MyDrugInfoPage"){ MyDrugInfoPage(navController, searchHiltViewModel) }
     }
 }

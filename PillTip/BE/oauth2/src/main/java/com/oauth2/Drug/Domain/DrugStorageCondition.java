@@ -22,13 +22,13 @@ public class DrugStorageCondition {
     private Category category;
 
     @Column(nullable = false)
-    private String value;
+    private String value = "";
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "boolean default false")
     private boolean active;
 
     public enum Category {
-        TEMPERATURE, CONTAINER, HUMID, LIGHT, PLACE
+        TEMPERATURE, CONTAINER, HUMID, LIGHT
     }
     // getter, setter 생략
 }

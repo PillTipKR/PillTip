@@ -9,8 +9,9 @@ import com.oauth2.DUR.Dto.SearchDurDto;
 import com.oauth2.Drug.Domain.Drug;
 import com.oauth2.Drug.Repository.DrugRepository;
 import com.oauth2.Search.Dto.SearchIndexDTO;
-import com.oauth2.User.dto.TakingPillRequest;
+import com.oauth2.User.dto.TakingPillSummaryResponse;
 import com.oauth2.User.entity.User;
+import com.oauth2.User.service.UserProfileService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
@@ -18,7 +19,6 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.time.Period;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -27,6 +27,7 @@ public class DurTaggingService {
     private final StringRedisTemplate redisTemplate;
     private final ObjectMapper objectMapper;
     private final DrugRepository drugRepository;
+    private final UserProfileService userProfileService;
 
     public List<SearchDurDto> generateTagsForDrugs(User user, List<SearchIndexDTO> drugs) throws JsonProcessingException {
         List<SearchDurDto> result = new ArrayList<>();
@@ -34,11 +35,10 @@ public class DurTaggingService {
         Map<String, List<Long>> classToDrugIdsMap = new HashMap<>();
         Set<String> userInteraction = new HashSet<>();
 
-        String pillsJson = user.getUserProfile().getTakingPills();
-        List<TakingPillRequest> pillRequests = (pillsJson != null && !pillsJson.isEmpty())
-                ? objectMapper.readValue(pillsJson, new TypeReference<>() {}) : new ArrayList<>();
+        List<Long> userDrugIds = userProfileService.getTakingPillSummary(user).getTakingPills().stream()
+                .map(TakingPillSummaryResponse.TakingPillSummary::getMedicationId)
+                .toList();
 
-        Set<Long> userDrugIds = pillRequests.stream().map(TakingPillRequest::getMedicationId).collect(Collectors.toSet());
         for (Long userDrugId : userDrugIds) {
             Optional<Drug> userDrug = drugRepository.findById(userDrugId);
             if (userDrug.isEmpty()) continue;
@@ -108,7 +108,7 @@ public class DurTaggingService {
             Map<String, String> detail = readJsonFromRedis(detailKey);
             if(detail != null) {
                 tagDesc.add(new DurDto(
-                        otherName,
+                        drugName+ " + " + otherName,
                         detail.getOrDefault("reason", ""),
                         detail.getOrDefault("note", "")
                 ));

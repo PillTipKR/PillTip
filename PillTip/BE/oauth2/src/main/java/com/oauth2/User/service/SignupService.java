@@ -179,6 +179,9 @@ public class SignupService {
                 .galleryPermission(false)
                 .phonePermission(false)
                 .smsPermission(false)
+                .filePermission(false)
+                .sensitiveInfoPermission(false)
+                .medicalInfoPermission(false)
                 .build();
     }
 
