@@ -71,23 +71,25 @@ public class DrugImportController {
     @PostMapping("/drugs")
     public String importAllRawData() throws IOException {
         // URL 디코딩
+        rawData();
+        return "import success";
+    }
+
+    private void rawData() throws IOException {
         drugImportService.importFromFile(drug1);
         drugImportService.importFromFile(drug2);
         drugImportService.importFromFile(drug3);
+    }
 
-        MultipartFile multipartFile = null;
-        Path path = Paths.get(nameEng);
-        multipartFile.transferTo(path);
-        ingredientImportService.importIngredientsFromCsv(multipartFile);
-        return "import success";
+    @PostMapping("/all")
+    public String importAll() throws IOException {
+        rawData();
+        return importAllPrompt();
     }
 
     @PostMapping("/prompt/all")
     public String importAllPrompt(){
-        promptImporter.importPromptCaution(promptCaution1);
-        promptImporter.importPromptCaution(promptCaution2);
-        promptImporter.importPromptCaution(promptCaution3);
-        System.out.println("주의사항 완료");
+        importCautionPrompt();
         return getPromptedDrug();
     }
 
@@ -110,13 +112,11 @@ public class DrugImportController {
         return "import success";
     }
 
-    @PostMapping("/prompt/cations")
-    public String importCautionPrompt(){
+    private void importCautionPrompt(){
         promptImporter.importPromptCaution(promptCaution1);
         promptImporter.importPromptCaution(promptCaution2);
         promptImporter.importPromptCaution(promptCaution3);
         System.out.println("주의사항 정보 주입 완료");
-        return "import success";
     }
 
 

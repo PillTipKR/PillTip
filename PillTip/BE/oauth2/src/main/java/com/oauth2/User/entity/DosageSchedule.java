@@ -38,8 +38,8 @@ public class DosageSchedule {
     private String dosageUnit; // 단위 (회, 정, 포 등)
 
     @Builder
-    public DosageSchedule(TakingPill takingPill, Integer hour, Integer minute, String period, 
-                         Double dosageAmount, String dosageUnit) {
+    public DosageSchedule(TakingPill takingPill, Integer hour, Integer minute, String period,
+                          Double dosageAmount, String dosageUnit) {
         this.takingPill = takingPill;
         this.hour = hour;
         this.minute = minute;
@@ -47,4 +47,4 @@ public class DosageSchedule {
         this.dosageAmount = dosageAmount;
         this.dosageUnit = dosageUnit;
     }
-} 
+}
