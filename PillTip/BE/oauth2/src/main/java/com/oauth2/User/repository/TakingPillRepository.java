@@ -12,10 +12,10 @@ import java.util.Optional;
 
 @Repository
 public interface TakingPillRepository extends JpaRepository<TakingPill, Long> {
-    List<TakingPill> findByUser(User user);
-    List<TakingPill> findByUserAndMedicationId(User user, Long medicationId);
-    Optional<TakingPill> findById(Long id);
-    
-    @Query("SELECT DISTINCT tp FROM TakingPill tp LEFT JOIN FETCH tp.dosageSchedules WHERE tp.user = :user")
-    List<TakingPill> findByUserWithDosageSchedules(@Param("user") User user);
-} 
+   List<TakingPill> findByUser(User user);
+   List<TakingPill> findByUserAndMedicationId(User user, Long medicationId);
+   Optional<TakingPill> findById(Long id);
+
+   @Query("SELECT DISTINCT tp FROM TakingPill tp LEFT JOIN FETCH tp.dosageSchedules WHERE tp.user = :user")
+   List<TakingPill> findByUserWithDosageSchedules(@Param("user") User user);
+}

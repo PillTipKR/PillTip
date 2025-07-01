@@ -21,7 +21,6 @@ import com.oauth2.User.service.TokenService;
 import com.oauth2.User.dto.SignupResponse;
 import com.oauth2.User.dto.DuplicateCheckRequest;
 import com.oauth2.User.dto.TakingPillRequest;
-import com.oauth2.User.entity.UserProfile;
 import com.oauth2.User.service.UserProfileService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
