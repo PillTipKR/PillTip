@@ -2,6 +2,9 @@ package com.pilltip.pilltip.view.search
 
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,8 +16,18 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -27,24 +40,32 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.pilltip.pilltip.R
 import com.pilltip.pilltip.composable.AuthComposable.AgeField
 import com.pilltip.pilltip.composable.AuthComposable.RoundTextField
 import com.pilltip.pilltip.composable.BackButton
 import com.pilltip.pilltip.composable.DoubleLineTitleText
 import com.pilltip.pilltip.composable.HeightSpacer
+import com.pilltip.pilltip.composable.IosButton
 import com.pilltip.pilltip.composable.NextButton
 import com.pilltip.pilltip.composable.SearchComposable.DayField
+import com.pilltip.pilltip.composable.SearchComposable.TimeField
 import com.pilltip.pilltip.composable.WhiteScreenModifier
+import com.pilltip.pilltip.composable.WidthSpacer
+import com.pilltip.pilltip.composable.noRippleClickable
 import com.pilltip.pilltip.model.search.DosageSchedule
 import com.pilltip.pilltip.model.search.RegisterDosageRequest
 import com.pilltip.pilltip.model.search.SearchHiltViewModel
+import com.pilltip.pilltip.ui.theme.gray050
 import com.pilltip.pilltip.ui.theme.gray500
 import com.pilltip.pilltip.ui.theme.gray800
 import com.pilltip.pilltip.ui.theme.pretendard
@@ -70,7 +91,7 @@ fun DosagePage(
     var endMonth by remember { mutableStateOf(0) }
     var endDay by remember { mutableStateOf(0) }
     var selectedDays by remember { mutableStateOf(List(7) { false }) }
-    var doseAmount by remember { mutableStateOf(0)}
+    var doseAmount by remember { mutableStateOf("") }
     var dosageList by remember { mutableStateOf(mutableListOf<DosageEntry>()) }
     val dropdownStates = remember { mutableStateListOf<Boolean>() }
     var scrollState = rememberScrollState()
@@ -112,8 +133,8 @@ fun DosagePage(
                     amPm = if (s.period == "AM") "AM" else "PM",
                     hour = s.hour,
                     minute = s.minute,
-                    dose = s.dosageAmount.toInt(),
-                    doseCount = s.dosageUnit
+                    alarm_on_off = s.alarmOnOff,
+                    dosageUnit = s.dosageUnit
                 )
             }.toMutableList()
         }
@@ -191,15 +212,15 @@ fun DosagePage(
                 )
                 HeightSpacer(12.dp)
                 RoundTextField(
-                    text = doseAmount.toString(),
-                    textChange = { doseAmount = it.toInt() },
+                    text = doseAmount,
+                    textChange = { doseAmount = it },
                     placeholder = "1회 복용량을 알려주세요",
                     isLogin = false,
                     keyboardType = KeyboardType.Number
                 )
             }
             HeightSpacer(28.dp)
-            if (selectedDays.any { it } && doseAmount != 0) {
+            if (selectedDays.any { it } && doseAmount != "") {
                 Text(
                     text = "복약 기간",
                     style = TextStyle(
@@ -452,15 +473,7 @@ fun DosagePage(
                 end_date = "%04d-%02d-%02d".format(endYear, endMonth, endDay),
                 alert_name = "",
                 days_of_week = selectedWeekdays,
-                dosage_schedules = dosageList.map {
-                    DosageSchedule(
-                        hour = it.hour!!,
-                        minute = it.minute!!,
-                        period = mapPeriod(it.amPm!!),
-                        dosage_amount = it.dose!!.toDouble(),
-                        dosage_unit = it.doseCount
-                    )
-                }
+                dosage_schedules = emptyList()
             )
             if (isEditMode) {
                 searchViewModel.modifyDosage(editingPill!!.medicationId, request)
@@ -469,15 +482,15 @@ fun DosagePage(
                 navController.popBackStack()
             } else {
                 if (isFormValid) {
-                    searchViewModel.registerDosage(request)
-
-                    Toast.makeText(context, "복약 일정이 등록되었어요!", Toast.LENGTH_SHORT).show()
-
-                    navController.navigate("DetailPage") {
-                        popUpTo(navController.previousBackStackEntry?.destination?.route ?: "") {
-                            inclusive = true
-                        }
-                    }
+                    searchViewModel.setPendingRequest(request)
+                    navController.navigate("DosageAlarmPage")
+//                    Toast.makeText(context, "복약 일정이 등록되었어요!", Toast.LENGTH_SHORT).show()
+//
+//                    navController.navigate("DetailPage") {
+//                        popUpTo(navController.previousBackStackEntry?.destination?.route ?: "") {
+//                            inclusive = true
+//                        }
+//                    }
                 } else {
                     Toast.makeText(context, "모든 항목을 올바르게 입력해주세요.", Toast.LENGTH_SHORT).show()
                 }
@@ -489,14 +502,22 @@ fun DosagePage(
 @Composable
 fun DosageAlarmPage(
     navController: NavController,
-    request : RegisterDosageRequest,
     searchViewModel: SearchHiltViewModel,
-){
+) {
+    val request = searchViewModel.pendingDosageRequest
     var name by remember { mutableStateOf("") }
+    var dosageList by remember { mutableStateOf(mutableListOf<DosageEntry>()) }
+    val context = LocalContext.current
+    val scrollState = rememberScrollState()
+
     Column(
-        modifier = WhiteScreenModifier.systemBarsPadding().padding(horizontal = 22.dp)
-    ){
-        BackButton(horizontalPadding = 0.dp) {
+        modifier = WhiteScreenModifier
+            .systemBarsPadding()
+    ) {
+        BackButton(
+            horizontalPadding = 22.dp,
+            iconDrawable = R.drawable.btn_vertical_dots
+        ) {
             navController.navigate("DosagePage/$request.medication_id/$request.medication_name")
         }
         HeightSpacer(36.dp)
@@ -508,7 +529,8 @@ fun DosageAlarmPage(
                 fontFamily = pretendard,
                 fontWeight = FontWeight(700),
                 color = gray800,
-            )
+            ),
+            modifier = Modifier.padding(horizontal = 22.dp)
         )
         HeightSpacer(28.dp)
         Text(
@@ -518,13 +540,18 @@ fun DosageAlarmPage(
                 fontFamily = pretendard,
                 fontWeight = FontWeight(600),
                 color = gray800,
-            )
+            ),
+            modifier = Modifier.padding(horizontal = 22.dp)
         )
         HeightSpacer(12.dp)
         RoundTextField(
+            modifier = Modifier.padding(horizontal = 22.dp),
             text = name,
-            textChange = { name = it },
-            placeholder = "1회 복용량을 알려주세요",
+            textChange = {
+                name = it
+                request!!.copy(alert_name = name)
+            },
+            placeholder = "별칭을 적어주세요. 예) 두통약",
             isLogin = false
         )
         HeightSpacer(10.dp)
@@ -535,13 +562,69 @@ fun DosageAlarmPage(
                 fontFamily = pretendard,
                 fontWeight = FontWeight(500),
                 color = gray500,
-            )
+            ),
+            modifier = Modifier.padding(horizontal = 22.dp)
         )
         HeightSpacer(36.dp)
-        Column(
-            modifier = Modifier.fillMaxSize()
-        ){
-
+        Scaffold(
+            modifier = Modifier.fillMaxSize(),
+            containerColor = gray050,
+            bottomBar = {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .noRippleClickable {
+                            if (dosageList.size <= 9) {
+                                dosageList = dosageList.toMutableList().apply {
+                                    add(DosageEntry())
+                                }
+                            } else {
+                                Toast
+                                    .makeText(context, "최대 10개까지 일정을 생성할 수 있어요", Toast.LENGTH_SHORT)
+                                    .show()
+                            }
+                        }
+                        .padding(vertical = 12.dp, horizontal = 22.dp),
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Icon(Icons.Default.Add, contentDescription = "추가", tint = primaryColor)
+                    WidthSpacer(8.dp)
+                    Text(
+                        text = "복약 일정 추가하기",
+                        color = primaryColor,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+        ) { innerPadding ->
+            Column(
+                modifier = Modifier
+                    .padding(innerPadding)
+                    .fillMaxSize()
+                    .padding(horizontal = 22.dp)
+                    .verticalScroll(rememberScrollState())
+            ) {
+                dosageList.forEachIndexed { index, entry ->
+                    HeightSpacer(12.dp)
+                    TimeField(
+                        initialAmPm = entry.amPm,
+                        initialHour = entry.hour,
+                        initialMinute = entry.minute,
+                        timeChange = { amPm, hour, minute ->
+                            dosageList = dosageList.toMutableList().apply {
+                                this[index] = entry.copy(amPm = amPm, hour = hour, minute = minute)
+                            }
+                        },
+                        alarmChecked = entry.alarm_on_off ?: true,
+                        onAlarmToggle = { isChecked ->
+                            dosageList = dosageList.toMutableList().apply {
+                                this[index] = entry.copy(alarm_on_off = isChecked)
+                            }
+                        }
+                    )
+                }
+                HeightSpacer(80.dp)
+            }
         }
     }
 }

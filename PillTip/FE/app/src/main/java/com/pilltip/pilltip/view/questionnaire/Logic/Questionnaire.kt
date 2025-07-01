@@ -4,7 +4,6 @@ data class DosageEntry(
     var amPm: String? = null,
     var hour: Int? = null,
     var minute: Int? = null,
-    var dose: Int? = null,
-    var doseCount: String = "회",
-    var isDropdownExpanded: Boolean = false
+    var alarm_on_off : Boolean? = true,
+    val dosageUnit: String = "회"
 )

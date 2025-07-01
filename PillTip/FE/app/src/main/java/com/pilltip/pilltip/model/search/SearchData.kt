@@ -104,8 +104,8 @@ data class DosageSchedule(
     val hour: Int,
     val minute: Int,
     val period: String, // AM or PM
-    val dosage_amount: Double,
-    val dosage_unit: String
+    val dosageUnit: String,
+    val alarmOnOff: Boolean
 )
 
 data class RegisterDosageResponse(
@@ -128,8 +128,8 @@ data class DosageScheduleDetail(
     val hour: Int,
     val minute: Int,
     val period: String,
-    val dosageAmount: Double,
-    val dosageUnit: String
+    val dosageUnit: String,
+    val alarmOnOff: Boolean
 )
 
 /**
@@ -149,8 +149,10 @@ data class TakingPillSummaryData(
 data class TakingPillSummary(
     val medicationId: Long,
     val medicationName: String,
+    val alarmName: String,
     val startDate: String, // yyyy-MM-dd
-    val endDate: String
+    val endDate: String,
+    val dosageAmount: Double
 )
 
 /**

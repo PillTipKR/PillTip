@@ -1271,10 +1271,10 @@ fun ProfilePage(
         ProfileStepDescription("닉네임")
         HeightSpacer(12.dp)
         RoundTextField(
-            nickname,
+            text = nickname,
             textChange = { nickname = it },
-            "닉네임을 입력해주세요",
-            false
+            placeholder = "닉네임을 입력해주세요",
+            isLogin = false
         )
         HeightSpacer(28.dp)
         ProfileStepDescription("성별")

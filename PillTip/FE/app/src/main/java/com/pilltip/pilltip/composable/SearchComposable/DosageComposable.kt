@@ -41,6 +41,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.pilltip.pilltip.R
 import com.pilltip.pilltip.composable.HeightSpacer
+import com.pilltip.pilltip.composable.IosButton
 import com.pilltip.pilltip.composable.NextButton
 import com.pilltip.pilltip.composable.WheelColumn
 import com.pilltip.pilltip.composable.noRippleClickable
@@ -59,7 +60,9 @@ fun TimeField(
     initialAmPm: String?,
     initialHour: Int?,
     initialMinute: Int?,
-    timeChange: (String, Int, Int) -> Unit
+    timeChange: (String, Int, Int) -> Unit,
+    alarmChecked: Boolean,
+    onAlarmToggle: (Boolean) -> Unit
 ) {
     var selectedHour by remember { mutableStateOf<Int?>(null) }
     var selectedMinute by remember { mutableStateOf<Int?>(null) }
@@ -112,10 +115,9 @@ fun TimeField(
                 )
             }
 
-            Image(
-                imageVector = ImageVector.vectorResource(R.drawable.btn_right_gray_arrow),
-                contentDescription = "Time BottomSheet 열기",
-                modifier = Modifier.size(20.dp)
+            IosButton(
+                checked = alarmChecked,
+                onCheckedChange = { onAlarmToggle(it) }
             )
         }
     }
