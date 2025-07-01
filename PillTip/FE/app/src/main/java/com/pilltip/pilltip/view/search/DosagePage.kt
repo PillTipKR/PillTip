@@ -55,15 +55,22 @@ import com.pilltip.pilltip.composable.SearchComposable.TimeField
 import com.pilltip.pilltip.composable.WhiteScreenModifier
 import com.pilltip.pilltip.composable.WidthSpacer
 import com.pilltip.pilltip.composable.noRippleClickable
+import com.pilltip.pilltip.model.search.DosageSchedule
+import com.pilltip.pilltip.model.search.RegisterDosageRequest
+import com.pilltip.pilltip.model.search.SearchHiltViewModel
 import com.pilltip.pilltip.ui.theme.gray800
 import com.pilltip.pilltip.ui.theme.pretendard
 import com.pilltip.pilltip.ui.theme.primaryColor
 import com.pilltip.pilltip.view.questionnaire.Logic.DosageEntry
+import com.pilltip.pilltip.view.search.Logic.mapPeriod
 import java.time.LocalDate
 
 @Composable
 fun DosagePage(
-    navController: NavController
+    navController: NavController,
+    searchViewModel: SearchHiltViewModel,
+    drugId: Long,
+    drugName: String
 ) {
     val context = LocalContext.current
     var name by remember { mutableStateOf("") }
@@ -378,9 +385,40 @@ fun DosagePage(
             text = "등록하기",
             buttonColor = if (isFormValid) Color(0xFF348ADF) else primaryColor
         ) {
+            if (isFormValid) {
+                val daysOfWeekLabels = listOf("MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN")
+                val selectedWeekdays = daysOfWeekLabels.filterIndexed { i, _ -> selectedDays[i] }
 
+                val request = RegisterDosageRequest(
+                    medication_id = drugId,
+                    medication_name = drugName,
+                    start_date = "%04d-%02d-%02d".format(startYear, startMonth, startDay),
+                    end_date = "%04d-%02d-%02d".format(endYear, endMonth, endDay),
+                    alert_name = name,
+                    days_of_week = selectedWeekdays,
+                    dosage_schedules = dosageList.map {
+                        DosageSchedule(
+                            hour = it.hour!!,
+                            minute = it.minute!!,
+                            period = mapPeriod(it.amPm!!),
+                            dosage_amount = it.dose!!.toDouble(),
+                            dosage_unit = it.doseCount
+                        )
+                    }
+                )
+
+                searchViewModel.registerDosage(request)
+
+                Toast.makeText(context, "복약 일정이 등록되었어요!", Toast.LENGTH_SHORT).show()
+
+                navController.navigate("DetailPage") {
+                    popUpTo(navController.previousBackStackEntry?.destination?.route ?: "") {
+                        inclusive = true
+                    }
+                }
+            } else {
+                Toast.makeText(context, "모든 항목을 올바르게 입력해주세요.", Toast.LENGTH_SHORT).show()
+            }
         }
     }
-
-
 }

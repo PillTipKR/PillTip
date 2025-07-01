@@ -25,6 +25,8 @@ import com.oauth2.User.entity.UserProfile;
 import com.oauth2.User.service.UserProfileService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.oauth2.User.dto.TakingPillSummaryResponse;
+import com.oauth2.User.dto.TakingPillDetailResponse;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -151,17 +153,18 @@ public class AuthController {
 
     // 복용 중인 약 추가
     @PostMapping("/taking-pill")
-    public ResponseEntity<ApiResponse<UserProfile>> addTakingPill(
+    public ResponseEntity<ApiResponse<TakingPillDetailResponse>> addTakingPill(
             @AuthenticationPrincipal User user,
             @RequestBody TakingPillRequest request) {
         logger.info("Received addTakingPill request for user: {}", user.getId());
         logger.debug("TakingPillRequest details: {}", request);
         
         try {
-            UserProfile userProfile = userProfileService.addTakingPill(user, request);
+            userProfileService.addTakingPill(user, request);
+            TakingPillDetailResponse takingPillDetail = userProfileService.getTakingPillDetail(user);
             logger.info("Successfully added taking pill for user: {}", user.getId());
             return ResponseEntity.status(201)
-                .body(ApiResponse.success("Taking pill added successfully", userProfile));
+                .body(ApiResponse.success("Taking pill added successfully", takingPillDetail));
         } catch (Exception e) {
             logger.error("Error adding taking pill for user: {} - Error: {}", user.getId(), e.getMessage(), e);
             return ResponseEntity.status(400)
@@ -171,17 +174,18 @@ public class AuthController {
 
     // 복용 중인 약 삭제
     @DeleteMapping("/taking-pill/{medicationId}")
-    public ResponseEntity<ApiResponse<UserProfile>> deleteTakingPill(
+    public ResponseEntity<ApiResponse<TakingPillSummaryResponse>> deleteTakingPill(
             @AuthenticationPrincipal User user,
             @PathVariable String medicationId) {
         logger.info("Received deleteTakingPill request for user: {}", user.getId());
         logger.debug("Medication ID to delete: {}", medicationId);
         
         try {
-            UserProfile userProfile = userProfileService.deleteTakingPill(user, medicationId);
+            userProfileService.deleteTakingPill(user, medicationId);
+            TakingPillSummaryResponse takingPillSummary = userProfileService.getTakingPillSummary(user);
             logger.info("Successfully deleted taking pill for user: {}", user.getId());
             return ResponseEntity.status(200)
-                .body(ApiResponse.success("Taking pill deleted successfully", userProfile));
+                .body(ApiResponse.success("Taking pill deleted successfully", takingPillSummary));
         } catch (Exception e) {
             logger.error("Error deleting taking pill for user: {} - Error: {}", user.getId(), e.getMessage(), e);
             return ResponseEntity.status(400)
@@ -190,20 +194,28 @@ public class AuthController {
     }
 
     // 복용 중인 약 수정
-    @PutMapping("/taking-pill")
-    public ResponseEntity<ApiResponse<UserProfile>> updateTakingPill(
+    @PutMapping("/taking-pill/{medicationId}")
+    public ResponseEntity<ApiResponse<TakingPillDetailResponse>> updateTakingPill(
             @AuthenticationPrincipal User user,
+            @PathVariable String medicationId,
             @RequestBody TakingPillRequest request) {
-        logger.info("Received updateTakingPill request for user: {}", user.getId());
+        logger.info("Received updateTakingPill request for user: {} - Medication ID: {}", user.getId(), medicationId);
         logger.debug("TakingPillRequest details: {}", request);
         
         try {
-            UserProfile userProfile = userProfileService.updateTakingPill(user, request);
-            logger.info("Successfully updated taking pill for user: {}", user.getId());
+            // 요청의 medicationId와 경로 파라미터의 medicationId가 일치하는지 확인
+            if (!medicationId.equals(request.getMedicationId().toString())) {
+                return ResponseEntity.status(400)
+                    .body(ApiResponse.error("Path medication ID and request medication ID do not match", null));
+            }
+            
+            userProfileService.updateTakingPill(user, request);
+            TakingPillDetailResponse takingPillDetail = userProfileService.getTakingPillDetail(user);
+            logger.info("Successfully updated taking pill for user: {} - Medication ID: {}", user.getId(), medicationId);
             return ResponseEntity.status(200)
-                .body(ApiResponse.success("Taking pill updated successfully", userProfile));
+                .body(ApiResponse.success("Taking pill updated successfully", takingPillDetail));
         } catch (Exception e) {
-            logger.error("Error updating taking pill for user: {} - Error: {}", user.getId(), e.getMessage(), e);
+            logger.error("Error updating taking pill for user: {} - Medication ID: {} - Error: {}", user.getId(), medicationId, e.getMessage(), e);
             return ResponseEntity.status(400)
                 .body(ApiResponse.error("Failed to update taking pill: " + e.getMessage(), null));
         }
@@ -211,29 +223,42 @@ public class AuthController {
 
     // 복용 중인 약 조회
     @GetMapping("/taking-pill")
-    public ResponseEntity<ApiResponse<UserProfile>> getTakingPill(
+    public ResponseEntity<ApiResponse<TakingPillSummaryResponse>> getTakingPill(
             @AuthenticationPrincipal User user) {
         logger.info("Received getTakingPill request for user: {}", user.getId());
         
         try {
-            UserProfile userProfile = userProfileService.getTakingPill(user);
-            logger.info("Successfully retrieved taking pill for user: {}", user.getId());
+            TakingPillSummaryResponse takingPillSummary = userProfileService.getTakingPillSummary(user);
+            logger.info("Successfully retrieved taking pill summary for user: {}", user.getId());
             return ResponseEntity.status(200)
-                .body(ApiResponse.success("Taking pill retrieved successfully", userProfile));
+                .body(ApiResponse.success("Taking pill summary retrieved successfully", takingPillSummary));
         } catch (Exception e) {
-            logger.error("Error retrieving taking pill for user: {} - Error: {}", user.getId(), e.getMessage(), e);
+            logger.error("Error retrieving taking pill summary for user: {} - Error: {}", user.getId(), e.getMessage(), e);
             return ResponseEntity.status(400)
-                .body(ApiResponse.error("Failed to retrieve taking pill: " + e.getMessage(), null));
+                .body(ApiResponse.error("Failed to retrieve taking pill summary: " + e.getMessage(), null));
         }
     }
 
-    // 임신 여부 업데이트
-    @PutMapping("/pregnant")
-    public ResponseEntity<ApiResponse<UserProfile>> updatePregnant(
+    // 특정 약의 상세 정보 조회
+    @GetMapping("/taking-pill/{medicationId}")
+    public ResponseEntity<ApiResponse<TakingPillDetailResponse.TakingPillDetail>> getTakingPillDetail(
             @AuthenticationPrincipal User user,
-            @RequestParam boolean pregnant) {
-        UserProfile userProfile = userProfileService.updatePregnant(user, pregnant);
-        return ResponseEntity.status(200)
-            .body(ApiResponse.success("Pregnant updated successfully", userProfile));
+            @PathVariable String medicationId) {
+        logger.info("Received getTakingPillDetail request for user: {} - Medication ID: {}", user.getId(), medicationId);
+        
+        try {
+            TakingPillDetailResponse.TakingPillDetail pillDetail = userProfileService.getTakingPillDetailById(user, Long.parseLong(medicationId));
+            logger.info("Successfully retrieved taking pill detail for user: {} - Medication ID: {}", user.getId(), medicationId);
+            return ResponseEntity.status(200)
+                .body(ApiResponse.success("Taking pill detail retrieved successfully", pillDetail));
+        } catch (NumberFormatException e) {
+            logger.error("Invalid medication ID format for user: {} - Medication ID: {}", user.getId(), medicationId);
+            return ResponseEntity.status(400)
+                .body(ApiResponse.error("Invalid medication ID format", null));
+        } catch (Exception e) {
+            logger.error("Error retrieving taking pill detail for user: {} - Medication ID: {} - Error: {}", user.getId(), medicationId, e.getMessage(), e);
+            return ResponseEntity.status(400)
+                .body(ApiResponse.error("Failed to retrieve taking pill detail: " + e.getMessage(), null));
+        }
     }
 }

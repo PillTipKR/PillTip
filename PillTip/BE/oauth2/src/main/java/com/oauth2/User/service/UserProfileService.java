@@ -1,6 +1,8 @@
 package com.oauth2.User.service;
 
 import com.oauth2.User.dto.TakingPillRequest;
+import com.oauth2.User.dto.TakingPillSummaryResponse;
+import com.oauth2.User.dto.TakingPillDetailResponse;
 import com.oauth2.User.entity.User;
 import com.oauth2.User.entity.UserProfile;
 import com.oauth2.User.repository.UserProfileRepository;
@@ -73,6 +75,103 @@ public class UserProfileService {
     public UserProfile getTakingPill(User user) {
         return userProfileRepository.findByUserId(user.getId())
             .orElseThrow(() -> new RuntimeException("User profile not found"));
+    }
+
+    /**
+     * 복용 중인 약 정보를 요약 형태로 반환합니다.
+     * @param user 현재 로그인한 사용자
+     * @return 복용 중인 약 정보 요약
+     */
+    public TakingPillSummaryResponse getTakingPillSummary(User user) {
+        UserProfile userProfile = userProfileRepository.findByUserId(user.getId())
+            .orElseThrow(() -> new RuntimeException("User profile not found"));
+
+        List<TakingPillRequest> takingPills = getTakingPillsList(userProfile);
+        
+        List<TakingPillSummaryResponse.TakingPillSummary> summaries = takingPills.stream()
+            .map(pill -> TakingPillSummaryResponse.TakingPillSummary.builder()
+                .medicationId(pill.getMedicationId())
+                .medicationName(pill.getMedicationName())
+                .startDate(pill.getStartDate())
+                .endDate(pill.getEndDate())
+                .build())
+            .collect(Collectors.toList());
+        
+        return TakingPillSummaryResponse.builder()
+            .takingPills(summaries)
+            .build();
+    }
+
+    /**
+     * 복용 중인 약 정보를 상세 형태로 반환합니다.
+     * @param user 현재 로그인한 사용자
+     * @return 복용 중인 약 정보 상세
+     */
+    public TakingPillDetailResponse getTakingPillDetail(User user) {
+        UserProfile userProfile = userProfileRepository.findByUserId(user.getId())
+            .orElseThrow(() -> new RuntimeException("User profile not found"));
+
+        List<TakingPillRequest> takingPills = getTakingPillsList(userProfile);
+        
+        List<TakingPillDetailResponse.TakingPillDetail> details = takingPills.stream()
+            .map(pill -> TakingPillDetailResponse.TakingPillDetail.builder()
+                .medicationId(pill.getMedicationId())
+                .medicationName(pill.getMedicationName())
+                .startDate(pill.getStartDate())
+                .endDate(pill.getEndDate())
+                .alertName(pill.getAlertName())
+                .daysOfWeek(pill.getDaysOfWeek())
+                .dosageSchedules(pill.getDosageSchedules().stream()
+                    .map(schedule -> TakingPillDetailResponse.DosageScheduleDetail.builder()
+                        .hour(schedule.getHour())
+                        .minute(schedule.getMinute())
+                        .period(schedule.getPeriod())
+                        .dosageAmount(schedule.getDosageAmount())
+                        .dosageUnit(schedule.getDosageUnit())
+                        .build())
+                    .collect(Collectors.toList()))
+                .build())
+            .collect(Collectors.toList());
+        
+        return TakingPillDetailResponse.builder()
+            .takingPills(details)
+            .build();
+    }
+
+    /**
+     * 특정 약의 상세 정보를 조회합니다.
+     * @param user 현재 로그인한 사용자
+     * @param medicationId 약품 ID
+     * @return 특정 약의 상세 정보
+     */
+    public TakingPillDetailResponse.TakingPillDetail getTakingPillDetailById(User user, Long medicationId) {
+        UserProfile userProfile = userProfileRepository.findByUserId(user.getId())
+            .orElseThrow(() -> new RuntimeException("User profile not found"));
+
+        List<TakingPillRequest> takingPills = getTakingPillsList(userProfile);
+        
+        TakingPillRequest targetPill = takingPills.stream()
+            .filter(pill -> pill.getMedicationId().equals(medicationId))
+            .findFirst()
+            .orElseThrow(() -> new RuntimeException("Medication not found with ID: " + medicationId));
+        
+        return TakingPillDetailResponse.TakingPillDetail.builder()
+            .medicationId(targetPill.getMedicationId())
+            .medicationName(targetPill.getMedicationName())
+            .startDate(targetPill.getStartDate())
+            .endDate(targetPill.getEndDate())
+            .alertName(targetPill.getAlertName())
+            .daysOfWeek(targetPill.getDaysOfWeek())
+            .dosageSchedules(targetPill.getDosageSchedules().stream()
+                .map(schedule -> TakingPillDetailResponse.DosageScheduleDetail.builder()
+                    .hour(schedule.getHour())
+                    .minute(schedule.getMinute())
+                    .period(schedule.getPeriod())
+                    .dosageAmount(schedule.getDosageAmount())
+                    .dosageUnit(schedule.getDosageUnit())
+                    .build())
+                .collect(Collectors.toList()))
+            .build();
     }
 
     public UserProfile updatePregnant(User user, boolean pregnant) {

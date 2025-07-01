@@ -79,6 +79,7 @@ import com.pilltip.pilltip.R
 import com.pilltip.pilltip.composable.BackButton
 import com.pilltip.pilltip.composable.HeightSpacer
 import com.pilltip.pilltip.composable.NextButton
+import com.pilltip.pilltip.composable.QuestionnaireComposable.InformationBox
 import com.pilltip.pilltip.composable.SearchComposable.AutoCompleteList
 import com.pilltip.pilltip.composable.SearchComposable.PillSearchField
 import com.pilltip.pilltip.composable.SearchComposable.SearchTag
@@ -355,7 +356,7 @@ fun EssentialPage(
             ),
             text = "동의하기",
             onClick = {
-                if (isEssentialChecked && isOptionalChecked) navController.navigate("AreYouTakingPage")
+                if (isEssentialChecked && isOptionalChecked) navController.navigate("AreYouPage/약")
             }
         )
     }

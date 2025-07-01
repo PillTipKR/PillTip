@@ -2,6 +2,7 @@ package com.pilltip.pilltip.view.search
 
 import android.content.Intent
 import android.graphics.drawable.Icon
+import android.net.Uri
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -743,7 +744,7 @@ fun DetailPage(
                             buttonColor = Color.White,
                             textColor = primaryColor,
                             onClick = {
-                                navController.navigate("DosagePage")
+                                navController.navigate("DosagePage/${detail.id}/${Uri.encode(detail.name)}")
                             }
                         )
                         NextButton(
@@ -803,7 +804,7 @@ fun DrugInfoTab(
         HeightSpacer(12.dp)
         DashedBorderBox(
             onRegisterClick = {
-                navController.navigate("AreYouPage/약")
+                navController.navigate("QuestionnairePage")
             }
         )
         Row(
