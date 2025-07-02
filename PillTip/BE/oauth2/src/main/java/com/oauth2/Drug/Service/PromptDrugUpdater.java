@@ -1,9 +1,9 @@
 package com.oauth2.Drug.Service;
 
 import com.oauth2.Drug.Domain.*;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.text.Normalizer;
 import java.util.List;

@@ -4,6 +4,7 @@ package com.oauth2.User.service;
 
 import com.oauth2.User.dto.SignupRequest;
 import com.oauth2.User.entity.*;
+import com.oauth2.User.repository.FCMTokenRepository;
 import com.oauth2.User.repository.UserRepository;
 import com.oauth2.User.dto.OAuth2UserInfo;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +23,7 @@ public class SignupService {
     private final PasswordEncoder passwordEncoder; //비밀번호 암호화
     private final TokenService tokenService;
     private final OAuth2Service oauth2Service;
+    private final FCMTokenRepository fcmTokenRepository;
 
     //회원가입 요청 처리
     public User signup(SignupRequest request) {
@@ -70,6 +72,7 @@ public class SignupService {
         FCMToken fcmToken = new FCMToken();
         fcmToken.setLoggedIn(true);
         fcmToken.setUser(user);
+        fcmTokenRepository.save(fcmToken);
         user.setFCMToken(fcmToken);
 
         return userRepository.save(user);

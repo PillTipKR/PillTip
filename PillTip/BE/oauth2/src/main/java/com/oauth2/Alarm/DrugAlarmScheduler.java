@@ -20,39 +20,39 @@ public class DrugAlarmScheduler {
 
     private final AlarmService alarmService;
     private final UserRepository userRepository;
+    private final ObjectMapper objectMapper;
 
-    @Scheduled(cron = "0 * * * * *") // 매 분마다 실행
+    @Scheduled(cron = "0 * * * * *")
     public void dispatchMedicationAlarms() throws JsonProcessingException {
         LocalTime now = LocalTime.now();
-        ObjectMapper mapper = new ObjectMapper();
 
         List<User> users = userRepository.findAllActiveUsersWithPillInfo();
 
         for (User user : users) {
-            String json = user.getUserProfile().getTakingPills(); // 복약 정보가 저장된 JSON 문자열
+            String json = user.getUserProfile().getTakingPills();
+            if (json == null || json.isBlank()) {
+                System.out.println("복약 JSON 없음 - userId: " + user.getId());
+                continue; // JSON이 없으면 skip
+            }else
+                System.out.println("복약 JSON 존재! - userId: " + user.getId());
 
-            List<TakingPillRequest> pills = mapper.readValue(json, new TypeReference<>() {});
+            List<TakingPillRequest> pills = objectMapper.readValue(json, new TypeReference<>() {});
 
             for (TakingPillRequest pill : pills) {
-                // 호출부
                 if (!pill.matchesToday(LocalDate.now())) continue;
 
                 for (TakingPillRequest.DosageSchedule ds : pill.getDosageSchedules()) {
                     int targetHour = to24Hour(ds.getHour(), ds.getPeriod());
                     if (targetHour == now.getHour() && ds.getMinute() == now.getMinute()) {
-                        // 알림 전송
-                        alarmService.sendMedicationAlarm(user.getFCMToken(), pill.getAlarmName(), pill.getMedicationName() + " 복약할 시간이에요!");
+                        alarmService.sendMedicationAlarm(user.getFCMToken(), pill.getAlarmName(), pill.getMedicationName());
                     }
                 }
             }
         }
     }
 
-
     public int to24Hour(Integer hour, String period) {
-        if (hour == 12) hour = 0; // 12 AM = 0시
+        if (hour == 12) hour = 0;
         return "PM".equalsIgnoreCase(period) ? hour + 12 : hour;
     }
-
-
 }
