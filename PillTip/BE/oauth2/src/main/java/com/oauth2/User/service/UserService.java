@@ -10,6 +10,7 @@ import com.oauth2.User.entity.FCMToken;
 import com.oauth2.User.entity.LoginType;
 import com.oauth2.User.entity.User;
 import com.oauth2.User.entity.UserToken;
+import com.oauth2.User.repository.FCMTokenRepository;
 import com.oauth2.User.repository.UserRepository;
 import com.oauth2.User.repository.UserProfileRepository;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +27,7 @@ public class UserService {
     private final TokenService tokenService;
     private final UserProfileRepository userProfileRepository;
     private final OAuth2Service oauth2Service;
+    private final FCMTokenRepository fcmTokenRepository;
 
     // ID/PW 로그인
     public LoginResponse login(LoginRequest request) {
@@ -45,6 +47,7 @@ public class UserService {
             FCMToken fcmToken = new FCMToken();
             fcmToken.setLoggedIn(true);
             fcmToken.setUser(user);
+            fcmTokenRepository.save(fcmToken);
             user.setFCMToken(fcmToken);
         }
         return LoginResponse.builder()
@@ -89,6 +92,7 @@ public class UserService {
                 FCMToken fcmToken = new FCMToken();
                 fcmToken.setLoggedIn(true);
                 fcmToken.setUser(user);
+                fcmTokenRepository.save(fcmToken);
                 user.setFCMToken(fcmToken);
             }
             return LoginResponse.builder()

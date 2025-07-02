@@ -1,9 +1,13 @@
 package com.oauth2.Drug.Domain;
 
+import com.oauth2.Review.Domain.Review;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Set;
 
 @Getter
@@ -48,6 +52,8 @@ public class Drug {
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "drug", cascade = CascadeType.ALL)
     private Set<DrugStorageCondition> storageConditions;
 
+    @OneToMany(mappedBy = "drug", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Review> reviews = new ArrayList<>();
 
     // getter, setter 생략
 }

@@ -12,7 +12,6 @@ import com.oauth2.Drug.Domain.DrugEffect;
 import com.oauth2.Drug.Domain.DrugStorageCondition;
 import com.oauth2.Drug.Repository.DrugRepository;
 import com.oauth2.Search.Dto.SearchIndexDTO;
-import com.oauth2.User.dto.TakingPillSummaryResponse;
 import com.oauth2.User.entity.User;
 import com.oauth2.User.service.UserProfileService;
 import lombok.RequiredArgsConstructor;

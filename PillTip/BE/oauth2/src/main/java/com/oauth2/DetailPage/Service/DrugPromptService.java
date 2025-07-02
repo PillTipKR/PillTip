@@ -1,6 +1,5 @@
 package com.oauth2.DetailPage.Service;
 
-import com.oauth2.DUR.Dto.DurTagDto;
 import com.oauth2.DetailPage.Dto.*;
 import com.oauth2.User.dto.TakingPillSummaryResponse;
 import com.oauth2.User.entity.User;

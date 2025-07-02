@@ -3,11 +3,14 @@
 package com.oauth2.User.entity;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.oauth2.Review.Domain.Review;
+import com.oauth2.Review.Domain.ReviewLike;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity //JPA에서 DB테이블과 매핑되는 클래스임을 명시
@@ -79,6 +82,12 @@ public class User {
     @JsonManagedReference
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
     private FCMToken FCMToken;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Review> reviews = new ArrayList<>();
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ReviewLike> likes = new ArrayList<>();
 
     // 유저 문진표 1대 N 관계
     @JsonManagedReference
