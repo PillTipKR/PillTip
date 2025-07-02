@@ -25,16 +25,16 @@ public class PatientQuestionnaireService {
     @Transactional
     public PatientQuestionnaire createQuestionnaire(User user, PatientQuestionnaireRequest request) throws JsonProcessingException {
         String medicationInfoJson = objectMapper.writeValueAsString(
-                toKeyedList(request.getMedicationInfo(), "medication_id")
+                toKeyedList(request.getMedicationInfo(), "medicationId")
         );
         String allergyInfoJson = objectMapper.writeValueAsString(
-                toKeyedList(request.getAllergyInfo(), "allergy_name")
+                toKeyedList(request.getAllergyInfo(), "allergyName")
         );
         String chronicDiseaseInfoJson = objectMapper.writeValueAsString(
-                toKeyedList(request.getChronicDiseaseInfo(), "chronicDisease_name")
+                toKeyedList(request.getChronicDiseaseInfo(), "chronicDiseaseName")
         );
         String surgeryHistoryInfoJson = objectMapper.writeValueAsString(
-                toKeyedList(request.getSurgeryHistoryInfo(), "surgeryHistory_name")
+                toKeyedList(request.getSurgeryHistoryInfo(), "surgeryHistoryName")
         );
 
         PatientQuestionnaire questionnaire = PatientQuestionnaire.builder()
@@ -56,10 +56,24 @@ public class PatientQuestionnaireService {
     private List<Map<String, ?>> toKeyedList(List<PatientQuestionnaireRequest.InfoItem> list, String keyName) {
         if (list == null) return null;
         return list.stream()
-                .map(item -> Map.of(
-                        keyName, item.getId(),
-                        "submitted", item.isSubmitted()
-                ))
+                .map(item -> {
+                    String value = null;
+                    if ("medicationId".equals(keyName)) {
+                        value = item.getMedicationId();
+                    } else if ("allergyName".equals(keyName)) {
+                        value = item.getAllergyName();
+                    } else if ("chronicDiseaseName".equals(keyName)) {
+                        value = item.getChronicDiseaseName();
+                    } else if ("surgeryHistoryName".equals(keyName)) {
+                        value = item.getSurgeryHistoryName();
+                    } else {
+                        value = item.getId();
+                    }
+                    return Map.of(
+                            keyName, value,
+                            "submitted", item.isSubmitted()
+                    );
+                })
                 .collect(Collectors.toList());
     }
 
@@ -95,10 +109,10 @@ public class PatientQuestionnaireService {
         q.setAddress(request.getAddress());
         q.setQuestionnaireName(request.getQuestionnaireName());
         q.setNotes(request.getNotes());
-        q.setMedicationInfo(objectMapper.writeValueAsString(toKeyedList(request.getMedicationInfo(), "medication_id")));
-        q.setAllergyInfo(objectMapper.writeValueAsString(toKeyedList(request.getAllergyInfo(), "allergy_name")));
-        q.setChronicDiseaseInfo(objectMapper.writeValueAsString(toKeyedList(request.getChronicDiseaseInfo(), "chronicDisease_name")));
-        q.setSurgeryHistoryInfo(objectMapper.writeValueAsString(toKeyedList(request.getSurgeryHistoryInfo(), "surgeryHistory_name")));
+        q.setMedicationInfo(objectMapper.writeValueAsString(toKeyedList(request.getMedicationInfo(), "medicationId")));
+        q.setAllergyInfo(objectMapper.writeValueAsString(toKeyedList(request.getAllergyInfo(), "allergyName")));
+        q.setChronicDiseaseInfo(objectMapper.writeValueAsString(toKeyedList(request.getChronicDiseaseInfo(), "chronicDiseaseName")));
+        q.setSurgeryHistoryInfo(objectMapper.writeValueAsString(toKeyedList(request.getSurgeryHistoryInfo(), "surgeryHistoryName")));
         q.setLastModifiedDate(LocalDate.now());
         return q;
     }

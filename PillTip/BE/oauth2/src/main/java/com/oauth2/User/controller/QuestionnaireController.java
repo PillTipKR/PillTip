@@ -106,6 +106,8 @@ public class QuestionnaireController {
                 .body(ApiResponse.error("Failed to check questionnaire availability: " + e.getMessage(), null));
         }
     }
+
+    // ---------------------------------------문진표---------------------------------------
     // 문진표 작성
     @PostMapping("")
     public ResponseEntity<ApiResponse<PatientQuestionnaire>> createQuestionnaire(
@@ -132,7 +134,8 @@ public class QuestionnaireController {
     public ResponseEntity<ApiResponse<java.util.List<com.oauth2.User.dto.PatientQuestionnaireSummaryResponse>>> getUserQuestionnaireList(
             @AuthenticationPrincipal User user) {
         java.util.List<com.oauth2.User.dto.PatientQuestionnaireSummaryResponse> list = patientQuestionnaireService.getUserQuestionnaireSummaries(user);
-        return ResponseEntity.ok(ApiResponse.success("문진표 리스트 조회 성공", list));
+        return ResponseEntity.status(200)
+            .body(ApiResponse.success("문진표 리스트 조회 성공", list));
     }
     // 문진표 삭제
     @DeleteMapping("/{id}")
@@ -140,7 +143,8 @@ public class QuestionnaireController {
             @AuthenticationPrincipal User user,
             @PathVariable Integer id) {
         java.util.List<com.oauth2.User.dto.PatientQuestionnaireSummaryResponse> list = patientQuestionnaireService.deleteQuestionnaireAndReturnList(user, id);
-        return ResponseEntity.ok(ApiResponse.success("문진표 삭제 성공", list));
+        return ResponseEntity.status(200)
+            .body(ApiResponse.success("문진표 삭제 성공", list));
     }
     // 문진표 수정
     @PutMapping("/{id}")

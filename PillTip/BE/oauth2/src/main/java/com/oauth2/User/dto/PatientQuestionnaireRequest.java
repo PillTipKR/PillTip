@@ -29,6 +29,10 @@ public class PatientQuestionnaireRequest {
     @Builder
     public static class InfoItem {
         private String id;
+        private String medicationId;
+        private String allergyName;
+        private String chronicDiseaseName;
+        private String surgeryHistoryName;
         private boolean submitted;
     }
 } 

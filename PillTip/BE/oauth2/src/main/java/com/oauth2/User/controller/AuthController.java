@@ -82,13 +82,18 @@ public class AuthController {
     @GetMapping("/me")
     public ResponseEntity<ApiResponse<UserResponse>> getCurrentUser(@AuthenticationPrincipal User user) {
         if (user == null) {
-            return ResponseEntity.status(401)
+            return ResponseEntity.status(400)
                 .body(ApiResponse.error("User not authenticated", null));
         }
         
-        User currentUser = userService.getCurrentUser(user.getId());
-        return ResponseEntity.status(200)
-            .body(ApiResponse.success(new UserResponse(currentUser)));
+        try {
+            User currentUser = userService.getCurrentUser(user.getId());
+            return ResponseEntity.status(200)
+                .body(ApiResponse.success(new UserResponse(currentUser)));
+        } catch (Exception e) {
+            return ResponseEntity.status(400)
+                .body(ApiResponse.error("Failed to get current user: " + e.getMessage(), null));
+        }
     }
 
     @PostMapping("/logout")
@@ -108,13 +113,18 @@ public class AuthController {
     @PostMapping("/terms")
     public ResponseEntity<ApiResponse<UserResponse>> agreeToTerms(@AuthenticationPrincipal User user) {
         if (user == null) {
-            return ResponseEntity.status(401)
+            return ResponseEntity.status(400)
                 .body(ApiResponse.error("User not authenticated", null));
         }
         
-        User updatedUser = userService.agreeToTerms(user);
-        return ResponseEntity.status(200)
-            .body(ApiResponse.success("Terms agreed successfully", new UserResponse(updatedUser)));
+        try {
+            User updatedUser = userService.agreeToTerms(user);
+            return ResponseEntity.status(200)
+                .body(ApiResponse.success("Terms agreed successfully", new UserResponse(updatedUser)));
+        } catch (Exception e) {
+            return ResponseEntity.status(400)
+                .body(ApiResponse.error("Failed to agree to terms: " + e.getMessage(), null));
+        }
     }
 
     // 닉네임 업데이트
@@ -146,7 +156,7 @@ public class AuthController {
             return ResponseEntity.status(200)
                 .body(ApiResponse.success("Token refreshed successfully", loginResponse));
         } catch (RuntimeException e) {
-            return ResponseEntity.status(401)
+            return ResponseEntity.status(400)
                 .body(ApiResponse.error("Token refresh failed: " + e.getMessage(), null));
         }
     }
@@ -155,13 +165,18 @@ public class AuthController {
     @DeleteMapping("/delete-account")
     public ResponseEntity<ApiResponse<Void>> deleteAccount(@AuthenticationPrincipal User user) {
         if (user == null) {
-            return ResponseEntity.status(401)
+            return ResponseEntity.status(400)
                 .body(ApiResponse.error("User not authenticated", null));
         }
         
-        userService.deleteAccount(user.getId());
-        return ResponseEntity.status(200)
-            .body(ApiResponse.success("Account deleted successfully", null));
+        try {
+            userService.deleteAccount(user.getId());
+            return ResponseEntity.status(200)
+                .body(ApiResponse.success("Account deleted successfully", null));
+        } catch (Exception e) {
+            return ResponseEntity.status(400)
+                .body(ApiResponse.error("Failed to delete account: " + e.getMessage(), null));
+        }
     }
 
     // 복용 중인 약 추가
