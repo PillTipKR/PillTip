@@ -136,7 +136,6 @@ class SearchHiltViewModel @Inject constructor(
             try {
                 val response = dosageRegisterRepo.registerDosage(request)
                 _registerResult.value = response
-                _pillDetail.value = response.data
                 Log.d("DosageRegister", "등록 완료된 복약 정보: ${response.data}")
             } catch (e: Exception) {
                 Log.e("DosageRegister", "복약 등록 실패: ${e.message}")
@@ -155,6 +154,7 @@ class SearchHiltViewModel @Inject constructor(
             try {
                 val list = dosageSummaryRepo.getDosageSummary()
                 _pillSummaryList.value = list
+                Log.d("API Response", _pillSummaryList.value.toString())
             } catch (e: Exception) {
                 Log.e("DosageSummary", "불러오기 실패: ${e.message}")
             }
