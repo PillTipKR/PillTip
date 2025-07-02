@@ -197,7 +197,25 @@ public class DrugCautionService {
         }
     }
 
+    private String removeLeadingParentheses(String name) {
+        while (name.startsWith("(")) {
+            int depth = 0;
+            for (int i = 0; i < name.length(); i++) {
+                if (name.charAt(i) == '(') depth++;
+                else if (name.charAt(i) == ')') {
+                    depth--;
+                    if (depth == 0) {
+                        name = name.substring(i + 1).strip();
+                        break;
+                    }
+                }
+            }
+        }
+        return name.split("\\(")[0];
+    }
+
     private void saveCaution(String productName, DrugCaution.ConditionType conditionTypeStr, String conditionValue, String note) {
+        productName = removeLeadingParentheses(productName);
         List<Drug> drugs = drugRepository.findByNameContaining(productName);
         if (!drugs.isEmpty()) {
             Drug drug = drugs.get(0);
