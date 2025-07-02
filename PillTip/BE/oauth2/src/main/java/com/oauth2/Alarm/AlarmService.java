@@ -38,6 +38,6 @@ public class AlarmService {
     public void getToken(Long userId, String token){
         // 해당 아이디 가진 유저가 존재하는지 검사
         Optional<User> userById = userRepository.findById(userId);
-        userById.ifPresent(user -> user.setFCMToken(new FCMToken(token)));
+        userById.ifPresent(user -> user.getFCMToken().setFCMToken(token));
     }
 }
