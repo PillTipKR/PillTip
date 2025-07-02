@@ -18,10 +18,10 @@ import java.time.LocalDate;
 public class PatientQuestionnaire {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "questionnaire_id")
+    @Column(name = "questionnaireId")
     private Integer questionnaireId;
 
-    @Column(name = "questionnaire_name")
+    @Column(name = "questionnaireName")
     private String questionnaireName; // 문진표 이름
 
     @JsonBackReference
@@ -29,30 +29,30 @@ public class PatientQuestionnaire {
     @JoinColumn(name = "uuid")
     private User user;
 
-    @Column(name = "real_name")
+    @Column(name = "realName")
     private String realName;
 
     @Column(name = "address")
     private String address;
 
-    @Column(name = "issue_date")
+    @Column(name = "issueDate")
     private LocalDate issueDate; // 작성일
 
-    @Column(name = "last_modified_date")
+    @Column(name = "lastModifiedDate")
     private LocalDate lastModifiedDate; // 마지막 수정일
 
     @Column(columnDefinition = "TEXT")
     private String notes; // 추가 메모
 
-    @Column(name = "medication_info", columnDefinition = "TEXT")
+    @Column(name = "medicationInfo", columnDefinition = "TEXT")
     private String medicationInfo;
 
-    @Column(name = "allergy_info", columnDefinition = "TEXT")
+    @Column(name = "allergyInfo", columnDefinition = "TEXT")
     private String allergyInfo;
 
-    @Column(name = "chronic_disease_info", columnDefinition = "TEXT")
+    @Column(name = "chronicDiseaseInfo", columnDefinition = "TEXT")
     private String chronicDiseaseInfo;
 
-    @Column(name = "surgery_history_info", columnDefinition = "TEXT")
+    @Column(name = "surgeryHistoryInfo", columnDefinition = "TEXT")
     private String surgeryHistoryInfo;
 }

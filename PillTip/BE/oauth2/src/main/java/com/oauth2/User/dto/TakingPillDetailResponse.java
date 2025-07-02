@@ -26,7 +26,7 @@ public class TakingPillDetailResponse {
         private String medicationName;                // 약 이름
         private LocalDate startDate;                  // 복약 시작날짜
         private LocalDate endDate;                    // 복약 종료날짜
-        private String alertName;                     // 알림명
+        private String alarmName;                     // 알림명
         private List<String> daysOfWeek;              // 복용 요일
         private Double dosageAmount;                  // 복용량
         private List<DosageScheduleDetail> dosageSchedules; // 복용 스케줄

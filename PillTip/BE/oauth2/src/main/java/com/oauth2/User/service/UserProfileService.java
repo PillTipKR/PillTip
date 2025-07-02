@@ -34,7 +34,9 @@ public class UserProfileService {
         
         // 기존에 같은 약품이 있는지 확인
         boolean exists = takingPills.stream()
-            .anyMatch(pill -> pill.getMedicationId().equals(request.getMedicationId()));
+            .anyMatch(pill -> pill.getMedicationId() != null && 
+                            request.getMedicationId() != null && 
+                            pill.getMedicationId().equals(request.getMedicationId()));
         
         if (exists) {
             throw new RuntimeException("이미 복용 중인 약품입니다.");
@@ -66,7 +68,9 @@ public class UserProfileService {
 
         List<TakingPillRequest> takingPills = getTakingPillsList(userProfile);
         takingPills = takingPills.stream()
-            .map(pill -> pill.getMedicationId().equals(request.getMedicationId()) ? request : pill)
+            .map(pill -> (pill.getMedicationId() != null && 
+                         request.getMedicationId() != null && 
+                         pill.getMedicationId().equals(request.getMedicationId())) ? request : pill)
             .collect(Collectors.toList());
         
         return saveTakingPills(userProfile, takingPills);
@@ -121,10 +125,10 @@ public class UserProfileService {
                 .medicationName(pill.getMedicationName())
                 .startDate(pill.getStartDate())
                 .endDate(pill.getEndDate())
-                .alertName(pill.getAlarmName())
+                .alarmName(pill.getAlarmName())
                 .daysOfWeek(pill.getDaysOfWeek())
                 .dosageAmount(pill.getDosageAmount())
-                .dosageSchedules(pill.getDosageSchedules().stream()
+                .dosageSchedules(pill.getDosageSchedules() == null ? new ArrayList<>() : pill.getDosageSchedules().stream()
                     .map(schedule -> TakingPillDetailResponse.DosageScheduleDetail.builder()
                         .hour(schedule.getHour())
                         .minute(schedule.getMinute())
@@ -163,10 +167,10 @@ public class UserProfileService {
             .medicationName(targetPill.getMedicationName())
             .startDate(targetPill.getStartDate())
             .endDate(targetPill.getEndDate())
-            .alertName(targetPill.getAlarmName())
+            .alarmName(targetPill.getAlarmName())
             .daysOfWeek(targetPill.getDaysOfWeek())
             .dosageAmount(targetPill.getDosageAmount())
-            .dosageSchedules(targetPill.getDosageSchedules().stream()
+            .dosageSchedules(targetPill.getDosageSchedules() == null ? new ArrayList<>() : targetPill.getDosageSchedules().stream()
                 .map(schedule -> TakingPillDetailResponse.DosageScheduleDetail.builder()
                     .hour(schedule.getHour())
                     .minute(schedule.getMinute())
