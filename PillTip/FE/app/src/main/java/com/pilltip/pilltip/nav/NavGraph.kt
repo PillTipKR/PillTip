@@ -117,10 +117,12 @@ fun NavGraph(
             DosagePage(navController, searchHiltViewModel, drugId, drugName)
         }
 
-        composable("DosageAlarmPage") {
+        composable("DosageAlarmPage/{mode}") { backStackEntry ->
+            val mode = backStackEntry.arguments?.getString("mode")?.toBoolean() ?: false
             DosageAlarmPage(
                 navController = navController,
-                searchViewModel = searchHiltViewModel
+                searchViewModel = searchHiltViewModel,
+                isEditMode = mode
             )
         }
 

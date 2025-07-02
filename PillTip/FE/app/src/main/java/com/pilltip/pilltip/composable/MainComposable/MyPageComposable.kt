@@ -97,9 +97,9 @@ fun DrugSummaryCard(
             .border(width = 0.5.dp, color = gray200, shape = RoundedCornerShape(size = 12.dp))
             .padding(0.25.dp)
             .fillMaxWidth()
-            .height(71.dp)
-            .background(color = Color.White, shape = RoundedCornerShape(size = 12.dp))
-            .padding(horizontal = 16.dp, vertical = 16.dp)
+            .height(93.dp)
+            .background(color = Color(0xFFFFFFFF), shape = RoundedCornerShape(size = 12.dp))
+            .padding(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 16.dp)
     ) {
         Column {
             Row(
@@ -110,7 +110,7 @@ fun DrugSummaryCard(
                     style = TextStyle(
                         fontSize = 14.sp,
                         fontFamily = pretendard,
-                        fontWeight = FontWeight.Bold,
+                        fontWeight = FontWeight.W700,
                         color = Color.Black
                     )
                 )
@@ -180,14 +180,23 @@ fun DrugSummaryCard(
                 }
             }
 
-            HeightSpacer(8.dp)
-
+            HeightSpacer(12.dp)
             Text(
-                text = "복약 시작일 : ${pill.startDate} | 복약 종료일 : ${pill.endDate}",
+                text = "복약 시작일 | ${pill.startDate}",
                 style = TextStyle(
                     fontSize = 12.sp,
                     fontFamily = pretendard,
-                    fontWeight = FontWeight.Normal,
+                    fontWeight = FontWeight.W400,
+                    color = gray500
+                )
+            )
+            HeightSpacer(4.dp)
+            Text(
+                text = "복약 종료일 | ${pill.endDate}",
+                style = TextStyle(
+                    fontSize = 12.sp,
+                    fontFamily = pretendard,
+                    fontWeight = FontWeight.W400,
                     color = gray500
                 )
             )
