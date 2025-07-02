@@ -137,6 +137,33 @@ public class QuestionnaireController {
         return ResponseEntity.status(200)
             .body(ApiResponse.success("문진표 리스트 조회 성공", list));
     }
+    
+    // 문진표 상세 조회
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponse<PatientQuestionnaire>> getQuestionnaireById(
+            @AuthenticationPrincipal User user,
+            @PathVariable Integer id) {
+        logger.info("Received getQuestionnaireById request for user: {} - Questionnaire ID: {}", user.getId(), id);
+        
+        try {
+            PatientQuestionnaire questionnaire = patientQuestionnaireService.getQuestionnaireById(user, id);
+            logger.info("Successfully retrieved questionnaire for user: {} - Questionnaire ID: {}", user.getId(), id);
+            return ResponseEntity.status(200)
+                .body(ApiResponse.success("문진표 조회 성공", questionnaire));
+        } catch (IllegalArgumentException e) {
+            logger.error("Questionnaire not found for user: {} - Questionnaire ID: {} - Error: {}", user.getId(), id, e.getMessage());
+            return ResponseEntity.status(404)
+                .body(ApiResponse.error("문진표를 찾을 수 없습니다: " + e.getMessage(), null));
+        } catch (SecurityException e) {
+            logger.error("Access denied for user: {} - Questionnaire ID: {} - Error: {}", user.getId(), id, e.getMessage());
+            return ResponseEntity.status(403)
+                .body(ApiResponse.error("접근 권한이 없습니다: " + e.getMessage(), null));
+        } catch (Exception e) {
+            logger.error("Error retrieving questionnaire for user: {} - Questionnaire ID: {} - Error: {}", user.getId(), id, e.getMessage(), e);
+            return ResponseEntity.status(400)
+                .body(ApiResponse.error("문진표 조회 실패: " + e.getMessage(), null));
+        }
+    }
     // 문진표 삭제
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<java.util.List<com.oauth2.User.dto.PatientQuestionnaireSummaryResponse>>> deleteQuestionnaire(

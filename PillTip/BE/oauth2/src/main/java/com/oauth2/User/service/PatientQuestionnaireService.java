@@ -87,6 +87,18 @@ public class PatientQuestionnaireService {
             ))
             .collect(Collectors.toList());
     }
+    
+    public PatientQuestionnaire getQuestionnaireById(User user, Integer id) {
+        PatientQuestionnaire questionnaire = questionnaireRepository.findById(id)
+            .orElseThrow(() -> new IllegalArgumentException("문진표를 찾을 수 없습니다."));
+        
+        // 본인 문진표만 조회 가능
+        if (!questionnaire.getUser().getId().equals(user.getId())) {
+            throw new SecurityException("본인 문진표만 조회할 수 있습니다.");
+        }
+        
+        return questionnaire;
+    }
 
     @Transactional
     public void deleteQuestionnaire(User user, Integer id) {
