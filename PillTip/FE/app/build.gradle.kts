@@ -74,6 +74,7 @@ dependencies {
     implementation(libs.firebase.auth.ktx)
     implementation(libs.androidx.datastore.core.android)
     implementation("androidx.datastore:datastore-preferences:1.0.0")
+    implementation(libs.firebase.messaging.ktx)
 
     ksp (libs.hilt.compiler)
     implementation(libs.androidx.hilt.navigation.compose)

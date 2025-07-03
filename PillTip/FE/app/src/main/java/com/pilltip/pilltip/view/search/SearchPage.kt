@@ -116,6 +116,7 @@ import com.pilltip.pilltip.ui.theme.gray700
 import com.pilltip.pilltip.ui.theme.gray800
 import com.pilltip.pilltip.ui.theme.pretendard
 import com.pilltip.pilltip.ui.theme.primaryColor
+import com.pilltip.pilltip.view.search.Logic.removeMarkdown
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -828,12 +829,12 @@ fun DrugInfoTab(
         ExportAndCopy(
             headerText = "효능/효과",
             onCopyClicked = {
-                val text = detail.effect.let { "[${it.Type}] ${it.effect}" }
+                val text = removeMarkdown(detail.effect.effect)
                 clipboardManager.setText(AnnotatedString(text))
                 Toast.makeText(context, "복사되었습니다", Toast.LENGTH_SHORT).show()
             },
             onExportClicked = {
-                val text = detail.effect.let { "[${it.Type}] ${it.effect}" }
+                val text = removeMarkdown(detail.effect.effect)
                 shareText(context, "효능/효과", text)
             }
         )
@@ -841,7 +842,7 @@ fun DrugInfoTab(
             item = detail.effect,
             collapsedHeight = 186.dp
         ) { effect ->
-            Text("[${effect.Type}] ${effect.effect}")
+            Text(removeMarkdown(effect.effect))
         }
         HeightSpacer(42.dp)
         ExportAndCopy(
@@ -869,12 +870,12 @@ fun DrugInfoTab(
         ExportAndCopy(
             headerText = "용량/용법",
             onCopyClicked = {
-                val text = "[${detail.usage.Type}] ${detail.usage.effect}"
+                val text = removeMarkdown(detail.usage.effect)
                 clipboardManager.setText(AnnotatedString(text))
                 Toast.makeText(context, "복사되었습니다", Toast.LENGTH_SHORT).show()
             },
             onExportClicked = {
-                val text = "[${detail.usage.Type}] ${detail.usage.effect}"
+                val text = removeMarkdown(detail.usage.effect)
                 shareText(context, "용량/용법", text)
             }
         )
@@ -882,18 +883,18 @@ fun DrugInfoTab(
             item = detail.usage,
             collapsedHeight = 186.dp
         ) { effect ->
-            Text("[${effect.Type}] ${effect.effect}")
+            Text(removeMarkdown(effect.effect))
         }
         HeightSpacer(42.dp)
         ExportAndCopy(
             headerText = "주의사항",
             onCopyClicked = {
-                val text = "[${detail.caution.Type}] ${detail.caution.effect}"
+                val text = removeMarkdown(detail.caution.effect)
                 clipboardManager.setText(AnnotatedString(text))
                 Toast.makeText(context, "복사되었습니다", Toast.LENGTH_SHORT).show()
             },
             onExportClicked = {
-                val text = "[${detail.caution.Type}] ${detail.caution.effect}"
+                val text = removeMarkdown(detail.caution.effect)
                 shareText(context, "주의사항", text)
             }
         )
@@ -901,7 +902,7 @@ fun DrugInfoTab(
             item = detail.caution,
             collapsedHeight = 186.dp
         ) { effect ->
-            Text("[${effect.Type}] ${effect.effect}")
+            Text(removeMarkdown(effect.effect))
         }
         HeightSpacer(100.dp)
     }

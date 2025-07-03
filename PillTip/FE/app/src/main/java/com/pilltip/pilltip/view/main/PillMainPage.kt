@@ -1,5 +1,6 @@
 package com.pilltip.pilltip.view.main
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -33,6 +34,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
+import com.google.firebase.messaging.FirebaseMessaging
 import com.pilltip.pilltip.R
 import com.pilltip.pilltip.composable.HeightSpacer
 import com.pilltip.pilltip.composable.MainComposable.AnnouncementCard
@@ -56,6 +58,16 @@ fun PillMainPage(
     var selectedTab by remember { mutableStateOf(BottomTab.Home) }
     val systemUiController = rememberSystemUiController()
     HandleBackPressToExitApp(navController)
+    FirebaseMessaging.getInstance().token
+        .addOnCompleteListener { task ->
+            if (task.isSuccessful) {
+                val token = task.result
+                Log.d("FCM", "토큰: $token")
+                searchHiltViewModel.sendFcmToken(token)
+            } else {
+                Log.w("FCM", "토큰 받기 실패", task.exception)
+            }
+        }
 
     SideEffect {
         systemUiController.setStatusBarColor(

@@ -37,8 +37,8 @@ class SearchHiltViewModel @Inject constructor(
     private val dosageSummaryRepo: DosageSummaryRepository,
     private val dosageDetailRepo: DosageDetailRepository,
     private val dosageDeleteRepo: DosageDeleteRepository,
-    private val dosageModifyRepo: DosageModifyRepository
-
+    private val dosageModifyRepo: DosageModifyRepository,
+    private val fcmRepo: FcmTokenRepository
 ) : ViewModel() {
 
     /* 약품명 자동 완성 API*/
@@ -213,6 +213,19 @@ class SearchHiltViewModel @Inject constructor(
         pendingDosageRequest = null
     }
 
+    /* FCM 토큰 */
+    fun sendFcmToken(token: String) {
+        viewModelScope.launch {
+            try {
+                val result = fcmRepo.sendToken(token)
+                Log.d("FCM", "서버 응답: ${result.status} - ${result.message}")
+            } catch (e: Exception) {
+                Log.e("FCM", "토큰 전송 실패: ${e.message}")
+            }
+        }
+    }
+
+
 }
 
 @HiltViewModel
@@ -380,4 +393,14 @@ object RepositoryModule {
     @Provides
     fun provideQuestionnaireRepository(api: QuestionnaireApi): QuestionnaireRepository =
         QuestionnaireRepositoryImpl(api)
+
+    @Provides
+    fun provideFcmApi(@Named("SearchRetrofit") retrofit: Retrofit): FcmApi {
+        return retrofit.create(FcmApi::class.java)
+    }
+
+    @Provides
+    fun provideFcmTokenRepository(api: FcmApi): FcmTokenRepository {
+        return FcmTokenRepositoryImpl(api)
+    }
 }

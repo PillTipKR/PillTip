@@ -209,3 +209,27 @@ class QuestionnaireRepositoryImpl(
         api.submitQuestionnaire(request)
     }
 }
+
+/**
+ * FCM 토큰
+ */
+//SearcgRepository.kt
+interface FcmApi {
+    @POST("/api/token")
+    suspend fun sendFcmToken(
+        @Query("token") token: String
+    ): FcmTokenResponse
+}
+
+interface FcmTokenRepository {
+    suspend fun sendToken(token: String): FcmTokenResponse
+}
+
+class FcmTokenRepositoryImpl(
+    private val api: FcmApi
+) : FcmTokenRepository {
+    override suspend fun sendToken(token: String): FcmTokenResponse {
+        return api.sendFcmToken(token)
+    }
+}
+
