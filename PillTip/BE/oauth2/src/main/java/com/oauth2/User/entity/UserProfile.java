@@ -50,10 +50,6 @@ public class UserProfile {
     @Column(name = "health_status", columnDefinition = "TEXT")
     private String healthStatus;
 
-    @Column(name = "taking_pills", columnDefinition = "TEXT")
-    @Setter
-    private String takingPills;
-
     @Column(name = "disease_info", columnDefinition = "TEXT")
     private String diseaseInfo;
 
@@ -66,7 +62,7 @@ public class UserProfile {
 
     @Builder
     public UserProfile(User user, Integer age, Gender gender, BigDecimal height, BigDecimal weight,
-                      LocalDate birthDate, String phone, String healthStatus, String takingPills,
+                      LocalDate birthDate, String phone, String healthStatus,
                       String diseaseInfo, String allergyInfo) {
         this.user = user;
         this.age = age;
@@ -76,7 +72,6 @@ public class UserProfile {
         this.birthDate = birthDate;
         this.phone = phone;
         this.healthStatus = healthStatus;
-        this.takingPills = takingPills;
         this.diseaseInfo = diseaseInfo;
         this.allergyInfo = allergyInfo;
     }

@@ -135,7 +135,6 @@ public class SignupService {
                 .weight(new BigDecimal(request.getWeight()))
                 .phone(validatePhoneNumber(request.getPhone()))
                 .healthStatus("")
-                .takingPills("")
                 .diseaseInfo("")
                 .allergyInfo("")
                 .build();

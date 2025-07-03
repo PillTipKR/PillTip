@@ -94,6 +94,11 @@ public class User {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<PatientQuestionnaire> questionnaires;
 
+    // 복용 중인 약 1대 N 관계
+    @JsonManagedReference
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    private List<TakingPill> takingPills;
+
     @PrePersist // 엔티티 저장 전 실행
     protected void onCreate() {
         if (createdAt == null) {

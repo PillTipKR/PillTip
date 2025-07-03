@@ -1,7 +1,12 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import styles from "./QuestionnaireDisplay.module.css";
+import BasicInfo from "./BasicInfo";
+import MedicationInfoBlock from "./MedicationInfo";
+import AllergyInfoBlock from "./AllergyInfo";
+import ChronicDiseaseInfoBlock from "./ChronicDiseaseInfo";
+import SurgeryHistoryInfoBlock from "./SurgeryHistoryInfo";
+import Notes from "./Notes";
 import {
   MedicationInfo,
   AllergyInfo,
@@ -13,18 +18,47 @@ import {
 export default function QuestionnaireDisplay({
   questionnaire,
 }: QuestionnaireDisplayProps) {
-  const router = useRouter();
+  // JSON 문자열을 파싱 (snake_case, camelCase 모두 지원)
+  function safeParse(str: string) {
+    try {
+      return str ? JSON.parse(str) : [];
+    } catch {
+      return [];
+    }
+  }
 
-  // JSON 문자열을 파싱
-  const medicationInfo: MedicationInfo[] = JSON.parse(
-    questionnaire.data.medicationInfo
+  // medicationInfo: medication_id or medicationId
+  const medicationInfoRaw = questionnaire.data.medicationInfo;
+  const medicationInfo = safeParse(medicationInfoRaw).map((item: any) => ({
+    medication_id: item.medication_id ?? item.medicationId ?? "",
+    submitted: item.submitted,
+  }));
+
+  // allergyInfo: allergy_name or allergyName
+  const allergyInfoRaw = questionnaire.data.allergyInfo;
+  const allergyInfo = safeParse(allergyInfoRaw).map((item: any) => ({
+    allergy_name: item.allergy_name ?? item.allergyName ?? "",
+    submitted: item.submitted,
+  }));
+
+  // chronicDiseaseInfo: chronicDisease_name or chronicDiseaseName
+  const chronicDiseaseInfoRaw = questionnaire.data.chronicDiseaseInfo;
+  const chronicDiseaseInfo = safeParse(chronicDiseaseInfoRaw).map(
+    (item: any) => ({
+      chronicDisease_name:
+        item.chronicDisease_name ?? item.chronicDiseaseName ?? "",
+      submitted: item.submitted,
+    })
   );
-  const allergyInfo: AllergyInfo[] = JSON.parse(questionnaire.data.allergyInfo);
-  const chronicDiseaseInfo: ChronicDiseaseInfo[] = JSON.parse(
-    questionnaire.data.chronicDiseaseInfo
-  );
-  const surgeryHistoryInfo: SurgeryHistoryInfo[] = JSON.parse(
-    questionnaire.data.surgeryHistoryInfo
+
+  // surgeryHistoryInfo: surgeryHistory_name or surgeryHistoryName
+  const surgeryHistoryInfoRaw = questionnaire.data.surgeryHistoryInfo;
+  const surgeryHistoryInfo = safeParse(surgeryHistoryInfoRaw).map(
+    (item: any) => ({
+      surgeryHistory_name:
+        item.surgeryHistory_name ?? item.surgeryHistoryName ?? "",
+      submitted: item.submitted,
+    })
   );
 
   return (
@@ -42,135 +76,14 @@ export default function QuestionnaireDisplay({
           </div>
 
           <div className={styles.grid}>
-            {/* 기본 정보 */}
-            <div className={`${styles.infoCard} ${styles.basicInfo}`}>
-              <h2 className={`${styles.infoTitle} ${styles.basicInfoTitle}`}>
-                기본 정보
-              </h2>
-              <div className={styles.infoList}>
-                <div className={`${styles.infoItem} ${styles.basicInfoItem}`}>
-                  <span className={styles.infoLabel}>이름:</span>{" "}
-                  {questionnaire.data.realName}
-                </div>
-                <div className={`${styles.infoItem} ${styles.basicInfoItem}`}>
-                  <span className={styles.infoLabel}>주소:</span>{" "}
-                  {questionnaire.data.address}
-                </div>
-                <div className={`${styles.infoItem} ${styles.basicInfoItem}`}>
-                  <span className={styles.infoLabel}>발행일:</span>{" "}
-                  {questionnaire.data.issueDate}
-                </div>
-                <div className={`${styles.infoItem} ${styles.basicInfoItem}`}>
-                  <span className={styles.infoLabel}>최종 수정일:</span>{" "}
-                  {questionnaire.data.lastModifiedDate}
-                </div>
-              </div>
-            </div>
-
-            {/* 복용 중인 약물 */}
-            {medicationInfo.some((med) => med.submitted) && (
-              <div className={`${styles.infoCard} ${styles.medicationInfo}`}>
-                <h2
-                  className={`${styles.infoTitle} ${styles.medicationInfoTitle}`}
-                >
-                  복용 중인 약물
-                </h2>
-                <div className={styles.infoList}>
-                  {medicationInfo
-                    .filter((med) => med.submitted)
-                    .map((med, index) => (
-                      <div
-                        key={index}
-                        className={`${styles.infoItem} ${styles.medicationInfoItem}`}
-                      >
-                        • 약물 ID: {med.medication_id}
-                      </div>
-                    ))}
-                </div>
-              </div>
-            )}
-
-            {/* 알레르기 정보 */}
-            {allergyInfo.some((allergy) => allergy.submitted) && (
-              <div className={`${styles.infoCard} ${styles.allergyInfo}`}>
-                <h2
-                  className={`${styles.infoTitle} ${styles.allergyInfoTitle}`}
-                >
-                  알레르기 정보
-                </h2>
-                <div className={styles.infoList}>
-                  {allergyInfo
-                    .filter((allergy) => allergy.submitted)
-                    .map((allergy, index) => (
-                      <div
-                        key={index}
-                        className={`${styles.infoItem} ${styles.allergyInfoItem}`}
-                      >
-                        • {allergy.allergy_name}
-                      </div>
-                    ))}
-                </div>
-              </div>
-            )}
-
-            {/* 만성질환 정보 */}
-            {chronicDiseaseInfo.some((disease) => disease.submitted) && (
-              <div
-                className={`${styles.infoCard} ${styles.chronicDiseaseInfo}`}
-              >
-                <h2
-                  className={`${styles.infoTitle} ${styles.chronicDiseaseInfoTitle}`}
-                >
-                  만성질환 정보
-                </h2>
-                <div className={styles.infoList}>
-                  {chronicDiseaseInfo
-                    .filter((disease) => disease.submitted)
-                    .map((disease, index) => (
-                      <div
-                        key={index}
-                        className={`${styles.infoItem} ${styles.chronicDiseaseInfoItem}`}
-                      >
-                        • {disease.chronicDisease_name}
-                      </div>
-                    ))}
-                </div>
-              </div>
-            )}
-
-            {/* 수술 이력 */}
-            {surgeryHistoryInfo.some((surgery) => surgery.submitted) && (
-              <div
-                className={`${styles.infoCard} ${styles.surgeryHistoryInfo}`}
-              >
-                <h2
-                  className={`${styles.infoTitle} ${styles.surgeryHistoryInfoTitle}`}
-                >
-                  수술 이력
-                </h2>
-                <div className={styles.infoList}>
-                  {surgeryHistoryInfo
-                    .filter((surgery) => surgery.submitted)
-                    .map((surgery, index) => (
-                      <div
-                        key={index}
-                        className={`${styles.infoItem} ${styles.surgeryHistoryInfoItem}`}
-                      >
-                        • {surgery.surgeryHistory_name}
-                      </div>
-                    ))}
-                </div>
-              </div>
-            )}
+            <BasicInfo data={questionnaire.data} />
+            <MedicationInfoBlock medicationInfo={medicationInfo} />
+            <AllergyInfoBlock allergyInfo={allergyInfo} />
+            <ChronicDiseaseInfoBlock chronicDiseaseInfo={chronicDiseaseInfo} />
+            <SurgeryHistoryInfoBlock surgeryHistoryInfo={surgeryHistoryInfo} />
           </div>
 
-          {/* 특이사항 */}
-          {questionnaire.data.notes && (
-            <div className={styles.notes}>
-              <h2 className={styles.notesTitle}>특이사항</h2>
-              <p className={styles.notesContent}>{questionnaire.data.notes}</p>
-            </div>
-          )}
+          <Notes notes={questionnaire.data.notes ?? ""} />
         </div>
       </div>
     </div>

@@ -95,6 +95,29 @@ export default function QuestionnaireComponentDecider({
     );
   }
 
+  // 데이터 가공: 각 *Info 필드가 문자열이면 JSON.parse로 변환
+  const data = { ...questionnaire.data } as any;
+  const infoFields = [
+    "medicationInfo",
+    "allergyInfo",
+    "chronicDiseaseInfo",
+    "surgeryHistoryInfo",
+  ];
+  infoFields.forEach((field) => {
+    if (typeof data[field] === "string") {
+      try {
+        data[field] = JSON.parse(data[field]);
+      } catch {
+        data[field] = [];
+      }
+    }
+  });
+  const processedQuestionnaire = { ...questionnaire, data };
+
   // 문진표 정보를 표시
-  return <QuestionnaireDisplay questionnaire={questionnaire} />;
+  console.log(
+    "[DEBUG] QuestionnaireComponentDecider questionnaire:",
+    processedQuestionnaire
+  );
+  return <QuestionnaireDisplay questionnaire={processedQuestionnaire} />;
 }

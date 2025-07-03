@@ -1,0 +1,326 @@
+package com.oauth2.User.service;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.oauth2.User.dto.TakingPillRequest;
+import com.oauth2.User.dto.TakingPillSummaryResponse;
+import com.oauth2.User.dto.TakingPillDetailResponse;
+import com.oauth2.User.entity.User;
+import com.oauth2.User.entity.TakingPill;
+import com.oauth2.User.entity.DosageSchedule;
+import com.oauth2.User.repository.TakingPillRepository;
+import com.oauth2.User.repository.DosageScheduleRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDate;
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Service
+@RequiredArgsConstructor
+@Transactional
+public class TakingPillService {
+    private final TakingPillRepository takingPillRepository;
+    private final DosageScheduleRepository dosageScheduleRepository;
+    private final ObjectMapper objectMapper;
+
+    /**
+     * 복용 중인 약을 추가합니다.
+     */
+    public TakingPill addTakingPill(User user, TakingPillRequest request) {
+        // 요청 데이터 검증
+        validateTakingPillRequest(request);
+        
+        // 기존에 같은 약품이 있는지 확인
+        List<TakingPill> existingPills = takingPillRepository.findByUserAndMedicationId(user, request.getMedicationId());
+        if (!existingPills.isEmpty()) {
+            throw new RuntimeException("이미 복용 중인 약품입니다.");
+        }
+        
+        // TakingPill 엔티티 생성
+        TakingPill takingPill = TakingPill.builder()
+                .user(user)
+                .medicationId(request.getMedicationId())
+                .medicationName(request.getMedicationName())
+                .startYear(request.getStartDate().getYear())
+                .startMonth(request.getStartDate().getMonthValue())
+                .startDay(request.getStartDate().getDayOfMonth())
+                .endYear(request.getEndDate().getYear())
+                .endMonth(request.getEndDate().getMonthValue())
+                .endDay(request.getEndDate().getDayOfMonth())
+                .alarmName(request.getAlarmName())
+                .daysOfWeek(convertDaysOfWeekToJson(request.getDaysOfWeek()))
+                .dosageAmount(request.getDosageAmount())
+                .build();
+        
+        TakingPill savedTakingPill = takingPillRepository.save(takingPill);
+        
+        // DosageSchedule 엔티티들 생성 및 저장
+        if (request.getDosageSchedules() != null) {
+            for (TakingPillRequest.DosageSchedule scheduleRequest : request.getDosageSchedules()) {
+                DosageSchedule dosageSchedule = DosageSchedule.builder()
+                        .takingPill(savedTakingPill)
+                        .hour(scheduleRequest.getHour())
+                        .minute(scheduleRequest.getMinute())
+                        .period(scheduleRequest.getPeriod())
+                        .alarmOnOff(scheduleRequest.isAlarmOnOff())
+                        .dosageUnit(scheduleRequest.getDosageUnit())
+                        .build();
+                
+                dosageScheduleRepository.save(dosageSchedule);
+            }
+        }
+        
+        return savedTakingPill;
+    }
+
+    /**
+     * 복용 중인 약을 삭제합니다.
+     */
+    public void deleteTakingPill(User user, String medicationId) {
+        Long medId = Long.parseLong(medicationId);
+        List<TakingPill> takingPills = takingPillRepository.findByUserAndMedicationId(user, medId);
+        
+        if (takingPills.isEmpty()) {
+            throw new RuntimeException("해당 약품을 찾을 수 없습니다.");
+        }
+        
+        // TakingPill 삭제 시 연관된 DosageSchedule도 함께 삭제됨 (cascade 설정)
+        takingPillRepository.deleteAll(takingPills);
+    }
+
+    /**
+     * 복용 중인 약을 수정합니다.
+     */
+    public TakingPill updateTakingPill(User user, TakingPillRequest request) {
+        // 요청 데이터 검증
+        validateTakingPillRequest(request);
+        
+        // 기존 TakingPill 찾기
+        List<TakingPill> existingPills = takingPillRepository.findByUserAndMedicationId(user, request.getMedicationId());
+        if (existingPills.isEmpty()) {
+            throw new RuntimeException("수정할 약품을 찾을 수 없습니다.");
+        }
+        
+        TakingPill takingPill = existingPills.get(0);
+        
+        // TakingPill 정보 업데이트
+        takingPill.setMedicationName(request.getMedicationName());
+        takingPill.setStartYear(request.getStartDate().getYear());
+        takingPill.setStartMonth(request.getStartDate().getMonthValue());
+        takingPill.setStartDay(request.getStartDate().getDayOfMonth());
+        takingPill.setEndYear(request.getEndDate().getYear());
+        takingPill.setEndMonth(request.getEndDate().getMonthValue());
+        takingPill.setEndDay(request.getEndDate().getDayOfMonth());
+        takingPill.setAlarmName(request.getAlarmName());
+        takingPill.setDaysOfWeek(convertDaysOfWeekToJson(request.getDaysOfWeek()));
+        takingPill.setDosageAmount(request.getDosageAmount());
+        
+        // 기존 DosageSchedule 리스트를 클리어하고 새로운 스케줄로 교체
+        takingPill.getDosageSchedules().clear();
+        
+        // 새로운 DosageSchedule 생성 및 추가
+        if (request.getDosageSchedules() != null) {
+            for (TakingPillRequest.DosageSchedule scheduleRequest : request.getDosageSchedules()) {
+                DosageSchedule dosageSchedule = DosageSchedule.builder()
+                        .takingPill(takingPill)
+                        .hour(scheduleRequest.getHour())
+                        .minute(scheduleRequest.getMinute())
+                        .period(scheduleRequest.getPeriod())
+                        .alarmOnOff(scheduleRequest.isAlarmOnOff())
+                        .dosageUnit(scheduleRequest.getDosageUnit())
+                        .build();
+                
+                takingPill.getDosageSchedules().add(dosageSchedule);
+            }
+        }
+        
+        // TakingPill과 연관된 DosageSchedule들을 함께 저장
+        TakingPill updatedTakingPill = takingPillRepository.save(takingPill);
+        
+        return updatedTakingPill;
+    }
+
+    /**
+     * 복용 중인 약 정보를 요약 형태로 반환합니다.
+     */
+    public TakingPillSummaryResponse getTakingPillSummary(User user) {
+        List<TakingPill> takingPills = takingPillRepository.findByUser(user);
+        
+        List<TakingPillSummaryResponse.TakingPillSummary> summaries = takingPills.stream()
+                .map(pill -> TakingPillSummaryResponse.TakingPillSummary.builder()
+                        .medicationId(pill.getMedicationId())
+                        .medicationName(pill.getMedicationName())
+                        .alarmName(pill.getAlarmName())
+                        .startDate(createSafeLocalDate(pill.getStartYear(), pill.getStartMonth(), pill.getStartDay()))
+                        .endDate(createSafeLocalDate(pill.getEndYear(), pill.getEndMonth(), pill.getEndDay()))
+                        .dosageAmount(pill.getDosageAmount())
+                        .build())
+                .collect(Collectors.toList());
+        
+        return TakingPillSummaryResponse.builder()
+                .takingPills(summaries)
+                .build();
+    }
+
+    /**
+     * 복용 중인 약 정보를 상세 형태로 반환합니다.
+     */
+    public TakingPillDetailResponse getTakingPillDetail(User user) {
+        List<TakingPill> takingPills = takingPillRepository.findByUserWithDosageSchedules(user);
+        
+        List<TakingPillDetailResponse.TakingPillDetail> details = takingPills.stream()
+                .map(this::convertToDetailResponse)
+                .collect(Collectors.toList());
+        
+        return TakingPillDetailResponse.builder()
+                .takingPills(details)
+                .build();
+    }
+
+    /**
+     * 특정 약의 상세 정보를 조회합니다.
+     */
+    public TakingPillDetailResponse.TakingPillDetail getTakingPillDetailById(User user, Long medicationId) {
+        List<TakingPill> takingPills = takingPillRepository.findByUserAndMedicationId(user, medicationId);
+        
+        if (takingPills.isEmpty()) {
+            throw new RuntimeException("Medication not found with ID: " + medicationId);
+        }
+        
+        TakingPill takingPill = takingPills.get(0);
+        return convertToDetailResponse(takingPill);
+    }
+
+    /**
+     * 특정 사용자의 모든 복용 중인 약을 조회합니다.
+     */
+    public List<TakingPill> getTakingPillsByUser(User user) {
+        return takingPillRepository.findByUserWithDosageSchedules(user);
+    }
+
+    /**
+     * TakingPill 엔티티를 DetailResponse로 변환합니다.
+     */
+    private TakingPillDetailResponse.TakingPillDetail convertToDetailResponse(TakingPill takingPill) {
+        return TakingPillDetailResponse.TakingPillDetail.builder()
+                .medicationId(takingPill.getMedicationId())
+                .medicationName(takingPill.getMedicationName())
+                .startDate(createSafeLocalDate(takingPill.getStartYear(), takingPill.getStartMonth(), takingPill.getStartDay()))
+                .endDate(createSafeLocalDate(takingPill.getEndYear(), takingPill.getEndMonth(), takingPill.getEndDay()))
+                .alarmName(takingPill.getAlarmName())
+                .daysOfWeek(parseDaysOfWeekFromJson(takingPill.getDaysOfWeek()))
+                .dosageAmount(takingPill.getDosageAmount())
+                .dosageSchedules(takingPill.getDosageSchedules().stream()
+                        .map(schedule -> TakingPillDetailResponse.DosageScheduleDetail.builder()
+                                .hour(schedule.getHour())
+                                .minute(schedule.getMinute())
+                                .period(schedule.getPeriod())
+                                .dosageUnit(schedule.getDosageUnit())
+                                .alarmOnOff(schedule.getAlarmOnOff())
+                                .build())
+                        .collect(Collectors.toList()))
+                .build();
+    }
+
+    /**
+     * 요일 리스트를 JSON 문자열로 변환합니다.
+     */
+    private String convertDaysOfWeekToJson(List<String> daysOfWeek) {
+        try {
+            return objectMapper.writeValueAsString(daysOfWeek);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Failed to convert days of week to JSON", e);
+        }
+    }
+
+    /**
+     * JSON 문자열을 요일 리스트로 변환합니다.
+     */
+    private List<String> parseDaysOfWeekFromJson(String daysOfWeekJson) {
+        if (daysOfWeekJson == null || daysOfWeekJson.isEmpty()) {
+            return List.of();
+        }
+        
+        try {
+            return objectMapper.readValue(daysOfWeekJson, 
+                    objectMapper.getTypeFactory().constructCollectionType(List.class, String.class));
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Failed to parse days of week from JSON", e);
+        }
+    }
+
+    /**
+     * 안전한 LocalDate 생성 메서드
+     */
+    private LocalDate createSafeLocalDate(Integer year, Integer month, Integer day) {
+        if (year == null || month == null || day == null) {
+            return LocalDate.now(); // 기본값으로 오늘 날짜 반환
+        }
+        
+        // 월이 0이거나 12보다 큰 경우 기본값으로 1월 사용
+        int safeMonth = (month <= 0 || month > 12) ? 1 : month;
+        
+        // 일이 0이거나 31보다 큰 경우 기본값으로 1일 사용
+        int safeDay = (day <= 0 || day > 31) ? 1 : day;
+        
+        try {
+            return LocalDate.of(year, safeMonth, safeDay);
+        } catch (Exception e) {
+            // 날짜 생성 실패 시 오늘 날짜 반환
+            return LocalDate.now();
+        }
+    }
+
+    /**
+     * 요청 데이터 검증 메서드
+     */
+    private void validateTakingPillRequest(TakingPillRequest request) {
+        if (request.getMedicationId() == null) {
+            throw new RuntimeException("약품 ID는 필수입니다.");
+        }
+        
+        if (request.getMedicationName() == null || request.getMedicationName().trim().isEmpty()) {
+            throw new RuntimeException("약품 이름은 필수입니다.");
+        }
+        
+        if (request.getStartDate() == null) {
+            throw new RuntimeException("시작일은 필수입니다.");
+        }
+        
+        if (request.getEndDate() == null) {
+            throw new RuntimeException("종료일은 필수입니다.");
+        }
+        
+        if (request.getStartDate().isAfter(request.getEndDate())) {
+            throw new RuntimeException("시작일은 종료일보다 이전이어야 합니다.");
+        }
+        
+        if (request.getAlarmName() == null || request.getAlarmName().trim().isEmpty()) {
+            throw new RuntimeException("알림명은 필수입니다.");
+        }
+        
+        if (!request.isValidDaysOfWeek()) {
+            throw new RuntimeException("유효하지 않은 요일 정보입니다.");
+        }
+        
+        if (request.getDosageSchedules() == null || request.getDosageSchedules().isEmpty()) {
+            throw new RuntimeException("복용 스케줄은 최소 1개 이상 필요합니다.");
+        }
+        
+        // 복용 스케줄 검증
+        for (TakingPillRequest.DosageSchedule schedule : request.getDosageSchedules()) {
+            if (!schedule.isValidHour()) {
+                throw new RuntimeException("시간은 0-12 사이의 값이어야 합니다.");
+            }
+            if (!schedule.isValidMinute()) {
+                throw new RuntimeException("분은 0-59 사이의 값이어야 합니다.");
+            }
+            if (!schedule.isValidPeriod()) {
+                throw new RuntimeException("기간은 AM 또는 PM이어야 합니다.");
+            }
+        }
+    }
+} 

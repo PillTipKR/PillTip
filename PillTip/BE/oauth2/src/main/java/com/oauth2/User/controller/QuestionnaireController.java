@@ -17,6 +17,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.oauth2.User.service.TokenService;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import com.oauth2.User.service.HospitalService;
 
 @RestController
 @RequestMapping("/api/questionnaire")
@@ -26,6 +30,8 @@ public class QuestionnaireController {
     private static final Logger logger = LoggerFactory.getLogger(QuestionnaireController.class);
     private final UserPermissionsService userPermissionsService;
     private final PatientQuestionnaireService patientQuestionnaireService;
+    private final TokenService tokenService;
+    private final HospitalService hospitalService;
     //동의사항 조회
     @GetMapping("/permissions")
     public ResponseEntity<ApiResponse<UserPermissionsResponse>> getUserPermissions(
@@ -189,5 +195,56 @@ public class QuestionnaireController {
             return ResponseEntity.status(400)
                 .body(ApiResponse.error("Failed to update questionnaire: " + e.getMessage(), null));
         }
+    }
+    // 외부 문진표 URL 발급 API
+    @PostMapping("/external-url")
+    public ResponseEntity<ApiResponse<String>> generateExternalQuestionnaireUrl(
+            @AuthenticationPrincipal User user,
+            @RequestBody ExternalQuestionnaireUrlRequest request,
+            @RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader) {
+        try {
+            // 1. JWT 토큰에서 사용자 인증 (Spring Security에서 이미 인증됨)
+            // 2. 문진표 id가 실제로 사용자의 문진표인지 검증
+            patientQuestionnaireService.getQuestionnaireById(user, request.getQuestionnaireId());
+
+            // 2-1. 병원 코드가 유효한지 확인
+            if (!hospitalService.existsByHospitalCode(request.getHospitalCode())) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.error("존재하지 않는 병원 코드입니다.", null));
+            }
+
+            // 3. 90초 유효한 JWT 토큰 생성 (payload: userId, questionnaireId, hospitalCode)
+            String jwtToken = tokenService.createCustomJwtToken(
+                user.getId(),
+                request.getQuestionnaireId(),
+                request.getHospitalCode(),
+                90 // 90초
+            );
+
+            // 4. URL 생성
+            String url = String.format("http://localhost:3000/questionnaire/%d?jwtToken=%s",
+                    request.getQuestionnaireId(), jwtToken);
+            return ResponseEntity.status(HttpStatus.OK)
+                .body(ApiResponse.success("외부 문진표 URL 생성 성공", url));
+        } catch (SecurityException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(ApiResponse.error("접근 권한이 없습니다: " + e.getMessage(), null));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ApiResponse.error("문진표를 찾을 수 없습니다: " + e.getMessage(), null));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.error("외부 문진표 URL 생성 실패: " + e.getMessage(), null));
+        }
+    }
+
+    // 외부 문진표 URL 요청 DTO
+    public static class ExternalQuestionnaireUrlRequest {
+        private Integer questionnaireId;
+        private String hospitalCode;
+        public Integer getQuestionnaireId() { return questionnaireId; }
+        public void setQuestionnaireId(Integer questionnaireId) { this.questionnaireId = questionnaireId; }
+        public String getHospitalCode() { return hospitalCode; }
+        public void setHospitalCode(String hospitalCode) { this.hospitalCode = hospitalCode; }
     }
 } 

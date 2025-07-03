@@ -21,13 +21,14 @@ public interface UserRepository extends JpaRepository<User, Long> {
     // SELECT * FROM users WHERE login_id = ?
     Optional<User> findByLoginId(String loginId);
 
+    // DrugAlarmScheduler에서 사용하는 쿼리
+    // 복용 중인 약이 있는 유저 조회, 로그인 상태인 유저만 조회, 성능 최적화를 위해 DISTINCT 및 JOIN FETCH 사용
     @Query("""
-    SELECT u FROM User u
+    SELECT DISTINCT u FROM User u
     JOIN FETCH u.FCMToken t
     JOIN FETCH u.userProfile p
-    WHERE p.takingPills IS NOT NULL
-      AND t.loggedIn = true
+    JOIN u.takingPills tp
+    WHERE t.loggedIn = true
     """)
     List<User> findAllActiveUsersWithPillInfo();
-
 }

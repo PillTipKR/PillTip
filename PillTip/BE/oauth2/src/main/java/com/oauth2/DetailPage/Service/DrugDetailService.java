@@ -4,6 +4,7 @@ import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.elasticsearch.core.search.Hit;
+import com.oauth2.User.service.TakingPillService;
 import com.oauth2.DUR.Dto.SearchDurDto;
 import com.oauth2.DUR.Service.DurTaggingService;
 import com.oauth2.DetailPage.Dto.*;
@@ -28,7 +29,8 @@ public class DrugDetailService {
     private final DrugRepository drugRepository;
     private final ElasticsearchClient elasticsearchClient;
     private final DurTaggingService durTaggingService;
-    private final UserProfileService userProfileService;
+    private final TakingPillService takingPillService;
+    private final DrugPromptService drugPromptService;
 
     @Value("${elastic.drug.id}")
     private String drugId;
@@ -39,6 +41,10 @@ public class DrugDetailService {
     public DrugDetail getDetail(User user, Long id) throws IOException {
         SearchDurDto searchDurDto = durTaggingService.generateTagsForDrugs(user, getDetailFromElasticsearch(id)).get(0);
 
+        List<String> medicationNames = takingPillService.getTakingPillSummary(user).getTakingPills().stream()
+                .map(TakingPillSummaryResponse.TakingPillSummary::getMedicationName)
+                .toList();
+      
         // 한 번의 쿼리로 Drug과 관련된 DrugEffect, DrugStorageCondition을 가져옵니다.
         Optional<Drug> drug = drugRepository.findDrugWithAllRelations(id);
         Set<DrugEffect> effectDetails = new HashSet<>();

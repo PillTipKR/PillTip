@@ -11,7 +11,7 @@ import com.oauth2.Drug.Repository.DrugRepository;
 import com.oauth2.Search.Dto.SearchIndexDTO;
 import com.oauth2.User.dto.TakingPillSummaryResponse;
 import com.oauth2.User.entity.User;
-import com.oauth2.User.service.UserProfileService;
+import com.oauth2.User.service.TakingPillService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
@@ -27,7 +27,7 @@ public class DurTaggingService {
     private final StringRedisTemplate redisTemplate;
     private final ObjectMapper objectMapper;
     private final DrugRepository drugRepository;
-    private final UserProfileService userProfileService;
+    private final TakingPillService takingPillService;
 
     public List<SearchDurDto> generateTagsForDrugs(User user, List<SearchIndexDTO> drugs) throws JsonProcessingException {
         List<SearchDurDto> result = new ArrayList<>();
@@ -35,7 +35,7 @@ public class DurTaggingService {
         Map<String, List<Long>> classToDrugIdsMap = new HashMap<>();
         Set<String> userInteraction = new HashSet<>();
 
-        List<Long> userDrugIds = userProfileService.getTakingPillSummary(user).getTakingPills().stream()
+        List<Long> userDrugIds = takingPillService.getTakingPillSummary(user).getTakingPills().stream()
                 .map(TakingPillSummaryResponse.TakingPillSummary::getMedicationId)
                 .toList();
 
