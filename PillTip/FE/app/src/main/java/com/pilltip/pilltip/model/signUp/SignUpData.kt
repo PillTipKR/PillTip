@@ -71,11 +71,23 @@ data class TermsRequest(
 /* 로그인 유효성 검증 */
 data class AuthMeResponse(
     val status: String,
+    val message: String?,
     val data: UserData?
 )
 
 data class UserData(
+    val id: Long,
     val nickname: String,
     val profilePhoto: String?,
-    val terms: Boolean
+    val terms: Boolean,
+    val age: Int,
+    val gender: String,
+    val birthDate: String,
+    val phone: String,
+    val pregnant: Boolean,
+    val height: String,
+    val weight: String,
+    val realName: String?,
+    val address: String?,
+    val permissions: Boolean
 )

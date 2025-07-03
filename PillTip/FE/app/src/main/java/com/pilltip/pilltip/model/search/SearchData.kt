@@ -202,3 +202,11 @@ data class SurgeryHistoryEntry(
     val surgeryHistoryName: String,
     val submitted: Boolean
 )
+
+/**
+ * FCM 토큰
+ */
+data class FcmTokenResponse(
+    val status: String,
+    val message: String?
+)
