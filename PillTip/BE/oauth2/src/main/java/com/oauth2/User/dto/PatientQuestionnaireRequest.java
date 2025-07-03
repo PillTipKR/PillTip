@@ -12,8 +12,6 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 public class PatientQuestionnaireRequest {
-    private String realName;
-    private String address;
     private String questionnaireName;
 
     private List<InfoItem> medicationInfo;

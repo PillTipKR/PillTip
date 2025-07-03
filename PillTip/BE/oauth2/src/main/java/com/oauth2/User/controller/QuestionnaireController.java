@@ -8,8 +8,10 @@ import com.oauth2.User.dto.UserPermissionsResponse;
 import com.oauth2.User.entity.User;
 import com.oauth2.User.service.UserPermissionsService;
 import com.oauth2.User.dto.PatientQuestionnaireRequest;
+import com.oauth2.User.dto.PatientQuestionnaireResponse;
 import com.oauth2.User.entity.PatientQuestionnaire;
 import com.oauth2.User.service.PatientQuestionnaireService;
+import com.oauth2.User.dto.QuestionnaireAvailabilityResponse;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -95,17 +97,56 @@ public class QuestionnaireController {
     }
     //문진표 기능 사용 가능 여부 확인
     @GetMapping("/available")
-    public ResponseEntity<ApiResponse<Boolean>> isQuestionnaireAvailable(
+    public ResponseEntity<ApiResponse<QuestionnaireAvailabilityResponse>> isQuestionnaireAvailable(
             @AuthenticationPrincipal User user) {
         logger.info("Received isQuestionnaireAvailable request for user: {}", user.getId());
         
         try {
+            // 1. 동의사항 확인
             UserPermissionsResponse permissions = userPermissionsService.getUserPermissions(user);
-            boolean isAvailable = permissions.isSensitiveInfoPermission() && permissions.isMedicalInfoPermission();
+            boolean permissionsValid = permissions.isSensitiveInfoPermission() && permissions.isMedicalInfoPermission();
             
-            logger.info("Questionnaire availability check for user: {} - Available: {}", user.getId(), isAvailable);
+            // 2. 실명과 주소 확인
+            boolean personalInfoValid = user.getRealName() != null && !user.getRealName().trim().isEmpty() &&
+                                      user.getAddress() != null && !user.getAddress().trim().isEmpty();
+            
+            // 3. 모든 조건 확인
+            boolean isAvailable = permissionsValid && personalInfoValid;
+            
+            // 4. 누락된 항목 수집
+            java.util.List<String> missingItems = new java.util.ArrayList<>();
+            if (!permissionsValid) {
+                missingItems.add("동의사항 미완료");
+            }
+            if (!personalInfoValid) {
+                missingItems.add("실명/주소 미입력");
+            }
+            
+            // 5. 메시지 생성
+            String message;
+            if (isAvailable) {
+                message = "문진표 작성이 가능합니다.";
+            } else {
+                message = "문진표 작성을 위해 다음 항목을 완료해주세요: " + String.join(", ", missingItems);
+            }
+            
+            logger.info("Questionnaire availability check for user: {} - Permissions valid: {}, Personal info valid: {}, Available: {}", 
+                user.getId(), permissionsValid, personalInfoValid, isAvailable);
+            
+            if (!isAvailable) {
+                logger.info("Questionnaire not available for user: {} - Missing: {}", user.getId(), String.join(", ", missingItems));
+            }
+            
+            QuestionnaireAvailabilityResponse response = QuestionnaireAvailabilityResponse.builder()
+                .available(isAvailable)
+                .permissionsValid(permissionsValid)
+                .personalInfoValid(personalInfoValid)
+                .missingItems(missingItems)
+                .message(message)
+                .build();
+            
             return ResponseEntity.status(200)
-                .body(ApiResponse.success("Questionnaire availability checked successfully", isAvailable));
+                .body(ApiResponse.success("Questionnaire availability checked successfully", response));
         } catch (Exception e) {
             logger.error("Error checking questionnaire availability for user: {} - Error: {}", user.getId(), e.getMessage(), e);
             return ResponseEntity.status(400)
@@ -114,17 +155,27 @@ public class QuestionnaireController {
     }
 
     // ---------------------------------------문진표---------------------------------------
+    // 문진표 리스트 조회 (구체적인 경로를 먼저 정의)
+    @GetMapping("/list")
+    public ResponseEntity<ApiResponse<java.util.List<com.oauth2.User.dto.PatientQuestionnaireSummaryResponse>>> getUserQuestionnaireList(
+            @AuthenticationPrincipal User user) {
+        java.util.List<com.oauth2.User.dto.PatientQuestionnaireSummaryResponse> list = patientQuestionnaireService.getUserQuestionnaireSummaries(user);
+        return ResponseEntity.status(200)
+            .body(ApiResponse.success("문진표 리스트 조회 성공", list));
+    }
+    
     // 문진표 작성
     @PostMapping("")
-    public ResponseEntity<ApiResponse<PatientQuestionnaire>> createQuestionnaire(
+    public ResponseEntity<ApiResponse<PatientQuestionnaireResponse>> createQuestionnaire(
             @AuthenticationPrincipal User user,
             @RequestBody PatientQuestionnaireRequest request) {
         logger.info("Received createQuestionnaire request for user: {}", user.getId());
         try {
             PatientQuestionnaire questionnaire = patientQuestionnaireService.createQuestionnaire(user, request);
+            PatientQuestionnaireResponse response = PatientQuestionnaireResponse.from(questionnaire);
             logger.info("Successfully created questionnaire for user: {}", user.getId());
             return ResponseEntity.status(201)
-                .body(ApiResponse.success("Questionnaire created successfully", questionnaire));
+                .body(ApiResponse.success("Questionnaire created successfully", response));
         } catch (JsonProcessingException e) {
             logger.error("Error serializing questionnaire info for user: {} - Error: {}", user.getId(), e.getMessage(), e);
             return ResponseEntity.status(400)
@@ -135,27 +186,20 @@ public class QuestionnaireController {
                 .body(ApiResponse.error("Failed to create questionnaire: " + e.getMessage(), null));
         }
     }
-    // 문진표 리스트 조회
-    @GetMapping("/list")
-    public ResponseEntity<ApiResponse<java.util.List<com.oauth2.User.dto.PatientQuestionnaireSummaryResponse>>> getUserQuestionnaireList(
-            @AuthenticationPrincipal User user) {
-        java.util.List<com.oauth2.User.dto.PatientQuestionnaireSummaryResponse> list = patientQuestionnaireService.getUserQuestionnaireSummaries(user);
-        return ResponseEntity.status(200)
-            .body(ApiResponse.success("문진표 리스트 조회 성공", list));
-    }
     
-    // 문진표 상세 조회
-    @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<PatientQuestionnaire>> getQuestionnaireById(
+    // 문진표 상세 조회 (숫자 ID만 허용)
+    @GetMapping("/{id:\\d+}")
+    public ResponseEntity<ApiResponse<PatientQuestionnaireResponse>> getQuestionnaireById(
             @AuthenticationPrincipal User user,
             @PathVariable Integer id) {
         logger.info("Received getQuestionnaireById request for user: {} - Questionnaire ID: {}", user.getId(), id);
         
         try {
             PatientQuestionnaire questionnaire = patientQuestionnaireService.getQuestionnaireById(user, id);
+            PatientQuestionnaireResponse response = PatientQuestionnaireResponse.from(questionnaire);
             logger.info("Successfully retrieved questionnaire for user: {} - Questionnaire ID: {}", user.getId(), id);
             return ResponseEntity.status(200)
-                .body(ApiResponse.success("문진표 조회 성공", questionnaire));
+                .body(ApiResponse.success("문진표 조회 성공", response));
         } catch (IllegalArgumentException e) {
             logger.error("Questionnaire not found for user: {} - Questionnaire ID: {} - Error: {}", user.getId(), id, e.getMessage());
             return ResponseEntity.status(404)
@@ -170,8 +214,8 @@ public class QuestionnaireController {
                 .body(ApiResponse.error("문진표 조회 실패: " + e.getMessage(), null));
         }
     }
-    // 문진표 삭제
-    @DeleteMapping("/{id}")
+    // 문진표 삭제 (숫자 ID만 허용)
+    @DeleteMapping("/{id:\\d+}")
     public ResponseEntity<ApiResponse<java.util.List<com.oauth2.User.dto.PatientQuestionnaireSummaryResponse>>> deleteQuestionnaire(
             @AuthenticationPrincipal User user,
             @PathVariable Integer id) {
@@ -179,15 +223,16 @@ public class QuestionnaireController {
         return ResponseEntity.status(200)
             .body(ApiResponse.success("문진표 삭제 성공", list));
     }
-    // 문진표 수정
-    @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse<PatientQuestionnaire>> updateQuestionnaire(
+    // 문진표 수정 (숫자 ID만 허용)
+    @PutMapping("/{id:\\d+}")
+    public ResponseEntity<ApiResponse<PatientQuestionnaireResponse>> updateQuestionnaire(
             @AuthenticationPrincipal User user,
             @PathVariable Integer id,
             @RequestBody PatientQuestionnaireRequest request) {
         try {
             PatientQuestionnaire updated = patientQuestionnaireService.updateQuestionnaire(user, id, request);
-            return ResponseEntity.ok(ApiResponse.success("문진표 수정 성공", updated));
+            PatientQuestionnaireResponse response = PatientQuestionnaireResponse.from(updated);
+            return ResponseEntity.ok(ApiResponse.success("문진표 수정 성공", response));
         } catch (JsonProcessingException e) {
             return ResponseEntity.status(400)
                 .body(ApiResponse.error("Failed to serialize questionnaire info: " + e.getMessage(), null));

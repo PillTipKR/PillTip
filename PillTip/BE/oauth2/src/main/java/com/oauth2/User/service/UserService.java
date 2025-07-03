@@ -44,11 +44,16 @@ public class UserService {
 
         UserToken userToken = tokenService.generateTokens(user.getId());
         if(user.getFCMToken() == null) {
+            // FCM 토큰이 없으면 새로 생성
             FCMToken fcmToken = new FCMToken();
             fcmToken.setLoggedIn(true);
             fcmToken.setUser(user);
             fcmTokenRepository.save(fcmToken);
             user.setFCMToken(fcmToken);
+        } else {
+            // 기존 FCM 토큰이 있으면 로그인 상태를 true로 업데이트
+            user.getFCMToken().setLoggedIn(true);
+            fcmTokenRepository.save(user.getFCMToken());
         }
         return LoginResponse.builder()
                 .accessToken(userToken.getAccessToken())
@@ -89,11 +94,16 @@ public class UserService {
             System.out.println("Tokens generated successfully");
 
             if(user.getFCMToken() == null) {
+                // FCM 토큰이 없으면 새로 생성
                 FCMToken fcmToken = new FCMToken();
                 fcmToken.setLoggedIn(true);
                 fcmToken.setUser(user);
                 fcmTokenRepository.save(fcmToken);
                 user.setFCMToken(fcmToken);
+            } else {
+                // 기존 FCM 토큰이 있으면 로그인 상태를 true로 업데이트
+                user.getFCMToken().setLoggedIn(true);
+                fcmTokenRepository.save(user.getFCMToken());
             }
             return LoginResponse.builder()
                     .accessToken(userToken.getAccessToken())
@@ -116,10 +126,16 @@ public class UserService {
         User user = userRepository.findById(userToken.getUserId())
                 .orElseThrow(() -> new RuntimeException("User not found"));
         if(user.getFCMToken() == null) {
+            // FCM 토큰이 없으면 새로 생성
             FCMToken fcmToken = new FCMToken();
             fcmToken.setLoggedIn(true);
             fcmToken.setUser(user);
+            fcmTokenRepository.save(fcmToken);
             user.setFCMToken(fcmToken);
+        } else {
+            // 기존 FCM 토큰이 있으면 로그인 상태를 true로 업데이트
+            user.getFCMToken().setLoggedIn(true);
+            fcmTokenRepository.save(user.getFCMToken());
         }
         return LoginResponse.builder()
                 .accessToken(userToken.getAccessToken())
@@ -129,8 +145,15 @@ public class UserService {
 
     // 현재 로그인한 사용자 정보 조회
     public User getCurrentUser(Long userId) {
-        return userRepository.findById(userId)
+        return userRepository.findByIdWithQuestionnaires(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
+    }
+
+    // 실명과 주소 업데이트
+    public User updatePersonalInfo(User user, String realName, String address) {
+        user.setRealName(realName);
+        user.setAddress(address);
+        return userRepository.save(user);
     }
 
     // 이용약관 동의
@@ -141,11 +164,27 @@ public class UserService {
 
     // 닉네임 업데이트
     public User updateNickname(User user, String nickname) {
+        System.out.println("=== UserService.updateNickname ===");
+        System.out.println("User ID: " + user.getId());
+        System.out.println("Input nickname: '" + nickname + "'");
+        System.out.println("Input nickname length: " + nickname.length());
+        
+        // 닉네임 중복 체크
         if (userRepository.findByNickname(nickname).isPresent()) {
+            System.out.println("Nickname already exists: " + nickname);
             throw new RuntimeException("Nickname already exists");
         }
+        
+        // 닉네임 설정
         user.setNickname(nickname);
-        return userRepository.save(user);
+        System.out.println("Set nickname to user: '" + user.getNickname() + "'");
+        
+        // 저장
+        User savedUser = userRepository.save(user);
+        System.out.println("Saved user nickname: '" + savedUser.getNickname() + "'");
+        System.out.println("=== UserService.updateNickname END ===");
+        
+        return savedUser;
     }
 
     // 프로필 사진 업데이트
@@ -154,8 +193,35 @@ public class UserService {
         return userRepository.save(user);
     }
 
-    // 중복 체크
-    public boolean checkDuplicate(String value, String type) {
+    // 중복 체크 (예외 발생)
+    public void checkDuplicate(String value, String type) {
+        boolean isDuplicate = false;
+        switch (type.toLowerCase()) {
+            case "loginid":
+                isDuplicate = userRepository.findByLoginId(value).isPresent();
+                if (isDuplicate) {
+                    throw new RuntimeException("이미 존재하는 사용자 ID입니다.");
+                }
+                break;
+            case "nickname":
+                isDuplicate = userRepository.findByNickname(value).isPresent();
+                if (isDuplicate) {
+                    throw new RuntimeException("이미 사용 중인 닉네임입니다.");
+                }
+                break;
+            case "phonenumber":
+                isDuplicate = userProfileRepository.findByPhone(value).isPresent();
+                if (isDuplicate) {
+                    throw new RuntimeException("이미 사용 중인 전화번호입니다.");
+                }
+                break;
+            default:
+                throw new IllegalArgumentException("Invalid check type: " + type);
+        }
+    }
+
+    // 중복 체크 (boolean 반환)
+    public boolean isDuplicate(String value, String type) {
         switch (type.toLowerCase()) {
             case "loginid":
                 return userRepository.findByLoginId(value).isPresent();

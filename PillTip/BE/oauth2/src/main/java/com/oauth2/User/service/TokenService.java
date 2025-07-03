@@ -120,18 +120,9 @@ public class TokenService {
             throw new BadCredentialsException("유효하지 않은 리프레시 토큰입니다.");
         }
 
-        // Refresh Token이 만료된 경우 새로운 토큰 발급
-        if (userToken.getRefreshTokenExpiry().isBefore(LocalDateTime.now())) {
-            // 만료된 경우: 새로운 토큰 발급
-            UserToken newTokens = generateTokens(userId);
-            return new TokenRefreshResult(newTokens, true);
-        }
-
-        // Access Token만 갱신
-        String newAccessToken = generateAccessToken(userId);
-        LocalDateTime accessTokenExpiry = LocalDateTime.now().plusMinutes(accessTokenValidityInMinutes);
-        userToken.updateAccessToken(newAccessToken, accessTokenExpiry);
-        return new TokenRefreshResult(userTokenRepository.save(userToken), false);
+        // 보안을 위해 매번 새로운 토큰 발급 (리프레시 토큰 만료 여부와 관계없이)
+        UserToken newTokens = generateTokens(userId);
+        return new TokenRefreshResult(newTokens, true);
     }
 
     /**

@@ -39,8 +39,6 @@ public class PatientQuestionnaireService {
 
         PatientQuestionnaire questionnaire = PatientQuestionnaire.builder()
                 .user(user)
-                .realName(request.getRealName())
-                .address(request.getAddress())
                 .questionnaireName(request.getQuestionnaireName())
                 .notes(request.getNotes())
                 .issueDate(LocalDate.now())
@@ -89,7 +87,7 @@ public class PatientQuestionnaireService {
     }
 
     public PatientQuestionnaire getQuestionnaireById(User user, Integer id) {
-        PatientQuestionnaire questionnaire = questionnaireRepository.findById(id)
+        PatientQuestionnaire questionnaire = questionnaireRepository.findByIdWithUser(id)
             .orElseThrow(() -> new IllegalArgumentException("문진표를 찾을 수 없습니다."));
         
         // 본인 문진표만 조회 가능
@@ -112,13 +110,11 @@ public class PatientQuestionnaireService {
 
     @Transactional
     public PatientQuestionnaire updateQuestionnaire(User user, Integer id, PatientQuestionnaireRequest request) throws JsonProcessingException {
-        PatientQuestionnaire q = questionnaireRepository.findById(id)
+        PatientQuestionnaire q = questionnaireRepository.findByIdWithUser(id)
             .orElseThrow(() -> new IllegalArgumentException("문진표를 찾을 수 없습니다."));
         if (!q.getUser().getId().equals(user.getId())) {
             throw new SecurityException("본인 문진표만 수정할 수 있습니다.");
         }
-        q.setRealName(request.getRealName());
-        q.setAddress(request.getAddress());
         q.setQuestionnaireName(request.getQuestionnaireName());
         q.setNotes(request.getNotes());
         q.setMedicationInfo(objectMapper.writeValueAsString(toKeyedList(request.getMedicationInfo(), "medicationId")));
