@@ -469,6 +469,8 @@ fun DetailPage(
     }
     val coroutineScope = rememberCoroutineScope()
 
+
+
     val detailState by searchViewModel.drugDetail.collectAsState()
     val nickname = UserInfoManager.getUserData(LocalContext.current)?.nickname
     val systemUiController = rememberSystemUiController()

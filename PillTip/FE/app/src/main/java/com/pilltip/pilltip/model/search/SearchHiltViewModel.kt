@@ -215,6 +215,59 @@ class SearchHiltViewModel @Inject constructor(
 
 }
 
+@HiltViewModel
+class QuestionnaireViewModel @Inject constructor(
+    private val repository: QuestionnaireRepository
+) : ViewModel() {
+
+    // 기본 정보
+    var realName by mutableStateOf("")
+    var address by mutableStateOf("")
+    var questionnaireName by mutableStateOf("")
+    var notes by mutableStateOf("")
+
+    // 문진 항목 리스트
+    var medicationInfo by mutableStateOf<List<MedicationEntry>>(emptyList())
+    var allergyInfo by mutableStateOf<List<AllergyEntry>>(emptyList())
+    var chronicDiseaseInfo by mutableStateOf<List<ChronicDiseaseEntry>>(emptyList())
+    var surgeryHistoryInfo by mutableStateOf<List<SurgeryHistoryEntry>>(emptyList())
+
+    fun resetAll() {
+        realName = ""
+        address = ""
+        questionnaireName = ""
+        notes = ""
+        medicationInfo = emptyList()
+        allergyInfo = emptyList()
+        chronicDiseaseInfo = emptyList()
+        surgeryHistoryInfo = emptyList()
+    }
+
+    fun toRequest(): QuestionnaireSubmitRequest {
+        return QuestionnaireSubmitRequest(
+            realName = realName,
+            address = address,
+            questionnaireName = questionnaireName,
+            medicationInfo = medicationInfo,
+            allergyInfo = allergyInfo,
+            chronicDiseaseInfo = chronicDiseaseInfo,
+            surgeryHistoryInfo = surgeryHistoryInfo,
+            notes = notes
+        )
+    }
+
+    fun submit() {
+        viewModelScope.launch {
+            try {
+                repository.submit(toRequest())
+                Log.d("문진표", "제출 성공")
+            } catch (e: Exception) {
+                Log.e("문진표", "제출 실패: ${e.message}")
+            }
+        }
+    }
+}
+
 @Module
 @InstallIn(SingletonComponent::class)
 object RepositoryModule {
@@ -319,4 +372,12 @@ object RepositoryModule {
     fun provideDosageModifyRepository(api: DosageModifyApi): DosageModifyRepository {
         return DosageModifyRepositoryImpl(api)
     }
+
+    @Provides
+    fun provideQuestionnaireApi(@Named("SearchRetrofit") retrofit: Retrofit): QuestionnaireApi =
+        retrofit.create(QuestionnaireApi::class.java)
+
+    @Provides
+    fun provideQuestionnaireRepository(api: QuestionnaireApi): QuestionnaireRepository =
+        QuestionnaireRepositoryImpl(api)
 }

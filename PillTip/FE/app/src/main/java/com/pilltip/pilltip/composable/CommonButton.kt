@@ -135,6 +135,7 @@ fun BackButton(
     horizontalPadding: Dp = 18.dp,
     verticalPadding: Dp = 18.dp,
     @DrawableRes iconDrawable: Int = 0,
+    onClick: () -> Unit ={},
     navigationTo: () -> Unit
 ) {
     Row(
@@ -171,6 +172,7 @@ fun BackButton(
                 imageVector = ImageVector.vectorResource(id = iconDrawable),
                 contentDescription = "logo",
                 modifier = Modifier.noRippleClickable {
+                    onClick()
                 }
             )
         } else {
