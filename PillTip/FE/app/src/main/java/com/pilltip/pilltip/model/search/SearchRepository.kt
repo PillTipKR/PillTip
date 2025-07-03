@@ -1,5 +1,6 @@
 package com.pilltip.pilltip.model.search
 
+import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
@@ -183,5 +184,28 @@ class DosageModifyRepositoryImpl(
 ) : DosageModifyRepository {
     override suspend fun updateDosage(medicationId: Long, request: RegisterDosageRequest): List<TakingPillSummary> {
         return api.updateDosage(medicationId, request).data.takingPills
+    }
+}
+
+/**
+ * 문진표 API
+ */
+
+interface QuestionnaireApi {
+    @POST("/api/auth/questionnaire")
+    suspend fun submitQuestionnaire(
+        @Body request: QuestionnaireSubmitRequest
+    ): Response<Unit> // or any response DTO
+}
+
+interface QuestionnaireRepository {
+    suspend fun submit(request: QuestionnaireSubmitRequest)
+}
+
+class QuestionnaireRepositoryImpl(
+    private val api: QuestionnaireApi
+) : QuestionnaireRepository {
+    override suspend fun submit(request: QuestionnaireSubmitRequest) {
+        api.submitQuestionnaire(request)
     }
 }

@@ -1,7 +1,7 @@
 package com.pilltip.pilltip.view.questionnaire
 
-import android.annotation.SuppressLint
 import android.util.Log
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -28,35 +28,32 @@ import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
@@ -76,19 +73,26 @@ import androidx.compose.ui.zIndex
 import androidx.navigation.NavController
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.pilltip.pilltip.R
+import com.pilltip.pilltip.composable.AuthComposable.RoundTextField
 import com.pilltip.pilltip.composable.BackButton
 import com.pilltip.pilltip.composable.HeightSpacer
+import com.pilltip.pilltip.composable.IosButton
 import com.pilltip.pilltip.composable.NextButton
+import com.pilltip.pilltip.composable.QuestionnaireComposable.DottedDivider
 import com.pilltip.pilltip.composable.QuestionnaireComposable.InformationBox
 import com.pilltip.pilltip.composable.SearchComposable.AutoCompleteList
 import com.pilltip.pilltip.composable.SearchComposable.PillSearchField
-import com.pilltip.pilltip.composable.SearchComposable.SearchTag
 import com.pilltip.pilltip.composable.WhiteScreenModifier
 import com.pilltip.pilltip.composable.WidthSpacer
 import com.pilltip.pilltip.composable.buttonModifier
 import com.pilltip.pilltip.composable.noRippleClickable
+import com.pilltip.pilltip.model.search.AllergyEntry
+import com.pilltip.pilltip.model.search.ChronicDiseaseEntry
 import com.pilltip.pilltip.model.search.LogViewModel
+import com.pilltip.pilltip.model.search.MedicationEntry
+import com.pilltip.pilltip.model.search.QuestionnaireViewModel
 import com.pilltip.pilltip.model.search.SearchHiltViewModel
+import com.pilltip.pilltip.model.search.SurgeryHistoryEntry
 import com.pilltip.pilltip.ui.theme.gray200
 import com.pilltip.pilltip.ui.theme.gray400
 import com.pilltip.pilltip.ui.theme.gray500
@@ -103,7 +107,6 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.launch
 
 @Composable
 fun QuestionnairePage(
@@ -126,7 +129,20 @@ fun QuestionnairePage(
                 horizontalPadding = 22.dp,
                 verticalPadding = 0.dp
             ) {
-                navController.popBackStack()
+                navController.navigate("DetailPage") {
+                    popUpTo("DetailPage") {
+                        inclusive = false
+
+                    }
+                }
+            }
+
+            BackHandler {
+                navController.navigate("DetailPage") {
+                    popUpTo("DetailPage") {
+                        inclusive = false
+                    }
+                }
             }
         }
         Column(
@@ -233,7 +249,20 @@ fun EssentialPage(
             horizontalPadding = 0.dp,
             verticalPadding = 0.dp
         ) {
-            navController.popBackStack()
+            navController.navigate("DetailPage") {
+                popUpTo("DetailPage") {
+                    inclusive = false
+
+                }
+            }
+        }
+
+        BackHandler {
+            navController.navigate("DetailPage") {
+                popUpTo("DetailPage") {
+                    inclusive = false
+                }
+            }
         }
         HeightSpacer(62.dp)
         Image(
@@ -365,7 +394,7 @@ fun EssentialPage(
 @Composable
 fun AreYouPage(
     navController: NavController,
-    mode: String,
+    query: String,
     title: String,
     onYesClicked: () -> Unit,
     onNoClicked: () -> Unit
@@ -375,8 +404,29 @@ fun AreYouPage(
             .statusBarsPadding()
             .padding(horizontal = 22.dp)
     ) {
-        BackButton(horizontalPadding = 0.dp, verticalPadding = 16.dp) {
-            navController.navigate("QuestionnairePage")
+        BackButton(horizontalPadding = 0.dp, verticalPadding = 0.dp) {
+            val target = when (query) {
+                "알러지" -> "AreYouPage/약"
+                "기저질환" -> "AreYouPage/알러지"
+                "수술" -> "AreYouPage/기저질환"
+                else -> "QuestionnairePage"
+            }
+
+            navController.navigate(target) {
+                popUpTo("AreYouPage/$query") { inclusive = true }
+            }
+        }
+        BackHandler {
+            val target = when (query) {
+                "알러지" -> "AreYouPage/약"
+                "기저질환" -> "AreYouPage/알러지"
+                "수술" -> "AreYouPage/기저질환"
+                else -> "QuestionnairePage"
+            }
+
+            navController.navigate(target) {
+                popUpTo("AreYouPage/$query") { inclusive = true }
+            }
         }
         HeightSpacer(62.dp)
         Text(
@@ -402,7 +452,10 @@ fun AreYouPage(
                 modifier = Modifier
                     .weight(1f)
                     .height(185.dp)
-                    .background(color = primaryColor050, shape = RoundedCornerShape(size = 24.dp))
+                    .background(
+                        color = primaryColor050,
+                        shape = RoundedCornerShape(size = 24.dp)
+                    )
                     .padding(start = 17.dp, top = 22.dp, end = 17.dp, bottom = 30.dp)
                     .noRippleClickable { onYesClicked() },
                 horizontalAlignment = Alignment.CenterHorizontally
@@ -426,7 +479,10 @@ fun AreYouPage(
                 modifier = Modifier
                     .weight(1f)
                     .height(185.dp)
-                    .background(color = Color(0xFFFFF3F3), shape = RoundedCornerShape(size = 24.dp))
+                    .background(
+                        color = Color(0xFFFFF3F3),
+                        shape = RoundedCornerShape(size = 24.dp)
+                    )
                     .padding(start = 17.dp, top = 22.dp, end = 17.dp, bottom = 30.dp)
                     .noRippleClickable { onNoClicked() },
                 horizontalAlignment = Alignment.CenterHorizontally
@@ -449,19 +505,28 @@ fun AreYouPage(
     }
 }
 
+
+data class SelectedDrug(
+    val id: Long,
+    val name: String
+)
+
 @OptIn(ExperimentalLayoutApi::class, FlowPreview::class, ExperimentalMaterial3Api::class)
 @Composable
 fun QuestionnaireSearchPage(
     navController: NavController,
     logViewModel: LogViewModel,
-    searchViewModel: SearchHiltViewModel
+    searchViewModel: SearchHiltViewModel,
+    questionnaireViewModel: QuestionnaireViewModel
 ) {
     var inputText by remember { mutableStateOf("") }
-    val recentSearches by logViewModel.recentSearches.collectAsState()
     val autoCompleted by searchViewModel.autoCompleted.collectAsState()
     val isLoading by searchViewModel.isAutoCompleteLoading.collectAsState()
 
-    val selectedDrugs = remember { mutableStateListOf<String>() }
+    LaunchedEffect(Unit) {
+        questionnaireViewModel.resetAll()
+    }
+    val selectedDrugs = remember { mutableStateListOf<SelectedDrug>() }
 
     LaunchedEffect(Unit) {
         snapshotFlow { inputText }
@@ -499,7 +564,6 @@ fun QuestionnaireSearchPage(
                 onNavigateToResult = { query ->
                     logViewModel.addSearchQuery(inputText)
                     searchViewModel.fetchDrugSearch(query)
-                    navController.navigate("SearchResultsPage/${query}")
                     Log.d("Query: ", query)
                 }
             )
@@ -522,9 +586,14 @@ fun QuestionnaireSearchPage(
                         onClick = { },
                         onLoadMore = { searchViewModel.fetchAutoComplete(inputText) },
                         onAddClick = { selected ->
-                            if (!selectedDrugs.contains(selected.value)) {
+                            if (selectedDrugs.none { it.id == selected.id }) {
                                 keyboardController?.hide()
-                                selectedDrugs.add(selected.value)
+                                selectedDrugs.add(
+                                    SelectedDrug(
+                                        id = selected.id,
+                                        name = selected.value
+                                    )
+                                )
                             }
                         }
                     )
@@ -626,7 +695,7 @@ fun QuestionnaireSearchPage(
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Text(
-                                        text = drug,
+                                        text = drug.name,
                                         maxLines = 1,
                                         overflow = TextOverflow.Ellipsis,
                                         style = TextStyle(
@@ -660,7 +729,15 @@ fun QuestionnaireSearchPage(
                         text = "등록하기",
                         buttonColor = if (selectedDrugs.isEmpty()) Color(0xFF348ADF) else primaryColor
                     ) {
-                        selectedDrugs.clear()
+                        val medicationList = selectedDrugs.map {
+                            MedicationEntry(
+                                medicationId = it.id,
+                                medicationName = it.name,
+                                submitted = true
+                            )
+                        }
+                        questionnaireViewModel.medicationInfo = medicationList
+                        navController.navigate("AreYouPage/알러지")
                     }
 
                     HeightSpacer(8.dp)
@@ -676,13 +753,16 @@ fun QuestionnaireSearchPage(
                             .fillMaxWidth()
                             .noRippleClickable {
                                 selectedDrugs.clear()
-
                             }
                     )
-                    Spacer(modifier = Modifier
-                        .fillMaxWidth()
-                        .height(WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding())
-                        .background(Color.White)
+                    Spacer(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(
+                                WindowInsets.navigationBars.asPaddingValues()
+                                    .calculateBottomPadding()
+                            )
+                            .background(Color.White)
                     )
                 }
             }
@@ -690,4 +770,372 @@ fun QuestionnaireSearchPage(
     }
 }
 
+@Composable
+fun WritePage(
+    navController: NavController,
+    title: String,
+    description: String,
+    placeholder: String,
+    mode: String,
+    viewModel: QuestionnaireViewModel
+) {
+    var textList by remember { mutableStateOf(mutableListOf("")) }
+    val allFilled = textList.all { it.trim().isNotEmpty() }
+
+    Box(
+        modifier = WhiteScreenModifier
+            .fillMaxSize()
+            .padding(horizontal = 22.dp)
+            .statusBarsPadding()
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(bottom = 80.dp)
+        ) {
+            BackButton(horizontalPadding = 0.dp, verticalPadding = 0.dp) {
+                val targetRoute = when (mode) {
+                    "allergy" -> "AreYouPage/약"
+                    "etc" -> "AreYouPage/알러지"
+                    else -> "AreYouPage/기저질환"
+                }
+
+                navController.navigate(targetRoute) {
+                    popUpTo("WritePage/$mode") { inclusive = true }
+                }
+            }
+            BackHandler {
+                val targetRoute = when (mode) {
+                    "allergy" -> "AreYouPage/약"
+                    "etc" -> "AreYouPage/알러지"
+                    else -> "AreYouPage/기저질환"
+                }
+
+                navController.navigate(targetRoute) {
+                    popUpTo("WritePage/$mode") { inclusive = true }
+                }
+            }
+
+            HeightSpacer(62.dp)
+
+            Text(
+                text = "Q.",
+                fontSize = 26.sp,
+                lineHeight = 33.8.sp,
+                fontFamily = pretendard,
+                fontWeight = FontWeight(600),
+                color = primaryColor
+            )
+
+            HeightSpacer(4.dp)
+
+            Text(
+                text = title,
+                fontSize = 26.sp,
+                lineHeight = 33.8.sp,
+                fontFamily = pretendard,
+                fontWeight = FontWeight(700),
+                color = Color(0xFF121212)
+            )
+
+            HeightSpacer(12.dp)
+
+            Text(
+                text = description,
+                style = TextStyle(
+                    fontSize = 14.sp,
+                    lineHeight = 19.6.sp,
+                    fontFamily = pretendard,
+                    fontWeight = FontWeight(600),
+                    color = gray400,
+                )
+            )
+
+            HeightSpacer(30.dp)
+
+            if (textList.size < 10) {
+                Text(
+                    text = "+ 추가하기",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = primaryColor,
+                    modifier = Modifier
+                        .clickable {
+                            textList = textList.toMutableList().apply { add("") }
+                        }
+                        .padding(vertical = 8.dp)
+                )
+            }
+
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+            ) {
+                items(textList.size) { index ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        RoundTextField(
+                            text = textList[index],
+                            textChange = { newValue ->
+                                textList =
+                                    textList.toMutableList().also { it[index] = newValue }
+                            },
+                            placeholder = placeholder,
+                            isLogin = false,
+                            modifier = Modifier.weight(1f)
+                        )
+
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "X",
+                            fontSize = 18.sp,
+                            color = Color.Gray,
+                            modifier = Modifier
+                                .clickable {
+                                    textList =
+                                        textList.toMutableList().apply { removeAt(index) }
+                                }
+                                .padding(8.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(12.dp))
+                }
+
+                item {
+                    Spacer(modifier = Modifier.height(100.dp))
+                }
+            }
+        }
+
+        NextButton(
+            mModifier = Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+                .padding(vertical = 16.dp)
+                .padding(bottom = 46.dp)
+                .height(58.dp),
+            text = "다음",
+            buttonColor = if (allFilled) primaryColor else Color(0xFFCADCF5),
+            onClick = {
+                if (allFilled) {
+                    val processedList = textList.map { it.trim() }
+
+                    when (mode) {
+                        "allergy" -> {
+                            viewModel.allergyInfo =
+                                processedList.map { AllergyEntry(it, submitted = true) }
+                            navController.navigate("AreYouPage/기저질환")
+                        }
+
+                        "etc" -> {
+                            viewModel.chronicDiseaseInfo =
+                                processedList.map { ChronicDiseaseEntry(it, submitted = true) }
+                            navController.navigate("AreYouPage/수술")
+                        }
+
+                        else -> {
+                            viewModel.surgeryHistoryInfo =
+                                processedList.map { SurgeryHistoryEntry(it, submitted = true) }
+                            navController.navigate("QuestionnaireCheckPage")
+                        }
+                    }
+                }
+            }
+        )
+    }
+}
+
+@Composable
+fun QuestionnaireCheckPage(
+    navController: NavController,
+    viewModel: QuestionnaireViewModel
+) {
+    val realName by remember { mutableStateOf(viewModel.realName) }
+    val birthDate by remember { mutableStateOf("") }
+    val gender by remember { mutableStateOf("") }
+    val phone by remember { mutableStateOf("") }
+    val address by remember { mutableStateOf(viewModel.address) }
+    var expanded by remember { mutableStateOf(false) }
+    var option by remember { mutableStateOf("수정") }
+    var isEditMode by remember { mutableStateOf(false) }
+
+    val medicationList = remember { viewModel.medicationInfo.toMutableStateList() }
+    val allergyList = remember { viewModel.allergyInfo.toMutableStateList() }
+    val diseaseList = remember { viewModel.chronicDiseaseInfo.toMutableStateList() }
+    val surgeryList = remember { viewModel.surgeryHistoryInfo.toMutableStateList() }
+
+    Column(
+        modifier = WhiteScreenModifier
+            .padding(horizontal = 22.dp)
+            .statusBarsPadding()
+            .verticalScroll(rememberScrollState())
+    ) {
+        Box(){
+            BackButton(
+                title = "문진표 확인",
+                horizontalPadding = 0.dp,
+                iconDrawable = R.drawable.btn_vertical_dots,
+                onClick = { expanded = true }
+            ) {
+                navController.navigate("DetailPage")
+            }
+            DropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false },
+                modifier = Modifier.background(Color.White).align(Alignment.TopEnd)
+            ) {
+                DropdownMenuItem(text = { Text("수정") }, onClick = {
+                    option = "수정"
+                    isEditMode = !isEditMode
+                    expanded = false
+                })
+
+            }
+        }
+        TextField(
+            value = realName,
+            onValueChange = { viewModel.realName = it },
+            label = { Text("이름") })
+        TextField(value = birthDate, onValueChange = {}, label = { Text("생년월일") })
+        TextField(value = gender, onValueChange = {}, label = { Text("성별") })
+        TextField(value = phone, onValueChange = {}, label = { Text("전화번호") })
+        TextField(
+            value = address,
+            onValueChange = { viewModel.address = it },
+            label = { Text("주소") })
+
+        HeightSpacer(20.dp)
+
+        Section(
+            "복약 정보", medicationList, isEditMode,
+            onToggle = {
+                medicationList[it] =
+                    medicationList[it].copy(submitted = !medicationList[it].submitted)
+                viewModel.medicationInfo = medicationList
+            },
+            onDelete = {
+                medicationList.removeAt(it)
+                viewModel.medicationInfo = medicationList
+            }
+        )
+
+        DottedDivider()
+
+        Section(
+            "알러지 정보", allergyList, isEditMode,
+            onToggle = {
+                allergyList[it] = allergyList[it].copy(submitted = !allergyList[it].submitted)
+                viewModel.allergyInfo = allergyList
+            },
+            onDelete = {
+                allergyList.removeAt(it)
+                viewModel.allergyInfo = allergyList
+            }
+        )
+
+        DottedDivider()
+
+        Section(
+            "기저질환", diseaseList, isEditMode,
+            onToggle = {
+                diseaseList[it] = diseaseList[it].copy(submitted = !diseaseList[it].submitted)
+                viewModel.chronicDiseaseInfo = diseaseList
+            },
+            onDelete = {
+                diseaseList.removeAt(it)
+                viewModel.chronicDiseaseInfo = diseaseList
+            }
+        )
+
+        DottedDivider()
+
+        Section(
+            "수술 이력", surgeryList, isEditMode,
+            onToggle = {
+                surgeryList[it] = surgeryList[it].copy(submitted = !surgeryList[it].submitted)
+                viewModel.surgeryHistoryInfo = surgeryList
+            },
+            onDelete = {
+                surgeryList.removeAt(it)
+                viewModel.surgeryHistoryInfo = surgeryList
+            }
+        )
+
+        NextButton(
+            mModifier = buttonModifier,
+            text = if (isEditMode) "수정완료" else "제출하기",
+            onClick = {
+                if (isEditMode) {
+                    isEditMode = false
+                } else {
+                    viewModel.submit()
+                    navController.navigate("ResultPage") // 예시
+                }
+            }
+        )
+    }
+}
+
+@Composable
+fun <T> Section(
+    title: String,
+    items: List<T>,
+    isEditMode: Boolean,
+    onDelete: (Int) -> Unit,
+    onToggle: (Int) -> Unit
+) where T : Any {
+    HeightSpacer(24.dp)
+    Text(text = title, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+    HeightSpacer(16.dp)
+    items.forEachIndexed { index, item ->
+        val label = when (item) {
+            is MedicationEntry -> item.medicationName
+            is AllergyEntry -> item.allergyName
+            is ChronicDiseaseEntry -> item.chronicDiseaseName
+            is SurgeryHistoryEntry -> item.surgeryHistoryName
+            else -> ""
+        }
+        val submitted = when (item) {
+            is MedicationEntry -> item.submitted
+            is AllergyEntry -> item.submitted
+            is ChronicDiseaseEntry -> item.submitted
+            is SurgeryHistoryEntry -> item.submitted
+            else -> false
+        }
+
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 4.dp)
+        ) {
+            Text(
+                text = label,
+                style = TextStyle(
+                    fontSize = 14.sp,
+                    fontFamily = pretendard,
+                    fontWeight = FontWeight(500),
+                    color = gray800,
+                    textAlign = TextAlign.Justify,
+                )
+            )
+            Spacer(modifier = Modifier.weight(1f))
+            if (isEditMode) {
+                Text(
+                    text = "X",
+                    color = Color.Red,
+                    modifier = Modifier
+                        .padding(horizontal = 8.dp)
+                        .clickable { onDelete(index) }
+                )
+            } else {
+                IosButton(checked = submitted, onCheckedChange = { onToggle(index) })
+            }
+        }
+    }
+    HeightSpacer(24.dp)
+}
 

@@ -107,7 +107,6 @@ data class DosageSchedule(
     val period: String, // AM or PM
     val alarmOnOff: Boolean,
     val dosageUnit: String
-
 )
 
 data class RegisterDosageResponse(
@@ -166,4 +165,40 @@ data class TakingPillDetailResponse(
     val status: String,
     val message: String,
     val data: TakingPillDetailData
+)
+
+/**
+ * 문진표
+ */
+
+data class QuestionnaireSubmitRequest(
+    val realName: String,
+    val address: String,
+    val questionnaireName: String,
+    val medicationInfo: List<MedicationEntry>,
+    val allergyInfo: List<AllergyEntry>,
+    val chronicDiseaseInfo: List<ChronicDiseaseEntry>,
+    val surgeryHistoryInfo: List<SurgeryHistoryEntry>,
+    val notes: String
+)
+
+data class MedicationEntry(
+    val medicationId: Long,
+    val medicationName: String,
+    val submitted: Boolean
+)
+
+data class AllergyEntry(
+    val allergyName: String,
+    val submitted: Boolean
+)
+
+data class ChronicDiseaseEntry(
+    val chronicDiseaseName: String,
+    val submitted: Boolean
+)
+
+data class SurgeryHistoryEntry(
+    val surgeryHistoryName: String,
+    val submitted: Boolean
 )
