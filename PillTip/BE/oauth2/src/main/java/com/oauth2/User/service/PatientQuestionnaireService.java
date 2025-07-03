@@ -87,7 +87,7 @@ public class PatientQuestionnaireService {
             ))
             .collect(Collectors.toList());
     }
-    
+
     public PatientQuestionnaire getQuestionnaireById(User user, Integer id) {
         PatientQuestionnaire questionnaire = questionnaireRepository.findById(id)
             .orElseThrow(() -> new IllegalArgumentException("문진표를 찾을 수 없습니다."));

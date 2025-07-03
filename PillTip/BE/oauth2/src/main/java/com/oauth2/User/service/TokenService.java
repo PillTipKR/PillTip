@@ -214,4 +214,17 @@ public class TokenService {
     public void updateAccessToken(String accessToken, LocalDateTime accessTokenExpiry) {
         userTokenRepository.updateAccessToken(accessToken, accessTokenExpiry);
     }
+
+    // 커스텀 JWT 토큰 생성 (userId, questionnaireId, hospitalCode, 만료초)
+    public String createCustomJwtToken(Long userId, Integer questionnaireId, String hospitalCode, int expiresInSeconds) {
+        long now = System.currentTimeMillis();
+        return Jwts.builder()
+                .setSubject(String.valueOf(userId))
+                .claim("questionnaireId", questionnaireId)
+                .claim("hospitalCode", hospitalCode)
+                .setIssuedAt(new Date(now))
+                .setExpiration(new Date(now + expiresInSeconds * 1000L))
+                .signWith(SignatureAlgorithm.HS512, this.secretKey)
+                .compact();
+    }
 }

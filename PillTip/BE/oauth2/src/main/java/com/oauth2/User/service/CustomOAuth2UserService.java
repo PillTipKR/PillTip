@@ -93,7 +93,6 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                 .weight(new BigDecimal("0"))
                 .phone("")
                 .healthStatus("")
-                .takingPills("")
                 .diseaseInfo("")
                 .allergyInfo("")
                 .build();

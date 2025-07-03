@@ -44,8 +44,8 @@ public class TakingPillResponse {
         this.id = takingPill.getId();
         this.medicationId = takingPill.getMedicationId();
         this.medicationName = takingPill.getMedicationName();
-        this.startDate = takingPill.getStartDate();
-        this.endDate = takingPill.getEndDate();
+        this.startDate = createSafeLocalDate(takingPill.getStartYear(), takingPill.getStartMonth(), takingPill.getStartDay());
+        this.endDate = createSafeLocalDate(takingPill.getEndYear(), takingPill.getEndMonth(), takingPill.getEndDay());
         this.alertName = takingPill.getAlarmName();
         
         // JSON 문자열을 리스트로 변환
@@ -72,6 +72,28 @@ public class TakingPillResponse {
         } catch (Exception e) {
             // 파싱 실패 시 빈 리스트 반환
             return List.of();
+        }
+    }
+
+    /**
+     * 안전한 LocalDate 생성 메서드
+     */
+    private LocalDate createSafeLocalDate(Integer year, Integer month, Integer day) {
+        if (year == null || month == null || day == null) {
+            return LocalDate.now(); // 기본값으로 오늘 날짜 반환
+        }
+        
+        // 월이 0이거나 12보다 큰 경우 기본값으로 1월 사용
+        int safeMonth = (month <= 0 || month > 12) ? 1 : month;
+        
+        // 일이 0이거나 31보다 큰 경우 기본값으로 1일 사용
+        int safeDay = (day <= 0 || day > 31) ? 1 : day;
+        
+        try {
+            return LocalDate.of(year, safeMonth, safeDay);
+        } catch (Exception e) {
+            // 날짜 생성 실패 시 오늘 날짜 반환
+            return LocalDate.now();
         }
     }
 

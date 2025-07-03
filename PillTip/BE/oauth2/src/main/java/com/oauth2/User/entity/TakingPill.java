@@ -33,11 +33,23 @@ public class TakingPill {
     @Column(name = "medication_name", nullable = false)
     private String medicationName;
 
-    @Column(name = "start_date", nullable = false)
-    private LocalDate startDate;
+    @Column(name = "start_year", nullable = false)
+    private Integer startYear;
 
-    @Column(name = "end_date", nullable = false)
-    private LocalDate endDate;
+    @Column(name = "start_month", nullable = false)
+    private Integer startMonth;
+
+    @Column(name = "start_day", nullable = false)
+    private Integer startDay;
+
+    @Column(name = "end_year", nullable = false)
+    private Integer endYear;
+
+    @Column(name = "end_month", nullable = false)
+    private Integer endMonth;
+
+    @Column(name = "end_day", nullable = false)
+    private Integer endDay;
 
     @Column(name = "alarm_name", nullable = false)
     private String alarmName;
@@ -53,13 +65,19 @@ public class TakingPill {
     private List<DosageSchedule> dosageSchedules = new ArrayList<>();
 
     @Builder
-    public TakingPill(User user, Long medicationId, String medicationName, LocalDate startDate, 
-                     LocalDate endDate, String alarmName, String daysOfWeek, Double dosageAmount) {
+    public TakingPill(User user, Long medicationId, String medicationName, 
+                     Integer startYear, Integer startMonth, Integer startDay,
+                     Integer endYear, Integer endMonth, Integer endDay,
+                     String alarmName, String daysOfWeek, Double dosageAmount) {
         this.user = user;
         this.medicationId = medicationId;
         this.medicationName = medicationName;
-        this.startDate = startDate;
-        this.endDate = endDate;
+        this.startYear = startYear;
+        this.startMonth = startMonth;
+        this.startDay = startDay;
+        this.endYear = endYear;
+        this.endMonth = endMonth;
+        this.endDay = endDay;
         this.alarmName = alarmName;
         this.daysOfWeek = daysOfWeek;
         this.dosageAmount = dosageAmount;

@@ -1,44 +1,53 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ApiResponse } from "@/types/questionnaire";
+import { cookies } from "next/headers";
 
-// BE API 엔드포인트 설정
-const BE_BASE_URL = process.env.BE_API_URL || "http://164.125.253.20:20022";
+// BE API 엔드포인트 설정, 내부 서버인경우에는 http://localhost:20022 으로 설정
+const BE_BASE_URL = process.env.BE_API_URL || "http://localhost:20022";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ questionnaireId: string }> }
+  { params }: { params: { questionnaireId: string } }
 ) {
-  const { questionnaireId } = await params;
+  const { questionnaireId } = params;
 
-  // Authorization 헤더에서 JWT 토큰 추출
-  const authHeader = request.headers.get("authorization");
-  const jwtToken = authHeader?.startsWith("Bearer ")
-    ? authHeader.substring(7)
-    : null;
+  // 쿼리 파라미터와 쿠키에서 jwtToken을 읽음 (request.nextUrl 사용)
+  console.log("[DEBUG] request.nextUrl:", request.nextUrl.toString());
+  const jwtTokenFromQuery = request.nextUrl.searchParams.get("jwtToken");
+  console.log("[DEBUG] jwtTokenFromQuery:", jwtTokenFromQuery);
+  const jwtTokenFromCookie = (await cookies()).get("jwtToken")?.value;
+  const jwtToken = jwtTokenFromQuery || jwtTokenFromCookie;
+
+  console.log(`[DEBUG] questionnaireId:`, questionnaireId);
+  console.log(`[DEBUG] jwtToken:`, jwtToken);
 
   try {
-    // BE에서 문진표 데이터 가져오기
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
     };
 
-    // JWT 토큰이 있으면 Authorization 헤더에 추가
+    // jwtToken이 이미 'Bearer '로 시작하는지 체크
     if (jwtToken) {
-      headers["Authorization"] = `Bearer ${jwtToken}`;
+      headers["Authorization"] = jwtToken.startsWith("Bearer ")
+        ? jwtToken
+        : `Bearer ${jwtToken}`;
+    } else {
+      console.warn(`[WARN] No JWT token found in cookies.`);
     }
 
-    const response = await fetch(
-      `${BE_BASE_URL}/api/questionnaire/${questionnaireId}`,
-      {
-        method: "GET",
-        headers,
-      }
-    );
+    const beUrl = `${BE_BASE_URL}/api/questionnaire/${questionnaireId}`;
+    console.log(`[DEBUG] Fetching from BE:`, beUrl);
+    const response = await fetch(beUrl, {
+      method: "GET",
+      headers,
+    });
+
+    console.log(`[DEBUG] BE response status:`, response.status);
 
     if (!response.ok) {
       // BE에서 문진표를 찾을 수 없어도 더미 데이터로 화면을 보여줌
-      console.log(
-        `문진표 ${questionnaireId}를 찾을 수 없어서 더미 데이터를 반환합니다.`
+      console.warn(
+        `문진표 ${questionnaireId}를 찾을 수 없어서 더미 데이터를 반환합니다. (BE status: ${response.status})`
       );
 
       const dummyData = {
@@ -79,9 +88,11 @@ export async function GET(
     }
 
     const result = await response.json();
+    console.log(`[DEBUG] BE response JSON:`, result);
 
     // BE 응답 구조에 맞게 변환
     if (result.status === "success" && result.data) {
+      const medicationInfo = JSON.parse(result.data.medicationInfo);
       const questionnaire = {
         id: questionnaireId,
         title: result.data.questionnaireName,
@@ -92,14 +103,15 @@ export async function GET(
 
       return NextResponse.json(questionnaire);
     } else {
+      console.error(`[ERROR] Invalid questionnaire data from BE:`, result);
       return NextResponse.json(
         { error: "문진표 데이터가 올바르지 않습니다." },
         { status: 400 }
       );
     }
   } catch (error) {
-    console.error("문진표 조회 오류:", error);
-    console.log(`네트워크 오류로 인해 더미 데이터를 반환합니다.`);
+    console.error("[ERROR] 문진표 조회 오류:", error);
+    console.log(`[DEBUG] 네트워크 오류로 인해 더미 데이터를 반환합니다.`);
 
     // 네트워크 오류가 발생해도 더미 데이터로 화면을 보여줌
     const dummyData = {
@@ -138,4 +150,21 @@ export async function GET(
 
     return NextResponse.json(questionnaire);
   }
+}
+
+export async function POST(request: Request) {
+  // ... 로그인 로직 후 jwtToken 발급
+  const jwtToken =
+    "Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiIzIiwiaWF0IjoxNzQ5MTk5NjIxLCJleHAiOjc3NDkxOTk1NjF9.9qrDulbKvu4FW6jjM2BBN7MOyyTbCqhwoVoeTHEBrPekwz3b5QEu6MtDLvNCv7Y4-bRyj8E__5XebmDPpwfZ2w";
+  const response = NextResponse.json({ success: true });
+
+  response.cookies.set("jwtToken", jwtToken, {
+    httpOnly: true, // JS에서 접근 불가, 보안 ↑
+    path: "/",
+    maxAge: 60 * 60 * 24, // 1일
+    sameSite: "lax", // 또는 "strict", "none"
+    secure: process.env.NODE_ENV === "production", // HTTPS에서만
+  });
+
+  return response;
 }
