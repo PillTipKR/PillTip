@@ -3,7 +3,7 @@ package com.oauth2.DetailPage.Service;
 import com.oauth2.DetailPage.Dto.*;
 import com.oauth2.User.dto.TakingPillSummaryResponse;
 import com.oauth2.User.entity.User;
-import com.oauth2.User.service.UserProfileService;
+import com.oauth2.User.service.TakingPillService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
@@ -32,11 +32,11 @@ public class DrugPromptService {
     @Value("${openai.model}")
     private String model;
 
-    private final UserProfileService userProfileService;
+    private final TakingPillService takingPillService;
 
 
     private PromptRequestDto buildPromptRequestDto(User user, DrugDetail detail) {
-        List<String> medicationNames = userProfileService.getTakingPillSummary(user).getTakingPills().stream()
+        List<String> medicationNames = takingPillService.getTakingPillSummary(user).getTakingPills().stream()
                 .map(TakingPillSummaryResponse.TakingPillSummary::getMedicationName)
                 .toList();
 
