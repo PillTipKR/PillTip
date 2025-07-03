@@ -50,6 +50,12 @@ public class User {
     @Column(nullable = false) // 유저의 동의사항
     private boolean terms;
 
+    @Column(name = "real_name")
+    private String realName; // 실명 (null 허용)
+
+    @Column(name = "address")
+    private String address; // 주소 (null 허용)
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt; // onCreate에서 현재 시간을 가져오고, 이 값을 저장
@@ -114,7 +120,7 @@ public class User {
 
     @Builder
     public User(LoginType loginType, String loginId, String socialId, String passwordHash,
-                String profilePhoto, String nickname, boolean terms) {
+                String profilePhoto, String nickname, boolean terms, String realName, String address) {
         this.loginType = loginType;
         this.loginId = loginId;
         this.socialId = socialId;
@@ -122,5 +128,7 @@ public class User {
         this.profilePhoto = profilePhoto;
         this.nickname = nickname;
         this.terms = terms;
+        this.realName = realName;
+        this.address = address;
     }
 }

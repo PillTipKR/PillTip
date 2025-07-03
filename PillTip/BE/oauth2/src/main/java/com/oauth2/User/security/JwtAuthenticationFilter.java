@@ -58,6 +58,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             // JWT 토큰이 유효한 경우 사용자 ID를 추출
             if (jwt != null) {
                 try {
+                    System.out.println("=== JWT TOKEN VALIDATION START ===");
+                    
                     // 토큰에서 사용자 ID 추출
                     Long userId = tokenService.getUserIdFromToken(jwt);
                     System.out.println("User ID from token: " + userId); // 디버깅 로그
@@ -65,13 +67,24 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     // DB에서 토큰 정보 조회
                     UserToken userToken = userTokenRepository.findById(userId)
                             .orElseThrow(() -> new BadCredentialsException("유효하지 않은 토큰입니다."));
+                    System.out.println("UserToken found in DB for user: " + userId);
 
                     // 토큰 일치 여부 및 만료 시간 검증
+                    System.out.println("Stored access token: " + userToken.getAccessToken().substring(0, Math.min(userToken.getAccessToken().length(), 20)) + "...");
+                    System.out.println("Request access token: " + jwt.substring(0, Math.min(jwt.length(), 20)) + "...");
+                    System.out.println("Tokens match: " + userToken.getAccessToken().equals(jwt));
+                    
                     if (!userToken.getAccessToken().equals(jwt)) {
+                        System.out.println("Token mismatch detected");
                         throw new BadCredentialsException("유효하지 않은 토큰입니다.");
                     }
 
+                    System.out.println("Access token expiry: " + userToken.getAccessTokenExpiry());
+                    System.out.println("Current time: " + LocalDateTime.now());
+                    System.out.println("Token expired: " + userToken.getAccessTokenExpiry().isBefore(LocalDateTime.now()));
+                    
                     if (userToken.getAccessTokenExpiry().isBefore(LocalDateTime.now())) {
+                        System.out.println("Token expired detected");
                         throw new BadCredentialsException("토큰이 만료되었습니다.");
                     }
 
@@ -104,8 +117,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             response.setContentType("application/json;charset=UTF-8");
             
             String errorType = ex.getMessage().contains("만료") ? "expired" : "invalid";
+            String errorMessage = ex.getMessage();
+            
+            // 더 구체적인 에러 메시지 제공
+            if (errorMessage.contains("유효하지 않은 토큰")) {
+                errorMessage = "토큰이 유효하지 않습니다. 다시 로그인해주세요.";
+            } else if (errorMessage.contains("토큰이 만료")) {
+                errorMessage = "토큰이 만료되었습니다. 토큰을 갱신하거나 다시 로그인해주세요.";
+            } else if (errorMessage.contains("사용자를 찾을 수 없습니다")) {
+                errorMessage = "사용자 정보를 찾을 수 없습니다. 다시 로그인해주세요.";
+            }
+            
             response.getWriter().write(objectMapper.writeValueAsString(
-                ApiResponse.error(ex.getMessage(), errorType)
+                ApiResponse.error(errorMessage, errorType)
             ));
         } catch (Exception e) {
             System.out.println("Unexpected error: " + e.getMessage()); // 디버깅 로그
@@ -113,7 +137,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.setContentType("application/json;charset=UTF-8");
             response.getWriter().write(objectMapper.writeValueAsString(
-                ApiResponse.error("인증에 실패했습니다.", "invalid")
+                ApiResponse.error("인증에 실패했습니다. 토큰을 확인하고 다시 시도해주세요.", "invalid")
             ));
         }
     }

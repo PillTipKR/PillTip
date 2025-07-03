@@ -20,6 +20,7 @@ import java.time.LocalDate;
 @Transactional //메서드 전체를 하나의 트랜잭션으로 처리
 public class SignupService {
     private final UserRepository userRepository; //유저 저장소 접근 객체
+    private final UserService userService; //유저 서비스
     private final PasswordEncoder passwordEncoder; //비밀번호 암호화
     private final TokenService tokenService;
     private final OAuth2Service oauth2Service;
@@ -42,9 +43,7 @@ public class SignupService {
                     .loginType(LoginType.SOCIAL)
                     .socialId(oauth2UserInfo.getSocialId())
                     .userEmail(oauth2UserInfo.getEmail())  // null 가능
-                    .nickname(oauth2UserInfo.getName() != null ?
-                            oauth2UserInfo.getName() :
-                            generateRandomNickname())  // 이름이 없으면 랜덤 닉네임 생성
+                    .nickname(request.getNickname())  // 요청에서 받은 닉네임 사용
                     .profilePhoto(oauth2UserInfo.getProfileImage())  // null 가능
                     .terms(false)
                     .build();
@@ -80,15 +79,17 @@ public class SignupService {
 
     //회원가입 요청 유효성 검사
     private void validateSignupRequest(SignupRequest request) {
+        // loginType 검사
+        if (request.getLoginType() == null) {
+            throw new RuntimeException("LoginType is required (IDPW or SOCIAL)");
+        }
+        
         // IDPW 로그인, 빈 값 검사, 중복 검사
         if (request.getLoginType() == LoginType.IDPW) {
             if (request.getLoginId() == null || request.getPassword() == null) {
                 throw new RuntimeException("User ID and password are required for ID/PW login");
             }
-            userRepository.findByLoginId(request.getLoginId())
-                    .ifPresent(user -> {
-                        throw new IllegalArgumentException("이미 존재하는 사용자 ID입니다.");
-                    });
+            userService.checkDuplicate(request.getLoginId(), "loginid");
         }
         // 소셜 로그인, 빈 값 검사, 중복 검사
         else if (request.getLoginType() == LoginType.SOCIAL) {
@@ -104,10 +105,12 @@ public class SignupService {
         if (request.getNickname() == null) {
             throw new RuntimeException("Nickname is required");
         }
-        userRepository.findByNickname(request.getNickname())
-                .ifPresent(user -> {
-                    throw new RuntimeException("Nickname already exists");
-                });
+        userService.checkDuplicate(request.getNickname(), "nickname");
+        
+        // 전화번호 중복 검사
+        if (request.getPhone() != null) {
+            userService.checkDuplicate(request.getPhone(), "phonenumber");
+        }
     }
 
     // 사용자 생성

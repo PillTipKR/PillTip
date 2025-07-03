@@ -29,12 +29,6 @@ public class PatientQuestionnaire {
     @JoinColumn(name = "uuid")
     private User user;
 
-    @Column(name = "realName")
-    private String realName;
-
-    @Column(name = "address")
-    private String address;
-
     @Column(name = "issueDate")
     private LocalDate issueDate; // 작성일
 
