@@ -43,7 +43,7 @@ public class SecurityConfig {
                         "/css/**", "/js/**", "/images/**",
                         "/static/**", "/webjars/**", "/favicon.ico",
                         "/api/auth/signup", "/api/auth/login", "/api/auth/check-duplicate",
-                        "/api/auth/refresh", "/api/auth/social-login").permitAll()
+                        "/api/auth/refresh", "/api/auth/social-login", "/api/questionnaire/public/**").permitAll()
                 // 나머지 경로는 인증 필요
                 .anyRequest().authenticated()
             )

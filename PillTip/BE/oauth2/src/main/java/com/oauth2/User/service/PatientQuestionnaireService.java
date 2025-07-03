@@ -136,4 +136,16 @@ public class PatientQuestionnaireService {
         // 삭제 후 남아있는 리스트 반환
         return getUserQuestionnaireSummaries(user);
     }
+
+    // 사용자의 최신 문진표 조회
+    public PatientQuestionnaire getLatestQuestionnaireByUser(User user) {
+        return questionnaireRepository.findTopByUserOrderByIssueDateDesc(user)
+                .orElse(null);
+    }
+
+    // 소유자 검증 없이 문진표 조회
+    public PatientQuestionnaire getQuestionnaireByIdPublic(Integer id) {
+        return questionnaireRepository.findById(id)
+            .orElseThrow(() -> new IllegalArgumentException("문진표를 찾을 수 없습니다."));
+    }
 } 

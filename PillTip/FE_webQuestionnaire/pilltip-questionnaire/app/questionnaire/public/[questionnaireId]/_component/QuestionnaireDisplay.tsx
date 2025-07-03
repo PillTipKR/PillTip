@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import styles from "./QuestionnaireDisplay.module.css";
 import BasicInfo from "./BasicInfo";
 import MedicationInfoBlock from "./MedicationInfo";
@@ -7,6 +8,7 @@ import AllergyInfoBlock from "./AllergyInfo";
 import ChronicDiseaseInfoBlock from "./ChronicDiseaseInfo";
 import SurgeryHistoryInfoBlock from "./SurgeryHistoryInfo";
 import Notes from "./Notes";
+import { downloadTxtFile } from "@/app/questionnaire/QuestionnaireTxtDownloadButton";
 import {
   MedicationInfo,
   AllergyInfo,
@@ -18,13 +20,18 @@ import {
 export default function QuestionnaireDisplay({
   questionnaire,
 }: QuestionnaireDisplayProps) {
-  // JSON 문자열을 파싱 (snake_case, camelCase 모두 지원)
-  function safeParse(str: string) {
-    try {
-      return str ? JSON.parse(str) : [];
-    } catch {
-      return [];
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  function safeParse(data: any) {
+    if (Array.isArray(data)) return data;
+    if (typeof data === "string") {
+      try {
+        return JSON.parse(data);
+      } catch {
+        return [];
+      }
     }
+    return [];
   }
 
   // medicationInfo: medication_id or medicationId
@@ -73,6 +80,23 @@ export default function QuestionnaireDisplay({
             <div className={styles.questionnaireId}>
               문진표 ID: {questionnaire.data.questionnaireId}
             </div>
+            <button
+              onClick={() => {
+                setIsDownloading(true);
+                downloadTxtFile({
+                  ...questionnaire.data,
+                  medicationInfo,
+                  allergyInfo,
+                  chronicDiseaseInfo,
+                  surgeryHistoryInfo,
+                });
+                setIsDownloading(false);
+              }}
+              disabled={isDownloading}
+              className={styles.downloadButton}
+            >
+              {isDownloading ? "다운로드 중..." : "📄 TXT 다운로드"}
+            </button>
           </div>
 
           <div className={styles.grid}>

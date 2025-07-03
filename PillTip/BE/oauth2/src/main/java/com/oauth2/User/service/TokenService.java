@@ -209,7 +209,7 @@ public class TokenService {
     // 커스텀 JWT 토큰 생성 (userId, questionnaireId, hospitalCode, 만료초)
     public String createCustomJwtToken(Long userId, Integer questionnaireId, String hospitalCode, int expiresInSeconds) {
         long now = System.currentTimeMillis();
-        return Jwts.builder()
+        String token = Jwts.builder()
                 .setSubject(String.valueOf(userId))
                 .claim("questionnaireId", questionnaireId)
                 .claim("hospitalCode", hospitalCode)
@@ -217,5 +217,32 @@ public class TokenService {
                 .setExpiration(new Date(now + expiresInSeconds * 1000L))
                 .signWith(SignatureAlgorithm.HS512, this.secretKey)
                 .compact();
+        System.out.println("[JWT 생성] userId: " + userId + ", questionnaireId: " + questionnaireId + ", hospitalCode: " + hospitalCode + ", expiresInSeconds: " + expiresInSeconds);
+        System.out.println("[JWT 생성] secretKey: " + secretKey);
+        System.out.println("[JWT 생성] token: " + token);
+        return token;
+    }
+
+    // 커스텀 JWT 토큰 검증 (questionnaireId 일치)
+    public boolean validateCustomJwtToken(String token, Integer questionnaireId) {
+        try {
+            System.out.println("[JWT 검증] 전달받은 token: " + token);
+            System.out.println("[JWT 검증] 전달받은 questionnaireId 파라미터: " + questionnaireId);
+            System.out.println("[JWT 검증] secretKey: " + secretKey);
+            Claims claims = Jwts.parser()
+                .setSigningKey(secretKey)
+                .parseClaimsJws(token)
+                .getBody();
+            Integer tokenQid = claims.get("questionnaireId", Integer.class);
+            System.out.println("[JWT 검증] token 내 claim의 questionnaireId: " + tokenQid);
+            if (!questionnaireId.equals(tokenQid)) {
+                System.out.println("[JWT 검증] 파라미터와 claim의 questionnaireId 불일치");
+                return false;
+            }
+            return true;
+        } catch (Exception e) {
+            System.out.println("[JWT 검증] Custom JWT validation error: " + e.getMessage());
+            return false;
+        }
     }
 }
