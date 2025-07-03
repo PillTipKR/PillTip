@@ -91,21 +91,23 @@ data class DurDto(
  * 복약 등록
  */
 data class RegisterDosageRequest(
-    val medication_id: Long,
-    val medication_name: String,
-    val start_date: String, // yyyy-MM-dd
-    val end_date: String,
-    val alert_name: String,
-    val days_of_week: List<String>,
-    val dosage_schedules: List<DosageSchedule>
+    val medicationId: Long,
+    val medicationName: String,
+    val startDate: String, // yyyy-MM-dd
+    val endDate: String,
+    val alarmName: String,
+    val dosageAmount: Double,
+    val daysOfWeek: List<String>,
+    val dosageSchedules: List<DosageSchedule>
 )
 
 data class DosageSchedule(
     val hour: Int,
     val minute: Int,
     val period: String, // AM or PM
-    val dosageUnit: String,
-    val alarmOnOff: Boolean
+    val alarmOnOff: Boolean,
+    val dosageUnit: String
+
 )
 
 data class RegisterDosageResponse(
@@ -119,8 +121,9 @@ data class TakingPillDetailData(
     val medicationName: String,
     val startDate: String,
     val endDate: String,
-    val alertName: String,
+    val alarmName: String,
     val daysOfWeek: List<String>,
+    val dosageAmount: Double,
     val dosageSchedules: List<DosageScheduleDetail>
 )
 

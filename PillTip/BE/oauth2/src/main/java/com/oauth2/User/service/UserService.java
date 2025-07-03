@@ -6,9 +6,11 @@ import com.oauth2.User.dto.LoginRequest;
 import com.oauth2.User.dto.LoginResponse;
 import com.oauth2.User.dto.SocialLoginRequest;
 import com.oauth2.User.dto.OAuth2UserInfo;
+import com.oauth2.User.entity.FCMToken;
 import com.oauth2.User.entity.LoginType;
 import com.oauth2.User.entity.User;
 import com.oauth2.User.entity.UserToken;
+import com.oauth2.User.repository.FCMTokenRepository;
 import com.oauth2.User.repository.UserRepository;
 import com.oauth2.User.repository.UserProfileRepository;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +27,7 @@ public class UserService {
     private final TokenService tokenService;
     private final UserProfileRepository userProfileRepository;
     private final OAuth2Service oauth2Service;
+    private final FCMTokenRepository fcmTokenRepository;
 
     // ID/PW 로그인
     public LoginResponse login(LoginRequest request) {
@@ -40,8 +43,13 @@ public class UserService {
         }
 
         UserToken userToken = tokenService.generateTokens(user.getId());
-        user.getFCMToken().setLoggedIn(true);
-
+        if(user.getFCMToken() == null) {
+            FCMToken fcmToken = new FCMToken();
+            fcmToken.setLoggedIn(true);
+            fcmToken.setUser(user);
+            fcmTokenRepository.save(fcmToken);
+            user.setFCMToken(fcmToken);
+        }
         return LoginResponse.builder()
                 .accessToken(userToken.getAccessToken())
                 .refreshToken(userToken.getRefreshToken())
@@ -53,18 +61,18 @@ public class UserService {
         System.out.println("=== Social Login Debug ===");
         System.out.println("Provider: " + request.getProvider());
         System.out.println("Token: " + request.getToken().substring(0, Math.min(request.getToken().length(), 20)) + "...");
-        
+
         try {
             // OAuth2 서버에서 사용자 정보 가져오기
             System.out.println("Calling OAuth2 service to get user info...");
             OAuth2UserInfo oauth2UserInfo = oauth2Service.getUserInfo(
-                request.getProvider(),
-                request.getToken()
+                    request.getProvider(),
+                    request.getToken()
             );
             System.out.println("OAuth2 User Info - Social ID: " + oauth2UserInfo.getSocialId());
             System.out.println("OAuth2 User Info - Email: " + oauth2UserInfo.getEmail());
             System.out.println("OAuth2 User Info - Name: " + oauth2UserInfo.getName());
-            
+
             // 소셜 ID로 사용자 조회
             System.out.println("Searching user by social ID: " + oauth2UserInfo.getSocialId());
             User user = userRepository.findBySocialId(oauth2UserInfo.getSocialId())
@@ -79,8 +87,14 @@ public class UserService {
             System.out.println("Generating tokens for user...");
             UserToken userToken = tokenService.generateTokens(user.getId());
             System.out.println("Tokens generated successfully");
-            user.getFCMToken().setLoggedIn(true);
 
+            if(user.getFCMToken() == null) {
+                FCMToken fcmToken = new FCMToken();
+                fcmToken.setLoggedIn(true);
+                fcmToken.setUser(user);
+                fcmTokenRepository.save(fcmToken);
+                user.setFCMToken(fcmToken);
+            }
             return LoginResponse.builder()
                     .accessToken(userToken.getAccessToken())
                     .refreshToken(userToken.getRefreshToken())
@@ -101,8 +115,12 @@ public class UserService {
         // 사용자 정보 조회
         User user = userRepository.findById(userToken.getUserId())
                 .orElseThrow(() -> new RuntimeException("User not found"));
-        user.getFCMToken().setLoggedIn(true);
-
+        if(user.getFCMToken() == null) {
+            FCMToken fcmToken = new FCMToken();
+            fcmToken.setLoggedIn(true);
+            fcmToken.setUser(user);
+            user.setFCMToken(fcmToken);
+        }
         return LoginResponse.builder()
                 .accessToken(userToken.getAccessToken())
                 .refreshToken(userToken.getRefreshToken())
@@ -154,7 +172,7 @@ public class UserService {
     public void deleteAccount(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
-        
+
         // 연관된 모든 데이터 삭제
         userRepository.delete(user);
     }

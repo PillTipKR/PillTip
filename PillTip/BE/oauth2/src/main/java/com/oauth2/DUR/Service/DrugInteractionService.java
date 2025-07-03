@@ -81,7 +81,26 @@ public class DrugInteractionService {
 
     }
 
+    private String removeLeadingParentheses(String name) {
+        while (name.startsWith("(")) {
+            int depth = 0;
+            for (int i = 0; i < name.length(); i++) {
+                if (name.charAt(i) == '(') depth++;
+                else if (name.charAt(i) == ')') {
+                    depth--;
+                    if (depth == 0) {
+                        name = name.substring(i + 1).strip();
+                        break;
+                    }
+                }
+            }
+        }
+        return name.split("\\(")[0];
+    }
+
     private void saveInteraction(String pName1, String pName2, String reason, String note){
+        pName1 = removeLeadingParentheses(pName1);
+        pName2 = removeLeadingParentheses(pName2);
         List<Drug> idList1 = drugRepository.findByNameContaining(pName1);
         List<Drug> idList2 = drugRepository.findByNameContaining(pName2);
 

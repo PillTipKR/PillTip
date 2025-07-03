@@ -26,6 +26,5 @@ public record DrugDetail (
         EffectDetail effect,
         EffectDetail usage,
         EffectDetail caution,
-        List<DurTagDto> durTags,
-        String gptExplain
+        List<DurTagDto> durTags
 ) {}

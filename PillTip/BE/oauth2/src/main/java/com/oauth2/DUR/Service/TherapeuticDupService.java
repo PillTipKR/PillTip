@@ -60,7 +60,25 @@ public class TherapeuticDupService {
 
     }
 
+    private String removeLeadingParentheses(String name) {
+        while (name.startsWith("(")) {
+            int depth = 0;
+            for (int i = 0; i < name.length(); i++) {
+                if (name.charAt(i) == '(') depth++;
+                else if (name.charAt(i) == ')') {
+                    depth--;
+                    if (depth == 0) {
+                        name = name.substring(i + 1).strip();
+                        break;
+                    }
+                }
+            }
+        }
+        return name.split("\\(")[0];
+    }
+
     private void saveTherapeuticDup(String productName, String className, String category, String note, String remark) {
+        productName = removeLeadingParentheses(productName);
         List<Drug> drugList = drugRepository.findByNameContaining(productName);
         if (!drugList.isEmpty()) {
             Drug drug = drugList.get(0);

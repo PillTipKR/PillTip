@@ -13,7 +13,6 @@ import com.oauth2.Drug.Domain.DrugEffect;
 import com.oauth2.Drug.Domain.DrugStorageCondition;
 import com.oauth2.Drug.Repository.DrugRepository;
 import com.oauth2.Search.Dto.SearchIndexDTO;
-import com.oauth2.User.dto.TakingPillSummaryResponse;
 import com.oauth2.User.entity.User;
 import com.oauth2.User.service.UserProfileService;
 import lombok.RequiredArgsConstructor;
@@ -45,7 +44,7 @@ public class DrugDetailService {
         List<String> medicationNames = takingPillService.getTakingPillSummary(user).getTakingPills().stream()
                 .map(TakingPillSummaryResponse.TakingPillSummary::getMedicationName)
                 .toList();
-
+      
         // 한 번의 쿼리로 Drug과 관련된 DrugEffect, DrugStorageCondition을 가져옵니다.
         Optional<Drug> drug = drugRepository.findDrugWithAllRelations(id);
         Set<DrugEffect> effectDetails = new HashSet<>();
@@ -81,22 +80,6 @@ public class DrugDetailService {
                 .filter(e -> e.getCategory() == DrugStorageCondition.Category.HUMID)
                 .toList().get(0);
 
-        PromptRequestDto promptRequestDto = new PromptRequestDto(
-                searchDurDto.durTags(),
-                user.getUserProfile().getAge(),
-                user.getUserProfile().getGender().name(),
-                user.getUserProfile().getDiseaseInfo(),
-                medicationNames,
-                new DrugRequestInfoDto(
-                        drug.get().getName(),
-                        new EffectDetail(effects.getType(),effects.getContent()),
-                        new EffectDetail(usages.getType(),usages.getContent()),
-                        new EffectDetail(cautions.getType(),cautions.getContent())
-                )
-        );
-
-        String gptExplain = drugPromptService.getAsk(promptRequestDto);
-
         return drug.map(value -> DrugDetail.builder()
                 .id(id)
                 .name(searchDurDto.drugName())
@@ -115,7 +98,6 @@ public class DrugDetailService {
                 .light(new StorageDetail(light.getCategory(), light.getValue(), light.isActive()))
                 .humid(new StorageDetail(humid.getCategory(), humid.getValue(), humid.isActive()))
                 .durTags(searchDurDto.durTags())
-                .gptExplain(gptExplain)
                 .build()).orElse(null);
     }
 

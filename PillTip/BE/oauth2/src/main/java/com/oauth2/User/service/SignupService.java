@@ -4,6 +4,7 @@ package com.oauth2.User.service;
 
 import com.oauth2.User.dto.SignupRequest;
 import com.oauth2.User.entity.*;
+import com.oauth2.User.repository.FCMTokenRepository;
 import com.oauth2.User.repository.UserRepository;
 import com.oauth2.User.dto.OAuth2UserInfo;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +23,7 @@ public class SignupService {
     private final PasswordEncoder passwordEncoder; //비밀번호 암호화
     private final TokenService tokenService;
     private final OAuth2Service oauth2Service;
+    private final FCMTokenRepository fcmTokenRepository;
 
     //회원가입 요청 처리
     public User signup(SignupRequest request) {
@@ -31,21 +33,21 @@ public class SignupService {
         if (request.getLoginType() == LoginType.SOCIAL) {
             // OAuth2 서버에서 사용자 정보 가져오기
             OAuth2UserInfo oauth2UserInfo = oauth2Service.getUserInfo(
-                request.getProvider(),
-                request.getToken()
+                    request.getProvider(),
+                    request.getToken()
             );
-            
+
             // OAuth2 사용자 정보로 User 객체 생성
             user = User.builder()
-                .loginType(LoginType.SOCIAL)
-                .socialId(oauth2UserInfo.getSocialId())
-                .userEmail(oauth2UserInfo.getEmail())  // null 가능
-                .nickname(oauth2UserInfo.getName() != null ? 
-                        oauth2UserInfo.getName() : 
-                        generateRandomNickname())  // 이름이 없으면 랜덤 닉네임 생성
-                .profilePhoto(oauth2UserInfo.getProfileImage())  // null 가능
-                .terms(false)
-                .build();
+                    .loginType(LoginType.SOCIAL)
+                    .socialId(oauth2UserInfo.getSocialId())
+                    .userEmail(oauth2UserInfo.getEmail())  // null 가능
+                    .nickname(oauth2UserInfo.getName() != null ?
+                            oauth2UserInfo.getName() :
+                            generateRandomNickname())  // 이름이 없으면 랜덤 닉네임 생성
+                    .profilePhoto(oauth2UserInfo.getProfileImage())  // null 가능
+                    .terms(false)
+                    .build();
         } else {
             user = createUser(request);
         }
@@ -66,7 +68,13 @@ public class SignupService {
 
         UserToken userToken = tokenService.generateTokens(user.getId());
         user.setUserToken(userToken);
-        user.getFCMToken().setLoggedIn(true);
+
+        FCMToken fcmToken = new FCMToken();
+        fcmToken.setLoggedIn(true);
+        fcmToken.setUser(user);
+        fcmTokenRepository.save(fcmToken);
+        user.setFCMToken(fcmToken);
+
         return userRepository.save(user);
     }
 
@@ -78,28 +86,28 @@ public class SignupService {
                 throw new RuntimeException("User ID and password are required for ID/PW login");
             }
             userRepository.findByLoginId(request.getLoginId())
-                .ifPresent(user -> {
-                    throw new IllegalArgumentException("이미 존재하는 사용자 ID입니다.");
-                });
-        } 
+                    .ifPresent(user -> {
+                        throw new IllegalArgumentException("이미 존재하는 사용자 ID입니다.");
+                    });
+        }
         // 소셜 로그인, 빈 값 검사, 중복 검사
         else if (request.getLoginType() == LoginType.SOCIAL) {
             if (request.getToken() == null) {
                 throw new RuntimeException("Token is required for social login");
             }
             userRepository.findBySocialId(request.getToken())
-                .ifPresent(user -> {
-                    throw new RuntimeException("Social account already exists");
-                });
-        } 
+                    .ifPresent(user -> {
+                        throw new RuntimeException("Social account already exists");
+                    });
+        }
         // 닉네임 중복 검사
         if (request.getNickname() == null) {
             throw new RuntimeException("Nickname is required");
         }
         userRepository.findByNickname(request.getNickname())
-            .ifPresent(user -> {
-                throw new RuntimeException("Nickname already exists");
-            });
+                .ifPresent(user -> {
+                    throw new RuntimeException("Nickname already exists");
+                });
     }
 
     // 사용자 생성

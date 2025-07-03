@@ -1,7 +1,6 @@
 package com.oauth2.Drug.Service;
 
 import com.oauth2.Drug.Domain.*;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

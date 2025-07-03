@@ -25,7 +25,7 @@ public class DrugAlarmScheduler {
     private final UserRepository userRepository;
     private final TakingPillService takingPillService;
 
-    @Scheduled(cron = "0 * * * * *") // 매 분마다 실행
+    @Scheduled(cron = "0 * * * * *")
     public void dispatchMedicationAlarms() throws JsonProcessingException {
         LocalTime now = LocalTime.now();
 
@@ -84,7 +84,7 @@ public class DrugAlarmScheduler {
     }
 
     public int to24Hour(Integer hour, String period) {
-        if (hour == 12) hour = 0; // 12 AM = 0시
+        if (hour == 12) hour = 0;
         return "PM".equalsIgnoreCase(period) ? hour + 12 : hour;
     }
 
