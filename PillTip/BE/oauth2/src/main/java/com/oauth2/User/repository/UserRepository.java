@@ -39,4 +39,12 @@ public interface UserRepository extends JpaRepository<User, Long> {
     WHERE u.id = :userId
     """)
     Optional<User> findByIdWithQuestionnaires(Long userId);
+
+    // 전화번호로 사용자 조회 (UserProfile을 통해)
+    @Query("""
+    SELECT u FROM User u
+    JOIN FETCH u.userProfile p
+    WHERE p.phone = :phone
+    """)
+    Optional<User> findByPhone(String phone);
 }

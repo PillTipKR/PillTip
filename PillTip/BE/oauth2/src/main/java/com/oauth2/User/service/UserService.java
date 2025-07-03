@@ -234,6 +234,12 @@ public class UserService {
         }
     }
 
+    // 전화번호로 사용자 조회
+    public User findByPhone(String phone) {
+        return userRepository.findByPhone(phone)
+                .orElse(null);
+    }
+
     // 회원 탈퇴
     public void deleteAccount(Long userId) {
         User user = userRepository.findById(userId)

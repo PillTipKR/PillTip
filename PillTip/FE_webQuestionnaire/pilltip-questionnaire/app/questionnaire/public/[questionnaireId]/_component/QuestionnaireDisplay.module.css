@@ -41,6 +41,31 @@
   color: #6b7280;
 }
 
+.downloadButton {
+  margin-top: 1rem;
+  padding: 0.75rem 1.5rem;
+  background-color: #059669;
+  color: white;
+  border: none;
+  border-radius: 0.375rem;
+  font-weight: 500;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.downloadButton:hover:not(:disabled) {
+  background-color: #047857;
+}
+
+.downloadButton:disabled {
+  background-color: #9ca3af;
+  cursor: not-allowed;
+}
+
 /* 그리드 레이아웃 */
 .grid {
   display: grid;

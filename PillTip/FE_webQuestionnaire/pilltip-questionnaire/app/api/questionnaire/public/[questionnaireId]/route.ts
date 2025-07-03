@@ -2,16 +2,16 @@ import { NextRequest, NextResponse } from "next/server";
 import { ApiResponse } from "@/types/questionnaire";
 import { cookies } from "next/headers";
 
-// BE API 엔드포인트 설정, 내부 서버인경우에는 http://localhost:20022 으로 설정
+// BE API 엔드포인트 설정 (로컬 테스트용)
 const BE_BASE_URL = process.env.BE_API_URL || "http://localhost:20022";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { questionnaireId: string } }
+  context: { params: { questionnaireId: string } }
 ) {
-  const { questionnaireId } = params;
+  const { questionnaireId } = context.params;
 
-  // 쿼리 파라미터와 쿠키에서 jwtToken을 읽음 (request.nextUrl 사용)
+  // 쿼리 파라미터에서 jwtToken을 읽음 (QR 코드를 통한 접근)
   console.log("[DEBUG] request.nextUrl:", request.nextUrl.toString());
   const jwtTokenFromQuery = request.nextUrl.searchParams.get("jwtToken");
   console.log("[DEBUG] jwtTokenFromQuery:", jwtTokenFromQuery);
@@ -35,11 +35,14 @@ export async function GET(
       console.warn(`[WARN] No JWT token found in cookies.`);
     }
 
-    const beUrl = `${BE_BASE_URL}/api/questionnaire/${questionnaireId}`;
+    const beUrl = `${BE_BASE_URL}/api/questionnaire/public/${questionnaireId}?jwtToken=${jwtToken}`;
     console.log(`[DEBUG] Fetching from BE:`, beUrl);
     const response = await fetch(beUrl, {
       method: "GET",
-      headers,
+      headers: {
+        "Content-Type": "application/json",
+        // Authorization 헤더는 필요 없음 (이 API는 쿼리 파라미터로만 받음)
+      },
     });
 
     console.log(`[DEBUG] BE response status:`, response.status);
@@ -92,7 +95,6 @@ export async function GET(
 
     // BE 응답 구조에 맞게 변환
     if (result.status === "success" && result.data) {
-      const medicationInfo = JSON.parse(result.data.medicationInfo);
       const questionnaire = {
         id: questionnaireId,
         title: result.data.questionnaireName,

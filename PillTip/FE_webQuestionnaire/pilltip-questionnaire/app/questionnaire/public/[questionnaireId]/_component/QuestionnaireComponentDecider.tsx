@@ -25,10 +25,10 @@ export default function QuestionnaireComponentDecider({
     try {
       setLoading(true);
 
-      // URL에서 JWT 토큰 추출 (쿼리 파라미터 또는 URL 파라미터)
+      // URL에서 JWT 토큰 추출 (쿼리 파라미터 또는 localStorage)
       const urlParams = new URLSearchParams(window.location.search);
       const jwtToken =
-        urlParams.get("token") || localStorage.getItem("jwtToken");
+        urlParams.get("jwtToken") || localStorage.getItem("jwtToken");
 
       // BE API 호출 - JWT 토큰을 Authorization 헤더에 포함
       const headers: Record<string, string> = {
@@ -39,9 +39,13 @@ export default function QuestionnaireComponentDecider({
         headers["Authorization"] = `Bearer ${jwtToken}`;
       }
 
-      const response = await fetch(`/api/questionnaire/${questionnaireId}`, {
-        headers,
-      });
+      // fetch 호출 시 쿼리 파라미터로 jwtToken을 반드시 포함
+      const response = await fetch(
+        `/api/questionnaire/public/${questionnaireId}?jwtToken=${
+          jwtToken ?? ""
+        }`,
+        { headers }
+      );
 
       if (!response.ok) {
         // 404 에러가 발생해도 더미 데이터가 반환되므로 에러를 던지지 않음
