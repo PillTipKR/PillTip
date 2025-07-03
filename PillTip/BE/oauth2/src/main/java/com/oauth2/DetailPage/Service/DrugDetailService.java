@@ -5,6 +5,7 @@ import co.elastic.clients.elasticsearch.core.SearchRequest;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.elasticsearch.core.search.Hit;
 import com.oauth2.User.service.TakingPillService;
+import com.oauth2.User.dto.TakingPillSummaryResponse;
 import com.oauth2.DUR.Dto.SearchDurDto;
 import com.oauth2.DUR.Service.DurTaggingService;
 import com.oauth2.DetailPage.Dto.*;
