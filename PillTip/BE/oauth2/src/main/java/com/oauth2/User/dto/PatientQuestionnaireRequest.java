@@ -21,6 +21,10 @@ public class PatientQuestionnaireRequest {
 
     private String notes;
 
+    // Add these fields for user info update
+    private String realName;
+    private String address;
+
     @Data
     @NoArgsConstructor
     @AllArgsConstructor

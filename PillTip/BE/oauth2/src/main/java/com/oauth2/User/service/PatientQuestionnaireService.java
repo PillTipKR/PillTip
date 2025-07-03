@@ -7,6 +7,7 @@ import com.oauth2.User.dto.PatientQuestionnaireSummaryResponse;
 import com.oauth2.User.entity.PatientQuestionnaire;
 import com.oauth2.User.entity.User;
 import com.oauth2.User.repository.PatientQuestionnaireRepository;
+import com.oauth2.User.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,9 +22,12 @@ import java.util.stream.Collectors;
 public class PatientQuestionnaireService {
     private final PatientQuestionnaireRepository questionnaireRepository;
     private final ObjectMapper objectMapper;
+    private final UserService userService;
 
     @Transactional
     public PatientQuestionnaire createQuestionnaire(User user, PatientQuestionnaireRequest request) throws JsonProcessingException {
+        // Update user realName and address
+        userService.updatePersonalInfo(user, request.getRealName(), request.getAddress());
         String medicationInfoJson = objectMapper.writeValueAsString(
                 toKeyedList(request.getMedicationInfo(), "medicationId")
         );
@@ -110,6 +114,8 @@ public class PatientQuestionnaireService {
 
     @Transactional
     public PatientQuestionnaire updateQuestionnaire(User user, Integer id, PatientQuestionnaireRequest request) throws JsonProcessingException {
+        // Update user realName and address
+        userService.updatePersonalInfo(user, request.getRealName(), request.getAddress());
         PatientQuestionnaire q = questionnaireRepository.findByIdWithUser(id)
             .orElseThrow(() -> new IllegalArgumentException("문진표를 찾을 수 없습니다."));
         if (!q.getUser().getId().equals(user.getId())) {
