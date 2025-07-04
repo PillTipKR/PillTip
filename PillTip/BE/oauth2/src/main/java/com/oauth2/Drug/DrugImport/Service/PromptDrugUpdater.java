@@ -78,7 +78,7 @@ public class PromptDrugUpdater {
             String amountStr = (i < amounts.length) ? amounts[i].trim() : "";
             String unit = (units.length == 1) ? units[0].trim() : (i < units.length ? units[i].trim() : "");
 
-            DrugIngredient.DrugIngredientId id = new DrugIngredient.DrugIngredientId();
+            DrugIngredientId id = new DrugIngredientId();
             id.setDrugId(drug.getId());
             id.setIngredientId(ingredient.getId());
 

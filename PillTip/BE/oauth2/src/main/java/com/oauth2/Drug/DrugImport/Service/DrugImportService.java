@@ -13,17 +13,13 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import com.oauth2.Drug.DrugImport.Domain.*;
 import com.oauth2.Drug.DrugImport.Repository.DrugRepository;
 import com.opencsv.CSVReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import com.oauth2.Drug.DrugImport.Domain.Drug;
-import com.oauth2.Drug.DrugImport.Domain.DrugEffect;
-import com.oauth2.Drug.DrugImport.Domain.DrugIngredient;
-import com.oauth2.Drug.DrugImport.Domain.DrugStorageCondition;
-import com.oauth2.Drug.DrugImport.Domain.Ingredient;
 import org.springframework.web.multipart.MultipartFile;
 
 @Service
@@ -144,7 +140,7 @@ public class DrugImportService {
                 }
 
                 DrugIngredient di = new DrugIngredient();
-                DrugIngredient.DrugIngredientId diId = new DrugIngredient.DrugIngredientId();
+                DrugIngredientId diId = new DrugIngredientId();
                 parseIngredientAmount(di, amount);
                 diId.setDrugId(drug.getId());
                 diId.setIngredientId(ingredient.getId());

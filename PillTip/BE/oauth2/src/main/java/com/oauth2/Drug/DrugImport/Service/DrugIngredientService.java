@@ -1,6 +1,7 @@
 package com.oauth2.Drug.DrugImport.Service;
 
 import com.oauth2.Drug.DrugImport.Domain.DrugIngredient;
+import com.oauth2.Drug.DrugImport.Domain.DrugIngredientId;
 import com.oauth2.Drug.DrugImport.Repository.DrugIngredientRepository;
 import org.springframework.stereotype.Service;
 import java.util.List;
@@ -20,13 +21,13 @@ public class DrugIngredientService {
     public DrugIngredient save(DrugIngredient drugIngredient) {
         return drugIngredientRepository.save(drugIngredient);
     }
-    public void delete(DrugIngredient.DrugIngredientId id) {
+    public void delete(DrugIngredientId id) {
         drugIngredientRepository.deleteById(id);
     }
-    public DrugIngredient findByIngredientId(DrugIngredient.DrugIngredientId id) {
+    public DrugIngredient findByIngredientId(DrugIngredientId id) {
         return drugIngredientRepository.findById(id).orElse(null);
     }
-    public Optional<DrugIngredient> findById(DrugIngredient.DrugIngredientId id){
+    public Optional<DrugIngredient> findById(DrugIngredientId id){
         return drugIngredientRepository.findById(id);
     }
     public List<DrugIngredient> findByDrugId(Long id) {
