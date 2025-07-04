@@ -230,20 +230,62 @@ class SearchHiltViewModel @Inject constructor(
 
 @HiltViewModel
 class QuestionnaireViewModel @Inject constructor(
-    private val repository: QuestionnaireRepository
+    private val repository: QuestionnaireRepository,
+    private val permissionRepository: PermissionRepository
 ) : ViewModel() {
 
-    // 기본 정보
     var realName by mutableStateOf("")
     var address by mutableStateOf("")
+    var phoneNumber by mutableStateOf("")
     var questionnaireName by mutableStateOf("")
     var notes by mutableStateOf("")
 
-    // 문진 항목 리스트
     var medicationInfo by mutableStateOf<List<MedicationEntry>>(emptyList())
     var allergyInfo by mutableStateOf<List<AllergyEntry>>(emptyList())
     var chronicDiseaseInfo by mutableStateOf<List<ChronicDiseaseEntry>>(emptyList())
     var surgeryHistoryInfo by mutableStateOf<List<SurgeryHistoryEntry>>(emptyList())
+
+    var submittedQuestionnaire by mutableStateOf<QuestionnaireData?>(null)
+
+    var permissionState by mutableStateOf<PermissionData?>(null)
+    var isPermissionLoading by mutableStateOf(false)
+
+    fun updateSensitivePermissions(
+        sensitiveInfo: Boolean,
+        medicalInfo: Boolean
+    ) {
+        viewModelScope.launch {
+            isPermissionLoading = true
+            try {
+                val request = PermissionRequest(
+                    sensitiveInfoPermission = sensitiveInfo,
+                    medicalInfoPermission = medicalInfo
+                )
+                val response = permissionRepository.updatePermissions(request)
+                permissionState = response.data
+                Log.d("PermissionUpdate", "민감정보 동의 성공: ${response.message}")
+            } catch (e: Exception) {
+                Log.e("PermissionUpdate", "민감정보 동의 실패: ${e.message}")
+            } finally {
+                isPermissionLoading = false
+            }
+        }
+    }
+
+    fun loadPermissions() {
+        viewModelScope.launch {
+            isPermissionLoading = true
+            try {
+                val response = permissionRepository.getPermissions()
+                permissionState = response.data
+                Log.d("PermissionLoad", "현재 권한 상태: ${response.data}")
+            } catch (e: Exception) {
+                Log.e("PermissionLoad", "권한 불러오기 실패: ${e.message}")
+            } finally {
+                isPermissionLoading = false
+            }
+        }
+    }
 
     fun resetAll() {
         realName = ""
@@ -260,6 +302,7 @@ class QuestionnaireViewModel @Inject constructor(
         return QuestionnaireSubmitRequest(
             realName = realName,
             address = address,
+            phoneNumber = phoneNumber,
             questionnaireName = questionnaireName,
             medicationInfo = medicationInfo,
             allergyInfo = allergyInfo,
@@ -272,8 +315,9 @@ class QuestionnaireViewModel @Inject constructor(
     fun submit() {
         viewModelScope.launch {
             try {
-                repository.submit(toRequest())
-                Log.d("문진표", "제출 성공")
+                val response = repository.submit(toRequest())
+                submittedQuestionnaire = response
+                Log.d("문진표", "제출 성공: ID=${response.questionnaireId}")
             } catch (e: Exception) {
                 Log.e("문진표", "제출 실패: ${e.message}")
             }
@@ -403,4 +447,15 @@ object RepositoryModule {
     fun provideFcmTokenRepository(api: FcmApi): FcmTokenRepository {
         return FcmTokenRepositoryImpl(api)
     }
+
+    @Provides
+    fun providePermissionApi(@Named("SearchRetrofit") retrofit: Retrofit): PermissionApi {
+        return retrofit.create(PermissionApi::class.java)
+    }
+
+    @Provides
+    fun providePermissionRepository(api: PermissionApi): PermissionRepository {
+        return PermissionRepositoryImpl(api)
+    }
+
 }

@@ -174,12 +174,13 @@ data class TakingPillDetailResponse(
 data class QuestionnaireSubmitRequest(
     val realName: String,
     val address: String,
+    val phoneNumber: String,
     val questionnaireName: String,
     val medicationInfo: List<MedicationEntry>,
     val allergyInfo: List<AllergyEntry>,
     val chronicDiseaseInfo: List<ChronicDiseaseEntry>,
     val surgeryHistoryInfo: List<SurgeryHistoryEntry>,
-    val notes: String
+    val notes: String? = null
 )
 
 data class MedicationEntry(
@@ -203,10 +204,61 @@ data class SurgeryHistoryEntry(
     val submitted: Boolean
 )
 
+data class QuestionnaireResponse(
+    val status: String,
+    val message: String,
+    val data: QuestionnaireData
+)
+
+data class QuestionnaireData(
+    val questionnaireId: Long,
+    val questionnaireName: String,
+    val realName: String,
+    val address: String,
+    val issueDate: String,
+    val lastModifiedDate: String,
+    val notes: String,
+    val medicationInfo: List<MedicationEntry>,
+    val allergyInfo: List<AllergyEntry>,
+    val chronicDiseaseInfo: List<ChronicDiseaseEntry>,
+    val surgeryHistoryInfo: List<SurgeryHistoryEntry>
+)
+
 /**
  * FCM 토큰
  */
 data class FcmTokenResponse(
     val status: String,
     val message: String?
+)
+
+/**
+ * 민감정보 동의
+ */
+data class PermissionRequest(
+    val locationPermission: Boolean? = null,
+    val cameraPermission: Boolean? = null,
+    val galleryPermission: Boolean? = null,
+    val phonePermission: Boolean? = null,
+    val smsPermission: Boolean? = null,
+    val filePermission: Boolean? = null,
+    val sensitiveInfoPermission: Boolean? = null,
+    val medicalInfoPermission: Boolean? = null
+)
+
+data class PermissionResponse(
+    val status: String,
+    val message: String,
+    val data: PermissionData
+)
+
+data class PermissionData(
+    val locationPermission: Boolean,
+    val cameraPermission: Boolean,
+    val galleryPermission: Boolean,
+    val phonePermission: Boolean,
+    val smsPermission: Boolean,
+    val filePermission: Boolean,
+    val sensitiveInfoPermission: Boolean,
+    val medicalInfoPermission: Boolean
 )

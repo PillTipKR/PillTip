@@ -80,7 +80,7 @@ class DrugDetailRepositoryImpl(
  *
  */
 interface DosageRegisterApi {
-    @POST("api/auth/taking-pill")
+    @POST("api/taking-pill")
     suspend fun registerDosage(
         @Body request: RegisterDosageRequest
     ): RegisterDosageResponse
@@ -103,7 +103,7 @@ class DosageRegisterRepositoryImpl(
  */
 
 interface DosageSummaryApi {
-    @GET("/api/auth/taking-pill")
+    @GET("/api/taking-pill")
     suspend fun getDosageSummary(): TakingPillSummaryResponse
 }
 
@@ -124,7 +124,7 @@ class DosageSummaryRepositoryImpl(
  */
 
 interface DosageDeleteApi {
-    @DELETE("/api/auth/taking-pill/{medicationId}")
+    @DELETE("/api/taking-pill/{medicationId}")
     suspend fun deleteTakingPill(
         @Path("medicationId") medicationId: Long
     ): TakingPillSummaryResponse
@@ -146,7 +146,7 @@ class DosageDeleteRepositoryImpl(
  */
 
 interface DosageDetailApi {
-    @GET("/api/auth/taking-pill/{medicationId}")
+    @GET("/api/taking-pill/{medicationId}")
     suspend fun getDosageDetail(
         @Path("medicationId") medicationId: Long
     ): TakingPillDetailResponse
@@ -168,7 +168,7 @@ class DosageDetailRepositoryImpl(
  * 복약 데이터 수정 API
  */
 interface DosageModifyApi {
-    @PUT("/api/auth/taking-pill/{medicationId}")
+    @PUT("/api/taking-pill/{medicationId}")
     suspend fun updateDosage(
         @Path("medicationId") medicationId: Long,
         @Body request: RegisterDosageRequest
@@ -192,21 +192,21 @@ class DosageModifyRepositoryImpl(
  */
 
 interface QuestionnaireApi {
-    @POST("/api/auth/questionnaire")
+    @POST("/api/questionnaire")
     suspend fun submitQuestionnaire(
         @Body request: QuestionnaireSubmitRequest
-    ): Response<Unit> // or any response DTO
+    ): QuestionnaireResponse
 }
 
 interface QuestionnaireRepository {
-    suspend fun submit(request: QuestionnaireSubmitRequest)
+    suspend fun submit(request: QuestionnaireSubmitRequest): QuestionnaireData
 }
 
 class QuestionnaireRepositoryImpl(
     private val api: QuestionnaireApi
 ) : QuestionnaireRepository {
-    override suspend fun submit(request: QuestionnaireSubmitRequest) {
-        api.submitQuestionnaire(request)
+    override suspend fun submit(request: QuestionnaireSubmitRequest): QuestionnaireData {
+        return api.submitQuestionnaire(request).data
     }
 }
 
@@ -232,4 +232,37 @@ class FcmTokenRepositoryImpl(
         return api.sendFcmToken(token)
     }
 }
+
+/**
+ * 민감정보 동의
+ */
+interface PermissionApi {
+    @PUT("/api/questionnaire/permissions/multi")
+    suspend fun updatePermissions(
+        @Body request: PermissionRequest
+    ): PermissionResponse
+
+    @GET("/api/questionnaire/permissions")
+    suspend fun getPermissions(): PermissionResponse
+}
+
+interface PermissionRepository {
+    suspend fun updatePermissions(request: PermissionRequest): PermissionResponse
+    suspend fun getPermissions(): PermissionResponse
+}
+
+class PermissionRepositoryImpl(
+    private val api: PermissionApi
+) : PermissionRepository {
+    override suspend fun updatePermissions(request: PermissionRequest): PermissionResponse {
+        return api.updatePermissions(request)
+    }
+    override suspend fun getPermissions(): PermissionResponse {
+        return api.getPermissions()
+    }
+}
+
+/**
+ * 민감정보 동의 여부 조회
+ */
 

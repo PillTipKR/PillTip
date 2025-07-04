@@ -1288,7 +1288,11 @@ fun ProfilePage(
             year = selectedYear
             month = selectedMonth
             day = selectedDay
-        })
+        },
+            displayYear = year,
+            displayMonth = month,
+            displayDay = day,
+        )
         HeightSpacer(28.dp)
         Row {
             ProfileStepDescription("연령")
@@ -1410,7 +1414,9 @@ fun InterestPage(
                             viewModel.submitTerms(
                                 token = accessToken,
                                 onSuccess = {
-                                    navController.navigate("PillMainPage")
+                                    navController.navigate("PillMainPage") {
+                                        popUpTo(0) { inclusive = true }
+                                    }
                                 },
                                 onFailure = { error ->
                                     Toast.makeText(
@@ -1418,7 +1424,7 @@ fun InterestPage(
                                         "약관 전송 실패: ${error?.message ?: "알 수 없는 오류"}",
                                         Toast.LENGTH_SHORT
                                     ).show()
-                                    navController.navigate("PillMainPage")  {
+                                    navController.navigate("SelectPage")  {
                                         popUpTo(0) { inclusive = true }
                                     }
                                 }
@@ -1427,10 +1433,10 @@ fun InterestPage(
                         onFailure = { error ->
                             Toast.makeText(
                                 context,
-                                error?.message ?: "회원가입에 실패했습니다.",
+                                error?.message ?: "회원가입에 실패했습니다. 다시 시도해주세요.",
                                 Toast.LENGTH_SHORT
                             ).show()
-                            navController.navigate("PillMainPage")  {
+                            navController.navigate("SelectPage")  {
                                 popUpTo(0) { inclusive = true }
                             }
                         }

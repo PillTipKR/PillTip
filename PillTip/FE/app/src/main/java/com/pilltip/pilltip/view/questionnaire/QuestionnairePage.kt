@@ -34,6 +34,9 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
@@ -60,10 +63,13 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
@@ -79,6 +85,8 @@ import com.pilltip.pilltip.composable.HeightSpacer
 import com.pilltip.pilltip.composable.IosButton
 import com.pilltip.pilltip.composable.NextButton
 import com.pilltip.pilltip.composable.QuestionnaireComposable.DottedDivider
+import com.pilltip.pilltip.composable.QuestionnaireComposable.EditableProfileField
+import com.pilltip.pilltip.composable.QuestionnaireComposable.FixedProfiledField
 import com.pilltip.pilltip.composable.QuestionnaireComposable.InformationBox
 import com.pilltip.pilltip.composable.SearchComposable.AutoCompleteList
 import com.pilltip.pilltip.composable.SearchComposable.PillSearchField
@@ -86,6 +94,7 @@ import com.pilltip.pilltip.composable.WhiteScreenModifier
 import com.pilltip.pilltip.composable.WidthSpacer
 import com.pilltip.pilltip.composable.buttonModifier
 import com.pilltip.pilltip.composable.noRippleClickable
+import com.pilltip.pilltip.model.UserInfoManager
 import com.pilltip.pilltip.model.search.AllergyEntry
 import com.pilltip.pilltip.model.search.ChronicDiseaseEntry
 import com.pilltip.pilltip.model.search.LogViewModel
@@ -96,6 +105,7 @@ import com.pilltip.pilltip.model.search.SurgeryHistoryEntry
 import com.pilltip.pilltip.ui.theme.gray200
 import com.pilltip.pilltip.ui.theme.gray400
 import com.pilltip.pilltip.ui.theme.gray500
+import com.pilltip.pilltip.ui.theme.gray600
 import com.pilltip.pilltip.ui.theme.gray700
 import com.pilltip.pilltip.ui.theme.gray800
 import com.pilltip.pilltip.ui.theme.pretendard
@@ -222,7 +232,8 @@ fun QuestionnairePage(
 
 @Composable
 fun EssentialPage(
-    navController: NavController
+    navController: NavController,
+    questionnaireViewModel: QuestionnaireViewModel
 ) {
     var isEssentialChecked by remember { mutableStateOf(false) }
     var isOptionalChecked by remember { mutableStateOf(false) }
@@ -385,7 +396,13 @@ fun EssentialPage(
             ),
             text = "동의하기",
             onClick = {
-                if (isEssentialChecked && isOptionalChecked) navController.navigate("AreYouPage/약")
+                if (isEssentialChecked && isOptionalChecked) {
+                    questionnaireViewModel.updateSensitivePermissions(
+                        sensitiveInfo = true,
+                        medicalInfo = true
+                    )
+                    navController.navigate("AreYouPage/약")
+                }
             }
         )
     }
@@ -953,11 +970,18 @@ fun QuestionnaireCheckPage(
     navController: NavController,
     viewModel: QuestionnaireViewModel
 ) {
-    val realName by remember { mutableStateOf(viewModel.realName) }
-    val birthDate by remember { mutableStateOf("") }
-    val gender by remember { mutableStateOf("") }
-    val phone by remember { mutableStateOf("") }
-    val address by remember { mutableStateOf(viewModel.address) }
+    val context = LocalContext.current
+    val focusManager = LocalFocusManager.current
+    val keyboardController = LocalSoftwareKeyboardController.current
+    var questionnaireName by remember { mutableStateOf("내 문진표") }
+    var realName by remember { mutableStateOf("김필팁") }
+    var isEditingRealName by remember { mutableStateOf(false) }
+    var gender by remember { mutableStateOf(UserInfoManager.getUserData(context)?.gender) }
+    var phone by remember { mutableStateOf(UserInfoManager.getUserData(context)?.phone!!) }
+    var isEditingPhone by remember { mutableStateOf(false) }
+
+    var address by remember { mutableStateOf("부산광역시 금정구 부산대학교로\n어쩌구 저쩌구") }
+    var isEditingAddress by remember { mutableStateOf(false) }
     var expanded by remember { mutableStateOf(false) }
     var option by remember { mutableStateOf("수정") }
     var isEditMode by remember { mutableStateOf(false) }
@@ -967,16 +991,19 @@ fun QuestionnaireCheckPage(
     val diseaseList = remember { viewModel.chronicDiseaseInfo.toMutableStateList() }
     val surgeryList = remember { viewModel.surgeryHistoryInfo.toMutableStateList() }
 
+
+
     Column(
         modifier = WhiteScreenModifier
             .padding(horizontal = 22.dp)
             .statusBarsPadding()
             .verticalScroll(rememberScrollState())
     ) {
-        Box(){
+        Box() {
             BackButton(
                 title = "문진표 확인",
                 horizontalPadding = 0.dp,
+                verticalPadding = 0.dp,
                 iconDrawable = R.drawable.btn_vertical_dots,
                 onClick = { expanded = true }
             ) {
@@ -985,7 +1012,9 @@ fun QuestionnaireCheckPage(
             DropdownMenu(
                 expanded = expanded,
                 onDismissRequest = { expanded = false },
-                modifier = Modifier.background(Color.White).align(Alignment.TopEnd)
+                modifier = Modifier
+                    .background(Color.White)
+                    .align(Alignment.TopEnd)
             ) {
                 DropdownMenuItem(text = { Text("수정") }, onClick = {
                     option = "수정"
@@ -995,17 +1024,62 @@ fun QuestionnaireCheckPage(
 
             }
         }
-        TextField(
+        BasicTextField(
+            value = questionnaireName,
+            onValueChange = { questionnaireName = it },
+            singleLine = true,
+            textStyle = TextStyle(
+                fontSize = 20.sp,
+                fontFamily = pretendard,
+                fontWeight = FontWeight(600),
+                color = gray800,
+                textAlign = TextAlign.Center,
+            ),
+            keyboardOptions = KeyboardOptions(
+                imeAction = ImeAction.Done
+            ),
+            keyboardActions = KeyboardActions(
+                onDone = {
+                    keyboardController?.hide()
+                    focusManager.clearFocus()
+                }
+            ),
+            modifier = Modifier
+                .fillMaxWidth()
+        )
+        HeightSpacer(24.dp)
+        EditableProfileField(
+            label = "이름",
             value = realName,
-            onValueChange = { viewModel.realName = it },
-            label = { Text("이름") })
-        TextField(value = birthDate, onValueChange = {}, label = { Text("생년월일") })
-        TextField(value = gender, onValueChange = {}, label = { Text("성별") })
-        TextField(value = phone, onValueChange = {}, label = { Text("전화번호") })
-        TextField(
+            onValueChange = { realName = it },
+            isEditable = isEditingRealName,
+            onEditToggle = { isEditingRealName = !isEditingRealName }
+        )
+
+        FixedProfiledField(
+            "생년월일",
+            "${UserInfoManager.getUserData(context)?.birthDate} (만 ${
+                UserInfoManager.getUserData(context)?.age
+            }세)"
+        )
+        FixedProfiledField("성별", "${gender}성")
+
+
+        EditableProfileField(
+            label = "전화번호",
+            value = phone,
+            onValueChange = { phone = it },
+            isEditable = isEditingPhone,
+            onEditToggle = { isEditingPhone = !isEditingPhone }
+        )
+
+        EditableProfileField(
+            label = "주소",
             value = address,
-            onValueChange = { viewModel.address = it },
-            label = { Text("주소") })
+            onValueChange = { address = it },
+            isEditable = isEditingAddress,
+            onEditToggle = { isEditingAddress = !isEditingAddress }
+        )
 
         HeightSpacer(20.dp)
 
@@ -1071,8 +1145,13 @@ fun QuestionnaireCheckPage(
                 if (isEditMode) {
                     isEditMode = false
                 } else {
+                    viewModel.realName = realName
+                    viewModel.address = address
+                    viewModel.phoneNumber = phone
+                    viewModel.questionnaireName = questionnaireName
+
                     viewModel.submit()
-                    navController.navigate("ResultPage") // 예시
+                    navController.navigate("DetailPage")
                 }
             }
         )

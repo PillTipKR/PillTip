@@ -332,7 +332,7 @@ fun DosagePage(
             } else {
                 if (isFormValid) {
                     searchViewModel.setPendingRequest(request)
-                    navController.navigate("DosageAlarmPage")
+                    navController.navigate("DosageAlarmPage/${false}")
                 } else {
                     Toast.makeText(context, "모든 항목을 올바르게 입력해주세요.", Toast.LENGTH_SHORT).show()
                 }
