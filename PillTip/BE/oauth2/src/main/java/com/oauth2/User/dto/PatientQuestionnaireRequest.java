@@ -33,6 +33,7 @@ public class PatientQuestionnaireRequest {
     public static class InfoItem {
         private String id;
         private String medicationId;
+        private String medicationName;
         private String phoneNumber;
         private String allergyName;
         private String chronicDiseaseName;
