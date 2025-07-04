@@ -14,6 +14,9 @@ export default function BasicInfo({ data }: { data: any }) {
           <span className={styles.infoLabel}>주소:</span> {data.address}
         </div>
         <div className={`${styles.infoItem} ${styles.basicInfoItem}`}>
+          <span className={styles.infoLabel}>전화번호:</span> {data.phoneNumber}
+        </div>
+        <div className={`${styles.infoItem} ${styles.basicInfoItem}`}>
           <span className={styles.infoLabel}>발행일:</span> {data.issueDate}
         </div>
         <div className={`${styles.infoItem} ${styles.basicInfoItem}`}>

@@ -13,6 +13,7 @@ function generateQuestionnaireTxt(questionnaire: any): string {
   content += "[기본 정보]\n";
   content += `환자명: ${questionnaire.realName || "미입력"}\n`;
   content += `주소: ${questionnaire.address || "미입력"}\n`;
+  content += `전화번호: ${questionnaire.phoneNumber || "미입력"}\n`;
   content += `작성일: ${questionnaire.issueDate || "미입력"}\n`;
   content += `최종수정일: ${questionnaire.lastModifiedDate || "미입력"}\n`;
   content += `문진표명: ${questionnaire.questionnaireName || "미입력"}\n\n`;
