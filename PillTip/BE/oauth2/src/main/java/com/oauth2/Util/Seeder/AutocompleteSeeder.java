@@ -1,7 +1,7 @@
 package com.oauth2.Util.Seeder;
 
-import com.oauth2.DUR.Service.DurRedisLoader;
-import com.oauth2.Elasticsearch.Service.DataSyncService;
+import com.oauth2.Drug.DUR.Service.DurRedisLoader;
+import com.oauth2.Util.Elasticsearch.Service.DataSyncService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
