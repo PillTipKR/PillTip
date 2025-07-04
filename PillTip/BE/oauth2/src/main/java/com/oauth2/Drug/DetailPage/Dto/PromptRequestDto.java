@@ -1,0 +1,15 @@
+package com.oauth2.Drug.DetailPage.Dto;
+
+import com.oauth2.Drug.DUR.Dto.DurTagDto;
+
+import java.util.List;
+
+public record PromptRequestDto(
+        List<DurTagDto> durInfo,         // DUR 정보 (없을 경우 빈 문자열)
+        int age,                  // 사용자 나이
+        String gender,            // "MALE" 또는 "FEMALE"
+        String underlyingDisease, // 기저질환 (예: "고혈압", 없으면
+        List<String> currentDrugs, // 현재 복약 중인 약들
+        DrugRequestInfoDto drugInfo        // 약물 요약 정보 (예: "스피드펜연질캡슐200밀리그램(이부프로펜)")
+){}
+
