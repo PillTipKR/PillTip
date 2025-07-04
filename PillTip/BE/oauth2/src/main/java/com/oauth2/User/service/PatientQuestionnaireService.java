@@ -63,6 +63,12 @@ public class PatientQuestionnaireService {
                     String value = null;
                     if ("medicationId".equals(keyName)) {
                         value = item.getMedicationId();
+                        // medicationId인 경우 medicationName도 함께 저장
+                        return Map.of(
+                                keyName, value,
+                                "medicationName", item.getMedicationName() != null ? item.getMedicationName() : "",
+                                "submitted", item.isSubmitted()
+                        );
                     } else if ("allergyName".equals(keyName)) {
                         value = item.getAllergyName();
                     } else if ("chronicDiseaseName".equals(keyName)) {
