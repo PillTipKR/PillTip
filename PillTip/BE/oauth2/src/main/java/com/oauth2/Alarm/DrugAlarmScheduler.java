@@ -3,7 +3,6 @@ package com.oauth2.Alarm;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.oauth2.User.dto.TakingPillRequest;
 import com.oauth2.User.entity.User;
 import com.oauth2.User.entity.TakingPill;
 import com.oauth2.User.entity.DosageSchedule;
@@ -26,7 +25,7 @@ public class DrugAlarmScheduler {
     private final TakingPillService takingPillService;
 
     @Scheduled(cron = "0 * * * * *")
-    public void dispatchMedicationAlarms() throws JsonProcessingException {
+    public void dispatchMedicationAlarms() {
         LocalTime now = LocalTime.now();
 
         List<User> users = userRepository.findAllActiveUsersWithPillInfo();
@@ -43,7 +42,7 @@ public class DrugAlarmScheduler {
                     int targetHour = to24Hour(dosageSchedule.getHour(), dosageSchedule.getPeriod());
                     if (targetHour == now.getHour() && dosageSchedule.getMinute() == now.getMinute()) {
                         // 알림 전송
-                        alarmService.sendMedicationAlarm(user.getFCMToken(), takingPill.getAlarmName(), takingPill.getMedicationName() + " 복약할 시간이에요!");
+                        alarmService.sendMedicationAlarm(user.getFCMToken(), takingPill.getAlarmName(), takingPill.getMedicationName());
                     }
                 }
             }
@@ -65,8 +64,9 @@ public class DrugAlarmScheduler {
         // 요일 확인
         try {
             ObjectMapper mapper = new ObjectMapper();
-            List<String> daysOfWeek = mapper.readValue(takingPill.getDaysOfWeek(), 
-                    new TypeReference<List<String>>() {});
+            List<String> daysOfWeek = mapper.readValue(takingPill.getDaysOfWeek(),
+                    new TypeReference<>() {
+                    });
             
             // 매일 복용인 경우
             if (daysOfWeek.contains("EVERYDAY")) {

@@ -3,7 +3,6 @@ package com.oauth2.DetailPage.Controller;
 import com.oauth2.DetailPage.Dto.DrugDetail;
 import com.oauth2.DetailPage.Service.DrugDetailService;
 import com.oauth2.DetailPage.Service.DrugPromptService;
-import com.oauth2.Drug.Service.PromptDrugUpdater;
 import com.oauth2.User.dto.ApiResponse;
 import com.oauth2.User.entity.User;
 import lombok.RequiredArgsConstructor;

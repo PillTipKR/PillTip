@@ -27,8 +27,10 @@ public interface UserRepository extends JpaRepository<User, Long> {
     SELECT DISTINCT u FROM User u
     JOIN FETCH u.FCMToken t
     JOIN FETCH u.userProfile p
-    JOIN u.takingPills tp
+    LEFT JOIN u.takingPills tp
     WHERE t.loggedIn = true
+    and u.userPermissions.phonePermission = true
+    and tp IS NOT NULL
     """)
     List<User> findAllActiveUsersWithPillInfo();
 

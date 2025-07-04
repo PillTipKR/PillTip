@@ -59,13 +59,11 @@ public class PromptDrugUpdater {
         String nameLine = extractLine(block, "- 성분명:");
         String amountLine = extractLine(block, "- 분량:");
         String unitLine = extractLine(block, "- 단위:");
-        String specLine = extractLine(block, "- 규격:");
 
         // 쉼표 기준 분리
         String[] names = nameLine.split(",");
         String[] amounts = amountLine.split(",");
         String[] units = unitLine.split(",");
-        String[] specs = specLine.split(",");
 
         for (int i = 0; i < names.length; i++) {
             String name = names[i].trim();
