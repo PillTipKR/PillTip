@@ -24,6 +24,7 @@ public class PatientQuestionnaireRequest {
     // Add these fields for user info update
     private String realName;
     private String address;
+    private String phoneNumber;
 
     @Data
     @NoArgsConstructor
@@ -32,6 +33,7 @@ public class PatientQuestionnaireRequest {
     public static class InfoItem {
         private String id;
         private String medicationId;
+        private String phoneNumber;
         private String allergyName;
         private String chronicDiseaseName;
         private String surgeryHistoryName;

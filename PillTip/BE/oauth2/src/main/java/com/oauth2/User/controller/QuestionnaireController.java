@@ -174,9 +174,10 @@ public class QuestionnaireController {
             @RequestBody PatientQuestionnaireRequest request) {
         // Validate realName and address
         if (request.getRealName() == null || request.getRealName().trim().isEmpty() ||
-            request.getAddress() == null || request.getAddress().trim().isEmpty()) {
+            request.getAddress() == null || request.getAddress().trim().isEmpty() ||
+            request.getPhoneNumber() == null || request.getPhoneNumber().trim().isEmpty()) {
             return ResponseEntity.status(400)
-                .body(ApiResponse.error("실명과 주소는 필수입니다.", null));
+                .body(ApiResponse.error("실명과 주소, 전화번호는 필수입니다.", null));
         }
         logger.info("Received createQuestionnaire request for user: {}", user.getId());
         try {
