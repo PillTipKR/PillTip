@@ -2,7 +2,6 @@ package com.pilltip.pilltip.view.main
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -13,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
@@ -20,6 +20,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -40,13 +41,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -57,7 +58,6 @@ import com.pilltip.pilltip.composable.IosButton
 import com.pilltip.pilltip.composable.MainComposable.DrugSummaryCard
 import com.pilltip.pilltip.composable.MainComposable.ProfileTagButton
 import com.pilltip.pilltip.composable.NextButton
-import com.pilltip.pilltip.composable.PillTipDatePicker
 import com.pilltip.pilltip.composable.WhiteScreenModifier
 import com.pilltip.pilltip.composable.WidthSpacer
 import com.pilltip.pilltip.composable.noRippleClickable
@@ -74,7 +74,6 @@ import com.pilltip.pilltip.ui.theme.gray900
 import com.pilltip.pilltip.ui.theme.pretendard
 import com.pilltip.pilltip.ui.theme.primaryColor
 import kotlinx.coroutines.launch
-import java.time.LocalDate
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -208,7 +207,7 @@ fun MyPage(
             isChecked = toggle,
             onCheckedChange = { toggle = !toggle }
         )
-        MyPageMenuItem(text = "앱 이용 약관") { /* TODO */ }
+        MyPageMenuItem(text = "앱 이용 약관") { navController.navigate("EssentialInfoPage") }
         MyPageMenuItem(text = "로그아웃") {
             UserInfoManager.clear(context)
             TokenManager.clear(context)
@@ -501,15 +500,20 @@ fun MyDrugInfoPage(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EssentialInfoPage(
-    navController: NavController
-){
+    navController: NavController,
+    searchHiltViewModel: SearchHiltViewModel
+) {
     var toggle by remember { mutableStateOf(true) }
     val scope = rememberCoroutineScope()
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var isSheetVisible by remember { mutableStateOf(false) }
+    var isEssential1Checked by remember { mutableStateOf(false) }
+    var isEssential2Checked by remember { mutableStateOf(false) }
     Column(
-        modifier = WhiteScreenModifier.padding(horizontal = 22.dp).systemBarsPadding()
-    ){
+        modifier = WhiteScreenModifier
+            .padding(horizontal = 22.dp)
+            .systemBarsPadding()
+    ) {
         BackButton(
             title = "앱 이용 약관",
             horizontalPadding = 0.dp,
@@ -517,7 +521,7 @@ fun EssentialInfoPage(
         ) { navController.popBackStack() }
         HeightSpacer(24.dp)
         MyPageMenuItem(text = "내 민감정보 삭제") {
-
+            isSheetVisible = true
         }
         MyPageToggleItem(
             text = "푸시알람 동의",
@@ -572,58 +576,107 @@ fun EssentialInfoPage(
                         fontFamily = pretendard,
                         fontWeight = FontWeight(700),
                         color = Color.Black,
-                    )
+                    ),
+                    modifier = Modifier.padding(vertical = 10.dp)
                 )
                 HeightSpacer(8.dp)
-                Text(
-                    text = "보안을 위해 저장된 모든 정보가 파기되며,\n복구할 수 없습니다.",
-                    style = TextStyle(
-                        fontSize = 14.sp,
-                        lineHeight = 19.6.sp,
-                        fontFamily = pretendard,
-                        fontWeight = FontWeight(400),
-                        color = gray500
-                    )
-                )
-                HeightSpacer(12.dp)
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 22.dp),
+                    modifier = Modifier.padding(vertical = 10.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    NextButton(
-                        mModifier = Modifier
-                            .weight(1f)
-                            .padding(vertical = 16.dp)
-                            .height(58.dp),
-                        text = "탈퇴하기",
-                        buttonColor = gray100,
-                        textColor = gray700,
-                        onClick = {
-                            scope.launch {
-                                bottomSheetState.hide()
-                            }.invokeOnCompletion {
-                                isSheetVisible = false
-                            }
+                    Image(
+                        imageVector =
+                            if (!isEssential1Checked)
+                                ImageVector.vectorResource(R.drawable.btn_gray_checkmark)
+                            else
+                                ImageVector.vectorResource(R.drawable.btn_blue_checkmark),
+                        contentDescription = "checkBtn",
+                        modifier = Modifier
+                            .size(20.dp, 20.dp)
+                            .noRippleClickable { isEssential1Checked = !isEssential1Checked }
+                    )
+                    WidthSpacer(8.dp)
+                    Text(
+                        text = "내 복약정보, 문진표 등 민감정보가 포함된\n모든 데이터가 파기되며, 복구가 불가능합니다",
+                        style = TextStyle(
+                            fontSize = 14.sp,
+                            fontFamily = pretendard,
+                            fontWeight = FontWeight(500),
+                            color = Color(0xFF686D78),
+                        ),
+                        modifier = Modifier.noRippleClickable {
+                            isEssential1Checked = !isEssential1Checked
                         }
                     )
-                    NextButton(
-                        mModifier = Modifier
-                            .weight(1f)
-                            .padding(vertical = 16.dp)
-                            .height(58.dp),
-                        text = "뒤로가기",
-                        buttonColor = primaryColor,
-                        onClick = {
-                            scope.launch {
-                                bottomSheetState.hide()
-                            }.invokeOnCompletion {
-                                isSheetVisible = false
+                    Spacer(modifier = Modifier.weight(1f))
+                    Image(
+                        imageVector = ImageVector.vectorResource(R.drawable.btn_announce_arrow),
+                        contentDescription = "description",
+                        modifier = Modifier
+                            .noRippleClickable {
+
                             }
-                        }
                     )
                 }
+                HeightSpacer(4.dp)
+                Row(
+                    modifier = Modifier.padding(vertical = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Image(
+                        imageVector =
+                            if (!isEssential2Checked)
+                                ImageVector.vectorResource(R.drawable.btn_gray_checkmark)
+                            else
+                                ImageVector.vectorResource(R.drawable.btn_blue_checkmark),
+                        contentDescription = "checkBtn",
+                        modifier = Modifier
+                            .size(20.dp, 20.dp)
+                            .noRippleClickable { isEssential2Checked = !isEssential2Checked }
+                    )
+                    WidthSpacer(8.dp)
+                    Text(
+                        text = "민감정보수집동의가 철회되며, 일부서비스를\n이용하시려면 다시 동의해야합니다.",
+                        style = TextStyle(
+                            fontSize = 14.sp,
+                            fontFamily = pretendard,
+                            fontWeight = FontWeight(500),
+                            color = Color(0xFF686D78),
+                        ),
+                        modifier = Modifier.noRippleClickable {
+                            isEssential2Checked = !isEssential2Checked
+                        }
+                    )
+                    Spacer(modifier = Modifier.weight(1f))
+                    Image(
+                        imageVector = ImageVector.vectorResource(R.drawable.btn_announce_arrow),
+                        contentDescription = "description",
+                        modifier = Modifier
+                            .noRippleClickable {
+
+                            }
+                    )
+                }
+                HeightSpacer(16.dp)
+                NextButton(
+                    mModifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 16.dp)
+                        .height(58.dp),
+                    text = "모두 동의하고 삭제하기",
+                    buttonColor = if (isEssential1Checked && isEssential2Checked) primaryColor else Color(0xFFCADCF5),
+                    onClick = {
+                        if (isEssential1Checked && isEssential2Checked){
+                            scope.launch {
+                                bottomSheetState.hide()
+                            }.invokeOnCompletion {
+                                isSheetVisible = false
+                            }
+
+                        }
+                    }
+                )
+
             }
         }
     }

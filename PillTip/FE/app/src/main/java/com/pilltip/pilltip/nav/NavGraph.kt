@@ -23,6 +23,7 @@ import com.pilltip.pilltip.view.auth.PhoneAuthPage
 import com.pilltip.pilltip.view.auth.ProfilePage
 import com.pilltip.pilltip.view.auth.SelectPage
 import com.pilltip.pilltip.view.auth.SplashPage
+import com.pilltip.pilltip.view.main.EssentialInfoPage
 import com.pilltip.pilltip.view.main.MyDrugInfoPage
 import com.pilltip.pilltip.view.main.MyPage
 import com.pilltip.pilltip.view.main.PillMainPage
@@ -87,7 +88,7 @@ fun NavGraph(
 
         /* Main */
         composable("PillMainPage") {
-            PillMainPage(navController, searchHiltViewModel)
+            PillMainPage(navController, searchHiltViewModel, questionnaireViewModel)
         }
 
         /* Search */
@@ -135,7 +136,7 @@ fun NavGraph(
             QuestionnairePage(navController)
         }
         composable("EssentialPage") {
-            EssentialPage(navController)
+            EssentialPage(navController, questionnaireViewModel)
         }
         composable("AreYouPage/{query}") { backStackEntry ->
             val query = backStackEntry.arguments?.getString("query") ?: ""
@@ -230,5 +231,6 @@ fun NavGraph(
 
         /* mypage */
         composable("MyDrugInfoPage") { MyDrugInfoPage(navController, searchHiltViewModel) }
+        composable("EssentialInfoPage") { EssentialInfoPage(navController, searchHiltViewModel) }
     }
 }

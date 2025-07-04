@@ -3,8 +3,12 @@ package com.pilltip.pilltip.view.main
 import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -12,12 +16,22 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -30,6 +44,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -42,18 +57,29 @@ import com.pilltip.pilltip.composable.MainComposable.BottomBar
 import com.pilltip.pilltip.composable.MainComposable.BottomTab
 import com.pilltip.pilltip.composable.MainComposable.LogoField
 import com.pilltip.pilltip.composable.MainComposable.MainSearchField
+import com.pilltip.pilltip.composable.MainComposable.ProfileTagButton
 import com.pilltip.pilltip.composable.MainComposable.SmallTabCard
+import com.pilltip.pilltip.composable.QuestionnaireComposable.QuestionnaireCard
+import com.pilltip.pilltip.composable.WhiteScreenModifier
 import com.pilltip.pilltip.composable.WidthSpacer
 import com.pilltip.pilltip.model.HandleBackPressToExitApp
+import com.pilltip.pilltip.model.search.QuestionnaireSummary
+import com.pilltip.pilltip.model.search.QuestionnaireViewModel
 import com.pilltip.pilltip.model.search.SearchHiltViewModel
 import com.pilltip.pilltip.ui.theme.backgroundColor
+import com.pilltip.pilltip.ui.theme.gray050
+import com.pilltip.pilltip.ui.theme.gray200
 import com.pilltip.pilltip.ui.theme.gray800
 import com.pilltip.pilltip.ui.theme.pretendard
+import com.pilltip.pilltip.ui.theme.primaryColor
+import com.pilltip.pilltip.ui.theme.primaryColor050
+import com.pilltip.pilltip.ui.theme.primaryColor100
 
 @Composable
 fun PillMainPage(
     navController: NavController,
-    searchHiltViewModel: SearchHiltViewModel
+    searchHiltViewModel: SearchHiltViewModel,
+    questionnaireViewModel: QuestionnaireViewModel
 ) {
     var selectedTab by remember { mutableStateOf(BottomTab.Home) }
     val systemUiController = rememberSystemUiController()
@@ -93,7 +119,7 @@ fun PillMainPage(
             when (selectedTab) {
                 BottomTab.Home -> HomePage(navController)
                 BottomTab.Interaction -> InteractionPage()
-                BottomTab.Chart -> ChartPage()
+                BottomTab.Chart -> MyQuestionnairePage(navController, questionnaireViewModel)
                 BottomTab.Calendar -> CalendarPage()
                 BottomTab.MyPage -> MyPage(navController, searchHiltViewModel)
             }
@@ -205,6 +231,7 @@ fun HomePage(
                 .width(20.dp)
                 .height(20.dp)
         )
+        R.drawable.logo_pilltip_blue_pill
     }
 
 }
@@ -215,8 +242,143 @@ fun InteractionPage() {
 }
 
 @Composable
-fun ChartPage() {
-    Text("차트 화면")
+fun MyQuestionnairePage(
+    navController: NavController,
+    viewModel: QuestionnaireViewModel
+) {
+    var scrollState = rememberScrollState()
+    var firstSelected by remember { mutableStateOf(false) }
+    var secondSelected by remember { mutableStateOf(false) }
+    var expanded by remember { mutableStateOf(false) }
+    var sortOption by remember { mutableStateOf("최신순") }
+    val list by remember { derivedStateOf { viewModel.questionnaireList } }
+    val loading by remember { derivedStateOf { viewModel.isListLoading } }
+
+    LaunchedEffect(Unit) {
+        viewModel.fetchQuestionnaireList()
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .statusBarsPadding()
+            .background(color = gray050)
+    ) {
+        Text(
+            text = "내 문진표",
+            style = TextStyle(
+                fontSize = 16.sp,
+                fontFamily = pretendard,
+                fontWeight = FontWeight(500),
+                color = gray800,
+            ),
+            textAlign = TextAlign.Center,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp)
+        )
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            modifier = Modifier
+                .horizontalScroll(scrollState)
+                .padding(start = 22.dp)
+        ) {
+            ProfileTagButton(
+                text = "처방약만",
+                selected = firstSelected,
+                onClick = { firstSelected = !firstSelected }
+            )
+
+            Image(
+                imageVector = ImageVector.vectorResource(R.drawable.ic_login_vertical_divider),
+                contentDescription = "디바이더",
+                modifier = Modifier
+                    .padding(horizontal = 6.dp)
+                    .width(1.dp)
+                    .background(gray200)
+                    .height(20.dp)
+            )
+            Box {
+                ProfileTagButton(
+                    text = sortOption,
+                    image = R.drawable.btn_blue_dropdown,
+                    selected = false,
+                    onClick = { expanded = true }
+                )
+
+                DropdownMenu(
+                    expanded = expanded,
+                    onDismissRequest = { expanded = false },
+                    modifier = Modifier.background(Color.White)
+                ) {
+                    DropdownMenuItem(text = { Text("최신순") }, onClick = {
+                        sortOption = "최신순"
+                        expanded = false
+                    })
+                    DropdownMenuItem(text = { Text("오래된 순") }, onClick = {
+                        sortOption = "오래된 순"
+                        expanded = false
+                    })
+                    DropdownMenuItem(text = { Text("가나다순") }, onClick = {
+                        sortOption = "가나다순"
+                        expanded = false
+                    })
+                }
+            }
+        }
+        HeightSpacer(10.dp)
+        Row(
+            modifier = Modifier
+                .border(
+                    width = 0.5.dp,
+                    color = primaryColor100,
+                    shape = RoundedCornerShape(size = 12.dp)
+                )
+                .padding(0.25.dp)
+                .fillMaxWidth()
+                .height(50.dp)
+                .background(color = primaryColor050, shape = RoundedCornerShape(size = 12.dp))
+                .padding(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 16.dp)
+        ) {
+            Image(
+                imageVector = ImageVector.vectorResource(R.drawable.ic_announce_speakerphone),
+                contentDescription = "문진표 공지"
+            )
+            WidthSpacer(8.dp)
+            Text(
+                text = "스마트 문진표에 대해 알려드려요",
+                style = TextStyle(
+                    fontSize = 14.sp,
+                    fontFamily = pretendard,
+                    fontWeight = FontWeight(600),
+                    color = primaryColor,
+                )
+            )
+        }
+        HeightSpacer(12.dp)
+        if (loading) {
+            CircularProgressIndicator()
+        } else {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+                contentPadding = PaddingValues(vertical = 12.dp)
+            ) {
+                items(list) { item ->
+                    QuestionnaireCard(
+                        questionnaire = item,
+                        onEdit = {
+                        },
+                        onDelete = {
+                        }
+                    )
+                }
+            }
+        }
+    }
 }
 
 @Composable
