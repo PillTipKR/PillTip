@@ -10,6 +10,7 @@ import com.oauth2.User.entity.FCMToken;
 import com.oauth2.User.entity.LoginType;
 import com.oauth2.User.entity.User;
 import com.oauth2.User.entity.UserToken;
+import com.oauth2.User.entity.UserProfile;
 import com.oauth2.User.repository.FCMTokenRepository;
 import com.oauth2.User.repository.UserRepository;
 import com.oauth2.User.repository.UserProfileRepository;
@@ -154,6 +155,15 @@ public class UserService {
         user.setRealName(realName);
         user.setAddress(address);
         return userRepository.save(user);
+    }
+
+    // 전화번호 업데이트 (UserProfile의 phone 필드 수정)
+    public User updatePhoneNumber(User user, String phoneNumber) {
+        UserProfile userProfile = userProfileRepository.findByUserId(user.getId())
+            .orElseThrow(() -> new RuntimeException("User profile not found"));
+        userProfile.setPhone(phoneNumber);
+        userProfileRepository.save(userProfile);
+        return user;
     }
 
     // 이용약관 동의

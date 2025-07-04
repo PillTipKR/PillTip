@@ -22,12 +22,13 @@ import java.util.stream.Collectors;
 public class PatientQuestionnaireService {
     private final PatientQuestionnaireRepository questionnaireRepository;
     private final ObjectMapper objectMapper;
-    private final UserService userService;
+    private final UserService userService;  
 
     @Transactional
     public PatientQuestionnaire createQuestionnaire(User user, PatientQuestionnaireRequest request) throws JsonProcessingException {
         // Update user realName and address
         userService.updatePersonalInfo(user, request.getRealName(), request.getAddress());
+        userService.updatePhoneNumber(user, request.getPhoneNumber());
         String medicationInfoJson = objectMapper.writeValueAsString(
                 toKeyedList(request.getMedicationInfo(), "medicationId")
         );
@@ -116,6 +117,7 @@ public class PatientQuestionnaireService {
     public PatientQuestionnaire updateQuestionnaire(User user, Integer id, PatientQuestionnaireRequest request) throws JsonProcessingException {
         // Update user realName and address
         userService.updatePersonalInfo(user, request.getRealName(), request.getAddress());
+        userService.updatePhoneNumber(user, request.getPhoneNumber());
         PatientQuestionnaire q = questionnaireRepository.findByIdWithUser(id)
             .orElseThrow(() -> new IllegalArgumentException("문진표를 찾을 수 없습니다."));
         if (!q.getUser().getId().equals(user.getId())) {

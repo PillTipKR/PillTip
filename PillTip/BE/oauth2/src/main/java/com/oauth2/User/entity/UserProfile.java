@@ -44,6 +44,7 @@ public class UserProfile {
     @Column(name = "birth_date", nullable = false)
     private LocalDate birthDate;
 
+    @Setter
     @Column(nullable = false, unique = true)
     private String phone;
 
