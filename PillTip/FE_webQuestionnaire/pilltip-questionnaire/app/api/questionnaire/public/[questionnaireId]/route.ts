@@ -58,6 +58,7 @@ export async function GET(
         questionnaireName: `문진표 ${questionnaireId}`,
         realName: "필팁 더미데이터",
         address: "부산대 기약기약",
+        phoneNumber: "010-1234-5678",
         issueDate: new Date().toISOString().split("T")[0],
         lastModifiedDate: new Date().toISOString().split("T")[0],
         notes: "더미미더미미미",

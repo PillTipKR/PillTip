@@ -22,6 +22,7 @@ public class PatientQuestionnaireResponse {
     private String questionnaireName;
     private String realName;
     private String address;
+    private String phoneNumber;
     private LocalDate issueDate;
     private LocalDate lastModifiedDate;
     private String notes;
@@ -39,6 +40,7 @@ public class PatientQuestionnaireResponse {
                     .questionnaireName(questionnaire.getQuestionnaireName())
                     .realName(questionnaire.getUser().getRealName())
                     .address(questionnaire.getUser().getAddress())
+                    .phoneNumber(questionnaire.getUser().getUserProfile() != null ? questionnaire.getUser().getUserProfile().getPhone() : null)
                     .issueDate(questionnaire.getIssueDate())
                     .lastModifiedDate(questionnaire.getLastModifiedDate())
                     .notes(questionnaire.getNotes())
