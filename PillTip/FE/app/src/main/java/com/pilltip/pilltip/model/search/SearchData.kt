@@ -168,7 +168,7 @@ data class TakingPillDetailResponse(
 )
 
 /**
- * 문진표
+ * 문진표 생성
  */
 
 data class QuestionnaireSubmitRequest(
@@ -222,6 +222,22 @@ data class QuestionnaireData(
     val allergyInfo: List<AllergyEntry>,
     val chronicDiseaseInfo: List<ChronicDiseaseEntry>,
     val surgeryHistoryInfo: List<SurgeryHistoryEntry>
+)
+
+/**
+ * 문진표 리스트 조회
+ */
+data class QuestionnaireListResponse(
+    val status: String,
+    val message: String,
+    val data: List<QuestionnaireSummary>
+)
+
+data class QuestionnaireSummary(
+    val questionnaireId: Long,
+    val questionnaireName: String,
+    val issueDate: String,
+    val lastModifiedDate: String
 )
 
 /**

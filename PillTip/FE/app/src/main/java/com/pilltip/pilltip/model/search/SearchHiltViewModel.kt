@@ -323,6 +323,25 @@ class QuestionnaireViewModel @Inject constructor(
             }
         }
     }
+
+    var questionnaireList by mutableStateOf<List<QuestionnaireSummary>>(emptyList())
+        private set
+
+    var isListLoading by mutableStateOf(false)
+
+    fun fetchQuestionnaireList() {
+        viewModelScope.launch {
+            isListLoading = true
+            try {
+                questionnaireList = repository.getList()
+                Log.d("문진표", "리스트 불러오기 성공: ${questionnaireList.size}개")
+            } catch (e: Exception) {
+                Log.e("문진표", "리스트 불러오기 실패: ${e.message}")
+            } finally {
+                isListLoading = false
+            }
+        }
+    }
 }
 
 @Module

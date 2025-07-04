@@ -141,6 +141,7 @@ class DosageDeleteRepositoryImpl(
         return api.deleteTakingPill(medicationId).data.takingPills
     }
 }
+
 /**
  * 복약 세부 데이터 불러오기 API
  */
@@ -176,13 +177,19 @@ interface DosageModifyApi {
 }
 
 interface DosageModifyRepository {
-    suspend fun updateDosage(medicationId: Long, request: RegisterDosageRequest): List<TakingPillSummary>
+    suspend fun updateDosage(
+        medicationId: Long,
+        request: RegisterDosageRequest
+    ): List<TakingPillSummary>
 }
 
 class DosageModifyRepositoryImpl(
     private val api: DosageModifyApi
 ) : DosageModifyRepository {
-    override suspend fun updateDosage(medicationId: Long, request: RegisterDosageRequest): List<TakingPillSummary> {
+    override suspend fun updateDosage(
+        medicationId: Long,
+        request: RegisterDosageRequest
+    ): List<TakingPillSummary> {
         return api.updateDosage(medicationId, request).data.takingPills
     }
 }
@@ -196,10 +203,14 @@ interface QuestionnaireApi {
     suspend fun submitQuestionnaire(
         @Body request: QuestionnaireSubmitRequest
     ): QuestionnaireResponse
+
+    @GET("/api/questionnaire/list")
+    suspend fun getQuestionnaireList(): QuestionnaireListResponse
 }
 
 interface QuestionnaireRepository {
     suspend fun submit(request: QuestionnaireSubmitRequest): QuestionnaireData
+    suspend fun getList(): List<QuestionnaireSummary>
 }
 
 class QuestionnaireRepositoryImpl(
@@ -207,6 +218,10 @@ class QuestionnaireRepositoryImpl(
 ) : QuestionnaireRepository {
     override suspend fun submit(request: QuestionnaireSubmitRequest): QuestionnaireData {
         return api.submitQuestionnaire(request).data
+    }
+
+    override suspend fun getList(): List<QuestionnaireSummary> {
+        return api.getQuestionnaireList().data
     }
 }
 
@@ -257,6 +272,7 @@ class PermissionRepositoryImpl(
     override suspend fun updatePermissions(request: PermissionRequest): PermissionResponse {
         return api.updatePermissions(request)
     }
+
     override suspend fun getPermissions(): PermissionResponse {
         return api.getPermissions()
     }

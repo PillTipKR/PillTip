@@ -88,7 +88,7 @@ fun NavGraph(
 
         /* Main */
         composable("PillMainPage") {
-            PillMainPage(navController, searchHiltViewModel)
+            PillMainPage(navController, searchHiltViewModel, questionnaireViewModel)
         }
 
         /* Search */
