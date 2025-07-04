@@ -17,6 +17,7 @@ public record DrugDetail (
         String form,
         String packaging,
         String atcCode,
+        String imageUrl,
         Drug.Tag tag,
         Date approvalDate,
         StorageDetail container,

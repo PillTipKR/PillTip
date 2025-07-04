@@ -1,6 +1,8 @@
 package com.oauth2.Alarm;
 
 import jakarta.annotation.PostConstruct;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 
@@ -14,6 +16,8 @@ public class FirebaseConfig {
 
     @Value("${firebase.json}")
     private String firebaseJson;
+
+    private static final Logger logger = LoggerFactory.getLogger(FirebaseConfig.class);
 
     @PostConstruct
     public void initialize() {
@@ -29,7 +33,7 @@ public class FirebaseConfig {
                 FirebaseApp.initializeApp(options);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Error occurred in FirebaseConfig: {}", e.getMessage());
         }
     }
 }

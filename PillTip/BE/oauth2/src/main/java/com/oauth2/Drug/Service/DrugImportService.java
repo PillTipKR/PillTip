@@ -5,7 +5,6 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.sql.Date;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -15,10 +14,10 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import com.oauth2.Drug.Repository.DrugRepository;
-import com.oauth2.Drug.Repository.DrugStorageConditionRepository;
 import com.opencsv.CSVReader;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import com.oauth2.Drug.Domain.Drug;
 import com.oauth2.Drug.Domain.DrugEffect;
@@ -35,6 +34,7 @@ public class DrugImportService {
     private final DrugEffectService drugEffectService;
     private final DrugStorageConditionService drugStorageConditionService;
     private final DrugRepository drugRepository;
+    private static final Logger logger = LoggerFactory.getLogger(DrugImportService.class);
 
     // TODO: 나머지 서비스도 필요시 주입
 
@@ -355,7 +355,7 @@ public class DrugImportService {
 
             drugRepository.saveAll(drugList);
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Error occurred in import image: {}", e.getMessage());
         }
     }
 

@@ -9,6 +9,7 @@ public record SearchDurDto(
         String drugName,
         List<IngredientDetail> ingredients,
         String manufacturer,
+        String imageUrl,
         List<DurTagDto> durTags
 )
 {}

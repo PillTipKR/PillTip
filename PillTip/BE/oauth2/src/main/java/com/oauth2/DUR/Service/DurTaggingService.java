@@ -77,7 +77,10 @@ public class DurTaggingService {
             boolean isDup = therValue != null && classToDrugIdsMap.containsKey(therValue.get("className"));
             tags.add(buildDurTag("효능군중복주의", therValue, isDup));
 
-            result.add(new SearchDurDto(drug.id(), drug.drugName(), drug.ingredient(), drug.manufacturer(), tags));
+            Optional<Drug> drug1  = drugRepository.findById(drugId);
+
+            String image = drug1.map(Drug::getImage).orElse(null);
+            result.add(new SearchDurDto(drugId, drugName, drug.ingredient(), drug.manufacturer(), image, tags));
         }
         return result;
     }

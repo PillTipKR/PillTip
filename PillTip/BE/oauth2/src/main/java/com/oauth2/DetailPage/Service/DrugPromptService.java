@@ -1,5 +1,6 @@
 package com.oauth2.DetailPage.Service;
 
+import com.oauth2.DUR.Dto.DurTagDto;
 import com.oauth2.DetailPage.Dto.*;
 import com.oauth2.User.dto.TakingPillSummaryResponse;
 import com.oauth2.User.entity.User;
@@ -39,9 +40,12 @@ public class DrugPromptService {
         List<String> medicationNames = takingPillService.getTakingPillSummary(user).getTakingPills().stream()
                 .map(TakingPillSummaryResponse.TakingPillSummary::getMedicationName)
                 .toList();
+        List<DurTagDto> trueTags = detail.durTags().stream()
+                .filter(DurTagDto::isTrue)
+                .toList();
 
         return new PromptRequestDto(
-                detail.durTags(),
+                trueTags,
                 user.getUserProfile().getAge(),
                 user.getUserProfile().getGender().name(),
                 user.getUserProfile().getDiseaseInfo(),

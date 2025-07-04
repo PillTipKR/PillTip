@@ -4,6 +4,8 @@ import com.oauth2.Drug.Domain.*;
 import com.oauth2.Drug.Repository.*;
 import com.opencsv.CSVReader;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -18,6 +20,7 @@ import java.util.Optional;
 public class IngredientImportService {
 
     private final IngredientRepository ingredientRepository;
+    private final Logger logger = LoggerFactory.getLogger(IngredientImportService.class);
 
     public void importIngredientsFromCsv(MultipartFile file) {
         try (CSVReader reader = new CSVReader(new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8))) {
@@ -39,7 +42,7 @@ public class IngredientImportService {
 
             ingredientRepository.saveAll(ingredientList);
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Error occurred in import ingredient: {}", e.getMessage());
         }
     }
 

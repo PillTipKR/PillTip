@@ -2,6 +2,8 @@ package com.oauth2.Drug.Service;
 
 import com.oauth2.Drug.Domain.*;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -20,6 +22,7 @@ public class PromptImporter {
     private final DrugService drugService;
     private final DrugEffectService drugEffectService;
     private final PromptDrugUpdater promptDrugUpdater;
+    private final Logger logger = LoggerFactory.getLogger(PromptImporter.class);
 
     public void importPromptInfo(String filePath) {
         try {
@@ -41,7 +44,7 @@ public class PromptImporter {
                 promptDrugUpdater.updatePromptDataForDrug(matchedDrug, sectionMap);
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.error("Error occurred in import drug file: {}", e.getMessage());
         }
     }
 
@@ -83,7 +86,7 @@ public class PromptImporter {
 
     private String removeSquareBrackets(String name) {
         // 예: "약이름 [수출명: 뭐시기]" → "약이름"
-        return name.replaceAll("\\[.*?\\]", "").trim();
+        return name.replaceAll("\\[.*?]", "").trim();
     }
 
 
@@ -193,7 +196,7 @@ public class PromptImporter {
                 }
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.error("Error occurred in import caution file: {}", e.getMessage());
         }
     }
 

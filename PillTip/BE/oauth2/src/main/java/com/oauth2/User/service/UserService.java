@@ -44,18 +44,7 @@ public class UserService {
         }
 
         UserToken userToken = tokenService.generateTokens(user.getId());
-        if(user.getFCMToken() == null) {
-            // FCM 토큰이 없으면 새로 생성
-            FCMToken fcmToken = new FCMToken();
-            fcmToken.setLoggedIn(true);
-            fcmToken.setUser(user);
-            fcmTokenRepository.save(fcmToken);
-            user.setFCMToken(fcmToken);
-        } else {
-            // 기존 FCM 토큰이 있으면 로그인 상태를 true로 업데이트
-            user.getFCMToken().setLoggedIn(true);
-            fcmTokenRepository.save(user.getFCMToken());
-        }
+        updateFCMToken(user);
         return LoginResponse.builder()
                 .accessToken(userToken.getAccessToken())
                 .refreshToken(userToken.getRefreshToken())
@@ -94,18 +83,8 @@ public class UserService {
             UserToken userToken = tokenService.generateTokens(user.getId());
             System.out.println("Tokens generated successfully");
 
-            if(user.getFCMToken() == null) {
-                // FCM 토큰이 없으면 새로 생성
-                FCMToken fcmToken = new FCMToken();
-                fcmToken.setLoggedIn(true);
-                fcmToken.setUser(user);
-                fcmTokenRepository.save(fcmToken);
-                user.setFCMToken(fcmToken);
-            } else {
-                // 기존 FCM 토큰이 있으면 로그인 상태를 true로 업데이트
-                user.getFCMToken().setLoggedIn(true);
-                fcmTokenRepository.save(user.getFCMToken());
-            }
+            updateFCMToken(user);
+
             return LoginResponse.builder()
                     .accessToken(userToken.getAccessToken())
                     .refreshToken(userToken.getRefreshToken())
@@ -126,18 +105,7 @@ public class UserService {
         // 사용자 정보 조회
         User user = userRepository.findById(userToken.getUserId())
                 .orElseThrow(() -> new RuntimeException("User not found"));
-        if(user.getFCMToken() == null) {
-            // FCM 토큰이 없으면 새로 생성
-            FCMToken fcmToken = new FCMToken();
-            fcmToken.setLoggedIn(true);
-            fcmToken.setUser(user);
-            fcmTokenRepository.save(fcmToken);
-            user.setFCMToken(fcmToken);
-        } else {
-            // 기존 FCM 토큰이 있으면 로그인 상태를 true로 업데이트
-            user.getFCMToken().setLoggedIn(true);
-            fcmTokenRepository.save(user.getFCMToken());
-        }
+        updateFCMToken(user);
         return LoginResponse.builder()
                 .accessToken(userToken.getAccessToken())
                 .refreshToken(userToken.getRefreshToken())
@@ -232,16 +200,12 @@ public class UserService {
 
     // 중복 체크 (boolean 반환)
     public boolean isDuplicate(String value, String type) {
-        switch (type.toLowerCase()) {
-            case "loginid":
-                return userRepository.findByLoginId(value).isPresent();
-            case "nickname":
-                return userRepository.findByNickname(value).isPresent();
-            case "phonenumber":
-                return userProfileRepository.findByPhone(value).isPresent();
-            default:
-                throw new IllegalArgumentException("Invalid check type: " + type);
-        }
+        return switch (type.toLowerCase()) {
+            case "loginid" -> userRepository.findByLoginId(value).isPresent();
+            case "nickname" -> userRepository.findByNickname(value).isPresent();
+            case "phonenumber" -> userProfileRepository.findByPhone(value).isPresent();
+            default -> throw new IllegalArgumentException("Invalid check type: " + type);
+        };
     }
 
     // 전화번호로 사용자 조회
@@ -257,5 +221,20 @@ public class UserService {
 
         // 연관된 모든 데이터 삭제
         userRepository.delete(user);
+    }
+
+    private void updateFCMToken(User user) {
+        if(user.getFCMToken() == null) {
+            // FCM 토큰이 없으면 새로 생성
+            FCMToken fcmToken = new FCMToken();
+            fcmToken.setLoggedIn(true);
+            fcmToken.setUser(user);
+            fcmTokenRepository.save(fcmToken);
+            user.setFCMToken(fcmToken);
+        } else {
+            // 기존 FCM 토큰이 있으면 로그인 상태를 true로 업데이트
+            user.getFCMToken().setLoggedIn(true);
+            fcmTokenRepository.save(user.getFCMToken());
+        }
     }
 }

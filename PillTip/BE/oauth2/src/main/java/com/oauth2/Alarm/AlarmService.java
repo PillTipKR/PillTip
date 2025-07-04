@@ -3,12 +3,13 @@ package com.oauth2.Alarm;
 import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.firebase.messaging.FirebaseMessagingException;
 import com.google.firebase.messaging.Message;
-import com.google.firebase.messaging.Notification;
 import com.oauth2.User.entity.FCMToken;
 import com.oauth2.User.entity.User;
 import com.oauth2.User.repository.FCMTokenRepository;
 import com.oauth2.User.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,6 +21,7 @@ public class AlarmService {
 
     private final UserRepository userRepository;
     private final FCMTokenRepository fcmTokenRepository;
+    private static final Logger logger = LoggerFactory.getLogger(AlarmService.class);
 
     public void sendMedicationAlarm(FCMToken fcmToken, String alertTitle, String pillName) {
         Message message = Message.builder()
@@ -30,7 +32,7 @@ public class AlarmService {
         try {
             FirebaseMessaging.getInstance().send(message);
         } catch (FirebaseMessagingException e) {
-            e.printStackTrace();
+            logger.error("An error occurred in AlarmService", e);
         }
     }
 
