@@ -1,13 +1,16 @@
 package com.oauth2.User.TakingPill.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.oauth2.User.TakingPill.Dto.TakingPillRequest;
 import com.oauth2.User.TakingPill.Dto.TakingPillSummaryResponse;
 import com.oauth2.User.TakingPill.Dto.TakingPillDetailResponse;
 import com.oauth2.User.Auth.Entity.User;
+import com.oauth2.User.TakingPill.Entity.DosageLog;
 import com.oauth2.User.TakingPill.Entity.TakingPill;
 import com.oauth2.User.TakingPill.Entity.DosageSchedule;
+import com.oauth2.User.TakingPill.Repositoty.DosageLogRepository;
 import com.oauth2.User.TakingPill.Repositoty.TakingPillRepository;
 import com.oauth2.User.TakingPill.Repositoty.DosageScheduleRepository;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +18,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -25,6 +30,7 @@ public class TakingPillService {
     private final TakingPillRepository takingPillRepository;
     private final DosageScheduleRepository dosageScheduleRepository;
     private final ObjectMapper objectMapper;
+    private final DosageLogRepository dosageLogRepository;
 
     /**
      * 복용 중인 약을 추가합니다.
@@ -58,7 +64,7 @@ public class TakingPillService {
         TakingPill savedTakingPill = takingPillRepository.save(takingPill);
         
         // DosageSchedule 엔티티들 생성 및 저장
-        if (request.getDosageSchedules() != null) {
+        if (request.getDosageSchedules() != null){
             for (TakingPillRequest.DosageSchedule scheduleRequest : request.getDosageSchedules()) {
                 DosageSchedule dosageSchedule = DosageSchedule.builder()
                         .takingPill(savedTakingPill)
@@ -68,11 +74,32 @@ public class TakingPillService {
                         .alarmOnOff(scheduleRequest.isAlarmOnOff())
                         .dosageUnit(scheduleRequest.getDosageUnit())
                         .build();
-                
+
                 dosageScheduleRepository.save(dosageSchedule);
             }
         }
-        
+        List<DosageSchedule> schedules = savedTakingPill.getDosageSchedules();
+
+        if (schedules != null && !schedules.isEmpty()) {
+            LocalDate date = request.getStartDate();
+
+            while (!date.isAfter(request.getEndDate())) {
+                if (matchesToday(savedTakingPill, date)) {
+                    for (DosageSchedule schedule : schedules) {
+                        DosageLog dosageLog = DosageLog.builder()
+                                .scheduledTime(LocalDateTime.of(date,
+                                        LocalTime.of(schedule.getHour(), schedule.getMinute())))
+                                .user(user)
+                                .alarmName(request.getAlarmName())
+                                .medicationName(request.getMedicationName())
+                                .build();
+                        dosageLogRepository.save(dosageLog);
+                    }
+                }
+                date = date.plusDays(1);
+            }
+        }
+
         return savedTakingPill;
     }
 
@@ -139,7 +166,7 @@ public class TakingPillService {
         
         // TakingPill과 연관된 DosageSchedule들을 함께 저장
         TakingPill updatedTakingPill = takingPillRepository.save(takingPill);
-        
+
         return updatedTakingPill;
     }
 
@@ -273,6 +300,47 @@ public class TakingPillService {
             return LocalDate.now();
         }
     }
+
+    /**
+     * TakingPill이 오늘 복용해야 하는지 확인
+     */
+    public boolean matchesToday(TakingPill takingPill, LocalDate today) {
+        // 복용 기간 확인 - 년, 월, 일로 분리된 필드에서 LocalDate 생성
+        LocalDate startDate = createSafeLocalDate(takingPill.getStartYear(), takingPill.getStartMonth(), takingPill.getStartDay());
+        LocalDate endDate = createSafeLocalDate(takingPill.getEndYear(), takingPill.getEndMonth(), takingPill.getEndDay());
+
+        if (startDate.isAfter(today) || endDate.isBefore(today)) {
+            return false;
+        }
+
+        // 요일 확인
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            List<String> daysOfWeek = mapper.readValue(takingPill.getDaysOfWeek(),
+                    new TypeReference<>() {
+                    });
+
+            // 매일 복용인 경우
+            if (daysOfWeek.contains("EVERYDAY")) {
+                return true;
+            }
+
+            // 특정 요일 복용인 경우
+            String todayOfWeek = today.getDayOfWeek().name().substring(0, 3); // MON, TUE, WED, etc.
+            return daysOfWeek.contains(todayOfWeek);
+
+        } catch (JsonProcessingException e) {
+            // JSON 파싱 실패 시 false 반환
+            return false;
+        }
+    }
+
+    public int to24Hour(Integer hour, String period) {
+        if (hour == 12) hour = 0;
+        return "PM".equalsIgnoreCase(period) ? hour + 12 : hour;
+    }
+
+
 
     /**
      * 요청 데이터 검증 메서드

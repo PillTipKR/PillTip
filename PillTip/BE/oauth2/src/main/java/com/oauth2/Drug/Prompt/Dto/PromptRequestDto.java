@@ -1,6 +1,7 @@
-package com.oauth2.Drug.DetailPage.Dto;
+package com.oauth2.Drug.Prompt.Dto;
 
 import com.oauth2.Drug.DUR.Dto.DurTagDto;
+import com.oauth2.Drug.DetailPage.Dto.DrugRequestInfoDto;
 
 import java.util.List;
 
