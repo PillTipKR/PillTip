@@ -50,6 +50,7 @@ public class DosageLog {
     public DosageLog(User user, String alarmName, String medicationName, LocalDateTime scheduledTime) {
         this.user = user;
         this.medicationName = medicationName;
+        this.alarmName = alarmName;
         this.scheduledTime = scheduledTime;
         this.isTaken = false;
         this.isRescheduled = false;
