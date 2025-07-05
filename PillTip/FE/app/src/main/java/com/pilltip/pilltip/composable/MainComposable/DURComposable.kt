@@ -25,7 +25,7 @@ fun DURText(
             fontSize = 18.sp,
             fontFamily = pretendard,
             fontWeight = FontWeight(600),
-            color = if(isOk) primaryColor else Color(0xFFEB2C28),
+            color = if(!isOk) primaryColor else Color(0xFFEB2C28),
         )
     )
     HeightSpacer(16.dp)
