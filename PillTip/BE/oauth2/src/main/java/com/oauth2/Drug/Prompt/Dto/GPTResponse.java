@@ -1,4 +1,4 @@
-package com.oauth2.Drug.DetailPage.Dto;
+package com.oauth2.Drug.Prompt.Dto;
 
 import lombok.Data;
 

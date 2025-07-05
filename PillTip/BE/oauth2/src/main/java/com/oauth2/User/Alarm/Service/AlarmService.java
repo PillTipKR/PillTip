@@ -23,9 +23,10 @@ public class AlarmService {
     private final FCMTokenRepository fcmTokenRepository;
     private static final Logger logger = LoggerFactory.getLogger(AlarmService.class);
 
-    public void sendMedicationAlarm(FCMToken fcmToken, String alertTitle, String pillName) {
+    public void sendMedicationAlarm(FCMToken fcmToken, Long id, String alertTitle, String pillName) {
         Message message = Message.builder()
                 .setToken(fcmToken.getFCMToken())
+                .putData("logId", String.valueOf(id))
                 .putData("title", alertTitle)
                 .putData("body", pillName + " 복약할 시간이에요!")
                 .build();
