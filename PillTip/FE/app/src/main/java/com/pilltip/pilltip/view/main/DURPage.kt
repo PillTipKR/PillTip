@@ -632,7 +632,7 @@ fun DURResultPage(
                     style = android.graphics.Paint.Style.FILL
                     color = android.graphics.Color.WHITE
                     isAntiAlias = true
-                    setShadowLayer(3f, 0f, 4f, android.graphics.Color.argb(10, 0, 0, 0)) // ✅ 그림자 설정
+                    setShadowLayer(3f, 0f, 4f, android.graphics.Color.argb(10, 0, 0, 0))
                 }
 
                 this.drawContext.canvas.nativeCanvas.apply {
