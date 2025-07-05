@@ -58,11 +58,14 @@ public class DosageLogService {
         List<DosageLogResponse> responses = new ArrayList<>();
         int total = 0;
         int takenCount = 0;
+        int totalPercent = 0;
+
         for (Map.Entry<String, List<DosageLog>> entry : groupedLogs.entrySet()) {
             String name = entry.getKey();
             List<DosageLog> logs = entry.getValue();
             total = logs.size();
             takenCount = Math.toIntExact(logs.stream().filter(DosageLog::isTaken).count());
+            totalPercent = (int) (total == 0 ? 0.0 : (takenCount * 100.0) / total);
 
             List<DosageScheduleDto> scheduleDtos = logs.stream()
                     .map(log -> new DosageScheduleDto(
@@ -76,10 +79,9 @@ public class DosageLogService {
             // 복약 완료 비율 계산
             int drugTotal = scheduleDtos.size();
             int drugTakenCount = Math.toIntExact(scheduleDtos.stream().filter(DosageScheduleDto::isTaken).count());
-
+            int drugPercent = (int) (drugTotal == 0 ? 0.0 : (drugTakenCount * 100.0) / drugTotal);
             DosageLogResponse response = new DosageLogResponse(
-                    drugTotal,
-                    drugTakenCount,
+                    drugPercent,
                     name,
                     scheduleDtos
             );
@@ -87,8 +89,7 @@ public class DosageLogService {
         }
 
         return new AllDosageLogResponse(
-                total,
-                takenCount,
+                totalPercent,
                 responses
         );
     }
