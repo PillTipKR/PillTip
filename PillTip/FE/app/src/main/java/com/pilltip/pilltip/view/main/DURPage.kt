@@ -83,6 +83,7 @@ import com.pilltip.pilltip.composable.noRippleClickable
 import com.pilltip.pilltip.model.search.DurGptData
 import com.pilltip.pilltip.model.search.SearchHiltViewModel
 import com.pilltip.pilltip.ui.theme.gray200
+import com.pilltip.pilltip.ui.theme.gray400
 import com.pilltip.pilltip.ui.theme.gray500
 import com.pilltip.pilltip.ui.theme.gray600
 import com.pilltip.pilltip.ui.theme.gray700
@@ -490,9 +491,12 @@ fun DURResultPage(
             backgroundColor = Color.Transparent,
             onClick = {}
         ) {
-            navController.navigate("PillMainPage")
+            navController.navigate("PillMainPage") {
+                popUpTo("PillMainPage") {
+                    inclusive = true
+                }
+            }
         }
-        HeightSpacer(16.dp)
         Box(
             modifier = Modifier
                 .height(30.dp)
@@ -580,8 +584,27 @@ fun DURResultPage(
                     isOk = durData.durTrueInter,
                     description = durData.interact
                 )
+                HeightSpacer(18.dp)
+                Text(
+                    text = "본 결과지는 식품의약품안전처 의약품안전사용서비스(DUR)와",
+                    style = TextStyle(
+                        fontSize = 10.sp,
+                        fontFamily = pretendard,
+                        fontWeight = FontWeight(600),
+                        color = gray400,
+                    )
+                )
+                HeightSpacer(4.dp)
+                Text(
+                    text = "PillTip의 AI 인프라를 기반으로 제공됩니다",
+                    style = TextStyle(
+                        fontSize = 10.sp,
+                        fontFamily = pretendard,
+                        fontWeight = FontWeight(600),
+                        color = gray400,
+                    )
+                )
             }
-
             Canvas(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -624,7 +647,11 @@ fun DURResultPage(
             mModifier = buttonModifier,
             text = "확인"
         ) {
-            navController.navigate("PillMainPage")
+            navController.navigate("PillMainPage") {
+                popUpTo("PillMainPage") {
+                    inclusive = true
+                }
+            }
         }
     }
 }
