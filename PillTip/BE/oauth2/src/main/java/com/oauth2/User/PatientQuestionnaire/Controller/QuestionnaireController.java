@@ -179,6 +179,20 @@ public class QuestionnaireController {
             return ResponseEntity.status(400)
                 .body(ApiResponse.error("실명과 주소, 전화번호는 필수입니다.", null));
         }
+        
+        // 권한 체크
+        try {
+            UserPermissionsResponse permissions = userPermissionsService.getUserPermissions(user);
+            if (!permissions.isSensitiveInfoPermission() || !permissions.isMedicalInfoPermission()) {
+                return ResponseEntity.status(403)
+                    .body(ApiResponse.error("문진표 작성을 위한 권한이 없습니다. 민감정보 및 의료정보 동의가 필요합니다.", null));
+            }
+        } catch (Exception e) {
+            logger.error("Error checking permissions for user: {} - Error: {}", user.getId(), e.getMessage(), e);
+            return ResponseEntity.status(400)
+                .body(ApiResponse.error("권한 확인 중 오류가 발생했습니다: " + e.getMessage(), null));
+        }
+        
         logger.info("Received createQuestionnaire request for user: {}", user.getId());
         try {
             PatientQuestionnaire questionnaire = patientQuestionnaireService.createQuestionnaire(user, request);
@@ -255,6 +269,19 @@ public class QuestionnaireController {
     public ResponseEntity<ApiResponse<java.util.List<PatientQuestionnaireSummaryResponse>>> deleteQuestionnaire(
             @AuthenticationPrincipal User user,
             @PathVariable Integer id) {
+        // 권한 체크
+        try {
+            UserPermissionsResponse permissions = userPermissionsService.getUserPermissions(user);
+            if (!permissions.isSensitiveInfoPermission() || !permissions.isMedicalInfoPermission()) {
+                return ResponseEntity.status(403)
+                    .body(ApiResponse.error("문진표 삭제를 위한 권한이 없습니다. 민감정보 및 의료정보 동의가 필요합니다.", null));
+            }
+        } catch (Exception e) {
+            logger.error("Error checking permissions for user: {} - Error: {}", user.getId(), e.getMessage(), e);
+            return ResponseEntity.status(400)
+                .body(ApiResponse.error("권한 확인 중 오류가 발생했습니다: " + e.getMessage(), null));
+        }
+        
         java.util.List<PatientQuestionnaireSummaryResponse> list = patientQuestionnaireService.deleteQuestionnaireAndReturnList(user, id);
         return ResponseEntity.status(200)
             .body(ApiResponse.success("문진표 삭제 성공", list));
@@ -272,6 +299,20 @@ public class QuestionnaireController {
             return ResponseEntity.status(400)
                 .body(ApiResponse.error("실명과 주소, 전화번호는 필수입니다.", null));
         }
+        
+        // 권한 체크
+        try {
+            UserPermissionsResponse permissions = userPermissionsService.getUserPermissions(user);
+            if (!permissions.isSensitiveInfoPermission() || !permissions.isMedicalInfoPermission()) {
+                return ResponseEntity.status(403)
+                    .body(ApiResponse.error("문진표 수정을 위한 권한이 없습니다. 민감정보 및 의료정보 동의가 필요합니다.", null));
+            }
+        } catch (Exception e) {
+            logger.error("Error checking permissions for user: {} - Error: {}", user.getId(), e.getMessage(), e);
+            return ResponseEntity.status(400)
+                .body(ApiResponse.error("권한 확인 중 오류가 발생했습니다: " + e.getMessage(), null));
+        }
+        
         try {
             PatientQuestionnaire updated = patientQuestionnaireService.updateQuestionnaire(user, id, request);
             PatientQuestionnaireResponse response = PatientQuestionnaireResponse.from(updated);
