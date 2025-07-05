@@ -50,6 +50,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -78,6 +79,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import androidx.navigation.NavController
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
+import com.kakao.sdk.user.model.User
 import com.pilltip.pilltip.R
 import com.pilltip.pilltip.composable.AuthComposable.RoundTextField
 import com.pilltip.pilltip.composable.BackButton
@@ -99,6 +101,7 @@ import com.pilltip.pilltip.model.search.AllergyEntry
 import com.pilltip.pilltip.model.search.ChronicDiseaseEntry
 import com.pilltip.pilltip.model.search.LogViewModel
 import com.pilltip.pilltip.model.search.MedicationEntry
+import com.pilltip.pilltip.model.search.QuestionnaireDetail
 import com.pilltip.pilltip.model.search.QuestionnaireViewModel
 import com.pilltip.pilltip.model.search.SearchHiltViewModel
 import com.pilltip.pilltip.model.search.SurgeryHistoryEntry
@@ -113,6 +116,7 @@ import com.pilltip.pilltip.ui.theme.primaryColor
 import com.pilltip.pilltip.ui.theme.primaryColor050
 import com.pilltip.pilltip.view.auth.logic.EssentialTerms
 import com.pilltip.pilltip.view.auth.logic.OptionalTerms
+import com.pilltip.pilltip.view.questionnaire.Logic.toKoreanGender
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -968,30 +972,44 @@ fun WritePage(
 @Composable
 fun QuestionnaireCheckPage(
     navController: NavController,
-    viewModel: QuestionnaireViewModel
+    viewModel: QuestionnaireViewModel,
+    fromDetail: Boolean = false,
+    questionnaireId: Long? = null
 ) {
+    LaunchedEffect(fromDetail, questionnaireId) {
+        if (fromDetail && questionnaireId != null) {
+            viewModel.fetchQuestionnaireDetail(questionnaireId)
+        }
+    }
     val context = LocalContext.current
     val focusManager = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current
+    val userInformation = UserInfoManager.getUserData(context)
     var questionnaireName by remember { mutableStateOf("내 문진표") }
-    var realName by remember { mutableStateOf("김필팁") }
+    var realName by remember { mutableStateOf(userInformation?.realName ?: "") }
     var isEditingRealName by remember { mutableStateOf(false) }
-    var gender by remember { mutableStateOf(UserInfoManager.getUserData(context)?.gender) }
-    var phone by remember { mutableStateOf(UserInfoManager.getUserData(context)?.phone!!) }
+    var gender by remember { mutableStateOf(userInformation?.gender ?: "") }
+    var phone by remember { mutableStateOf(userInformation?.phone ?: "") }
     var isEditingPhone by remember { mutableStateOf(false) }
 
-    var address by remember { mutableStateOf("부산광역시 금정구 부산대학교로\n어쩌구 저쩌구") }
+    var address by remember { mutableStateOf(userInformation?.address ?: "") }
+    val detail by remember { derivedStateOf { viewModel.questionnaireDetail } }
+
+    LaunchedEffect(detail) {
+        if (fromDetail && detail != null) {
+            viewModel.loadQuestionnaireDetail(detail!!, realName, address, phone)
+        }
+    }
+
     var isEditingAddress by remember { mutableStateOf(false) }
     var expanded by remember { mutableStateOf(false) }
     var option by remember { mutableStateOf("수정") }
     var isEditMode by remember { mutableStateOf(false) }
 
-    val medicationList = remember { viewModel.medicationInfo.toMutableStateList() }
-    val allergyList = remember { viewModel.allergyInfo.toMutableStateList() }
-    val diseaseList = remember { viewModel.chronicDiseaseInfo.toMutableStateList() }
-    val surgeryList = remember { viewModel.surgeryHistoryInfo.toMutableStateList() }
-
-
+    val medicationList = viewModel.medicationInfo
+    val allergyList = viewModel.allergyInfo
+    val diseaseList = viewModel.chronicDiseaseInfo
+    val surgeryList = viewModel.surgeryHistoryInfo
 
     Column(
         modifier = WhiteScreenModifier
@@ -1062,7 +1080,7 @@ fun QuestionnaireCheckPage(
                 UserInfoManager.getUserData(context)?.age
             }세)"
         )
-        FixedProfiledField("성별", "${gender}성")
+        FixedProfiledField("성별", "${gender.toKoreanGender()}성")
 
 
         EditableProfileField(
@@ -1086,13 +1104,14 @@ fun QuestionnaireCheckPage(
         Section(
             "복약 정보", medicationList, isEditMode,
             onToggle = {
-                medicationList[it] =
-                    medicationList[it].copy(submitted = !medicationList[it].submitted)
-                viewModel.medicationInfo = medicationList
+                val updated = medicationList.toMutableList()
+                updated[it] = updated[it].copy(submitted = !updated[it].submitted)
+                viewModel.medicationInfo = updated
             },
             onDelete = {
-                medicationList.removeAt(it)
-                viewModel.medicationInfo = medicationList
+                val updated = medicationList.toMutableList()
+                updated.removeAt(it)
+                viewModel.medicationInfo = updated
             }
         )
 
@@ -1101,12 +1120,14 @@ fun QuestionnaireCheckPage(
         Section(
             "알러지 정보", allergyList, isEditMode,
             onToggle = {
-                allergyList[it] = allergyList[it].copy(submitted = !allergyList[it].submitted)
-                viewModel.allergyInfo = allergyList
+                val updated = allergyList.toMutableList()
+                updated[it] = updated[it].copy(submitted = !updated[it].submitted)
+                viewModel.allergyInfo = updated
             },
             onDelete = {
-                allergyList.removeAt(it)
-                viewModel.allergyInfo = allergyList
+                val updated = allergyList.toMutableList()
+                updated.removeAt(it)
+                viewModel.allergyInfo = updated
             }
         )
 
@@ -1115,12 +1136,14 @@ fun QuestionnaireCheckPage(
         Section(
             "기저질환", diseaseList, isEditMode,
             onToggle = {
-                diseaseList[it] = diseaseList[it].copy(submitted = !diseaseList[it].submitted)
-                viewModel.chronicDiseaseInfo = diseaseList
+                val updated = diseaseList.toMutableList()
+                updated[it] = updated[it].copy(submitted = !updated[it].submitted)
+                viewModel.chronicDiseaseInfo = updated
             },
             onDelete = {
-                diseaseList.removeAt(it)
-                viewModel.chronicDiseaseInfo = diseaseList
+                val updated = diseaseList.toMutableList()
+                updated.removeAt(it)
+                viewModel.chronicDiseaseInfo = updated
             }
         )
 
@@ -1129,18 +1152,24 @@ fun QuestionnaireCheckPage(
         Section(
             "수술 이력", surgeryList, isEditMode,
             onToggle = {
-                surgeryList[it] = surgeryList[it].copy(submitted = !surgeryList[it].submitted)
-                viewModel.surgeryHistoryInfo = surgeryList
+                val updated = surgeryList.toMutableList()
+                updated[it] = updated[it].copy(submitted = !updated[it].submitted)
+                viewModel.surgeryHistoryInfo = updated
             },
             onDelete = {
-                surgeryList.removeAt(it)
-                viewModel.surgeryHistoryInfo = surgeryList
+                val updated = surgeryList.toMutableList()
+                updated.removeAt(it)
+                viewModel.surgeryHistoryInfo = updated
             }
         )
 
         NextButton(
             mModifier = buttonModifier,
-            text = if (isEditMode) "수정완료" else "제출하기",
+            text = if (fromDetail) {
+                if (isEditMode) "수정완료" else "생성하기"
+            } else {
+                if (isEditMode) "수정완료" else "제출하기"
+            },
             onClick = {
                 if (isEditMode) {
                     isEditMode = false
@@ -1150,8 +1179,15 @@ fun QuestionnaireCheckPage(
                     viewModel.phoneNumber = phone
                     viewModel.questionnaireName = questionnaireName
 
-                    viewModel.submit()
-                    navController.navigate("DetailPage")
+
+                    if (fromDetail){
+                        viewModel.modify()
+                        navController.navigate("PillMainPage/Chart")
+                    }
+                    else{
+                        viewModel.submit()
+                        navController.navigate("DetailPage")
+                    }
                 }
             }
         )

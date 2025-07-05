@@ -9,6 +9,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.pilltip.pilltip.composable.MainComposable.BottomTab
 import com.pilltip.pilltip.model.search.LogViewModel
 import com.pilltip.pilltip.model.search.QuestionnaireViewModel
 import com.pilltip.pilltip.model.search.SearchHiltViewModel
@@ -89,6 +90,18 @@ fun NavGraph(
         /* Main */
         composable("PillMainPage") {
             PillMainPage(navController, searchHiltViewModel, questionnaireViewModel)
+        }
+
+        composable("PillMainPage/{tab}") { backStackEntry ->
+            val tabName = backStackEntry.arguments?.getString("tab")
+            val selected = BottomTab.entries.firstOrNull { it.name == tabName } ?: BottomTab.Home
+
+            PillMainPage(
+                navController = navController,
+                searchHiltViewModel = hiltViewModel(),
+                questionnaireViewModel = hiltViewModel(),
+                initialTab = selected
+            )
         }
 
         /* Search */
@@ -227,6 +240,16 @@ fun NavGraph(
 
         composable("QuestionnaireCheckPage") {
             QuestionnaireCheckPage(navController, questionnaireViewModel)
+        }
+
+        composable("questionnaire_check/{id}") { backStackEntry ->
+            val id = backStackEntry.arguments?.getString("id")?.toLongOrNull()
+            QuestionnaireCheckPage(
+                navController = navController,
+                viewModel = hiltViewModel(),
+                fromDetail = true,
+                questionnaireId = id
+            )
         }
 
         /* mypage */

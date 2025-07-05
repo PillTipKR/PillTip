@@ -206,11 +206,30 @@ interface QuestionnaireApi {
 
     @GET("/api/questionnaire/list")
     suspend fun getQuestionnaireList(): QuestionnaireListResponse
+
+    @GET("/api/questionnaire/{id}")
+    suspend fun getQuestionnaireDetail(
+        @Path("id") id: Long
+    ): QuestionnaireDetailResponse
+
+    @PUT("/api/questionnaire/{id}")
+    suspend fun updateQuestionnaire(
+        @Path("id") id: Long,
+        @Body request: QuestionnaireSubmitRequest
+    ): QuestionnaireResponse
+
+    @DELETE("/api/questionnaire/{questionnaire_id}")
+    suspend fun deleteQuestionnaire(
+        @Path("questionnaire_id") id: Long
+    ): QuestionnaireListResponse
 }
 
 interface QuestionnaireRepository {
     suspend fun submit(request: QuestionnaireSubmitRequest): QuestionnaireData
     suspend fun getList(): List<QuestionnaireSummary>
+    suspend fun getDetail(id: Long): QuestionnaireDetail
+    suspend fun update(id: Long, request: QuestionnaireSubmitRequest): QuestionnaireData
+    suspend fun delete(id: Long)
 }
 
 class QuestionnaireRepositoryImpl(
@@ -222,6 +241,18 @@ class QuestionnaireRepositoryImpl(
 
     override suspend fun getList(): List<QuestionnaireSummary> {
         return api.getQuestionnaireList().data
+    }
+
+    override suspend fun getDetail(id: Long): QuestionnaireDetail {
+        return api.getQuestionnaireDetail(id).data
+    }
+
+    override suspend fun update(id: Long, request: QuestionnaireSubmitRequest): QuestionnaireData {
+        return api.updateQuestionnaire(id, request).data
+    }
+
+    override suspend fun delete(id: Long) {
+        api.deleteQuestionnaire(id)
     }
 }
 

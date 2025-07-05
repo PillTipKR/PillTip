@@ -7,3 +7,11 @@ data class DosageEntry(
     var alarm_on_off : Boolean? = true,
     val dosageUnit: String = "회"
 )
+
+fun String.toKoreanGender(): String {
+    return when (this) {
+        "MALE" -> "남"
+        "FEMALE" -> "여"
+        else -> "기타"
+    }
+}

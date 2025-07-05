@@ -1,6 +1,7 @@
 package com.pilltip.pilltip.view.main
 
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -41,6 +42,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -79,7 +81,8 @@ import com.pilltip.pilltip.ui.theme.primaryColor100
 fun PillMainPage(
     navController: NavController,
     searchHiltViewModel: SearchHiltViewModel,
-    questionnaireViewModel: QuestionnaireViewModel
+    questionnaireViewModel: QuestionnaireViewModel,
+    initialTab : BottomTab = BottomTab.Home
 ) {
     var selectedTab by remember { mutableStateOf(BottomTab.Home) }
     val systemUiController = rememberSystemUiController()
@@ -246,6 +249,7 @@ fun MyQuestionnairePage(
     navController: NavController,
     viewModel: QuestionnaireViewModel
 ) {
+    val context = LocalContext.current
     var scrollState = rememberScrollState()
     var firstSelected by remember { mutableStateOf(false) }
     var secondSelected by remember { mutableStateOf(false) }
@@ -370,9 +374,21 @@ fun MyQuestionnairePage(
                 items(list) { item ->
                     QuestionnaireCard(
                         questionnaire = item,
+                        onClick = {navController.navigate("questionnaire_check/${item.questionnaireId}")},
                         onEdit = {
+
                         },
                         onDelete = {
+                            viewModel.delete(
+                                id = item.questionnaireId,
+                                onSuccess = {
+                                    Toast.makeText(context, "삭제 완료", Toast.LENGTH_SHORT).show()
+                                    viewModel.fetchQuestionnaireList()
+                                },
+                                onError = {
+                                    Toast.makeText(context, "삭제 실패: $it", Toast.LENGTH_SHORT).show()
+                                }
+                            )
                         }
                     )
                 }

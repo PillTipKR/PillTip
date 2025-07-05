@@ -6,9 +6,11 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.toMutableStateList
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pilltip.pilltip.model.AuthInterceptor
+import com.pilltip.pilltip.model.UserInfoManager
 import com.pilltip.pilltip.model.signUp.NetworkModule
 import dagger.Module
 import dagger.Provides
@@ -342,6 +344,70 @@ class QuestionnaireViewModel @Inject constructor(
             }
         }
     }
+
+    var questionnaireDetail by mutableStateOf<QuestionnaireDetail?>(null)
+        private set
+
+    var isLoading by mutableStateOf(false)
+        private set
+
+    fun fetchQuestionnaireDetail(id: Long) {
+        viewModelScope.launch {
+            isLoading = true
+            try {
+                val result = repository.getDetail(id)
+                questionnaireDetail = result
+                Log.d("문진표", "상세 조회 성공: $result")
+            } catch (e: Exception) {
+                Log.e("문진표", "상세 조회 실패: ${e.message}")
+            } finally {
+                isLoading = false
+            }
+        }
+    }
+
+    fun loadQuestionnaireDetail(
+        data: QuestionnaireDetail,
+        realName: String,
+        address: String,
+        phoneNumber: String
+    ) {
+        questionnaireName = data.questionnaireName
+        this.realName = realName
+        this.address = address
+        this.phoneNumber = phoneNumber
+
+        medicationInfo = data.medicationInfo.toMutableStateList()
+        allergyInfo = data.allergyInfo.toMutableStateList()
+        chronicDiseaseInfo = data.chronicDiseaseInfo.toMutableStateList()
+        surgeryHistoryInfo = data.surgeryHistoryInfo.toMutableStateList()
+    }
+
+    fun modify() {
+        viewModelScope.launch {
+            try {
+                val id = questionnaireDetail?.questionnaireId ?: return@launch
+                val request = toRequest()
+                repository.update(id, request)
+                Log.d("문진표", "수정 성공: ID=$id")
+            } catch (e: Exception) {
+                Log.e("문진표", "수정 실패: ${e.message}")
+            }
+        }
+    }
+
+    fun delete(id: Long, onSuccess: () -> Unit, onError: (String) -> Unit) {
+        viewModelScope.launch {
+            try {
+                repository.delete(id)
+                Log.d("문진표", "삭제 성공: $id")
+                onSuccess()
+            } catch (e: Exception) {
+                Log.e("문진표", "삭제 실패: ${e.message}")
+                onError(e.message ?: "알 수 없는 오류")
+            }
+        }
+    }
 }
 
 @Module
@@ -365,7 +431,7 @@ object RepositoryModule {
     @Named("SearchRetrofit")
     fun provideRetrofit(okHttpClient: OkHttpClient): Retrofit {
         return Retrofit.Builder()
-            .baseUrl("http://164.125.253.20:20022")
+            .baseUrl("https://164.125.253.20:20022")
             .addConverterFactory(GsonConverterFactory.create())
             .client(okHttpClient)
             .build()
@@ -476,5 +542,4 @@ object RepositoryModule {
     fun providePermissionRepository(api: PermissionApi): PermissionRepository {
         return PermissionRepositoryImpl(api)
     }
-
 }
