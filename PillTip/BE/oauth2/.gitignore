@@ -42,6 +42,11 @@ out/
 application.properties
 firebasefbsvc*
 
+### SSL Certificate Files ###
+src/main/resources/ssl/*.pem
+src/main/resources/ssl/*.p12
+src/main/resources/ssl/keystore.*
+
 # macOS ###
 # macOS Finder files
 .DS_Store

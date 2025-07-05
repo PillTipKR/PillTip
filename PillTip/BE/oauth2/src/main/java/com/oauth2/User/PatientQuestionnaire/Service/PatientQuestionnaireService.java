@@ -8,6 +8,8 @@ import com.oauth2.User.PatientQuestionnaire.Entity.PatientQuestionnaire;
 import com.oauth2.User.Auth.Entity.User;
 import com.oauth2.User.PatientQuestionnaire.Repository.PatientQuestionnaireRepository;
 import com.oauth2.User.UserInfo.Service.UserService;
+import com.oauth2.User.UserInfo.Service.UserSensitiveInfoService;
+import com.oauth2.User.UserInfo.Dto.UserSensitiveInfoDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,19 +18,53 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.Set;
+import java.util.HashSet;
 
 @Service
 @RequiredArgsConstructor
 public class PatientQuestionnaireService {
     private final PatientQuestionnaireRepository questionnaireRepository;
     private final ObjectMapper objectMapper;
-    private final UserService userService;  
+    private final UserService userService;
+    private final UserSensitiveInfoService userSensitiveInfoService;
 
     @Transactional
     public PatientQuestionnaire createQuestionnaire(User user, PatientQuestionnaireRequest request) throws JsonProcessingException {
         // Update user realName and address
         userService.updatePersonalInfo(user, request.getRealName(), request.getAddress());
         userService.updatePhoneNumber(user, request.getPhoneNumber());
+        
+        // 기존 민감정보 조회
+        UserSensitiveInfoDto existingHistory = userSensitiveInfoService.getSensitiveInfo(user);
+        
+        // 기존 데이터와 새로운 데이터를 병합
+        String medicationInfo = mergeWithExistingData(
+            request.getMedicationInfo(), 
+            existingHistory != null ? existingHistory.getMedicationInfo() : null, 
+            "medicationName"
+        );
+        String allergyInfo = mergeWithExistingData(
+            request.getAllergyInfo(), 
+            existingHistory != null ? existingHistory.getAllergyInfo() : null, 
+            "allergyName"
+        );
+        String chronicDiseaseInfo = mergeWithExistingData(
+            request.getChronicDiseaseInfo(), 
+            existingHistory != null ? existingHistory.getChronicDiseaseInfo() : null, 
+            "chronicDiseaseName"
+        );
+        String surgeryHistoryInfo = mergeWithExistingData(
+            request.getSurgeryHistoryInfo(), 
+            existingHistory != null ? existingHistory.getSurgeryHistoryInfo() : null, 
+            "surgeryHistoryName"
+        );
+        
+        // 병합된 데이터를 user_sensitive_info에 저장
+        userSensitiveInfoService.syncFromQuestionnaire(user, medicationInfo, allergyInfo, 
+            chronicDiseaseInfo, surgeryHistoryInfo);
+        
         String medicationInfoJson = objectMapper.writeValueAsString(
                 toKeyedList(request.getMedicationInfo(), "medicationId")
         );
@@ -86,6 +122,57 @@ public class PatientQuestionnaireService {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * 기존 데이터와 새로운 데이터를 병합
+     */
+    private String mergeWithExistingData(List<PatientQuestionnaireRequest.InfoItem> newItems, 
+                                       List<String> existingItems, 
+                                       String nameField) {
+        // 기존 데이터를 Set으로 변환 (중복 체크용)
+        Set<String> existingNames = (existingItems != null && !existingItems.isEmpty()) 
+            ? new HashSet<>(existingItems)
+            : new HashSet<>();
+        
+        // 새로운 데이터에서 이름 추출 (submitted 여부와 관계없이 모든 항목)
+        List<String> newNames = new ArrayList<>();
+        if (newItems != null) {
+            for (PatientQuestionnaireRequest.InfoItem item : newItems) {
+                String name = getNameFromItem(item, nameField);
+                if (name != null && !name.trim().isEmpty() && !existingNames.contains(name)) {
+                    newNames.add(name.trim());
+                    existingNames.add(name.trim()); // 중복 방지를 위해 Set에 추가
+                }
+            }
+        }
+        
+        // 기존 데이터와 새로운 데이터를 합침
+        List<String> mergedList = new ArrayList<>();
+        if (existingItems != null) {
+            mergedList.addAll(existingItems);
+        }
+        mergedList.addAll(newNames);
+        
+        return String.join(", ", mergedList);
+    }
+    
+    /**
+     * InfoItem에서 이름 필드 값을 추출
+     */
+    private String getNameFromItem(PatientQuestionnaireRequest.InfoItem item, String nameField) {
+        switch (nameField) {
+            case "medicationName":
+                return item.getMedicationName();
+            case "allergyName":
+                return item.getAllergyName();
+            case "chronicDiseaseName":
+                return item.getChronicDiseaseName();
+            case "surgeryHistoryName":
+                return item.getSurgeryHistoryName();
+            default:
+                return null;
+        }
+    }
+
     public List<PatientQuestionnaireSummaryResponse> getUserQuestionnaireSummaries(User user) {
         return questionnaireRepository.findByUser(user).stream()
             .map(q -> new PatientQuestionnaireSummaryResponse(
@@ -124,6 +211,36 @@ public class PatientQuestionnaireService {
         // Update user realName and address
         userService.updatePersonalInfo(user, request.getRealName(), request.getAddress());
         userService.updatePhoneNumber(user, request.getPhoneNumber());
+        
+        // 기존 민감정보 조회
+        UserSensitiveInfoDto existingHistory = userSensitiveInfoService.getSensitiveInfo(user);
+        
+        // 기존 데이터와 새로운 데이터를 병합
+        String medicationInfo = mergeWithExistingData(
+            request.getMedicationInfo(), 
+            existingHistory != null ? existingHistory.getMedicationInfo() : null, 
+            "medicationName"
+        );
+        String allergyInfo = mergeWithExistingData(
+            request.getAllergyInfo(), 
+            existingHistory != null ? existingHistory.getAllergyInfo() : null, 
+            "allergyName"
+        );
+        String chronicDiseaseInfo = mergeWithExistingData(
+            request.getChronicDiseaseInfo(), 
+            existingHistory != null ? existingHistory.getChronicDiseaseInfo() : null, 
+            "chronicDiseaseName"
+        );
+        String surgeryHistoryInfo = mergeWithExistingData(
+            request.getSurgeryHistoryInfo(), 
+            existingHistory != null ? existingHistory.getSurgeryHistoryInfo() : null, 
+            "surgeryHistoryName"
+        );
+        
+        // 병합된 데이터를 user_sensitive_info에 저장
+        userSensitiveInfoService.syncFromQuestionnaire(user, medicationInfo, allergyInfo, 
+            chronicDiseaseInfo, surgeryHistoryInfo);
+        
         PatientQuestionnaire q = questionnaireRepository.findByIdWithUser(id)
             .orElseThrow(() -> new IllegalArgumentException("문진표를 찾을 수 없습니다."));
         if (!q.getUser().getId().equals(user.getId())) {
