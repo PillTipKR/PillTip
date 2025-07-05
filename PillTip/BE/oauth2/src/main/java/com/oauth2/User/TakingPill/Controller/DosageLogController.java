@@ -20,10 +20,10 @@ public class DosageLogController {
 
     @GetMapping("/date")
     public ResponseEntity<ApiResponse<AllDosageLogResponse>> getDateLogs(
-            @RequestParam Long userId,
+           @AuthenticationPrincipal User user,
             @RequestParam LocalDate date
             ) {
-        AllDosageLogResponse responses = dosageLogService.getDateLog(userId, date);
+        AllDosageLogResponse responses = dosageLogService.getDateLog(user.getId(), date);
         return ResponseEntity.ok().body(ApiResponse.success(responses));
     }
 
