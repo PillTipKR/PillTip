@@ -241,6 +241,30 @@ data class QuestionnaireSummary(
 )
 
 /**
+ * 문진표 상세 정보
+ */
+
+data class QuestionnaireDetailResponse(
+    val status: String,
+    val message: String,
+    val data: QuestionnaireDetail
+)
+
+data class QuestionnaireDetail(
+    val questionnaireId: Long,
+    val questionnaireName: String,
+    val realName: String?,
+    val address: String?,
+    val issueDate: String,
+    val lastModifiedDate: String,
+    val notes: String?,
+    val medicationInfo: List<MedicationEntry>,
+    val allergyInfo: List<AllergyEntry>,
+    val chronicDiseaseInfo: List<ChronicDiseaseEntry>,
+    val surgeryHistoryInfo: List<SurgeryHistoryEntry>
+)
+
+/**
  * FCM 토큰
  */
 data class FcmTokenResponse(

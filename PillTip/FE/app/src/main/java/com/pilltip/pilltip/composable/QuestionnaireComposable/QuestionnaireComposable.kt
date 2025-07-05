@@ -230,8 +230,9 @@ fun FixedProfiledField(
 @Composable
 fun QuestionnaireCard(
     questionnaire: QuestionnaireSummary,
+    onClick: () -> Unit,
     onEdit: (QuestionnaireSummary) -> Unit,
-    onDelete: (QuestionnaireSummary) -> Unit
+    onDelete: () -> Unit
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
 
@@ -243,6 +244,9 @@ fun QuestionnaireCard(
             .height(93.dp)
             .background(color = Color(0xFFFFFFFF), shape = RoundedCornerShape(size = 12.dp))
             .padding(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 16.dp)
+            .noRippleClickable {
+                onClick()
+            }
     ) {
         Column {
             Row(
@@ -313,7 +317,7 @@ fun QuestionnaireCard(
                                 },
                                 onClick = {
                                     menuExpanded = false
-                                    //onDelete(pill)
+                                    onDelete()
                                 }
                             )
                         }
