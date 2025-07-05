@@ -257,6 +257,30 @@ class QuestionnaireRepositoryImpl(
 }
 
 /**
+ * DUR 기능
+ */
+
+interface DurGptApi {
+    @GET("/api/dur/gpt")
+    suspend fun getDurGptResult(
+        @Query("drugId1") drugId1: Long,
+        @Query("drugId2") drugId2: Long
+    ): DurGptResponse
+}
+
+interface DurGptRepository {
+    suspend fun getDurResult(drugId1: Long, drugId2: Long): DurGptData
+}
+
+class DurGptRepositoryImpl(
+    private val api: DurGptApi
+) : DurGptRepository {
+    override suspend fun getDurResult(drugId1: Long, drugId2: Long): DurGptData {
+        return api.getDurGptResult(drugId1, drugId2).data
+    }
+}
+
+/**
  * FCM 토큰
  */
 //SearcgRepository.kt
