@@ -31,7 +31,9 @@ public class DosageLogController {
     public ResponseEntity<ApiResponse<String>> markAsTaken(
             @AuthenticationPrincipal User user, @PathVariable Long logId) {
         // 복약 완료 처리 로직
-        dosageLogService.markAsTaken(logId);
-        return ResponseEntity.ok().body(ApiResponse.success("복약완료 확인!"));
+        dosageLogService.updateTaken(logId);
+        return ResponseEntity.ok().body(ApiResponse.success("복용 이력 수정!"));
     }
+
+
 }

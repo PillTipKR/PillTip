@@ -23,25 +23,20 @@ public class DosageLogService {
 
     private final DosageLogRepository dosageLogRepository;
 
-    public void markAsTaken(Long dosageLogId) {
+    public void updateTaken(Long dosageLogId) {
         // 복약 완료 상태 업데이트
         DosageLog dosageLog = dosageLogRepository.findById(dosageLogId)
                 .orElseThrow(() -> new IllegalArgumentException("복약 기록을 찾을 수 없습니다"));
 
-        dosageLog.setTakenAt(LocalDateTime.now());  // 복약 완료 시간
-        dosageLog.setTaken(true);  // 복약 완료 상태
+        if(!dosageLog.isTaken()){
+            dosageLog.setTakenAt(LocalDateTime.now());  // 복약 완료 시간
+            dosageLog.setTaken(true);  // 복약 완료 상태
+        }else{
+            dosageLog.setTakenAt(null);  // 복약 완료 시간
+            dosageLog.setTaken(false);  // 복약 완료 상태
+        }
         dosageLogRepository.save(dosageLog);
     }
-
-//    public AllDosageLogResponse updateTaken(Long dosageLogId, ) {
-//        // 복약 완료 상태 업데이트
-//        DosageLog dosageLog = dosageLogRepository.findById(dosageLogId)
-//                .orElseThrow(() -> new IllegalArgumentException("복약 기록을 찾을 수 없습니다"));
-//
-//        dosageLog.setTakenAt(LocalDateTime.now());  // 복약 완료 시간
-//        dosageLog.setTaken(true);  // 복약 완료 상태
-//        dosageLogRepository.save(dosageLog);
-//    }
 
     public void markPending(Long dosageLogId) {
         DosageLog dosageLog = dosageLogRepository.findById(dosageLogId)

@@ -5,4 +5,4 @@ public record DurAnalysisResponse(
    DurPerDrugDto durB,
    DurPerDrugDto interact,
    boolean userTaken
-   ) {}
+) {}

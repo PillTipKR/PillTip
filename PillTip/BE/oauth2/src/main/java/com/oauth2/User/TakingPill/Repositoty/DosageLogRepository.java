@@ -1,11 +1,13 @@
 package com.oauth2.User.TakingPill.Repositoty;
 
+import com.oauth2.User.Auth.Entity.User;
 import com.oauth2.User.TakingPill.Entity.DosageLog;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 public interface DosageLogRepository extends JpaRepository<DosageLog, Long> {
@@ -18,6 +20,13 @@ public interface DosageLogRepository extends JpaRepository<DosageLog, Long> {
             @Param("userId") Long userId,
             @Param("targetDate") LocalDate targetDate
     );
+
+
+    List<DosageLog> findByUserAndMedicationName(User user, String medicationName);
+
+    void deleteAllByUserAndMedicationNameAndScheduledTimeAfter(User user, String medicationName, LocalDateTime time);
+
+    void deleteAllByUserAndMedicationNameAndScheduledTimeBetween(User user, String medicationName, LocalDateTime from, LocalDateTime to);
 
 
 }
