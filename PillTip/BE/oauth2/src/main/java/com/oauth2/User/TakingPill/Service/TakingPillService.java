@@ -92,7 +92,7 @@ public class TakingPillService {
                     for (DosageSchedule schedule : schedules) {
                         DosageLog dosageLog = DosageLog.builder()
                                 .scheduledTime(LocalDateTime.of(date,
-                                        LocalTime.of(schedule.getHour(), schedule.getMinute())))
+                                        LocalTime.of(to24Hour(schedule.getHour(),schedule.getPeriod()), schedule.getMinute())))
                                 .user(user)
                                 .alarmName(request.getAlarmName())
                                 .medicationName(request.getMedicationName())
@@ -176,7 +176,18 @@ public class TakingPillService {
 
         // 기존 로그 조회
         List<DosageLog> existingLogs = dosageLogRepository.findByUserAndMedicationName(user, takingPill.getMedicationName());
-        List<DosageSchedule> dosageSchedules = takingPill.getDosageSchedules();
+        // 깊은 복사
+        List<DosageSchedule> oldSchedules = takingPill.getDosageSchedules()
+                .stream()
+                .map(schedule -> DosageSchedule.builder()
+                        .hour(schedule.getHour())
+                        .minute(schedule.getMinute())
+                        .period(schedule.getPeriod())
+                        .alarmOnOff(schedule.getAlarmOnOff())
+                        .dosageUnit(schedule.getDosageUnit())
+                        .build()
+                ).toList();
+
         // TakingPill 정보 업데이트
         takingPill.setMedicationName(request.getMedicationName());
         takingPill.setStartYear(request.getStartDate().getYear());
@@ -223,8 +234,10 @@ public class TakingPillService {
         boolean isStartDatePushed = newStartDate.isAfter(oldStartDate);
         boolean isEndDateExtended = newEndDate.isAfter(oldEndDate);
         boolean isEndDateShortened = newEndDate.isBefore(oldEndDate);
-        boolean isScheduleChanged = !isScheduleEqual(takingPill.getDosageSchedules(), request.getDosageSchedules());
-        System.out.println(isStartDateEarlier + " " + isStartDatePushed +" "+ isEndDateExtended + " " + isEndDateShortened+ " "+isScheduleChanged);
+        boolean isScheduleChanged = !isScheduleEqual(oldSchedules, request.getDosageSchedules());
+        System.out.println(isStartDateEarlier + " " + isStartDatePushed + " " + isEndDateExtended + " " + isEndDateShortened);
+        System.out.println(isScheduleChanged);
+        System.out.println(pillStatus);
         // 상태 기반 처리
         handleDosageLogsOnUpdate(
                 user,
@@ -486,22 +499,20 @@ public class TakingPillService {
         LocalDateTime now = LocalDateTime.now();
         String medicationName = pill.getMedicationName();
         List<DosageSchedule> schedules = pill.getDosageSchedules();
+        List<LocalDateTime> existingTimes = extractScheduledTimes(existingLogs);
 
-        // 1. COMPLETED 상태: 아무것도 하지 않음
-        if (status == COMPLETED) {
-            return;
-        }
+        if (status == COMPLETED) return;
 
-        // 2. 시작일 앞당김 → 과거 로그 생성
-        if (isStartDateEarlier) {
-            LocalDate from = pillStartDate(pill).minusDays(1);
-            List<DosageLog> backfill = generateDosageLogsBetween(user, medicationName, pill.getAlarmName(), from, oldStart, schedules, pill);
-            System.out.println("Generated log count (backfill): " + backfill.size());
+        if (isStartDateEarlier && !(isScheduleChanged && status == NEW) && status != ACTIVE) {
+            List<DosageLog> backfill = generateDosageLogsBetween(
+                    user, medicationName, pill.getAlarmName(),
+                    pillStartDate(pill).minusDays(1), oldStart,
+                    schedules, pill, existingTimes
+            );
             dosageLogRepository.saveAll(backfill);
         }
 
-        // 3. 시작일 뒤로 미룸 → 과거 로그 삭제 (NEW 상태일 때만)
-        if (isStartDatePushed && status == PillStatus.NEW) {
+        if (isStartDatePushed && status == NEW) {
             dosageLogRepository.deleteAll(
                     existingLogs.stream()
                             .filter(log -> log.getScheduledTime().toLocalDate().isBefore(pillStartDate(pill).minusDays(1)))
@@ -509,13 +520,15 @@ public class TakingPillService {
             );
         }
 
-        // 4. 종료일 연장 → 미래 로그 생성
-        if (isEndDateExtended) {
-            List<DosageLog> futureLogs = generateDosageLogsBetween(user, medicationName, pill.getAlarmName(), oldEnd, pillEndDate(pill).plusDays(1), schedules, pill);
+        if (isEndDateExtended && !isScheduleChanged) {
+            List<DosageLog> futureLogs = generateDosageLogsBetween(
+                    user, medicationName, pill.getAlarmName(),
+                    oldEnd, pillEndDate(pill).plusDays(1),
+                    schedules, pill, existingTimes
+            );
             dosageLogRepository.saveAll(futureLogs);
         }
 
-        // 5. 종료일 단축 → 미래 로그 삭제
         if (isEndDateShortened) {
             dosageLogRepository.deleteAll(
                     existingLogs.stream()
@@ -524,31 +537,40 @@ public class TakingPillService {
             );
         }
 
-        // 6. 스케줄 변경 시 → 현재~미래 로그 재생성 (ACTIVE는 과거 로그 보존)
         if (isScheduleChanged) {
-            if (status == PillStatus.NEW) {
-                // 모든 기존 로그 삭제 후 재생성
+            if (status == NEW) {
                 dosageLogRepository.deleteAll(existingLogs);
+
                 List<DosageLog> regenerated = generateDosageLogsBetween(
                         user, medicationName, pill.getAlarmName(),
-                        pillStartDate(pill).minusDays(1), pillEndDate(pill).plusDays(1), schedules, pill
+                        pillStartDate(pill).minusDays(1), pillEndDate(pill).plusDays(1),
+                        schedules, pill, List.of()  // NEW는 전체 삭제니까 기존 로그 없음
                 );
                 dosageLogRepository.saveAll(regenerated);
-            } else if (status == PillStatus.ACTIVE) {
-                // 미래 로그 중 isTaken=false 만 삭제
+            } else if (status == ACTIVE) {
                 List<DosageLog> futureLogsToRemove = existingLogs.stream()
                         .filter(log -> !log.isTaken() && !log.getScheduledTime().isBefore(now))
                         .collect(Collectors.toList());
+
                 dosageLogRepository.deleteAll(futureLogsToRemove);
 
-                // 미래 로그만 재생성
+                List<LocalDateTime> futureLogTimes = extractScheduledTimes(existingLogs);
+
                 List<DosageLog> regenerated = generateDosageLogsBetween(
                         user, medicationName, pill.getAlarmName(),
-                        now.toLocalDate(), pillEndDate(pill).plusDays(1), schedules, pill
+                        now.toLocalDate(), pillEndDate(pill).plusDays(1),
+                        schedules, pill, futureLogTimes
                 );
                 dosageLogRepository.saveAll(regenerated);
             }
         }
+    }
+
+
+    private List<LocalDateTime> extractScheduledTimes(List<DosageLog> logs) {
+        return logs.stream()
+                .map(DosageLog::getScheduledTime)
+                .collect(Collectors.toList());
     }
 
     private List<DosageLog> generateDosageLogsBetween(
@@ -558,21 +580,19 @@ public class TakingPillService {
             LocalDate from,
             LocalDate to,
             List<DosageSchedule> schedules,
-            TakingPill pill
+            TakingPill pill,
+            List<LocalDateTime> existingTimes
     ) {
         List<DosageLog> logs = new ArrayList<>();
-        System.out.println(from + " " + to);
+
         for (LocalDate date = from; !date.isAfter(to); date = date.plusDays(1)) {
-            System.out.println("검사 중인 날짜: " + date + " / 요일: " + date.getDayOfWeek());
-            if (!matchesToday(pill, date)) {
-                System.out.println("SKIPPED date: " + date + " (not matching daysOfWeek)");
-                continue;
-            }
+            if (!matchesToday(pill, date)) continue;
 
             for (DosageSchedule schedule : schedules) {
                 int hour = to24Hour(schedule.getHour(), schedule.getPeriod());
-                LocalTime time = LocalTime.of(hour, schedule.getMinute());
-                LocalDateTime scheduledTime = LocalDateTime.of(date, time);
+                LocalDateTime scheduledTime = LocalDateTime.of(date, LocalTime.of(hour, schedule.getMinute()));
+
+                if (existingTimes.contains(scheduledTime)) continue;
 
                 DosageLog log = DosageLog.builder()
                         .user(user)
@@ -588,6 +608,8 @@ public class TakingPillService {
         return logs;
     }
 
+
+
     private LocalDate pillStartDate(TakingPill pill) {
         return createSafeLocalDate(pill.getStartYear(), pill.getStartMonth(), pill.getStartDay());
     }
@@ -598,7 +620,6 @@ public class TakingPillService {
 
     private boolean isScheduleEqual(List<DosageSchedule> existing, List<TakingPillRequest.DosageSchedule> updated) {
         if (existing.size() != updated.size()) return false;
-
         for (int i = 0; i < existing.size(); i++) {
             DosageSchedule e = existing.get(i);
             TakingPillRequest.DosageSchedule u = updated.get(i);

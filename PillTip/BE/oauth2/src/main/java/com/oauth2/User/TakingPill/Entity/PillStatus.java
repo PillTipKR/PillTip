@@ -9,7 +9,7 @@ public enum PillStatus {
     public static PillStatus calculateStatus(LocalDate endDate, LocalDateTime created) {
         LocalDateTime now = LocalDateTime.now();
         //12시간이 지나지 않았으면 new
-        if (!now.isAfter(created.plusHours(12))) {
+        if (!now.isAfter(created.plusDays(1))) {
             return NEW;
         } else if (now.toLocalDate().isAfter(endDate)) {
             return COMPLETED;
