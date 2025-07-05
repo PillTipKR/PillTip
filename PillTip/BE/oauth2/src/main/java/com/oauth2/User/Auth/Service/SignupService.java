@@ -140,9 +140,6 @@ public class SignupService {
                 .height(new BigDecimal(request.getHeight()))
                 .weight(new BigDecimal(request.getWeight()))
                 .phone(validatePhoneNumber(request.getPhone()))
-                .healthStatus("")
-                .diseaseInfo("")
-                .allergyInfo("")
                 .build();
     }
 

@@ -5,6 +5,8 @@ package com.oauth2.User.UserInfo.Entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.oauth2.User.Auth.Entity.User;
+import com.oauth2.Util.Encryption.EncryptionConverter;
+
 import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Getter;
@@ -47,16 +49,8 @@ public class UserProfile {
 
     @Setter
     @Column(nullable = false, unique = true)
+    @Convert(converter = EncryptionConverter.class)
     private String phone;
-
-    @Column(name = "health_status", columnDefinition = "TEXT")
-    private String healthStatus;
-
-    @Column(name = "disease_info", columnDefinition = "TEXT")
-    private String diseaseInfo;
-
-    @Column(name = "allergy_info", columnDefinition = "TEXT")
-    private String allergyInfo;
 
     @Setter
     @Column(name = "pregnant", columnDefinition = "boolean default false")
@@ -64,8 +58,7 @@ public class UserProfile {
 
     @Builder
     public UserProfile(User user, Integer age, Gender gender, BigDecimal height, BigDecimal weight,
-                      LocalDate birthDate, String phone, String healthStatus,
-                      String diseaseInfo, String allergyInfo) {
+                      LocalDate birthDate, String phone) {
         this.user = user;
         this.age = age;
         this.gender = gender;
@@ -73,9 +66,6 @@ public class UserProfile {
         this.weight = weight;
         this.birthDate = birthDate;
         this.phone = phone;
-        this.healthStatus = healthStatus;
-        this.diseaseInfo = diseaseInfo;
-        this.allergyInfo = allergyInfo;
     }
 }
 

@@ -12,6 +12,8 @@ import com.oauth2.User.UserInfo.Entity.Interests;
 import com.oauth2.User.UserInfo.Entity.UserLocation;
 import com.oauth2.User.UserInfo.Entity.UserPermissions;
 import com.oauth2.User.UserInfo.Entity.UserProfile;
+import com.oauth2.Util.Encryption.EncryptionConverter;
+
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -37,18 +39,22 @@ public class User {
     private LoginType loginType;
 
     @Column(name = "login_id", unique = true) // 로그인 ID
+    @Convert(converter = EncryptionConverter.class)
     private String loginId;
 
     @Column(name = "social_id", unique = true) // 소셜 로그인 Oauth2의 토큰
+    @Convert(converter = EncryptionConverter.class)
     private String socialId;
 
     @Column(name = "password_hash", unique = true) // 로그인 비밀번호 hash
     private String passwordHash;
 
     @Column(name = "user_email", unique = true) // 유저의 이메일
+    @Convert(converter = EncryptionConverter.class)
     private String userEmail;
 
     @Column(name = "profile_photo") // 유저의 프로필 사진 URL
+    @Convert(converter = EncryptionConverter.class)
     private String profilePhoto;
 
     @Column(nullable = false, unique = true) // 유저의 닉네임
@@ -58,9 +64,11 @@ public class User {
     private boolean terms;
 
     @Column(name = "real_name")
+    @Convert(converter = EncryptionConverter.class)
     private String realName; // 실명 (null 허용)
 
     @Column(name = "address")
+    @Convert(converter = EncryptionConverter.class)
     private String address; // 주소 (null 허용)
 
     @CreationTimestamp

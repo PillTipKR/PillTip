@@ -4,6 +4,8 @@ package com.oauth2.User.PatientQuestionnaire.Entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.oauth2.User.Auth.Entity.User;
+import com.oauth2.Util.Encryption.EncryptionConverter;
+
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -40,14 +42,18 @@ public class PatientQuestionnaire {
     private String notes; // 추가 메모
 
     @Column(name = "medicationInfo", columnDefinition = "TEXT")
+    @Convert(converter = EncryptionConverter.class)
     private String medicationInfo;
 
     @Column(name = "allergyInfo", columnDefinition = "TEXT")
+    @Convert(converter = EncryptionConverter.class)
     private String allergyInfo;
 
     @Column(name = "chronicDiseaseInfo", columnDefinition = "TEXT")
+    @Convert(converter = EncryptionConverter.class)
     private String chronicDiseaseInfo;
 
     @Column(name = "surgeryHistoryInfo", columnDefinition = "TEXT")
+    @Convert(converter = EncryptionConverter.class)
     private String surgeryHistoryInfo;
 }
