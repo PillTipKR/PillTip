@@ -93,9 +93,6 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                 .height(new BigDecimal("0"))
                 .weight(new BigDecimal("0"))
                 .phone("")
-                .healthStatus("")
-                .diseaseInfo("")
-                .allergyInfo("")
                 .build();
 
         // Interests 생성

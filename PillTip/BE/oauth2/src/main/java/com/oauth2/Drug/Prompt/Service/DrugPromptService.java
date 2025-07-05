@@ -8,6 +8,7 @@ import com.oauth2.Drug.Prompt.Dto.*;
 import com.oauth2.User.TakingPill.Dto.TakingPillSummaryResponse;
 import com.oauth2.User.Auth.Entity.User;
 import com.oauth2.User.TakingPill.Service.TakingPillService;
+import com.oauth2.User.UserInfo.Service.UserSensitiveInfoService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
@@ -37,6 +38,7 @@ public class DrugPromptService {
     private String model;
 
     private final TakingPillService takingPillService;
+    private final UserSensitiveInfoService userSensitiveInfoService;
 
 
     private PromptRequestDto buildPromptRequestDto(User user, DrugDetail detail) {
@@ -47,11 +49,14 @@ public class DrugPromptService {
                 .filter(DurTagDto::isTrue)
                 .toList();
 
+        String chronicDiseaseInfo = userSensitiveInfoService.getSensitiveInfo(user) != null ? 
+                userSensitiveInfoService.getSensitiveInfo(user).getChronicDiseaseInfo().toString() : "";
+        
         return new PromptRequestDto(
                 trueTags,
                 user.getUserProfile().getAge(),
                 user.getUserProfile().getGender().name(),
-                user.getUserProfile().getDiseaseInfo(),
+                chronicDiseaseInfo,
                 medicationNames,
                 new DrugRequestInfoDto(
                         detail.name(),

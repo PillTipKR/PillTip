@@ -3,6 +3,8 @@ package com.oauth2.User.TakingPill.Entity;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.oauth2.User.Auth.Entity.User;
+import com.oauth2.Util.Encryption.EncryptionConverter;
+
 import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Getter;
@@ -31,6 +33,7 @@ public class TakingPill {
     private Long medicationId;
 
     @Column(name = "medication_name", nullable = false)
+    @Convert(converter = EncryptionConverter.class)
     private String medicationName;
 
     @Column(name = "start_year", nullable = false)
@@ -52,9 +55,11 @@ public class TakingPill {
     private Integer endDay;
 
     @Column(name = "alarm_name", nullable = false)
+    @Convert(converter = EncryptionConverter.class)
     private String alarmName;
 
     @Column(name = "days_of_week", nullable = false)
+    @Convert(converter = EncryptionConverter.class)
     private String daysOfWeek; // JSON 형태로 저장 (["MON", "TUE", "WED"])
 
     @Column(name = "dosage_amount", nullable = false)
