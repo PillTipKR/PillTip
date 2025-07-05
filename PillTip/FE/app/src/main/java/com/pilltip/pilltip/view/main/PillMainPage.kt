@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -53,6 +54,7 @@ import androidx.navigation.NavController
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.google.firebase.messaging.FirebaseMessaging
 import com.pilltip.pilltip.R
+import com.pilltip.pilltip.composable.BackButton
 import com.pilltip.pilltip.composable.HeightSpacer
 import com.pilltip.pilltip.composable.MainComposable.AnnouncementCard
 import com.pilltip.pilltip.composable.MainComposable.BottomBar
@@ -64,6 +66,7 @@ import com.pilltip.pilltip.composable.MainComposable.SmallTabCard
 import com.pilltip.pilltip.composable.QuestionnaireComposable.QuestionnaireCard
 import com.pilltip.pilltip.composable.WhiteScreenModifier
 import com.pilltip.pilltip.composable.WidthSpacer
+import com.pilltip.pilltip.composable.noRippleClickable
 import com.pilltip.pilltip.model.HandleBackPressToExitApp
 import com.pilltip.pilltip.model.search.QuestionnaireSummary
 import com.pilltip.pilltip.model.search.QuestionnaireViewModel
@@ -71,6 +74,7 @@ import com.pilltip.pilltip.model.search.SearchHiltViewModel
 import com.pilltip.pilltip.ui.theme.backgroundColor
 import com.pilltip.pilltip.ui.theme.gray050
 import com.pilltip.pilltip.ui.theme.gray200
+import com.pilltip.pilltip.ui.theme.gray600
 import com.pilltip.pilltip.ui.theme.gray800
 import com.pilltip.pilltip.ui.theme.pretendard
 import com.pilltip.pilltip.ui.theme.primaryColor
@@ -82,7 +86,7 @@ fun PillMainPage(
     navController: NavController,
     searchHiltViewModel: SearchHiltViewModel,
     questionnaireViewModel: QuestionnaireViewModel,
-    initialTab : BottomTab = BottomTab.Home
+    initialTab: BottomTab = BottomTab.Home
 ) {
     var selectedTab by remember { mutableStateOf(BottomTab.Home) }
     val systemUiController = rememberSystemUiController()
@@ -121,7 +125,7 @@ fun PillMainPage(
         ) {
             when (selectedTab) {
                 BottomTab.Home -> HomePage(navController)
-                BottomTab.Interaction -> InteractionPage()
+                BottomTab.Interaction -> navController.navigate("DURPage")
                 BottomTab.Chart -> MyQuestionnairePage(navController, questionnaireViewModel)
                 BottomTab.Calendar -> CalendarPage()
                 BottomTab.MyPage -> MyPage(navController, searchHiltViewModel)
@@ -236,12 +240,6 @@ fun HomePage(
         )
         R.drawable.logo_pilltip_blue_pill
     }
-
-}
-
-@Composable
-fun InteractionPage() {
-    Text("상충 비교 화면")
 }
 
 @Composable
@@ -374,7 +372,7 @@ fun MyQuestionnairePage(
                 items(list) { item ->
                     QuestionnaireCard(
                         questionnaire = item,
-                        onClick = {navController.navigate("questionnaire_check/${item.questionnaireId}")},
+                        onClick = { navController.navigate("questionnaire_check/${item.questionnaireId}") },
                         onEdit = {
 
                         },

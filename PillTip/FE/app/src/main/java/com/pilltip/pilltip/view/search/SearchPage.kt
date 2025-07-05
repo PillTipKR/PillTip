@@ -1,7 +1,5 @@
 package com.pilltip.pilltip.view.search
 
-import android.content.Intent
-import android.graphics.drawable.Icon
 import android.net.Uri
 import android.util.Log
 import android.widget.Toast
@@ -39,17 +37,9 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.ScrollableTabRow
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
@@ -75,7 +65,6 @@ import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
@@ -87,7 +76,6 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Popup
-import androidx.compose.ui.zIndex
 import androidx.navigation.NavController
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.pilltip.pilltip.R
@@ -108,7 +96,6 @@ import com.pilltip.pilltip.model.search.DetailDrugData
 import com.pilltip.pilltip.model.search.LogViewModel
 import com.pilltip.pilltip.model.search.SearchHiltViewModel
 import com.pilltip.pilltip.ui.theme.gray050
-import com.pilltip.pilltip.ui.theme.gray100
 import com.pilltip.pilltip.ui.theme.gray200
 import com.pilltip.pilltip.ui.theme.gray400
 import com.pilltip.pilltip.ui.theme.gray500

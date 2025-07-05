@@ -40,7 +40,8 @@ class SearchHiltViewModel @Inject constructor(
     private val dosageDetailRepo: DosageDetailRepository,
     private val dosageDeleteRepo: DosageDeleteRepository,
     private val dosageModifyRepo: DosageModifyRepository,
-    private val fcmRepo: FcmTokenRepository
+    private val fcmRepo: FcmTokenRepository,
+    private val durGptRepo: DurGptRepository
 ) : ViewModel() {
 
     /* 약품명 자동 완성 API*/
@@ -215,6 +216,29 @@ class SearchHiltViewModel @Inject constructor(
         pendingDosageRequest = null
     }
 
+    /* DUR 기능 */
+    private val _durGptResult = MutableStateFlow<DurGptData?>(null)
+    val durGptResult: StateFlow<DurGptData?> = _durGptResult.asStateFlow()
+
+    private val _isDurGptLoading = MutableStateFlow(false)
+    val isDurGptLoading: StateFlow<Boolean> = _isDurGptLoading.asStateFlow()
+
+    fun fetchDurAi(drugId1: Long, drugId2: Long) {
+        viewModelScope.launch {
+            _isDurGptLoading.value = true
+            try {
+                val result = durGptRepo.getDurResult(drugId1, drugId2)
+                _durGptResult.value = result
+                Log.d("DurGpt", "결과: $result")
+            } catch (e: Exception) {
+                Log.e("DurGpt", "에러: ${e.message}")
+                _durGptResult.value = null
+            } finally {
+                _isDurGptLoading.value = false
+            }
+        }
+    }
+
     /* FCM 토큰 */
     fun sendFcmToken(token: String) {
         viewModelScope.launch {
@@ -226,8 +250,6 @@ class SearchHiltViewModel @Inject constructor(
             }
         }
     }
-
-
 }
 
 @HiltViewModel
@@ -541,5 +563,15 @@ object RepositoryModule {
     @Provides
     fun providePermissionRepository(api: PermissionApi): PermissionRepository {
         return PermissionRepositoryImpl(api)
+    }
+
+    @Provides
+    fun provideDurGptApi(@Named("SearchRetrofit") retrofit: Retrofit): DurGptApi {
+        return retrofit.create(DurGptApi::class.java)
+    }
+
+    @Provides
+    fun provideDurGptRepository(api: DurGptApi): DurGptRepository {
+        return DurGptRepositoryImpl(api)
     }
 }

@@ -1,4 +1,5 @@
 package com.pilltip.pilltip.model.search
+
 /**
  * 약품 자동검색 API
  * http://164.125.253.20:20022/api/autocomplete/drugs?input=타이레놀&page=0
@@ -262,6 +263,27 @@ data class QuestionnaireDetail(
     val allergyInfo: List<AllergyEntry>,
     val chronicDiseaseInfo: List<ChronicDiseaseEntry>,
     val surgeryHistoryInfo: List<SurgeryHistoryEntry>
+)
+
+/**
+ * DUR 기능
+ */
+
+data class DurGptResponse(
+    val status: String,
+    val message: String?,
+    val data: DurGptData
+)
+
+data class DurGptData(
+    val drugA: String,
+    val drugB: String,
+    val durA: String,
+    val durB: String,
+    val interact: String,
+    val durTrueA: Boolean,
+    val durTrueB: Boolean,
+    val durTrueInter: Boolean
 )
 
 /**

@@ -134,13 +134,14 @@ fun BackButton(
     title: String = "",
     horizontalPadding: Dp = 18.dp,
     verticalPadding: Dp = 18.dp,
+    backgroundColor: Color = Color.White,
     @DrawableRes iconDrawable: Int = 0,
     onClick: () -> Unit ={},
     navigationTo: () -> Unit
 ) {
     Row(
         modifier = Modifier
-            .background(color = Color.White)
+            .background(color = backgroundColor)
             .fillMaxWidth()
             .padding(horizontal = horizontalPadding, vertical = verticalPadding)
             .height(57.dp),

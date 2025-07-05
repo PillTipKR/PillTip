@@ -1,9 +1,9 @@
 package com.pilltip.pilltip.nav
 
+import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -24,9 +24,12 @@ import com.pilltip.pilltip.view.auth.PhoneAuthPage
 import com.pilltip.pilltip.view.auth.ProfilePage
 import com.pilltip.pilltip.view.auth.SelectPage
 import com.pilltip.pilltip.view.auth.SplashPage
+import com.pilltip.pilltip.view.main.DURLoadingPage
+import com.pilltip.pilltip.view.main.DURPage
+import com.pilltip.pilltip.view.main.DURResultPage
+import com.pilltip.pilltip.view.main.DURSearchPage
 import com.pilltip.pilltip.view.main.EssentialInfoPage
 import com.pilltip.pilltip.view.main.MyDrugInfoPage
-import com.pilltip.pilltip.view.main.MyPage
 import com.pilltip.pilltip.view.main.PillMainPage
 import com.pilltip.pilltip.view.questionnaire.AreYouPage
 import com.pilltip.pilltip.view.questionnaire.EssentialPage
@@ -255,5 +258,21 @@ fun NavGraph(
         /* mypage */
         composable("MyDrugInfoPage") { MyDrugInfoPage(navController, searchHiltViewModel) }
         composable("EssentialInfoPage") { EssentialInfoPage(navController, searchHiltViewModel) }
+        composable("DURPage") { DURPage(navController) }
+        composable("DURSearchPage") {
+            DURSearchPage(navController, searchHiltViewModel)
+        }
+        composable("DURLoadingPage/{firstDrug}/{secondDrug}") { backStackEntry ->
+            val firstDrug = backStackEntry.arguments?.getString("firstDrug") ?: ""
+            val secondDrug = backStackEntry.arguments?.getString("secondDrug") ?: ""
+            Log.d("selectedDrugs: ", "$firstDrug, $secondDrug")
+            DURLoadingPage(
+                navController,
+                searchHiltViewModel,
+                firstDrug = firstDrug.toLong(),
+                secondDrug = secondDrug.toLong(),
+            )
+        }
+
     }
 }
