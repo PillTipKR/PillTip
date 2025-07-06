@@ -1,7 +1,7 @@
-package com.oauth2.Util.Initializer;
+package com.oauth2.Util.Elasticsearch.Initializer;
 
-import com.oauth2.Util.Manager.IndexManager;
-import com.oauth2.Util.Provider.IndexMappingProvider;
+import com.oauth2.Util.Elasticsearch.Manager.IndexManager;
+import com.oauth2.Util.Elasticsearch.Provider.IndexMappingProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.core.annotation.Order;

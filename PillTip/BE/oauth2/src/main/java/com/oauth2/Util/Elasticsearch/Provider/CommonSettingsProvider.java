@@ -1,4 +1,4 @@
-package com.oauth2.Util.Provider;
+package com.oauth2.Util.Elasticsearch.Provider;
 
 import co.elastic.clients.elasticsearch._types.analysis.*;
 import co.elastic.clients.elasticsearch.indices.IndexSettings;
