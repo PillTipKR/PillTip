@@ -6,5 +6,6 @@ public record DosageScheduleDto(
         Long logId,
         LocalDateTime scheduledTime,
         Boolean isTaken,
-        LocalDateTime takenAt
+        LocalDateTime takenAt,
+        boolean isVisible
 ) {}

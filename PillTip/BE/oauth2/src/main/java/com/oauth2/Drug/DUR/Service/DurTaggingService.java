@@ -39,6 +39,7 @@ public class DurTaggingService {
         for (SearchIndexDTO drugDto : drugs) {
             Drug drug = drugMap.get(drugDto.id());
             if (drug == null) continue; // 약 정보를 찾을 수 없는 경우 건너뛰기
+
             List<DurTagDto> tags = durCheckService.checkForDrug(drug, user.getUserProfile(), userContext);
 
             result.add(new SearchDurDto(

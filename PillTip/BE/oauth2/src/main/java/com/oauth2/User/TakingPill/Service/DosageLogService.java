@@ -72,7 +72,8 @@ public class DosageLogService {
                             log.getId(),
                             log.getScheduledTime(),
                             log.isTaken(),
-                            log.getTakenAt()
+                            log.getTakenAt(),
+                            log.getScheduledTime().isBefore(LocalDateTime.now())
                     ))
                     .collect(Collectors.toList());
 

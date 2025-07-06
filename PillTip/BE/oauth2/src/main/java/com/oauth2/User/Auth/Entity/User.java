@@ -3,10 +3,10 @@
 package com.oauth2.User.Auth.Entity;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
-import com.oauth2.User.Alarm.Domain.FCMToken;
-import com.oauth2.User.PatientQuestionnaire.Entity.PatientQuestionnaire;
 import com.oauth2.Drug.Review.Domain.Review;
 import com.oauth2.Drug.Review.Domain.ReviewLike;
+import com.oauth2.User.Alarm.Domain.FCMToken;
+import com.oauth2.User.PatientQuestionnaire.Entity.PatientQuestionnaire;
 import com.oauth2.User.TakingPill.Entity.TakingPill;
 import com.oauth2.User.UserInfo.Entity.Interests;
 import com.oauth2.User.UserInfo.Entity.UserLocation;

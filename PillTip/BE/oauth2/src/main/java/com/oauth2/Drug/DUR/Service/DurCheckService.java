@@ -31,7 +31,7 @@ public class DurCheckService {
         String drugName = drug.getName();
 
         // 병용금기 (사용자가 복용중인 다른 약물과의 상호작용)
-        tags.add(buildContraTag(drugName, userContext.userInteractionDrugNames()));
+        tags.add(buildContraTag(drugName, userContext.getUserInteractionDrugNames()));
 
         // 임부금기
         tags.add(buildDurTag("임부금기", readJsonFromRedis("DUR:PREGNANCY:" + drugId), userProfile.isPregnant()));
@@ -47,7 +47,7 @@ public class DurCheckService {
         // 효능군 중복주의
         Map<String, String> therValue = readJsonFromRedis("DUR:THERAPEUTIC_DUP:" + drugId);
         String className = therValue != null ? therValue.get("className") : null;
-        boolean isDup = className != null && userContext.classToDrugIdsMap().containsKey(className);
+        boolean isDup = className != null && userContext.getClassToDrugIdsMap().containsKey(className);
         tags.add(buildDurTag("효능군중복주의", therValue, isDup));
 
         return tags;

@@ -55,7 +55,7 @@ public class DurService {
                 new DurPerDrugDto(
                         drug1Opt.get().getName() + " + " + drug2Opt.get().getName(),
                         interactionTags.stream().filter(DurTagDto::isTrue).toList()),
-                !userContext.userInteractionDrugNames().isEmpty()
+                !userContext.getUserInteractionDrugNames().isEmpty()
         );
     }
 
