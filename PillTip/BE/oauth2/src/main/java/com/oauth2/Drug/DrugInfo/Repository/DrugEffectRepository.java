@@ -1,6 +1,6 @@
-package com.oauth2.Drug.DrugImport.Repository;
+package com.oauth2.Drug.DrugInfo.Repository;
 
-import com.oauth2.Drug.DrugImport.Domain.DrugEffect;
+import com.oauth2.Drug.DrugInfo.Domain.DrugEffect;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;

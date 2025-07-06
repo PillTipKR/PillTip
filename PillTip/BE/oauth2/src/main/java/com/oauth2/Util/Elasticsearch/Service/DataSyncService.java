@@ -2,12 +2,12 @@ package com.oauth2.Util.Elasticsearch.Service;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch.core.IndexRequest;
-import com.oauth2.Drug.DrugImport.Domain.Drug;
-import com.oauth2.Drug.DrugImport.Domain.DrugIngredient;
-import com.oauth2.Drug.DrugImport.Domain.Ingredient;
-import com.oauth2.Drug.DrugImport.Repository.DrugIngredientRepository;
-import com.oauth2.Drug.DrugImport.Repository.DrugRepository;
-import com.oauth2.Drug.DrugImport.Repository.IngredientRepository;
+import com.oauth2.Drug.DrugInfo.Domain.Drug;
+import com.oauth2.Drug.DrugInfo.Domain.DrugIngredient;
+import com.oauth2.Drug.DrugInfo.Domain.Ingredient;
+import com.oauth2.Drug.DrugInfo.Repository.DrugIngredientRepository;
+import com.oauth2.Drug.DrugInfo.Repository.DrugRepository;
+import com.oauth2.Drug.DrugInfo.Repository.IngredientRepository;
 import com.oauth2.Util.Elasticsearch.Dto.ElasticsearchDTO;
 import com.oauth2.Drug.Search.Dto.IngredientComp;
 import com.oauth2.Drug.Search.Dto.IngredientDetail;

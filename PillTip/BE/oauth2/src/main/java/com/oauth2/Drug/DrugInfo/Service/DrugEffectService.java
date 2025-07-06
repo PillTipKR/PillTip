@@ -1,7 +1,7 @@
-package com.oauth2.Drug.DrugImport.Service;
+package com.oauth2.Drug.DrugInfo.Service;
 
-import com.oauth2.Drug.DrugImport.Domain.DrugEffect;
-import com.oauth2.Drug.DrugImport.Repository.DrugEffectRepository;
+import com.oauth2.Drug.DrugInfo.Domain.DrugEffect;
+import com.oauth2.Drug.DrugInfo.Repository.DrugEffectRepository;
 import org.springframework.stereotype.Service;
 
 @Service

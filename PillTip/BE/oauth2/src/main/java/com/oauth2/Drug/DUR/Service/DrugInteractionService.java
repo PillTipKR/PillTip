@@ -1,9 +1,9 @@
 package com.oauth2.Drug.DUR.Service;
 
 import com.oauth2.Drug.DUR.Domain.DrugInteraction;
-import com.oauth2.Drug.DrugImport.Domain.Drug;
-import com.oauth2.Drug.DrugImport.Repository.DrugInteractionRepository;
-import com.oauth2.Drug.DrugImport.Repository.DrugRepository;
+import com.oauth2.Drug.DrugInfo.Domain.Drug;
+import com.oauth2.Drug.DUR.Repository.DrugInteractionRepository;
+import com.oauth2.Drug.DrugInfo.Repository.DrugRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;

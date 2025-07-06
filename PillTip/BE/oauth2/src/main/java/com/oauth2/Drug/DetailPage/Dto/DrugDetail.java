@@ -1,7 +1,7 @@
 package com.oauth2.Drug.DetailPage.Dto;
 
 import com.oauth2.Drug.DUR.Dto.DurTagDto;
-import com.oauth2.Drug.DrugImport.Domain.Drug;
+import com.oauth2.Drug.DrugInfo.Domain.Drug;
 import com.oauth2.Drug.Search.Dto.IngredientDetail;
 import lombok.Builder;
 
@@ -27,5 +27,6 @@ public record DrugDetail (
         EffectDetail effect,
         EffectDetail usage,
         EffectDetail caution,
-        List<DurTagDto> durTags
+        List<DurTagDto> durTags,
+        int count
 ) {}

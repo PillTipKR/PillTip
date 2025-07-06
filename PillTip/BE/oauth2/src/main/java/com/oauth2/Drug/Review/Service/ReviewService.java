@@ -1,7 +1,7 @@
 package com.oauth2.Drug.Review.Service;
 
-import com.oauth2.Drug.DrugImport.Domain.Drug;
-import com.oauth2.Drug.DrugImport.Repository.DrugRepository;
+import com.oauth2.Drug.DrugInfo.Domain.Drug;
+import com.oauth2.Drug.DrugInfo.Repository.DrugRepository;
 import com.oauth2.Drug.Review.Domain.*;
 import com.oauth2.Drug.Review.Dto.*;
 import com.oauth2.Drug.Review.Repository.*;

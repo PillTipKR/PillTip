@@ -1,4 +1,4 @@
-package com.oauth2.Drug.DrugImport.Domain;
+package com.oauth2.Drug.DrugInfo.Domain;
 
 import jakarta.persistence.*;
 import lombok.Getter;

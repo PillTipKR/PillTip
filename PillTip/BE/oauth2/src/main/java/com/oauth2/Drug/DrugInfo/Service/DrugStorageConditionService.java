@@ -1,7 +1,7 @@
-package com.oauth2.Drug.DrugImport.Service;
+package com.oauth2.Drug.DrugInfo.Service;
 
-import com.oauth2.Drug.DrugImport.Domain.DrugStorageCondition;
-import com.oauth2.Drug.DrugImport.Repository.DrugStorageConditionRepository;
+import com.oauth2.Drug.DrugInfo.Domain.DrugStorageCondition;
+import com.oauth2.Drug.DrugInfo.Repository.DrugStorageConditionRepository;
 import org.springframework.stereotype.Service;
 import java.util.List;
 
