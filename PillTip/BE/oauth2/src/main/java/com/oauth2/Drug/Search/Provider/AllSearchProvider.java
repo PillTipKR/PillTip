@@ -2,8 +2,8 @@ package com.oauth2.Drug.Search.Provider;
 
 import co.elastic.clients.elasticsearch._types.mapping.TypeMapping;
 import co.elastic.clients.elasticsearch.indices.IndexSettings;
-import com.oauth2.Util.Provider.CommonSettingsProvider;
-import com.oauth2.Util.Provider.IndexMappingProvider;
+import com.oauth2.Util.Elasticsearch.Provider.CommonSettingsProvider;
+import com.oauth2.Util.Elasticsearch.Provider.IndexMappingProvider;
 import com.oauth2.Drug.Search.Dto.IngredientDetail;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;

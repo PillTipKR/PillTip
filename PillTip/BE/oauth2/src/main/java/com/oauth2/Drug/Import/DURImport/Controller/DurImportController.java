@@ -1,8 +1,8 @@
-package com.oauth2.Drug.DUR.Controller;
+package com.oauth2.Drug.Import.DURImport.Controller;
 
-import com.oauth2.Drug.DUR.Service.DrugCautionService;
-import com.oauth2.Drug.DUR.Service.TherapeuticDupService;
-import com.oauth2.Drug.DUR.Service.DrugInteractionService;
+import com.oauth2.Drug.Import.DURImport.Service.DrugCautionService;
+import com.oauth2.Drug.Import.DURImport.Service.TherapeuticDupService;
+import com.oauth2.Drug.Import.DURImport.Service.DrugInteractionService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

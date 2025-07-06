@@ -1,4 +1,4 @@
-package com.oauth2.Util.Provider;
+package com.oauth2.Util.Elasticsearch.Provider;
 
 import co.elastic.clients.elasticsearch._types.mapping.TypeMapping;
 import co.elastic.clients.elasticsearch.indices.IndexSettings;

@@ -1,6 +1,6 @@
 package com.oauth2.Util.Seeder;
 
-import com.oauth2.Drug.DUR.Service.DurRedisLoader;
+import com.oauth2.Util.Redis.DurRedisLoader;
 import com.oauth2.Util.Elasticsearch.Service.DataSyncService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 @Component
 @Order(2)
 @RequiredArgsConstructor
-public class AutocompleteSeeder implements CommandLineRunner {
+public class PillSeeder implements CommandLineRunner {
 
     @Value("${app.seed}")
     private boolean seed;

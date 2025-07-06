@@ -1,4 +1,4 @@
-package com.oauth2.Drug.DUR.Service;
+package com.oauth2.Drug.Import.DURImport.Service;
 
 import com.oauth2.Drug.DUR.Domain.DrugInteraction;
 import com.oauth2.Drug.DrugInfo.Domain.Drug;
