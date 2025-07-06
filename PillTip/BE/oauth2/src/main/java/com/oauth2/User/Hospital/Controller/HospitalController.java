@@ -6,6 +6,7 @@ import com.oauth2.User.Hospital.Service.HospitalService;
 import com.oauth2.User.Hospital.dto.HospitalRegistrationRequest;
 import com.oauth2.User.Hospital.dto.HospitalRegistrationResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,10 +23,10 @@ public class HospitalController {
     public ResponseEntity<ApiResponse<Hospital>> createHospital(@RequestBody HospitalRegistrationRequest request) {
         try {
             Hospital saved = hospitalService.createHospital(request);
-            return ResponseEntity.status(201)
+            return ResponseEntity.status(HttpStatus.CREATED)
                                 .body(ApiResponse.success("병원 등록 성공", saved));
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(400)
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                                 .body(ApiResponse.error("병원 등록 실패", null));
         }
     }
@@ -35,10 +36,10 @@ public class HospitalController {
     public ResponseEntity<ApiResponse<Hospital>> updateHospital(@PathVariable Long id, @RequestBody HospitalRegistrationRequest request) {
         try {
             Hospital updated = hospitalService.updateHospital(id, request);
-            return ResponseEntity.status(200)
+            return ResponseEntity.status(HttpStatus.OK)
                                 .body(ApiResponse.success("병원 수정 성공", updated));
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(400)
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                                 .body(ApiResponse.error("병원 수정 실패", null));
         }
     }
@@ -48,10 +49,10 @@ public class HospitalController {
     public ResponseEntity<ApiResponse<String>> deleteHospital(@PathVariable Long id) {
         try {
             hospitalService.deleteHospital(id);
-            return ResponseEntity.status(200)
+            return ResponseEntity.status(HttpStatus.OK)
                                 .body(ApiResponse.success("병원 삭제 성공", null));
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(400)
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                                 .body(ApiResponse.error("병원 삭제 실패", null));
         }
     }
@@ -61,10 +62,10 @@ public class HospitalController {
     public ResponseEntity<ApiResponse<List<HospitalRegistrationResponse>>> searchHospitalByName(@RequestParam String name) {
         try {
             List<HospitalRegistrationResponse> result = hospitalService.searchHospitalByName(name);
-            return ResponseEntity.status(200)
+            return ResponseEntity.status(HttpStatus.OK)
                                 .body(ApiResponse.success("병원 검색 성공", result));
         } catch (Exception e) {
-            return ResponseEntity.status(400)
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                                 .body(ApiResponse.error("병원 검색 실패", null));
         }
     }
