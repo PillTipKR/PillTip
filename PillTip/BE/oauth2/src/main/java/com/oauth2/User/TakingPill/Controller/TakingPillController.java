@@ -64,18 +64,15 @@ public class TakingPillController {
     }
 
     // 복용 중인 약 수정
-    @PutMapping("/{medicationId}")
+    @PutMapping("")
     public ResponseEntity<ApiResponse<TakingPillDetailResponse>> updateTakingPill(
             @AuthenticationPrincipal User user,
-            @PathVariable String medicationId,
             @RequestBody TakingPillRequest request) {
-        logger.info("Received updateTakingPill request for user: {} - Medication ID: {}", user.getId(), medicationId);
+
         logger.debug("TakingPillRequest details: {}", request);
-        
+        Long medicationId = request.getMedicationId();
+        logger.info("Received updateTakingPill request for user: {} - Medication ID: {}", user.getId(), medicationId);
         try {
-            // URL 경로의 medicationId를 request에 설정
-            request.setMedicationId(Long.parseLong(medicationId));
-            
             takingPillService.updateTakingPill(user, request);
             TakingPillDetailResponse takingPillDetail = takingPillService.getTakingPillDetail(user);
             logger.info("Successfully updated taking pill for user: {} - Medication ID: {}", user.getId(), medicationId);
