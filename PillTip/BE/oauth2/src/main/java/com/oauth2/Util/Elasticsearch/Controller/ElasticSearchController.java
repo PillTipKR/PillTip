@@ -28,7 +28,8 @@ public class ElasticSearchController {
 
     @Value("${elastic.drug.manufacturer}")
     private String manufacturer;
-    @Value("${elastic.drug.ingredient.index}")
+
+    @Value("${elastic.drug.ingredient}")
     private String ingredient;
 
     //static이면 주입이 안됨!!

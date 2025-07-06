@@ -59,13 +59,12 @@ public class DosageLogService {
         int total = 0;
         int takenCount = 0;
         int totalPercent = 0;
-
+        List<DosageLog> allLogs = groupedLogs.values().stream()
+                .flatMap(List::stream)
+                .toList();
         for (Map.Entry<String, List<DosageLog>> entry : groupedLogs.entrySet()) {
             String name = entry.getKey();
             List<DosageLog> logs = entry.getValue();
-            total = logs.size();
-            takenCount = Math.toIntExact(logs.stream().filter(DosageLog::isTaken).count());
-            totalPercent = (int) (total == 0 ? 0.0 : (takenCount * 100.0) / total);
 
             List<DosageScheduleDto> scheduleDtos = logs.stream()
                     .map(log -> new DosageScheduleDto(
@@ -88,6 +87,9 @@ public class DosageLogService {
             );
             responses.add(response);
         }
+        total = allLogs.size();
+        takenCount = Math.toIntExact(allLogs.stream().filter(DosageLog::isTaken).count());
+        totalPercent = (int) (total == 0 ? 0.0 : (takenCount * 100.0) / total);
 
         return new AllDosageLogResponse(
                 totalPercent,

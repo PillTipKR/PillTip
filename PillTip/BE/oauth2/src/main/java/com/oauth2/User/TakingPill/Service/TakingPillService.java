@@ -523,7 +523,7 @@ public class TakingPillService {
         }
         
         // startDate와 endDate가 모두 설정된 경우에만 날짜 검증
-        if (request.getStartDate() != null && request.getEndDate() != null) {
+        if (request.getStartDate() != null) {
             if (request.getStartDate().isAfter(request.getEndDate())) {
                 throw new RuntimeException("시작일은 종료일보다 이전이어야 합니다.");
             }
