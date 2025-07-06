@@ -35,8 +35,8 @@ public class UserPermissions {
     @Column(name = "gallery_permission", nullable = false)
     private boolean galleryPermission; // 유저 갤러리 동의
 
-    @Column(name = "phone_permission", nullable = false)
-    private boolean phonePermission; // 유저 전화번호 동의
+    @Column(name = "phone_permission", nullable = false, columnDefinition = "boolean default true")
+    private boolean phonePermission = true; // 유저 전화번호 동의
 
     @Column(name = "sms_permission", nullable = false)
     private boolean smsPermission; // 유저 문자 동의
