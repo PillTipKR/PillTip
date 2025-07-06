@@ -17,6 +17,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+import com.oauth2.Util.Encryption.EncryptionUtil;
+
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -26,12 +29,43 @@ public class LoginService {
     private final TokenService tokenService;
     private final OAuth2Service oauth2Service;
     private final FCMTokenRepository fcmTokenRepository;
+    private final EncryptionUtil encryptionUtil;
     private final Logger logger = LoggerFactory.getLogger(LoginService.class);
 
     // ID/PW 로그인
     public LoginResponse login(LoginRequest request) {
-        User user = userRepository.findByLoginId(request.getLoginId())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+        logger.info("Login attempt for loginId: {}", request.getLoginId());
+        
+        // 모든 사용자를 조회하여 loginId를 복호화하여 비교
+        List<User> allUsers = userRepository.findAll();
+        logger.info("Total users in database: {}", allUsers.size());
+        
+        User user = null;
+        
+        for (User u : allUsers) {
+            logger.info("Checking user ID: {}, LoginType: {}, Encrypted LoginId: {}", 
+                u.getId(), u.getLoginType(), u.getLoginId());
+            
+            if (u.getLoginId() != null) {
+                try {
+                    String decryptedLoginId = encryptionUtil.decrypt(u.getLoginId());
+                    logger.info("Decrypted loginId for user {}: {}", u.getId(), decryptedLoginId);
+                    
+                    if (decryptedLoginId.equals(request.getLoginId())) {
+                        user = u;
+                        logger.info("Found matching user: {}", u.getId());
+                        break;
+                    }
+                } catch (Exception e) {
+                    logger.warn("Failed to decrypt loginId for user {}: {}", u.getId(), e.getMessage());
+                }
+            }
+        }
+        
+        if (user == null) {
+            logger.error("No user found with loginId: {}", request.getLoginId());
+            throw new RuntimeException("User not found");
+        }
 
         if (user.getLoginType() != LoginType.IDPW) {
             throw new RuntimeException("This account is not an ID/PW account");
@@ -51,35 +85,60 @@ public class LoginService {
 
     // 소셜 로그인
     public LoginResponse socialLogin(SocialLoginRequest request) {
-        System.out.println("=== Social Login Debug ===");
-        System.out.println("Provider: " + request.getProvider());
-        System.out.println("Token: " + request.getToken().substring(0, Math.min(request.getToken().length(), 20)) + "...");
+        logger.info("=== Social Login Debug ===");
+        logger.info("Provider: {}", request.getProvider());
+        logger.info("Token: {}", request.getToken().substring(0, Math.min(request.getToken().length(), 20)) + "...");
 
         try {
             // OAuth2 서버에서 사용자 정보 가져오기
-            System.out.println("Calling OAuth2 service to get user info...");
+            logger.info("Calling OAuth2 service to get user info...");
             OAuth2UserInfo oauth2UserInfo = oauth2Service.getUserInfo(
                     request.getProvider(),
                     request.getToken()
             );
-            System.out.println("OAuth2 User Info - Social ID: " + oauth2UserInfo.getSocialId());
-            System.out.println("OAuth2 User Info - Email: " + oauth2UserInfo.getEmail());
-            System.out.println("OAuth2 User Info - Name: " + oauth2UserInfo.getName());
+            logger.info("OAuth2 User Info - Social ID: {}", oauth2UserInfo.getSocialId());
+            logger.info("OAuth2 User Info - Email: {}", oauth2UserInfo.getEmail());
+            logger.info("OAuth2 User Info - Name: {}", oauth2UserInfo.getName());
 
-            // 소셜 ID로 사용자 조회
-            System.out.println("Searching user by social ID: " + oauth2UserInfo.getSocialId());
-            User user = userRepository.findBySocialId(oauth2UserInfo.getSocialId())
-                    .orElseThrow(() -> new RuntimeException("User not found"));
-            System.out.println("User found - ID: " + user.getId() + ", Nickname: " + user.getNickname() + ", LoginType: " + user.getLoginType());
+            // 모든 사용자를 조회하여 socialId를 복호화하여 비교
+            List<User> allUsers = userRepository.findAll();
+            logger.info("Total users in database: {}", allUsers.size());
+            
+            User user = null;
+            
+            for (User u : allUsers) {
+                logger.info("Checking user ID: {}, LoginType: {}, SocialId: {}", 
+                    u.getId(), u.getLoginType(), u.getSocialId());
+                
+                if (u.getSocialId() != null) {
+                    try {
+                        String decryptedSocialId = encryptionUtil.decrypt(u.getSocialId());
+                        logger.info("Decrypted socialId for user {}: {}", u.getId(), decryptedSocialId);
+                        
+                        if (decryptedSocialId.equals(oauth2UserInfo.getSocialId())) {
+                            user = u;
+                            logger.info("Found matching user: {}", u.getId());
+                            break;
+                        }
+                    } catch (Exception e) {
+                        logger.warn("Failed to decrypt socialId for user {}: {}", u.getId(), e.getMessage());
+                    }
+                }
+            }
+            
+            if (user == null) {
+                logger.error("No user found with socialId: {}", oauth2UserInfo.getSocialId());
+                throw new RuntimeException("User not found");
+            }
 
             if (user.getLoginType() != LoginType.SOCIAL) {
-                System.out.println("Error: User login type is not SOCIAL");
+                logger.error("User login type is not SOCIAL: {}", user.getLoginType());
                 throw new RuntimeException("This account is not a social account");
             }
 
-            System.out.println("Generating tokens for user...");
+            logger.info("Generating tokens for user...");
             UserToken userToken = tokenService.generateTokens(user.getId());
-            System.out.println("Tokens generated successfully");
+            logger.info("Tokens generated successfully");
 
             updateFCMToken(user);
 
