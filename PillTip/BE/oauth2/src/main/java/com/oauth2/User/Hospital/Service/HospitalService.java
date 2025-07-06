@@ -22,7 +22,7 @@ public class HospitalService {
     private final HospitalRepository hospitalRepository;
 
     @Transactional
-    // ? 새로운 병원 DB에 등록
+    // ? 병원 객체 생성
     public Hospital createHospital(HospitalRegistrationRequest request) {
         // 중복 체크
         if (hospitalRepository.existsByNameAndAddress(request.getHospitalName(), request.getHospitalAddress())) {
@@ -76,6 +76,7 @@ public class HospitalService {
             return Collections.emptyList();
         }
         
+        // ? 병원 이름으로 병원 검색, 검색된 병원 리스트를 (id, 병원코드, 병원이름, 병원주소)형식으로 변환
         return hospitalRepository.findHospitalByName(name.trim())
                 .stream()
                 .map(this::convertToResponse)
@@ -91,16 +92,19 @@ public class HospitalService {
         return response;
     }
 
+    // ? 병원 코드 생성
     public String generateHospitalCode(String address) {
         String prefix = getPrefixFromAddress(address);
         long count = hospitalRepository.countByHospitalCodeStartingWith(prefix);
         return prefix + (count + 1);
     }
 
+    // ? 병원 코드로 병원 찾기
     public Optional<Hospital> findHospitalByCode(String hospitalCode) {
         return hospitalRepository.findByHospitalCode(hospitalCode);
     }
 
+    // ? 병원 주소로 병원 코드 접두사 생성
     private String getPrefixFromAddress(String address) {
         if (address.contains("서울")) return "HosSeoul";
         if (address.contains("부산")) return "HosPusan";
