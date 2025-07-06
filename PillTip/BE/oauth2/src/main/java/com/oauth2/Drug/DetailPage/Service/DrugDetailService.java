@@ -7,12 +7,14 @@ import co.elastic.clients.elasticsearch.core.search.Hit;
 import com.oauth2.Drug.DUR.Dto.SearchDurDto;
 import com.oauth2.Drug.DUR.Service.DurTaggingService;
 import com.oauth2.Drug.DetailPage.Dto.*;
-import com.oauth2.Drug.DrugImport.Domain.Drug;
-import com.oauth2.Drug.DrugImport.Domain.DrugEffect;
-import com.oauth2.Drug.DrugImport.Domain.DrugStorageCondition;
-import com.oauth2.Drug.DrugImport.Repository.DrugRepository;
+import com.oauth2.Drug.DrugInfo.Domain.Drug;
+import com.oauth2.Drug.DrugInfo.Domain.DrugEffect;
+import com.oauth2.Drug.DrugInfo.Domain.DrugStorageCondition;
+import com.oauth2.Drug.DrugInfo.Repository.DrugRepository;
 import com.oauth2.Drug.Search.Dto.SearchIndexDTO;
 import com.oauth2.User.Auth.Entity.User;
+import com.oauth2.User.TakingPill.Entity.TakingPillCounter;
+import com.oauth2.User.TakingPill.Repositoty.TakingPillCounterRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -27,6 +29,7 @@ public class DrugDetailService {
     private final DrugRepository drugRepository;
     private final ElasticsearchClient elasticsearchClient;
     private final DurTaggingService durTaggingService;
+    private final TakingPillCounterRepository takingPillCounterRepository;
 
     @Value("${elastic.drug.id}")
     private String drugId;
@@ -72,6 +75,9 @@ public class DrugDetailService {
                 .filter(e -> e.getCategory() == DrugStorageCondition.Category.HUMID)
                 .toList().get(0);
 
+        Optional<TakingPillCounter> takingPillCounter = takingPillCounterRepository.findByDrugId(id);
+        int count = takingPillCounter.map(TakingPillCounter::getCount).orElse(0);
+
         return drug.map(value -> DrugDetail.builder()
                 .id(id)
                 .name(searchDurDto.drugName())
@@ -91,6 +97,7 @@ public class DrugDetailService {
                 .light(new StorageDetail(light.getCategory(), light.getValue(), light.isActive()))
                 .humid(new StorageDetail(humid.getCategory(), humid.getValue(), humid.isActive()))
                 .durTags(searchDurDto.durTags())
+                .count(count)
                 .build()).orElse(null);
     }
 

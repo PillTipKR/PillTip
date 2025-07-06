@@ -3,15 +3,14 @@ package com.oauth2.User.TakingPill.Service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.oauth2.Drug.DrugInfo.Repository.DrugRepository;
 import com.oauth2.User.TakingPill.Dto.TakingPillRequest;
 import com.oauth2.User.TakingPill.Dto.TakingPillSummaryResponse;
 import com.oauth2.User.TakingPill.Dto.TakingPillDetailResponse;
 import com.oauth2.User.Auth.Entity.User;
-import com.oauth2.User.TakingPill.Entity.DosageLog;
-import com.oauth2.User.TakingPill.Entity.PillStatus;
-import com.oauth2.User.TakingPill.Entity.TakingPill;
-import com.oauth2.User.TakingPill.Entity.DosageSchedule;
+import com.oauth2.User.TakingPill.Entity.*;
 import com.oauth2.User.TakingPill.Repositoty.DosageLogRepository;
+import com.oauth2.User.TakingPill.Repositoty.TakingPillCounterRepository;
 import com.oauth2.User.TakingPill.Repositoty.TakingPillRepository;
 import com.oauth2.User.TakingPill.Repositoty.DosageScheduleRepository;
 import com.oauth2.Util.Encryption.EncryptionUtil;
@@ -40,6 +39,8 @@ public class TakingPillService {
     private final ObjectMapper objectMapper;
     private final DosageLogRepository dosageLogRepository;
     private final EncryptionUtil encryptionUtil;
+    private final TakingPillCounterRepository takingPillCounterRepository;
+    private final DrugRepository drugRepository;
 
     /**
      * 복용 중인 약을 추가합니다.
@@ -109,6 +110,15 @@ public class TakingPillService {
                 date = date.plusDays(1);
             }
         }
+
+        TakingPillCounter takingPillCounter = takingPillCounterRepository.findByDrugId(request.getMedicationId()).orElse(null);
+        if (takingPillCounter == null) {
+            takingPillCounter = new TakingPillCounter();
+            takingPillCounter.setDrug(drugRepository.findById(request.getMedicationId()).orElse(null));
+            takingPillCounter.setCount(1);
+        }else takingPillCounter.setCount(takingPillCounter.getCount()+1);
+
+        takingPillCounterRepository.save(takingPillCounter);
 
         return savedTakingPill;
     }

@@ -1,8 +1,8 @@
-package com.oauth2.Drug.DrugImport.Service;
+package com.oauth2.Drug.DrugInfo.Service;
 
-import com.oauth2.Drug.DrugImport.Domain.DrugIngredient;
-import com.oauth2.Drug.DrugImport.Domain.DrugIngredientId;
-import com.oauth2.Drug.DrugImport.Repository.DrugIngredientRepository;
+import com.oauth2.Drug.DrugInfo.Domain.DrugIngredient;
+import com.oauth2.Drug.DrugInfo.Domain.DrugIngredientId;
+import com.oauth2.Drug.DrugInfo.Repository.DrugIngredientRepository;
 import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Optional;

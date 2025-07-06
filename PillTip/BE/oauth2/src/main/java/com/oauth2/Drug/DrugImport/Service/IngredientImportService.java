@@ -1,7 +1,7 @@
 package com.oauth2.Drug.DrugImport.Service;
 
-import com.oauth2.Drug.DrugImport.Domain.*;
-import com.oauth2.Drug.DrugImport.Repository.*;
+import com.oauth2.Drug.DrugInfo.Domain.*;
+import com.oauth2.Drug.DrugInfo.Repository.*;
 import com.opencsv.CSVReader;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;

@@ -1,4 +1,4 @@
-package com.oauth2.Drug.DrugImport.Domain;
+package com.oauth2.Drug.DrugInfo.Domain;
 
 import com.oauth2.Drug.Review.Domain.Review;
 import jakarta.persistence.*;

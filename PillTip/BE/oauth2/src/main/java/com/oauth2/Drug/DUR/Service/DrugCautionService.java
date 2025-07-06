@@ -1,9 +1,9 @@
 package com.oauth2.Drug.DUR.Service;
 
 import com.oauth2.Drug.DUR.Domain.DrugCaution;
-import com.oauth2.Drug.DrugImport.Domain.Drug;
-import com.oauth2.Drug.DrugImport.Repository.DrugCautionRepository;
-import com.oauth2.Drug.DrugImport.Repository.DrugRepository;
+import com.oauth2.Drug.DrugInfo.Domain.Drug;
+import com.oauth2.Drug.DUR.Repository.DrugCautionRepository;
+import com.oauth2.Drug.DrugInfo.Repository.DrugRepository;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;

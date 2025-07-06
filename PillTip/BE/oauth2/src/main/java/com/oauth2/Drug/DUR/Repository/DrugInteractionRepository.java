@@ -1,4 +1,4 @@
-package com.oauth2.Drug.DrugImport.Repository;
+package com.oauth2.Drug.DUR.Repository;
 
 import com.oauth2.Drug.DUR.Domain.DrugInteraction;
 import org.springframework.data.jpa.repository.JpaRepository;

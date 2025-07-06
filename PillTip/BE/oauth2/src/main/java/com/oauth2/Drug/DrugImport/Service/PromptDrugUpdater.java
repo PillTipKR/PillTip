@@ -1,6 +1,7 @@
 package com.oauth2.Drug.DrugImport.Service;
 
-import com.oauth2.Drug.DrugImport.Domain.*;
+import com.oauth2.Drug.DrugInfo.Domain.*;
+import com.oauth2.Drug.DrugInfo.Service.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
