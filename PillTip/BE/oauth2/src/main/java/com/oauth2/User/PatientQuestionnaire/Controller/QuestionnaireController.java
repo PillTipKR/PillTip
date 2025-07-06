@@ -24,8 +24,13 @@ import org.springframework.web.bind.annotation.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.oauth2.User.Auth.Service.TokenService;
 import org.springframework.http.HttpStatus;
-import com.oauth2.User.Hospital.HospitalService;
+
+import com.oauth2.User.Hospital.Entity.Hospital;
+import com.oauth2.User.Hospital.Repository.HospitalRepository;
+import com.oauth2.User.Hospital.Service.HospitalService;
 import com.oauth2.Util.Encryption.EncryptionUtil;
+
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/questionnaire")
@@ -350,9 +355,11 @@ public class QuestionnaireController {
         logger.info("=== QR QUESTIONNAIRE URL GENERATION START ===");
         logger.info("User ID: {}, Hospital Code: {}, Questionnaire ID: {}", user.getId(), hospitalCode, questionnaireId);
         
+        Optional<Hospital> hospitalOptional = hospitalService.findHospitalByCode(hospitalCode);
+
         try {
             // 1. 병원 코드 유효성 검사
-            if (!hospitalService.existsByHospitalCode(hospitalCode)) {
+            if (!hospitalOptional.isPresent()) {
                 logger.warn("Invalid hospital code: {}", hospitalCode);
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ApiResponse.error("존재하지 않는 병원 코드입니다.", null));
