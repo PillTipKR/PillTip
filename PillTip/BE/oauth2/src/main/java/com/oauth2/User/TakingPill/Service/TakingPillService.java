@@ -157,19 +157,29 @@ public class TakingPillService {
         takingPillRepository.delete(takingPill);
     }
 
-
-    /**
-     * 복용 중인 약을 수정합니다.
-     */
-
-    //수정을 누른 시점이
-
     public TakingPill updateTakingPill(User user, TakingPillRequest request) {
         // 요청 데이터 검증
         validateTakingPillRequest(request);
         
-        // 기존 TakingPill 찾기
+        logger.info("=== Update TakingPill Debug ===");
+        logger.info("User ID: {}", user.getId());
+        logger.info("Request Medication ID: {}", request.getMedicationId());
+        
+        // 데이터베이스의 모든 TakingPill 조회 (디버깅용)
+        List<TakingPill> allPills = takingPillRepository.findAll();
+        logger.info("=== Database Debug ===");
+        logger.info("Total TakingPills in database: {}", allPills.size());
+        
+        for (TakingPill pill : allPills) {
+            logger.info("DB TakingPill - ID: {}, User ID: {}, Medication ID: {}, Medication Name: {}", 
+                pill.getId(), pill.getUser().getId(), pill.getMedicationId(), pill.getMedicationName());
+        }
+        
+        // 기존 TakingPill 찾기 (트랜잭션 격리 문제 해결을 위해 직접 조회)
         List<TakingPill> existingPills = takingPillRepository.findByUserAndMedicationId(user, request.getMedicationId());
+        logger.info("Found {} TakingPills with medicationId {} for user {}", 
+            existingPills.size(), request.getMedicationId(), user.getId());
+        
         if (existingPills.isEmpty()) {
             throw new RuntimeException("수정할 약품을 찾을 수 없습니다.");
         }

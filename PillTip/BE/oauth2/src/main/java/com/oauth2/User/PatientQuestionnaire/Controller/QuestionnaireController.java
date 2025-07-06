@@ -198,10 +198,11 @@ public class QuestionnaireController {
         logger.info("Received createQuestionnaire request for user: {}", user.getId());
         try {
             PatientQuestionnaire questionnaire = patientQuestionnaireService.createQuestionnaire(user, request);
-            String decryptedPhoneNumber = getDecryptedPhoneNumber(user);
+            // POST 요청에서는 request에서 받은 phoneNumber를 사용
+            String phoneNumber = request.getPhoneNumber();
             String decryptedRealName = getDecryptedRealName(user);
             String decryptedAddress = getDecryptedAddress(user);
-            PatientQuestionnaireResponse response = PatientQuestionnaireResponse.from(questionnaire, decryptedPhoneNumber, decryptedRealName, decryptedAddress, encryptionUtil);
+            PatientQuestionnaireResponse response = PatientQuestionnaireResponse.from(questionnaire, phoneNumber, decryptedRealName, decryptedAddress, encryptionUtil);
             logger.info("Successfully created questionnaire for user: {}", user.getId());
             return ResponseEntity.status(201)
                 .body(ApiResponse.success("Questionnaire created successfully", response));

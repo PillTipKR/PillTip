@@ -17,6 +17,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
+import com.oauth2.Util.Encryption.EncryptionUtil;
 
 @Service //스프링 서비스 빈으로 등록
 @RequiredArgsConstructor //final 필드에 생성자 자동 생성
@@ -28,6 +30,7 @@ public class SignupService {
     private final TokenService tokenService;
     private final OAuth2Service oauth2Service;
     private final FCMTokenRepository fcmTokenRepository;
+    private final EncryptionUtil encryptionUtil;
 
     //회원가입 요청 처리
     public User signup(SignupRequest request) {
@@ -99,16 +102,31 @@ public class SignupService {
             if (request.getToken() == null) {
                 throw new RuntimeException("Token is required for social login");
             }
-            userRepository.findBySocialId(request.getToken())
-                    .ifPresent(user -> {
-                        throw new RuntimeException("Social account already exists");
-                    });
+            
+            // OAuth2 서버에서 사용자 정보 가져오기
+            OAuth2UserInfo oauth2UserInfo = oauth2Service.getUserInfo(
+                    request.getProvider(),
+                    request.getToken()
+            );
+            
+            // socialId 중복 체크 (암호화된 값과 비교)
+            List<User> allUsers = userRepository.findAll();
+            for (User user : allUsers) {
+                if (user.getSocialId() != null) {
+                    try {
+                        String decryptedSocialId = encryptionUtil.decrypt(user.getSocialId());
+                        if (decryptedSocialId.equals(oauth2UserInfo.getSocialId())) {
+                            throw new RuntimeException("Social account already exists");
+                        }
+                    } catch (Exception e) {
+                        // 복호화 실패 시 원본 값과도 비교
+                        if (user.getSocialId().equals(oauth2UserInfo.getSocialId())) {
+                            throw new RuntimeException("Social account already exists");
+                        }
+                    }
+                }
+            }
         }
-        // 닉네임 중복 검사
-        if (request.getNickname() == null) {
-            throw new RuntimeException("Nickname is required");
-        }
-        userService.checkDuplicate(request.getNickname(), "nickname");
         
         // 전화번호 중복 검사
         if (request.getPhone() != null) {
@@ -210,10 +228,5 @@ public class SignupService {
             throw new IllegalArgumentException("Invalid phone number format");
         }
         return phone;
-    }
-
-    // 랜덤 닉네임 생성 메서드
-    private String generateRandomNickname() {
-        return "user_" + System.currentTimeMillis();
     }
 }
