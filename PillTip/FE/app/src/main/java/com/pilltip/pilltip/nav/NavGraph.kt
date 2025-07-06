@@ -30,6 +30,8 @@ import com.pilltip.pilltip.view.main.DURResultPage
 import com.pilltip.pilltip.view.main.DURSearchPage
 import com.pilltip.pilltip.view.main.EssentialInfoPage
 import com.pilltip.pilltip.view.main.MyDrugInfoPage
+import com.pilltip.pilltip.view.main.MyHealthDetailPage
+import com.pilltip.pilltip.view.main.MyHealthPage
 import com.pilltip.pilltip.view.main.PillMainPage
 import com.pilltip.pilltip.view.questionnaire.AreYouPage
 import com.pilltip.pilltip.view.questionnaire.EssentialPage
@@ -272,6 +274,14 @@ fun NavGraph(
                 firstDrug = firstDrug.toLong(),
                 secondDrug = secondDrug.toLong(),
             )
+        }
+        composable("MyHealthPage"){
+            MyHealthPage(navController, searchHiltViewModel)
+        }
+
+        composable("MyHealthDetailPage/{type}") { backStackEntry ->
+            val type = backStackEntry.arguments?.getString("type") ?: ""
+            MyHealthDetailPage(type = type, navController = navController, searchHiltViewModel = searchHiltViewModel)
         }
 
     }

@@ -26,6 +26,7 @@ import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import java.time.LocalDate
 import javax.inject.Inject
 import javax.inject.Named
 import javax.inject.Singleton
@@ -41,7 +42,9 @@ class SearchHiltViewModel @Inject constructor(
     private val dosageDeleteRepo: DosageDeleteRepository,
     private val dosageModifyRepo: DosageModifyRepository,
     private val fcmRepo: FcmTokenRepository,
-    private val durGptRepo: DurGptRepository
+    private val durGptRepo: DurGptRepository,
+    private val sensitiveInfoRepo: SensitiveInfoRepository,
+    private val dosageLogRepo: DosageLogRepository
 ) : ViewModel() {
 
     /* 약품명 자동 완성 API*/
@@ -250,6 +253,57 @@ class SearchHiltViewModel @Inject constructor(
             }
         }
     }
+
+    /* 건강정보 조회 */
+    private val _sensitiveInfo = MutableStateFlow<SensitiveInfoData?>(null)
+    val sensitiveInfo: StateFlow<SensitiveInfoData?> = _sensitiveInfo.asStateFlow()
+
+    fun fetchSensitiveInfo() {
+        viewModelScope.launch {
+            try {
+                _sensitiveInfo.value = sensitiveInfoRepo.fetchSensitiveInfo()
+            } catch (e: Exception) {
+                Log.e("SensitiveInfo", "조회 실패: ${e.message}")
+            }
+        }
+    }
+
+    /* 복약 알림 */
+    private val _dailyDosageLog = MutableStateFlow<DailyDosageLogData?>(null)
+    val dailyDosageLog: StateFlow<DailyDosageLogData?> = _dailyDosageLog.asStateFlow()
+    var selectedDrugLog by mutableStateOf<DosageLogPerDrug?>(null)
+
+    fun fetchDailyDosageLog(date: LocalDate) {
+        viewModelScope.launch {
+            try {
+                val response = dosageLogRepo.getDailyDosageLog(date.toString())
+                _dailyDosageLog.value = response.data
+                Log.d("DailyDosageLog", "성공: ${response.data}")
+            } catch (e: Exception) {
+                Log.e("DailyDosageLog", "실패: ${e.message}")
+                _dailyDosageLog.value = null
+            }
+        }
+    }
+
+    fun toggleDosageTaken(
+        logId: Long,
+        onSuccess: (String) -> Unit,
+        onError: (String) -> Unit
+    ) {
+        viewModelScope.launch {
+            try {
+                val response = dosageLogRepo.toggleDosageTaken(logId)
+                if (response.status == "success") {
+                    onSuccess(response.data)
+                } else {
+                    onError(response.message ?: "실패했습니다.")
+                }
+            } catch (e: Exception) {
+                onError(e.localizedMessage ?: "에러가 발생했습니다.")
+            }
+        }
+    }
 }
 
 @HiltViewModel
@@ -292,6 +346,21 @@ class QuestionnaireViewModel @Inject constructor(
                 Log.e("PermissionUpdate", "민감정보 동의 실패: ${e.message}")
             } finally {
                 isPermissionLoading = false
+            }
+        }
+    }
+
+    private val _permissionUpdateResult = MutableStateFlow<PermissionData?>(null)
+    val permissionUpdateResult: StateFlow<PermissionData?> = _permissionUpdateResult.asStateFlow()
+
+    fun updateSinglePermission(permissionType: String, granted: Boolean) {
+        viewModelScope.launch {
+            try {
+                val response = permissionRepository.updateSinglePermission(permissionType, granted)
+                _permissionUpdateResult.value = response.data
+                Log.d("Permission", "업데이트 완료: $permissionType = $granted")
+            } catch (e: Exception) {
+                Log.e("Permission", "업데이트 실패: ${e.message}")
             }
         }
     }
@@ -573,5 +642,25 @@ object RepositoryModule {
     @Provides
     fun provideDurGptRepository(api: DurGptApi): DurGptRepository {
         return DurGptRepositoryImpl(api)
+    }
+
+    @Provides
+    fun provideSensitiveInfoApi(@Named("SearchRetrofit") retrofit: Retrofit): SensitiveInfoApi {
+        return retrofit.create(SensitiveInfoApi::class.java)
+    }
+
+    @Provides
+    fun provideSensitiveInfoRepository(api: SensitiveInfoApi): SensitiveInfoRepository {
+        return SensitiveInfoRepositoryImpl(api)
+    }
+
+    @Provides
+    fun provideDosageLogApi(@Named("SearchRetrofit") retrofit: Retrofit): DosageLogApi {
+        return retrofit.create(DosageLogApi::class.java)
+    }
+
+    @Provides
+    fun provideDosageLogRepository(api: DosageLogApi): DosageLogRepository {
+        return DosageLogRepositoryImpl(api)
     }
 }
