@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.oauth2.User.PatientQuestionnaire.Entity.PatientQuestionnaire;
+import com.oauth2.Util.Encryption.EncryptionUtil;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -31,23 +32,23 @@ public class PatientQuestionnaireResponse {
     private List<Map<String, Object>> chronicDiseaseInfo;
     private List<Map<String, Object>> surgeryHistoryInfo;
 
-    public static PatientQuestionnaireResponse from(PatientQuestionnaire questionnaire, String decryptedPhoneNumber) {
+    public static PatientQuestionnaireResponse from(PatientQuestionnaire questionnaire, String decryptedPhoneNumber, String decryptedRealName, String decryptedAddress, EncryptionUtil encryptionUtil) {
         ObjectMapper objectMapper = new ObjectMapper();
         
         try {
             return PatientQuestionnaireResponse.builder()
                     .questionnaireId(questionnaire.getQuestionnaireId())
                     .questionnaireName(questionnaire.getQuestionnaireName())
-                    .realName(questionnaire.getUser().getRealName())
-                    .address(questionnaire.getUser().getAddress())
+                    .realName(decryptedRealName)
+                    .address(decryptedAddress)
                     .phoneNumber(decryptedPhoneNumber)
                     .issueDate(questionnaire.getIssueDate())
                     .lastModifiedDate(questionnaire.getLastModifiedDate())
                     .notes(questionnaire.getNotes())
-                    .medicationInfo(parseJsonToList(questionnaire.getMedicationInfo(), objectMapper))
-                    .allergyInfo(parseJsonToList(questionnaire.getAllergyInfo(), objectMapper))
-                    .chronicDiseaseInfo(parseJsonToList(questionnaire.getChronicDiseaseInfo(), objectMapper))
-                    .surgeryHistoryInfo(parseJsonToList(questionnaire.getSurgeryHistoryInfo(), objectMapper))
+                    .medicationInfo(parseEncryptedJsonToList(questionnaire.getMedicationInfo(), objectMapper, encryptionUtil))
+                    .allergyInfo(parseEncryptedJsonToList(questionnaire.getAllergyInfo(), objectMapper, encryptionUtil))
+                    .chronicDiseaseInfo(parseEncryptedJsonToList(questionnaire.getChronicDiseaseInfo(), objectMapper, encryptionUtil))
+                    .surgeryHistoryInfo(parseEncryptedJsonToList(questionnaire.getSurgeryHistoryInfo(), objectMapper, encryptionUtil))
                     .build();
         } catch (JsonProcessingException e) {
             throw new RuntimeException("Failed to parse questionnaire data", e);
@@ -59,5 +60,20 @@ public class PatientQuestionnaireResponse {
             return List.of();
         }
         return objectMapper.readValue(json, new TypeReference<List<Map<String, Object>>>() {});
+    }
+
+    private static List<Map<String, Object>> parseEncryptedJsonToList(String encryptedJson, ObjectMapper objectMapper, EncryptionUtil encryptionUtil) throws JsonProcessingException {
+        if (encryptedJson == null || encryptedJson.trim().isEmpty()) {
+            return List.of();
+        }
+        
+        try {
+            // 암호화된 JSON을 복호화
+            String decryptedJson = encryptionUtil.decrypt(encryptedJson);
+            return objectMapper.readValue(decryptedJson, new TypeReference<List<Map<String, Object>>>() {});
+        } catch (Exception e) {
+            // 복호화 실패 시 원본 JSON으로 파싱 시도
+            return parseJsonToList(encryptedJson, objectMapper);
+        }
     }
 } 
