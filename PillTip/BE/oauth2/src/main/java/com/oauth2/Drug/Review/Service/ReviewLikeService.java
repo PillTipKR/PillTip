@@ -4,7 +4,7 @@ import com.oauth2.Drug.Review.Domain.Review;
 import com.oauth2.Drug.Review.Domain.ReviewLike;
 import com.oauth2.Drug.Review.Repository.ReviewLikeRepository;
 import com.oauth2.Drug.Review.Repository.ReviewRepository;
-import com.oauth2.User.Auth.Repository.UserRepository;
+import com.oauth2.User.Auth.Entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,13 +18,12 @@ public class ReviewLikeService {
 
     private final ReviewLikeRepository reviewLikeRepository;
     private final ReviewRepository reviewRepository;
-    private final UserRepository userRepository;
 
-    public boolean toggleLike(Long userId, Long reviewId) {
+    public boolean toggleLike(User user, Long reviewId) {
         Optional<ReviewLike> existing = reviewLikeRepository
                 .findAll()
                 .stream()
-                .filter(like -> like.getUser().getId().equals(userId) && like.getReview().getId().equals(reviewId))
+                .filter(like -> like.getUser().getId().equals(user.getId()) && like.getReview().getId().equals(reviewId))
                 .findFirst();
 
         if (existing.isPresent()) {
@@ -36,7 +35,7 @@ public class ReviewLikeService {
                     .orElseThrow(() -> new RuntimeException("리뷰 없음"));
 
             ReviewLike like = new ReviewLike();
-            like.setUser(userRepository.findById(userId).get());  // ID만 설정
+            like.setUser(user);  // ID만 설정
             like.setReview(review);
             reviewLikeRepository.save(like);
 
