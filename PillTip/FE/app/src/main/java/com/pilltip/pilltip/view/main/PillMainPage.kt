@@ -120,8 +120,8 @@ fun PillMainPage(
                 BottomTab.Home -> HomePage(navController)
                 BottomTab.Interaction -> navController.navigate("DURPage")
                 BottomTab.Chart -> MyQuestionnairePage(navController, questionnaireViewModel)
-                BottomTab.Calendar -> CalenderPage()
-                BottomTab.MyPage -> MyPage(navController, searchHiltViewModel)
+                BottomTab.Calendar -> CalenderPage(navController, searchHiltViewModel)
+                BottomTab.MyPage -> MyPage(navController, searchHiltViewModel, questionnaireViewModel)
             }
         }
     }
