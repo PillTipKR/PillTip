@@ -100,7 +100,7 @@ public class LoginService {
             logger.info("OAuth2 User Info - Email: {}", oauth2UserInfo.getEmail());
             logger.info("OAuth2 User Info - Name: {}", oauth2UserInfo.getName());
 
-            // 모든 사용자를 조회하여 socialId를 복호화하여 비교
+            // 모든 사용자를 조회하여 socialId를 비교
             List<User> allUsers = userRepository.findAll();
             logger.info("Total users in database: {}", allUsers.size());
             
@@ -112,7 +112,12 @@ public class LoginService {
                 
                 if (u.getSocialId() != null) {
                     try {
-                        String decryptedSocialId = encryptionUtil.decrypt(u.getSocialId());
+                        // EncryptionConverter가 자동으로 복호화해주지만, 
+                        // 혹시 모르니 명시적으로 복호화 시도
+                        String decryptedSocialId = encryptionUtil.isEncrypted(u.getSocialId()) 
+                            ? encryptionUtil.decrypt(u.getSocialId()) 
+                            : u.getSocialId();
+                        
                         logger.info("Decrypted socialId for user {}: {}", u.getId(), decryptedSocialId);
                         
                         if (decryptedSocialId.equals(oauth2UserInfo.getSocialId())) {
@@ -122,6 +127,12 @@ public class LoginService {
                         }
                     } catch (Exception e) {
                         logger.warn("Failed to decrypt socialId for user {}: {}", u.getId(), e.getMessage());
+                        // 복호화 실패 시 원본 값으로 비교
+                        if (u.getSocialId().equals(oauth2UserInfo.getSocialId())) {
+                            user = u;
+                            logger.info("Found matching user with original socialId: {}", u.getId());
+                            break;
+                        }
                     }
                 }
             }

@@ -57,7 +57,7 @@ public class User {
     @Convert(converter = EncryptionConverter.class)
     private String profilePhoto;
 
-    @Column(nullable = false, unique = true) // 유저의 닉네임
+    @Column(nullable = false) // 유저의 닉네임
     private String nickname;
 
     @Column(nullable = false) // 유저의 동의사항
