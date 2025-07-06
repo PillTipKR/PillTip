@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -32,7 +31,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -54,7 +52,6 @@ import androidx.navigation.NavController
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.google.firebase.messaging.FirebaseMessaging
 import com.pilltip.pilltip.R
-import com.pilltip.pilltip.composable.BackButton
 import com.pilltip.pilltip.composable.HeightSpacer
 import com.pilltip.pilltip.composable.MainComposable.AnnouncementCard
 import com.pilltip.pilltip.composable.MainComposable.BottomBar
@@ -64,17 +61,13 @@ import com.pilltip.pilltip.composable.MainComposable.MainSearchField
 import com.pilltip.pilltip.composable.MainComposable.ProfileTagButton
 import com.pilltip.pilltip.composable.MainComposable.SmallTabCard
 import com.pilltip.pilltip.composable.QuestionnaireComposable.QuestionnaireCard
-import com.pilltip.pilltip.composable.WhiteScreenModifier
 import com.pilltip.pilltip.composable.WidthSpacer
-import com.pilltip.pilltip.composable.noRippleClickable
 import com.pilltip.pilltip.model.HandleBackPressToExitApp
-import com.pilltip.pilltip.model.search.QuestionnaireSummary
 import com.pilltip.pilltip.model.search.QuestionnaireViewModel
 import com.pilltip.pilltip.model.search.SearchHiltViewModel
 import com.pilltip.pilltip.ui.theme.backgroundColor
 import com.pilltip.pilltip.ui.theme.gray050
 import com.pilltip.pilltip.ui.theme.gray200
-import com.pilltip.pilltip.ui.theme.gray600
 import com.pilltip.pilltip.ui.theme.gray800
 import com.pilltip.pilltip.ui.theme.pretendard
 import com.pilltip.pilltip.ui.theme.primaryColor
@@ -127,7 +120,7 @@ fun PillMainPage(
                 BottomTab.Home -> HomePage(navController)
                 BottomTab.Interaction -> navController.navigate("DURPage")
                 BottomTab.Chart -> MyQuestionnairePage(navController, questionnaireViewModel)
-                BottomTab.Calendar -> CalendarPage()
+                BottomTab.Calendar -> CalenderPage()
                 BottomTab.MyPage -> MyPage(navController, searchHiltViewModel)
             }
         }
@@ -393,9 +386,4 @@ fun MyQuestionnairePage(
             }
         }
     }
-}
-
-@Composable
-fun CalendarPage() {
-    Text("캘린더 화면")
 }

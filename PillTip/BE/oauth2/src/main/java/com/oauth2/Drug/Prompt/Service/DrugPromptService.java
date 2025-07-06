@@ -82,6 +82,8 @@ public class DrugPromptService {
         String interactExplanation = result.interact();
 
         return new DurResponse(
+                removeParentheses(durAnalysisResponse.durA().drugName()),
+                removeParentheses(durAnalysisResponse.durB().drugName()),
                 drugAExplanation,
                 drugBExplanation,
                 interactExplanation,
@@ -89,6 +91,14 @@ public class DrugPromptService {
                 !durAnalysisResponse.durB().durtags().isEmpty(),
                 !durAnalysisResponse.interact().durtags().isEmpty()
         );
+    }
+
+    private String removeParentheses(String text) {
+        if (text == null) {
+            System.out.println("[removeParentheses] text is null!");
+            return "";
+        }
+        return text.replaceAll("(\\(.*?\\)|\\[.*?\\])", "").trim();
     }
 
     private String askGPT(String prompt) {
@@ -156,7 +166,7 @@ public class DrugPromptService {
                 .append("각 항목은 다음 지침을 따라 주세요:\n\n")
 
                 .append("1. 약물 A, B 설명:\n")
-                .append("- durtags가 비어 있고, isTakingOtherDrugs가 true인 경우: '현재 다른 약들과 문제는 없어요'처럼 안심시키는 문장을 넣어 주세요.\n")
+                .append("- durtags가 비어 있고, isTakingOtherDrugs가 true인 경우: '지금 드시는 약들과는 특별한 상호작용이 없어요'처럼 안심시키는 문장을 넣어 주세요.\n")
                 .append("- durtags가 있을 경우: 모든 title 항목(예: 임부금기, 노인금기 등)을 하나도 빠짐없이 설명해 주세요.\n")
                 .append("  각 title 안의 reason, note를 자연스럽게 해요체 문단으로 풀어 주세요.\n\n")
 
@@ -254,9 +264,14 @@ public class DrugPromptService {
 
     public DurExplanationResult parseCombinedResponse(String gptResponse) {
         // 섹션을 "[약물 A 설명]" 등의 헤더 기준으로 분리
-        String[] parts = gptResponse.split("\\[약물 A 설명\\]|\\[약물 B 설명\\]|\\[병용 DUR 설명\\]");
+        String[] parts = gptResponse.split(
+                "(?i)[\\[\\(]?\\s*약물 A 설명\\s*[\\]\\)]?" +
+                        "|[\\[\\(]?\\s*약물 B 설명\\s*[\\]\\)]?" +
+                        "|[\\[\\(]?\\s*병용 DUR 설명\\s*[\\]\\)]?"
+        );
 
         if (parts.length < 4) {
+            System.out.println(gptResponse);
             throw new IllegalArgumentException("응답 형식이 예상과 달라서 3가지 설명으로 나눌 수 없어요.");
         }
 
