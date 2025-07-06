@@ -80,7 +80,7 @@ public class ReviewController {
     @GetMapping("/drug/{drugId}/stats")
     public ResponseEntity<ApiResponse<ReviewStats>> getDrugReviews(
             @AuthenticationPrincipal User user, @PathVariable Long drugId) {
-        ReviewStats reviewStats = reviewService.getReviewWithRating(drugId);
+        ReviewStats reviewStats = reviewService.getReviewStats(drugId);
         return ResponseEntity.ok(ApiResponse.success("조회 성공", reviewStats));
     }
 

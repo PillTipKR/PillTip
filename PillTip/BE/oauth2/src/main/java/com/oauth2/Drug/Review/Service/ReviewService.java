@@ -39,25 +39,36 @@ public class ReviewService {
         review.setDrug(drug);
         review.setRating(request.getRating());
         review.setContent(request.getContent());
-
         reviewRepository.save(review);
 
-        // 이미지 저장
-        List<String> imageUrls = request.getImageUrls(); // Firebase 업로드 후 전달됨
-        if (imageUrls != null) {
-            for (int i = 0; i < imageUrls.size(); i++) {
-                ReviewImage image = new ReviewImage();
-                image.setReview(review);
-                image.setImageUrl(imageUrls.get(i));
-                image.setSortOrder(i);
-                reviewImageRepository.save(image);
-            }
-        }
+        saveReviewImages(review, request.getImageUrls());
+        saveReviewTags(review, request.getTags());
 
-        // 태그 저장
-        request.getTags().forEach((typeStr, tagNames) -> {
+        return review.getId();
+    }
+
+    private void saveReviewImages(Review review, List<String> imageUrls) {
+        if (imageUrls == null || imageUrls.isEmpty()) {
+            return;
+        }
+        IntStream.range(0, imageUrls.size())
+                .mapToObj(i -> {
+                    ReviewImage image = new ReviewImage();
+                    image.setReview(review);
+                    image.setImageUrl(imageUrls.get(i));
+                    image.setSortOrder(i);
+                    return image;
+                })
+                .forEach(reviewImageRepository::save);
+    }
+
+    private void saveReviewTags(Review review, Map<String, List<String>> tags) {
+        if (tags == null || tags.isEmpty()) {
+            return;
+        }
+        tags.forEach((typeStr, tagNames) -> {
             TagType type = TagType.valueOf(typeStr.toUpperCase());
-            for (String tagName : tagNames) {
+            tagNames.forEach(tagName -> {
                 Tag tag = tagRepository.findByNameAndType(tagName, type)
                         .orElseGet(() -> tagRepository.save(new Tag(tagName, type)));
 
@@ -65,10 +76,8 @@ public class ReviewService {
                 reviewTag.setReview(review);
                 reviewTag.setTag(tag);
                 reviewTagRepository.save(reviewTag);
-            }
+            });
         });
-
-        return review.getId();
     }
 
     /**
@@ -88,69 +97,60 @@ public class ReviewService {
     @Transactional(readOnly = true)
     public List<UserReviewResponse> getReviewsByUser(Long userId) {
         List<Review> reviews = reviewRepository.findByUserId(userId);
-        List<Long> reviewIds = reviews.stream().map(Review::getId).toList();
-
-        // 좋아요 여부 최적화 조회
-        List<Long> likedIds = reviewLikeRepository.findLikedReviewIds(userId, reviewIds);
-        Set<Long> likedIdSet = new HashSet<>(likedIds);
+        Set<Long> likedIdSet = getLikedReviewIds(userId, reviews);
 
         return reviews.stream()
-                .map(r -> new UserReviewResponse(
-                        r.getDrug().getId(),
-                        r.getDrug().getName(),
-                        ReviewResponse.from(r, userId, likedIdSet.contains(r.getId()))
+                .map(review -> new UserReviewResponse(
+                        review.getDrug().getId(),
+                        review.getDrug().getName(),
+                        ReviewResponse.from(review, userId, likedIdSet.contains(review.getId()))
                 ))
                 .toList();
     }
 
-
-
     @Transactional(readOnly = true)
     public Page<ReviewResponse> getPagedReviews(Long drugId, Long userId, Pageable pageable) {
-        // 1. 기본 리뷰 페이징 + 정렬
-        Page<Review> page = reviewRepository.findByDrugId(drugId, pageable);
-        List<Review> reviews = page.getContent();
+        Page<Review> reviewPage = reviewRepository.findByDrugId(drugId, pageable);
+        List<Review> reviews = reviewPage.getContent();
+        Set<Long> likedIdSet = getLikedReviewIds(userId, reviews);
 
-        // 2. 좋아요 여부 최적화 조회
-        List<Long> reviewIds = reviews.stream().map(Review::getId).toList();
-        List<Long> likedIds = reviewLikeRepository.findLikedReviewIds(userId, reviewIds);
-        Set<Long> likedIdSet = new HashSet<>(likedIds);
-
-        // 3. DTO 변환 + isLiked 적용
-        List<ReviewResponse> responseList = reviews.stream()
-                .map(r -> ReviewResponse.from(r, userId, likedIdSet.contains(r.getId())))
+        List<ReviewResponse> reviewResponses = reviews.stream()
+                .map(review -> ReviewResponse.from(review, userId, likedIdSet.contains(review.getId())))
                 .toList();
 
-        return new PageImpl<>(responseList, pageable, page.getTotalElements());
+        return new PageImpl<>(reviewResponses, pageable, reviewPage.getTotalElements());
     }
 
-
-
+    private Set<Long> getLikedReviewIds(Long userId, List<Review> reviews) {
+        if (userId == null || reviews.isEmpty()) {
+            return Collections.emptySet();
+        }
+        List<Long> reviewIds = reviews.stream().map(Review::getId).toList();
+        return new HashSet<>(reviewLikeRepository.findLikedReviewIds(userId, reviewIds));
+    }
 
     public Sort getSort(String key, String direction) {
-        Sort.Direction dir;
+        Sort.Direction dir = Sort.Direction.DESC; // 기본값
         try {
-            dir = Sort.Direction.fromString(direction); // "asc" 또는 "desc" 처리
+            dir = Sort.Direction.fromString(direction);
         } catch (IllegalArgumentException e) {
-            dir = Sort.Direction.DESC; // 기본값
+            // "asc" 또는 "desc"가 아닌 경우 기본값 사용, 로깅 등을 추가할 수 있음
         }
-        System.out.println("Received sortKey = " + key + ", direction = " + direction);
+
         return switch (key.toLowerCase()) {
             case "rating" -> Sort.by(dir, "rating");
             case "likes" -> Sort.by(dir, "likeCount");
             case "latest", "createdat" -> Sort.by(dir, "createdAt");
-            default -> Sort.by(Sort.Direction.DESC, "createdAt"); // 기본 정렬
+            default -> Sort.by(Sort.Direction.DESC, "createdAt");
         };
     }
 
-
-
     @Transactional(readOnly = true)
-    public ReviewStats getReviewWithRating(Long drugId) {
-        List<Review> reviews = reviewRepository.findByDrugIdWithReviewTags(drugId); // 단일 호출
+    public ReviewStats getReviewStats(Long drugId) {
+        List<Review> reviews = reviewRepository.findByDrugIdWithReviewTags(drugId);
 
-        RatingStatsResponse ratingStats = computeRatingStatsFromReviews(reviews);
-        Map<TagType, TagStatsDto> tagStats = computeTagStatsFromReviews(reviews);
+        RatingStatsResponse ratingStats = computeRatingStats(reviews);
+        Map<TagType, TagStatsDto> tagStats = computeTagStats(reviews);
 
         return new ReviewStats(
                 (long) reviews.size(),
@@ -159,56 +159,57 @@ public class ReviewService {
         );
     }
 
-    public RatingStatsResponse computeRatingStatsFromReviews(List<Review> reviews) {
-        double avg = reviews.stream()
+    private RatingStatsResponse computeRatingStats(List<Review> reviews) {
+        if (reviews.isEmpty()) {
+            return new RatingStatsResponse(0.0, Collections.emptyMap());
+        }
+
+        double averageRating = reviews.stream()
                 .mapToDouble(Review::getRating)
                 .average().orElse(0.0);
 
-        Map<Integer, Long> buckets = IntStream.rangeClosed(1, 5)
-                .boxed().collect(Collectors.toMap(i -> i, i -> 0L));
+        Map<Integer, Long> ratingDistribution = reviews.stream()
+                .collect(Collectors.groupingBy(
+                        review -> (int) Math.floor(review.getRating()),
+                        Collectors.counting()
+                ));
 
-        for (Review r : reviews) {
-            int b = (int) Math.floor(r.getRating());
-            buckets.put(b, buckets.get(b) + 1);
-        }
+        // 1~5점까지 모든 점수에 대한 기본값 0을 보장
+        IntStream.rangeClosed(1, 5).forEach(rating -> ratingDistribution.putIfAbsent(rating, 0L));
 
-        return new RatingStatsResponse(avg, buckets);
+        return new RatingStatsResponse(averageRating, ratingDistribution);
     }
 
-    public Map<TagType, TagStatsDto> computeTagStatsFromReviews(List<Review> reviews) {
-        Map<TagType, Map<String, Long>> grouped = new EnumMap<>(TagType.class);
+    private Map<TagType, TagStatsDto> computeTagStats(List<Review> reviews) {
+        if (reviews.isEmpty()) {
+            return Collections.emptyMap();
+        }
 
-        for (Review r : reviews) {
-            for (ReviewTag rt : r.getReviewTags()) {
-                Tag tag = rt.getTag();
-                grouped
+        Map<TagType, Map<String, Long>> tagCountsByType = new EnumMap<>(TagType.class);
+        for (Review review : reviews) {
+            for (ReviewTag reviewTag : review.getReviewTags()) {
+                Tag tag = reviewTag.getTag();
+                tagCountsByType
                         .computeIfAbsent(tag.getType(), k -> new HashMap<>())
                         .merge(tag.getName(), 1L, Long::sum);
             }
         }
 
-        Map<TagType, TagStatsDto> result = new EnumMap<>(TagType.class);
-
+        Map<TagType, TagStatsDto> tagStatsMap = new EnumMap<>(TagType.class);
         for (TagType type : TagType.values()) {
-            Map<String, Long> tagMap = grouped.getOrDefault(type, Map.of());
-            long total = 0;
-            long max = 0;
-            String mostUsed = null;
+            Map<String, Long> tagCounts = tagCountsByType.getOrDefault(type, Collections.emptyMap());
 
-            for (var entry : tagMap.entrySet()) {
-                total += entry.getValue();
-                if (entry.getValue() > max) {
-                    mostUsed = entry.getKey();
-                    max = entry.getValue();
-                }
-            }
+            long total = tagCounts.values().stream().mapToLong(Long::longValue).sum();
+            Optional<Map.Entry<String, Long>> mostUsedEntry = tagCounts.entrySet().stream()
+                    .max(Map.Entry.comparingByValue());
 
-            result.put(type, new TagStatsDto(mostUsed, max, total));
+            String mostUsedTag = mostUsedEntry.map(Map.Entry::getKey).orElse(null);
+            long maxCount = mostUsedEntry.map(Map.Entry::getValue).orElse(0L);
+
+            tagStatsMap.put(type, new TagStatsDto(mostUsedTag, maxCount, total));
         }
 
-        return result;
+        return tagStatsMap;
     }
-
-
 }
 
