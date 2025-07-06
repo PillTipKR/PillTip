@@ -8,10 +8,10 @@ import com.oauth2.Drug.DrugInfo.Domain.Ingredient;
 import com.oauth2.Drug.DrugInfo.Repository.DrugIngredientRepository;
 import com.oauth2.Drug.DrugInfo.Repository.DrugRepository;
 import com.oauth2.Drug.DrugInfo.Repository.IngredientRepository;
-import com.oauth2.Util.Elasticsearch.Dto.ElasticsearchDTO;
 import com.oauth2.Drug.Search.Dto.IngredientComp;
 import com.oauth2.Drug.Search.Dto.IngredientDetail;
 import com.oauth2.Drug.Search.Dto.SearchIndexDTO;
+import com.oauth2.Util.Elasticsearch.Dto.ElasticsearchDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -41,16 +41,16 @@ public class DataSyncService {
     private final DrugRepository drugRepository;
     private final ElasticsearchClient elasticsearchClient;
     private final IngredientRepository ingredientRepository;
-    private final DrugIngredientRepository drugIngredientRepository;
+    private final DrugIngredientRepository pillIngredientRepository;
 
     private void syncTextToElasticsearch() throws IOException {
-        List<Drug> drugs = drugRepository.findAll();
+        List<Drug> pills = drugRepository.findAll();
         List<Ingredient> ingredients = ingredientRepository.findAll();
         Set<String> manufacturers = new HashSet<>();
-        for (Drug drug : drugs){
-            injectIndex(drugName,drug.getId(),drug.getName());
-            if (manufacturers.add(drug.getManufacturer())) {
-                injectIndex(manufacturer, 0L,drug.getManufacturer());
+        for (Drug pill : pills){
+            injectIndex(drugName, pill.getId(), pill.getName());
+            if (manufacturers.add(pill.getManufacturer())) {
+                injectIndex(manufacturer, 0L, pill.getManufacturer());
             }
         }
         for(Ingredient ingredient : ingredients){
@@ -77,9 +77,9 @@ public class DataSyncService {
 
 
     private void syncDrugsToElasticsearch() throws IOException {
-        List<Drug> drugs = drugRepository.findAll();
-        for (Drug drug : drugs) {
-            List<DrugIngredient> di = drugIngredientRepository.findById_DrugId(drug.getId());
+        List<Drug> pills = drugRepository.findAll();
+        for (Drug pill : pills) {
+            List<DrugIngredient> di = pillIngredientRepository.findById_DrugId(pill.getId());
             List<IngredientComp> ingredientComps = new ArrayList<>();
             for(DrugIngredient ding : di){
                 Optional<Ingredient> ing =
@@ -97,7 +97,7 @@ public class DataSyncService {
             if(!ingredientComps.isEmpty()) {
                 ingredientComps.sort(Collections.reverseOrder());
                 ingredientComps.get(0).setMain(true);
-                SearchIndexDTO dto = getSearchIndexDTO(drug, ingredientComps);
+                SearchIndexDTO dto = getSearchIndexDTO(pill, ingredientComps);
 
                 IndexRequest<SearchIndexDTO> indexRequest = new IndexRequest.Builder<SearchIndexDTO>()
                         .index(search)
@@ -110,7 +110,7 @@ public class DataSyncService {
         }
     }
 
-    private static SearchIndexDTO getSearchIndexDTO(Drug drug, List<IngredientComp> ingredientComps) {
+    private static SearchIndexDTO getSearchIndexDTO(Drug pill, List<IngredientComp> ingredientComps) {
         List<IngredientDetail> ingredientDetails = new ArrayList<>();
         for(IngredientComp ingredientComp : ingredientComps){
             IngredientDetail ingredientDetail = new IngredientDetail(
@@ -120,10 +120,10 @@ public class DataSyncService {
             ingredientDetails.add(ingredientDetail);
         }
         return new SearchIndexDTO(
-                drug.getId(),
-                drug.getName(),
+                pill.getId(),
+                pill.getName(),
                 ingredientDetails,
-                drug.getManufacturer()
+                pill.getManufacturer()
         );
     }
 
