@@ -7,6 +7,7 @@ import com.oauth2.User.Auth.Security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -18,6 +19,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 @Configuration // 스프링 설정 클래스임을 명시
 @EnableWebSecurity // 웹 보안 설정 활성화
+@EnableMethodSecurity//컨트롤러 레벨 보안 설정 활성화
 @RequiredArgsConstructor // 생성자 주입 설정
 public class SecurityConfig {
     // 커스텀 OAuth2 사용자 서비스 및 JWT 인증 필터를 주입받음

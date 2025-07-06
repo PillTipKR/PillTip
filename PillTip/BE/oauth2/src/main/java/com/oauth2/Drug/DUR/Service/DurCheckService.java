@@ -5,7 +5,12 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.oauth2.Drug.DUR.Dto.DurDto;
 import com.oauth2.Drug.DUR.Dto.DurTagDto;
+import com.oauth2.Drug.DUR.Dto.DurUserContext;
 import com.oauth2.Drug.DrugInfo.Domain.Drug;
+import com.oauth2.Drug.DrugInfo.Repository.DrugRepository;
+import com.oauth2.User.Auth.Entity.User;
+import com.oauth2.User.TakingPill.Dto.TakingPillSummaryResponse;
+import com.oauth2.User.TakingPill.Service.TakingPillService;
 import com.oauth2.User.UserInfo.Entity.UserProfile;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -13,10 +18,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.Period;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -24,6 +26,8 @@ public class DurCheckService {
 
     private final StringRedisTemplate redisTemplate;
     private final ObjectMapper objectMapper;
+    private final DrugRepository drugRepository;
+    private final TakingPillService takingPillService;
 
     public List<DurTagDto> checkForDrug(Drug drug, UserProfile userProfile, DurUserContext userContext) throws JsonProcessingException {
         List<DurTagDto> tags = new ArrayList<>();
@@ -31,7 +35,7 @@ public class DurCheckService {
         String drugName = drug.getName();
 
         // 병용금기 (사용자가 복용중인 다른 약물과의 상호작용)
-        tags.add(buildContraTag(drugName, userContext.getUserInteractionDrugNames()));
+        tags.add(buildContraTag(drugName, userContext.userInteractionDrugNames()));
 
         // 임부금기
         tags.add(buildDurTag("임부금기", readJsonFromRedis("DUR:PREGNANCY:" + drugId), userProfile.isPregnant()));
@@ -47,7 +51,7 @@ public class DurCheckService {
         // 효능군 중복주의
         Map<String, String> therValue = readJsonFromRedis("DUR:THERAPEUTIC_DUP:" + drugId);
         String className = therValue != null ? therValue.get("className") : null;
-        boolean isDup = className != null && userContext.getClassToDrugIdsMap().containsKey(className);
+        boolean isDup = className != null && userContext.classToDrugIdsMap().containsKey(className);
         tags.add(buildDurTag("효능군중복주의", therValue, isDup));
 
         return tags;
@@ -56,6 +60,36 @@ public class DurCheckService {
     private Map<String, String> readJsonFromRedis(String key) throws JsonProcessingException {
         String json = redisTemplate.opsForValue().get(key);
         return (json != null) ? objectMapper.readValue(json, new TypeReference<>() {}) : null;
+    }
+
+    public DurUserContext buildUserContext(User user) throws JsonProcessingException {
+        boolean isElderly = user.getUserProfile().getAge() >= 65;
+        Map<String, List<Long>> classToDrugIdsMap = new HashMap<>();
+        Set<String> userInteractionDrugNames = new HashSet<>();
+
+        List<Long> userDrugIds = takingPillService.getTakingPillSummary(user).getTakingPills().stream()
+                .map(TakingPillSummaryResponse.TakingPillSummary::getMedicationId)
+                .toList();
+
+        for (Long userDrugId : userDrugIds) {
+            Optional<Drug> userDrugOpt = drugRepository.findById(userDrugId);
+            if (userDrugOpt.isEmpty()) continue;
+
+            String drugName = userDrugOpt.get().getName();
+            List<String> contraList = redisTemplate.opsForList().range("DUR:INTERACT:" + drugName, 0, -1);
+            if (contraList != null && !contraList.isEmpty()) {
+                userInteractionDrugNames.add(drugName);
+            }
+
+            Map<String, String> value = readJsonFromRedis("DUR:THERAPEUTIC_DUP:" + userDrugId);
+            if (value != null) {
+                String className = value.getOrDefault("className", "").trim();
+                if (!className.isBlank()) {
+                    classToDrugIdsMap.computeIfAbsent(className, k -> new ArrayList<>()).add(userDrugId);
+                }
+            }
+        }
+        return new DurUserContext(isElderly, user.getUserProfile().isPregnant(), classToDrugIdsMap, userInteractionDrugNames);
     }
 
     private DurTagDto buildDurTag(String tagName, Map<String, String> valueMap, boolean shouldTag) {

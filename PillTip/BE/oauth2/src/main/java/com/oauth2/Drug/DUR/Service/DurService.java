@@ -3,15 +3,10 @@ package com.oauth2.Drug.DUR.Service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.oauth2.Drug.DUR.Dto.DurAnalysisResponse;
-import com.oauth2.Drug.DUR.Dto.DurDto;
-import com.oauth2.Drug.DUR.Dto.DurPerDrugDto;
-import com.oauth2.Drug.DUR.Dto.DurTagDto;
+import com.oauth2.Drug.DUR.Dto.*;
 import com.oauth2.Drug.DrugInfo.Domain.Drug;
 import com.oauth2.Drug.DrugInfo.Repository.DrugRepository;
 import com.oauth2.User.Auth.Entity.User;
-import com.oauth2.User.TakingPill.Dto.TakingPillSummaryResponse;
-import com.oauth2.User.TakingPill.Service.TakingPillService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
@@ -25,7 +20,6 @@ import java.util.*;
 public class DurService {
 
     private final DrugRepository drugRepository;
-    private final TakingPillService takingPillService;
     private final DurCheckService durCheckService; // 새로 추가된 서비스
     private final StringRedisTemplate redisTemplate;
     private final ObjectMapper objectMapper;
@@ -39,7 +33,7 @@ public class DurService {
             throw new NoSuchElementException("One or both drugs not found");
         }
 
-        DurUserContext userContext = buildUserContext(user);
+        DurUserContext userContext = durCheckService.buildUserContext(user);
 
         List<DurTagDto> tagsForDrug1 = durCheckService.checkForDrug(drug1Opt.get(), user.getUserProfile(), userContext);
         List<DurTagDto> tagsForDrug2 = durCheckService.checkForDrug(drug2Opt.get(), user.getUserProfile(), userContext);
@@ -55,38 +49,8 @@ public class DurService {
                 new DurPerDrugDto(
                         drug1Opt.get().getName() + " + " + drug2Opt.get().getName(),
                         interactionTags.stream().filter(DurTagDto::isTrue).toList()),
-                !userContext.getUserInteractionDrugNames().isEmpty()
+                !userContext.userInteractionDrugNames().isEmpty()
         );
-    }
-
-    private DurUserContext buildUserContext(User user) throws JsonProcessingException {
-        boolean isElderly = user.getUserProfile().getAge() >= 65;
-        Map<String, List<Long>> classToDrugIdsMap = new HashMap<>();
-        Set<String> userInteractionDrugNames = new HashSet<>();
-
-        List<Long> userDrugIds = takingPillService.getTakingPillSummary(user).getTakingPills().stream()
-                .map(TakingPillSummaryResponse.TakingPillSummary::getMedicationId)
-                .toList();
-
-        for (Long userDrugId : userDrugIds) {
-            Optional<Drug> userDrug = drugRepository.findById(userDrugId);
-            if (userDrug.isEmpty()) continue;
-
-            String drugName = userDrug.get().getName();
-            List<String> contraList = redisTemplate.opsForList().range("DUR:INTERACT:" + drugName, 0, -1);
-            if (contraList != null && !contraList.isEmpty()) {
-                userInteractionDrugNames.add(drugName);
-            }
-
-            Map<String, String> value = readJsonFromRedis("DUR:THERAPEUTIC_DUP:" + userDrugId);
-            if (value != null) {
-                String className = value.getOrDefault("className", "").trim();
-                if (!className.isBlank()) {
-                    classToDrugIdsMap.computeIfAbsent(className, k -> new ArrayList<>()).add(userDrugId);
-                }
-            }
-        }
-        return new DurUserContext(isElderly, user.getUserProfile().isPregnant(), classToDrugIdsMap, userInteractionDrugNames);
     }
 
     private List<DurTagDto> checkInteractionBetweenTwoDrugs(Drug drug1, Drug drug2) throws JsonProcessingException {
