@@ -25,6 +25,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.oauth2.User.Auth.Service.TokenService;
 import org.springframework.http.HttpStatus;
 import com.oauth2.User.Hospital.HospitalService;
+import com.oauth2.Util.Encryption.EncryptionUtil;
 
 @RestController
 @RequestMapping("/api/questionnaire")
@@ -37,6 +38,7 @@ public class QuestionnaireController {
     private final TokenService tokenService;
     private final HospitalService hospitalService;
     private final UserService userService;
+    private final EncryptionUtil encryptionUtil;
     //동의사항 조회
     @GetMapping("/permissions")
     public ResponseEntity<ApiResponse<UserPermissionsResponse>> getUserPermissions(
@@ -413,11 +415,10 @@ public class QuestionnaireController {
     private String getDecryptedPhoneNumber(User user) {
         try {
             if (user.getUserProfile() != null && user.getUserProfile().getPhone() != null) {
-                // UserProfile의 phone 필드는 이미 JPA에서 자동으로 복호화됨
-                // 하지만 혹시 문제가 있다면 명시적으로 복호화 시도
-                String phone = user.getUserProfile().getPhone();
-                if (phone != null && !phone.isEmpty()) {
-                    return phone;
+                String encryptedPhone = user.getUserProfile().getPhone();
+                if (encryptedPhone != null && !encryptedPhone.isEmpty()) {
+                    // 명시적으로 복호화
+                    return encryptionUtil.decrypt(encryptedPhone);
                 }
             }
         } catch (Exception e) {

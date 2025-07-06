@@ -6,10 +6,15 @@ package com.oauth2.User.UserInfo.Dto;
 import com.oauth2.User.Auth.Entity.User;
 import com.oauth2.User.UserInfo.Entity.UserPermissions;
 import com.oauth2.User.UserInfo.Entity.UserProfile;
+import com.oauth2.Util.Encryption.EncryptionUtil;
 import lombok.Getter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Getter
 public class UserResponse {
+    private static final Logger logger = LoggerFactory.getLogger(UserResponse.class);
+    
     // 기본 사용자 정보
     private final Long id;
     private final String nickname;
@@ -35,10 +40,10 @@ public class UserResponse {
     private final boolean permissions;
 
     // 생성자, 앱에서 정보를 처리하기 쉽도록 일정한 형식으로 변환
-    public UserResponse(User user) {
+    public UserResponse(User user, EncryptionUtil encryptionUtil) {
         this.id = user.getId();
         this.nickname = user.getNickname();
-        this.profilePhoto = user.getProfilePhoto();
+        this.profilePhoto = getDecryptedProfilePhoto(user, encryptionUtil);
         this.terms = user.isTerms();
         
         // UserProfile에서 정보 가져오기
@@ -46,21 +51,81 @@ public class UserResponse {
         this.age = profile != null ? profile.getAge() : null;
         this.gender = profile != null ? (profile.getGender() != null ? profile.getGender().name() : null) : null;
         this.birthDate = profile != null ? (profile.getBirthDate() != null ? profile.getBirthDate().toString() : null) : null;
-        this.phone = profile != null ? profile.getPhone() : null;
+        this.phone = profile != null ? getDecryptedPhone(profile, encryptionUtil) : null;
         this.pregnant = profile != null ? profile.isPregnant() : false;
         
         // height, weight
         this.height = profile != null && profile.getHeight() != null ? profile.getHeight().toString() : null;
         this.weight = profile != null && profile.getWeight() != null ? profile.getWeight().toString() : null;
         
-        // User 엔티티에서 직접 realName과 address 가져오기
-        this.realName = user.getRealName();
-        this.address = user.getAddress();
+        // User 엔티티에서 직접 realName과 address 가져오기 (복호화)
+        this.realName = getDecryptedRealName(user, encryptionUtil);
+        this.address = getDecryptedAddress(user, encryptionUtil);
         
         // 권한 정보: 두 권한이 모두 true일 때만 true
         UserPermissions userPermissions = user.getUserPermissions();
         this.permissions = userPermissions != null && 
                           userPermissions.isSensitiveInfoPermission() && 
                           userPermissions.isMedicalInfoPermission();
+    }
+
+    /**
+     * 암호화된 프로필 사진을 복호화합니다.
+     */
+    private String getDecryptedProfilePhoto(User user, EncryptionUtil encryptionUtil) {
+        try {
+            String encryptedPhoto = user.getProfilePhoto();
+            if (encryptedPhoto != null && !encryptedPhoto.isEmpty()) {
+                return encryptionUtil.decrypt(encryptedPhoto);
+            }
+        } catch (Exception e) {
+            logger.warn("Failed to decrypt profile photo for user {}: {}", user.getId(), e.getMessage());
+        }
+        return user.getProfilePhoto(); // 복호화 실패 시 원본 반환
+    }
+
+    /**
+     * 암호화된 전화번호를 복호화합니다.
+     */
+    private String getDecryptedPhone(UserProfile profile, EncryptionUtil encryptionUtil) {
+        try {
+            String encryptedPhone = profile.getPhone();
+            if (encryptedPhone != null && !encryptedPhone.isEmpty()) {
+                return encryptionUtil.decrypt(encryptedPhone);
+            }
+        } catch (Exception e) {
+            logger.warn("Failed to decrypt phone for user {}: {}", profile.getUserId(), e.getMessage());
+        }
+        return profile.getPhone(); // 복호화 실패 시 원본 반환
+    }
+
+    /**
+     * 암호화된 실명을 복호화합니다.
+     */
+    private String getDecryptedRealName(User user, EncryptionUtil encryptionUtil) {
+        try {
+            String encryptedName = user.getRealName();
+            if (encryptedName != null && !encryptedName.isEmpty()) {
+                return encryptionUtil.decrypt(encryptedName);
+            }
+        } catch (Exception e) {
+            logger.warn("Failed to decrypt real name for user {}: {}", user.getId(), e.getMessage());
+        }
+        return user.getRealName(); // 복호화 실패 시 원본 반환
+    }
+
+    /**
+     * 암호화된 주소를 복호화합니다.
+     */
+    private String getDecryptedAddress(User user, EncryptionUtil encryptionUtil) {
+        try {
+            String encryptedAddress = user.getAddress();
+            if (encryptedAddress != null && !encryptedAddress.isEmpty()) {
+                return encryptionUtil.decrypt(encryptedAddress);
+            }
+        } catch (Exception e) {
+            logger.warn("Failed to decrypt address for user {}: {}", user.getId(), e.getMessage());
+        }
+        return user.getAddress(); // 복호화 실패 시 원본 반환
     }
 }
