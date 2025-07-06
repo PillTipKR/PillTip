@@ -233,24 +233,6 @@ public class PatientQuestionnaireService {
                     alreadyExists = false;
                 }
                 
-                // name으로도 확인 (동일한 이름의 약물이 있는지)
-                if (!alreadyExists) {
-                    try {
-                        List<com.oauth2.User.TakingPill.Entity.TakingPill> existingPills = takingPillService.getTakingPillsByUser(user);
-                        for (com.oauth2.User.TakingPill.Entity.TakingPill pill : existingPills) {
-                            // 복호화된 약물명으로 비교
-                            String decryptedPillName = getDecryptedMedicationName(pill);
-                            if (medicationName.equals(decryptedPillName)) {
-                                alreadyExists = true;
-                                logger.info("Medication with name '{}' is already registered in takingPill for user {}", medicationName, user.getId());
-                                break;
-                            }
-                        }
-                    } catch (Exception e) {
-                        logger.warn("Error checking existing medications by name for user {}: {}", user.getId(), e.getMessage());
-                    }
-                }
-                
                 if (alreadyExists) {
                     continue; // 이미 등록되어 있으면 건너뛰기
                 }
@@ -267,15 +249,6 @@ public class PatientQuestionnaireService {
                 takingPillRequest.setAlarmName("문진표 등록 약물");
                 takingPillRequest.setDosageAmount(1.0); // 기본 복용량 1
                 takingPillRequest.setDaysOfWeek(List.of("EVERYDAY")); // 매일 복용
-                
-                // 기본 복용 스케줄 설정 (아침 9시)
-                TakingPillRequest.DosageSchedule defaultSchedule = new TakingPillRequest.DosageSchedule();
-                defaultSchedule.setHour(9);
-                defaultSchedule.setMinute(0);
-                defaultSchedule.setPeriod("AM");
-                defaultSchedule.setAlarmOnOff(true);
-                defaultSchedule.setDosageUnit("정");
-                takingPillRequest.setDosageSchedules(List.of(defaultSchedule));
                 
                 // TakingPill에 등록
                 takingPillService.addTakingPill(user, takingPillRequest);
