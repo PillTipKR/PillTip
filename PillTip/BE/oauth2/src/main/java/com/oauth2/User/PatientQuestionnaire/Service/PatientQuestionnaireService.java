@@ -8,9 +8,12 @@ import com.oauth2.User.PatientQuestionnaire.Entity.PatientQuestionnaire;
 import com.oauth2.User.Auth.Entity.User;
 import com.oauth2.User.PatientQuestionnaire.Repository.PatientQuestionnaireRepository;
 import com.oauth2.User.UserInfo.Service.UserService;
-import com.oauth2.User.UserInfo.Service.UserSensitiveInfoService;
-import com.oauth2.User.UserInfo.Dto.UserSensitiveInfoDto;
+import com.oauth2.User.TakingPill.Service.TakingPillService;
+import com.oauth2.User.TakingPill.Dto.TakingPillRequest;
+import com.oauth2.Util.Encryption.EncryptionUtil;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,53 +21,23 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import java.util.ArrayList;
-import java.util.Set;
-import java.util.HashSet;
 
 @Service
 @RequiredArgsConstructor
 public class PatientQuestionnaireService {
+    private static final Logger logger = LoggerFactory.getLogger(PatientQuestionnaireService.class);
+    
     private final PatientQuestionnaireRepository questionnaireRepository;
     private final ObjectMapper objectMapper;
     private final UserService userService;
-    private final UserSensitiveInfoService userSensitiveInfoService;
+    private final TakingPillService takingPillService;
+    private final EncryptionUtil encryptionUtil;
 
     @Transactional
     public PatientQuestionnaire createQuestionnaire(User user, PatientQuestionnaireRequest request) throws JsonProcessingException {
         // Update user realName and address
         userService.updatePersonalInfo(user, request.getRealName(), request.getAddress());
         userService.updatePhoneNumber(user, request.getPhoneNumber());
-        
-        // 기존 민감정보 조회
-        UserSensitiveInfoDto existingHistory = userSensitiveInfoService.getSensitiveInfo(user);
-        
-        // 기존 데이터와 새로운 데이터를 병합
-        String medicationInfo = mergeWithExistingData(
-            request.getMedicationInfo(), 
-            existingHistory != null ? existingHistory.getMedicationInfo() : null, 
-            "medicationName"
-        );
-        String allergyInfo = mergeWithExistingData(
-            request.getAllergyInfo(), 
-            existingHistory != null ? existingHistory.getAllergyInfo() : null, 
-            "allergyName"
-        );
-        String chronicDiseaseInfo = mergeWithExistingData(
-            request.getChronicDiseaseInfo(), 
-            existingHistory != null ? existingHistory.getChronicDiseaseInfo() : null, 
-            "chronicDiseaseName"
-        );
-        String surgeryHistoryInfo = mergeWithExistingData(
-            request.getSurgeryHistoryInfo(), 
-            existingHistory != null ? existingHistory.getSurgeryHistoryInfo() : null, 
-            "surgeryHistoryName"
-        );
-        
-        // 병합된 데이터를 user_sensitive_info에 저장
-        userSensitiveInfoService.syncFromQuestionnaire(user, medicationInfo, allergyInfo, 
-            chronicDiseaseInfo, surgeryHistoryInfo);
-        
         String medicationInfoJson = objectMapper.writeValueAsString(
                 toKeyedList(request.getMedicationInfo(), "medicationId")
         );
@@ -89,7 +62,13 @@ public class PatientQuestionnaireService {
                 .chronicDiseaseInfo(chronicDiseaseInfoJson)
                 .surgeryHistoryInfo(surgeryHistoryInfoJson)
                 .build();
-        return questionnaireRepository.save(questionnaire);
+        
+        PatientQuestionnaire savedQuestionnaire = questionnaireRepository.save(questionnaire);
+        
+        // 문진표 생성 완료 후 별도로 복약 등록 처리
+        processMedicationSync(user, request.getMedicationInfo());
+        
+        return savedQuestionnaire;
     }
 
     private List<Map<String, ?>> toKeyedList(List<PatientQuestionnaireRequest.InfoItem> list, String keyName) {
@@ -120,57 +99,6 @@ public class PatientQuestionnaireService {
                     );
                 })
                 .collect(Collectors.toList());
-    }
-
-    /**
-     * 기존 데이터와 새로운 데이터를 병합
-     */
-    private String mergeWithExistingData(List<PatientQuestionnaireRequest.InfoItem> newItems, 
-                                       List<String> existingItems, 
-                                       String nameField) {
-        // 기존 데이터를 Set으로 변환 (중복 체크용)
-        Set<String> existingNames = (existingItems != null && !existingItems.isEmpty()) 
-            ? new HashSet<>(existingItems)
-            : new HashSet<>();
-        
-        // 새로운 데이터에서 이름 추출 (submitted 여부와 관계없이 모든 항목)
-        List<String> newNames = new ArrayList<>();
-        if (newItems != null) {
-            for (PatientQuestionnaireRequest.InfoItem item : newItems) {
-                String name = getNameFromItem(item, nameField);
-                if (name != null && !name.trim().isEmpty() && !existingNames.contains(name)) {
-                    newNames.add(name.trim());
-                    existingNames.add(name.trim()); // 중복 방지를 위해 Set에 추가
-                }
-            }
-        }
-        
-        // 기존 데이터와 새로운 데이터를 합침
-        List<String> mergedList = new ArrayList<>();
-        if (existingItems != null) {
-            mergedList.addAll(existingItems);
-        }
-        mergedList.addAll(newNames);
-        
-        return String.join(", ", mergedList);
-    }
-    
-    /**
-     * InfoItem에서 이름 필드 값을 추출
-     */
-    private String getNameFromItem(PatientQuestionnaireRequest.InfoItem item, String nameField) {
-        switch (nameField) {
-            case "medicationName":
-                return item.getMedicationName();
-            case "allergyName":
-                return item.getAllergyName();
-            case "chronicDiseaseName":
-                return item.getChronicDiseaseName();
-            case "surgeryHistoryName":
-                return item.getSurgeryHistoryName();
-            default:
-                return null;
-        }
     }
 
     public List<PatientQuestionnaireSummaryResponse> getUserQuestionnaireSummaries(User user) {
@@ -211,36 +139,6 @@ public class PatientQuestionnaireService {
         // Update user realName and address
         userService.updatePersonalInfo(user, request.getRealName(), request.getAddress());
         userService.updatePhoneNumber(user, request.getPhoneNumber());
-        
-        // 기존 민감정보 조회
-        UserSensitiveInfoDto existingHistory = userSensitiveInfoService.getSensitiveInfo(user);
-        
-        // 기존 데이터와 새로운 데이터를 병합
-        String medicationInfo = mergeWithExistingData(
-            request.getMedicationInfo(), 
-            existingHistory != null ? existingHistory.getMedicationInfo() : null, 
-            "medicationName"
-        );
-        String allergyInfo = mergeWithExistingData(
-            request.getAllergyInfo(), 
-            existingHistory != null ? existingHistory.getAllergyInfo() : null, 
-            "allergyName"
-        );
-        String chronicDiseaseInfo = mergeWithExistingData(
-            request.getChronicDiseaseInfo(), 
-            existingHistory != null ? existingHistory.getChronicDiseaseInfo() : null, 
-            "chronicDiseaseName"
-        );
-        String surgeryHistoryInfo = mergeWithExistingData(
-            request.getSurgeryHistoryInfo(), 
-            existingHistory != null ? existingHistory.getSurgeryHistoryInfo() : null, 
-            "surgeryHistoryName"
-        );
-        
-        // 병합된 데이터를 user_sensitive_info에 저장
-        userSensitiveInfoService.syncFromQuestionnaire(user, medicationInfo, allergyInfo, 
-            chronicDiseaseInfo, surgeryHistoryInfo);
-        
         PatientQuestionnaire q = questionnaireRepository.findByIdWithUser(id)
             .orElseThrow(() -> new IllegalArgumentException("문진표를 찾을 수 없습니다."));
         if (!q.getUser().getId().equals(user.getId())) {
@@ -253,7 +151,13 @@ public class PatientQuestionnaireService {
         q.setChronicDiseaseInfo(objectMapper.writeValueAsString(toKeyedList(request.getChronicDiseaseInfo(), "chronicDiseaseName")));
         q.setSurgeryHistoryInfo(objectMapper.writeValueAsString(toKeyedList(request.getSurgeryHistoryInfo(), "surgeryHistoryName")));
         q.setLastModifiedDate(LocalDate.now());
-        return q;
+        
+        PatientQuestionnaire updatedQuestionnaire = q;
+        
+        // 문진표 수정 완료 후 별도로 복약 등록 처리
+        processMedicationSync(user, request.getMedicationInfo());
+        
+        return updatedQuestionnaire;
     }
 
     @Transactional
@@ -278,5 +182,127 @@ public class PatientQuestionnaireService {
     public PatientQuestionnaire getQuestionnaireByIdPublic(Integer id) {
         return questionnaireRepository.findById(id)
             .orElseThrow(() -> new IllegalArgumentException("문진표를 찾을 수 없습니다."));
+    }
+
+    /**
+     * 문진표에 등록된 복약기록을 takingPill에 자동 등록하는 메서드 (별도 처리)
+     */
+    private void processMedicationSync(User user, List<PatientQuestionnaireRequest.InfoItem> medicationInfo) {
+        if (medicationInfo == null || medicationInfo.isEmpty()) {
+            return;
+        }
+
+        // 별도 스레드에서 비동기적으로 처리
+        new Thread(() -> {
+            try {
+                syncMedicationToTakingPill(user, medicationInfo);
+            } catch (Exception e) {
+                logger.error("Failed to sync medication to takingPill for user {}: {}", user.getId(), e.getMessage(), e);
+            }
+        }).start();
+    }
+
+    /**
+     * 문진표에 등록된 복약기록을 takingPill에 자동 등록하는 메서드
+     */
+    @Transactional(propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW)
+    private void syncMedicationToTakingPill(User user, List<PatientQuestionnaireRequest.InfoItem> medicationInfo) {
+        if (medicationInfo == null || medicationInfo.isEmpty()) {
+            return;
+        }
+
+        // submit 값과 관계없이 모든 약물 처리
+        List<PatientQuestionnaireRequest.InfoItem> validMedications = medicationInfo.stream()
+                .filter(item -> item.getMedicationId() != null && !item.getMedicationId().trim().isEmpty())
+                .collect(Collectors.toList());
+
+        for (PatientQuestionnaireRequest.InfoItem medication : validMedications) {
+            try {
+                Long medicationId = Long.parseLong(medication.getMedicationId());
+                String medicationName = medication.getMedicationName() != null ? medication.getMedicationName() : "문진표 등록 약물";
+                
+                // 이미 takingPill에 등록되어 있는지 확인 (name과 id가 동일한 값이 있는지)
+                boolean alreadyExists = false;
+                try {
+                    takingPillService.getTakingPillDetailById(user, medicationId);
+                    // ID로 조회 성공하면 이미 존재
+                    alreadyExists = true;
+                    logger.info("Medication with ID {} is already registered in takingPill for user {}", medicationId, user.getId());
+                } catch (Exception e) {
+                    // ID로 조회 실패하면 존재하지 않음
+                    alreadyExists = false;
+                }
+                
+                // name으로도 확인 (동일한 이름의 약물이 있는지)
+                if (!alreadyExists) {
+                    try {
+                        List<com.oauth2.User.TakingPill.Entity.TakingPill> existingPills = takingPillService.getTakingPillsByUser(user);
+                        for (com.oauth2.User.TakingPill.Entity.TakingPill pill : existingPills) {
+                            // 복호화된 약물명으로 비교
+                            String decryptedPillName = getDecryptedMedicationName(pill);
+                            if (medicationName.equals(decryptedPillName)) {
+                                alreadyExists = true;
+                                logger.info("Medication with name '{}' is already registered in takingPill for user {}", medicationName, user.getId());
+                                break;
+                            }
+                        }
+                    } catch (Exception e) {
+                        logger.warn("Error checking existing medications by name for user {}: {}", user.getId(), e.getMessage());
+                    }
+                }
+                
+                if (alreadyExists) {
+                    continue; // 이미 등록되어 있으면 건너뛰기
+                }
+                
+                // 등록되어 있지 않으면 새로 등록
+                logger.info("Medication {} ({}) is not registered in takingPill, creating new entry for user {}", medicationId, medicationName, user.getId());
+                
+                // 기본 복용 정보로 TakingPillRequest 생성
+                TakingPillRequest takingPillRequest = new TakingPillRequest();
+                takingPillRequest.setMedicationId(medicationId);
+                takingPillRequest.setMedicationName(medicationName);
+                takingPillRequest.setStartDate(LocalDate.now()); // 오늘부터 시작
+                takingPillRequest.setEndDate(LocalDate.now().plusYears(1)); // 1년 후까지
+                takingPillRequest.setAlarmName("문진표 등록 약물");
+                takingPillRequest.setDosageAmount(1.0); // 기본 복용량 1
+                takingPillRequest.setDaysOfWeek(List.of("EVERYDAY")); // 매일 복용
+                
+                // 기본 복용 스케줄 설정 (아침 9시)
+                TakingPillRequest.DosageSchedule defaultSchedule = new TakingPillRequest.DosageSchedule();
+                defaultSchedule.setHour(9);
+                defaultSchedule.setMinute(0);
+                defaultSchedule.setPeriod("AM");
+                defaultSchedule.setAlarmOnOff(true);
+                defaultSchedule.setDosageUnit("정");
+                takingPillRequest.setDosageSchedules(List.of(defaultSchedule));
+                
+                // TakingPill에 등록
+                takingPillService.addTakingPill(user, takingPillRequest);
+                logger.info("Successfully registered medication {} ({}) to takingPill for user {}", medicationId, medicationName, user.getId());
+                
+            } catch (NumberFormatException e) {
+                logger.warn("Invalid medication ID format: {} for user {}", medication.getMedicationId(), user.getId());
+            } catch (Exception e) {
+                logger.error("Failed to register medication {} ({}) to takingPill for user {}: {}", 
+                    medication.getMedicationId(), medication.getMedicationName(), user.getId(), e.getMessage());
+                // 개별 약물 등록 실패가 전체 프로세스를 중단하지 않도록 예외를 다시 던지지 않음
+            }
+        }
+    }
+
+    /**
+     * TakingPill의 암호화된 약물명을 복호화합니다.
+     */
+    private String getDecryptedMedicationName(com.oauth2.User.TakingPill.Entity.TakingPill pill) {
+        try {
+            String encryptedName = pill.getMedicationName();
+            if (encryptedName != null && !encryptedName.isEmpty()) {
+                return encryptionUtil.decrypt(encryptedName);
+            }
+        } catch (Exception e) {
+            logger.warn("Failed to decrypt medication name for takingPill {}: {}", pill.getId(), e.getMessage());
+        }
+        return pill.getMedicationName(); // 복호화 실패 시 원본 반환
     }
 } 

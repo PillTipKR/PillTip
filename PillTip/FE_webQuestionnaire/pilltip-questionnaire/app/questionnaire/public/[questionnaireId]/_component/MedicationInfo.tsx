@@ -20,7 +20,10 @@ export default function MedicationInfoBlock({
               key={idx}
               className={`${styles.infoItem} ${styles.medicationInfoItem}`}
             >
-              • 약물 ID: {med.medication_id}
+              •{" "}
+              {med.medication_name
+                ? `${med.medication_name} (ID: ${med.medication_id})`
+                : `약물 ID: ${med.medication_id}`}
             </div>
           ))}
       </div>

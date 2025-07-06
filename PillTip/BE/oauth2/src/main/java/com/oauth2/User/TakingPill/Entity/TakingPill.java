@@ -36,29 +36,29 @@ public class TakingPill {
     @Convert(converter = EncryptionConverter.class)
     private String medicationName;
 
-    @Column(name = "start_year", nullable = false)
+    @Column(name = "start_year", nullable = true)
     private Integer startYear;
 
-    @Column(name = "start_month", nullable = false)
+    @Column(name = "start_month", nullable = true)
     private Integer startMonth;
 
-    @Column(name = "start_day", nullable = false)
+    @Column(name = "start_day", nullable = true)
     private Integer startDay;
 
-    @Column(name = "end_year", nullable = false)
+    @Column(name = "end_year", nullable = true)
     private Integer endYear;
 
-    @Column(name = "end_month", nullable = false)
+    @Column(name = "end_month", nullable = true)
     private Integer endMonth;
 
-    @Column(name = "end_day", nullable = false)
+    @Column(name = "end_day", nullable = true)
     private Integer endDay;
 
-    @Column(name = "alarm_name", nullable = false)
+    @Column(name = "alarm_name", nullable = true)
     @Convert(converter = EncryptionConverter.class)
     private String alarmName;
 
-    @Column(name = "days_of_week", nullable = false)
+    @Column(name = "days_of_week", nullable = true)
     @Convert(converter = EncryptionConverter.class)
     private String daysOfWeek; // JSON 형태로 저장 (["MON", "TUE", "WED"])
 

@@ -38,6 +38,7 @@ export default function QuestionnaireDisplay({
   const medicationInfoRaw = questionnaire.data.medicationInfo;
   const medicationInfo = safeParse(medicationInfoRaw).map((item: any) => ({
     medication_id: item.medication_id ?? item.medicationId ?? "",
+    medication_name: item.medication_name ?? item.medicationName ?? "",
     submitted: item.submitted,
   }));
 

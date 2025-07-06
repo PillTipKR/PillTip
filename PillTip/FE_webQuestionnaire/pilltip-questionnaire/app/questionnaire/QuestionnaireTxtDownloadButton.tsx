@@ -30,8 +30,12 @@ function generateQuestionnaireTxt(questionnaire: any): string {
   const filteredMedication = medicationInfo.filter((med: any) => med.submitted);
   if (filteredMedication.length > 0) {
     filteredMedication.forEach((med: any, index: number) => {
-      content += `${index + 1}. 약물 ID: ${
-        med.medicationId || med.medication_id || "미입력"
+      const medicationId = med.medicationId || med.medication_id || "미입력";
+      const medicationName = med.medicationName || med.medication_name || "";
+      content += `${index + 1}. ${
+        medicationName
+          ? `${medicationName} (ID: ${medicationId})`
+          : `약물 ID: ${medicationId}`
       }\n`;
       content += `   복용 여부: 복용 중\n`;
     });
