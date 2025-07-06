@@ -1,4 +1,4 @@
-package com.oauth2.Drug.DrugImport.Service;
+package com.oauth2.Drug.Import.DrugImport.Service;
 
 import java.io.IOException;
 import java.io.InputStreamReader;

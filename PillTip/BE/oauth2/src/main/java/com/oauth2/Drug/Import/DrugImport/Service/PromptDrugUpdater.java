@@ -1,4 +1,4 @@
-package com.oauth2.Drug.DrugImport.Service;
+package com.oauth2.Drug.Import.DrugImport.Service;
 
 import com.oauth2.Drug.DrugInfo.Domain.*;
 import com.oauth2.Drug.DrugInfo.Service.*;

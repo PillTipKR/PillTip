@@ -11,6 +11,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -78,8 +79,8 @@ public class ReviewController {
     }
 
     @GetMapping("/drug/{drugId}/stats")
-    public ResponseEntity<ApiResponse<ReviewStats>> getDrugReviews(
-            @AuthenticationPrincipal User user, @PathVariable Long drugId) {
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse<ReviewStats>> getDrugReviews(@PathVariable Long drugId) {
         ReviewStats reviewStats = reviewService.getReviewWithRating(drugId);
         return ResponseEntity.ok(ApiResponse.success("조회 성공", reviewStats));
     }
@@ -89,7 +90,7 @@ public class ReviewController {
             @AuthenticationPrincipal User user,
             @PathVariable Long reviewId
     ) {
-        boolean liked = reviewLikeService.toggleLike(user.getId(), reviewId);
+        boolean liked = reviewLikeService.toggleLike(user, reviewId);
         String message = liked ? "좋아요 추가됨" : "좋아요 취소됨";
         return ResponseEntity.ok(ApiResponse.success(message));
     }

@@ -1,8 +1,8 @@
-package com.oauth2.Drug.DrugImport.Controller;
+package com.oauth2.Drug.Import.DrugImport.Controller;
 
-import com.oauth2.Drug.DrugImport.Service.DrugImportService;
-import com.oauth2.Drug.DrugImport.Service.IngredientImportService;
-import com.oauth2.Drug.DrugImport.Service.PromptImporter;
+import com.oauth2.Drug.Import.DrugImport.Service.DrugImportService;
+import com.oauth2.Drug.Import.DrugImport.Service.IngredientImportService;
+import com.oauth2.Drug.Import.DrugImport.Service.PromptImporter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
