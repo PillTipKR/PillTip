@@ -5,8 +5,11 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.oauth2.User.TakingPill.Entity.DosageSchedule;
 import com.oauth2.User.TakingPill.Entity.TakingPill;
+import com.oauth2.Util.Encryption.EncryptionUtil;
 import lombok.Getter;
 import lombok.Setter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -16,6 +19,8 @@ import java.util.stream.Collectors;
 @Getter
 @Setter
 public class TakingPillResponse {
+    private static final Logger logger = LoggerFactory.getLogger(TakingPillResponse.class);
+    
     @JsonProperty("id")
     private Long id;
 
@@ -61,7 +66,83 @@ public class TakingPillResponse {
         }
     }
 
-    private List<String> parseDaysOfWeek(String daysOfWeekJson) {
+    /**
+     * 복호화된 필드를 사용하여 TakingPillResponse를 생성하는 정적 팩토리 메서드
+     */
+    public static TakingPillResponse fromDecrypted(TakingPill takingPill, EncryptionUtil encryptionUtil) {
+        TakingPillResponse response = new TakingPillResponse();
+        response.id = takingPill.getId();
+        response.medicationId = takingPill.getMedicationId();
+        response.medicationName = getDecryptedMedicationName(takingPill, encryptionUtil);
+        response.startDate = createSafeLocalDate(takingPill.getStartYear(), takingPill.getStartMonth(), takingPill.getStartDay());
+        response.endDate = createSafeLocalDate(takingPill.getEndYear(), takingPill.getEndMonth(), takingPill.getEndDay());
+        response.alertName = getDecryptedAlarmName(takingPill, encryptionUtil);
+        
+        // JSON 문자열을 리스트로 변환 (복호화된 데이터 사용)
+        response.daysOfWeek = parseDaysOfWeek(getDecryptedDaysOfWeek(takingPill, encryptionUtil));
+        
+        // dosageSchedules가 null일 경우 빈 리스트로 초기화
+        if (takingPill.getDosageSchedules() != null) {
+            response.dosageSchedules = takingPill.getDosageSchedules().stream()
+                    .map(DosageScheduleResponse::new)
+                    .collect(Collectors.toList());
+        } else {
+            response.dosageSchedules = new ArrayList<>();
+        }
+        
+        return response;
+    }
+
+    private TakingPillResponse() {
+        // 기본 생성자
+    }
+
+    /**
+     * 암호화된 약물명을 복호화합니다.
+     */
+    private static String getDecryptedMedicationName(TakingPill takingPill, EncryptionUtil encryptionUtil) {
+        try {
+            String encryptedName = takingPill.getMedicationName();
+            if (encryptedName != null && !encryptedName.isEmpty()) {
+                return encryptionUtil.decrypt(encryptedName);
+            }
+        } catch (Exception e) {
+            logger.warn("Failed to decrypt medication name for takingPill {}: {}", takingPill.getId(), e.getMessage());
+        }
+        return takingPill.getMedicationName(); // 복호화 실패 시 원본 반환
+    }
+
+    /**
+     * 암호화된 알림명을 복호화합니다.
+     */
+    private static String getDecryptedAlarmName(TakingPill takingPill, EncryptionUtil encryptionUtil) {
+        try {
+            String encryptedName = takingPill.getAlarmName();
+            if (encryptedName != null && !encryptedName.isEmpty()) {
+                return encryptionUtil.decrypt(encryptedName);
+            }
+        } catch (Exception e) {
+            logger.warn("Failed to decrypt alarm name for takingPill {}: {}", takingPill.getId(), e.getMessage());
+        }
+        return takingPill.getAlarmName(); // 복호화 실패 시 원본 반환
+    }
+
+    /**
+     * 암호화된 요일 정보를 복호화합니다.
+     */
+    private static String getDecryptedDaysOfWeek(TakingPill takingPill, EncryptionUtil encryptionUtil) {
+        try {
+            String encryptedDays = takingPill.getDaysOfWeek();
+            if (encryptedDays != null && !encryptedDays.isEmpty()) {
+                return encryptionUtil.decrypt(encryptedDays);
+            }
+        } catch (Exception e) {
+            logger.warn("Failed to decrypt days of week for takingPill {}: {}", takingPill.getId(), e.getMessage());
+        }
+        return takingPill.getDaysOfWeek(); // 복호화 실패 시 원본 반환
+    }
+
+    private static List<String> parseDaysOfWeek(String daysOfWeekJson) {
         if (daysOfWeekJson == null || daysOfWeekJson.isEmpty()) {
             return List.of();
         }
@@ -78,7 +159,7 @@ public class TakingPillResponse {
     /**
      * 안전한 LocalDate 생성 메서드
      */
-    private LocalDate createSafeLocalDate(Integer year, Integer month, Integer day) {
+    private static LocalDate createSafeLocalDate(Integer year, Integer month, Integer day) {
         if (year == null || month == null || day == null) {
             return LocalDate.now(); // 기본값으로 오늘 날짜 반환
         }

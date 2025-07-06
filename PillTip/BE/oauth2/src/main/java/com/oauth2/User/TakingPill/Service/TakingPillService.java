@@ -14,7 +14,10 @@ import com.oauth2.User.TakingPill.Entity.DosageSchedule;
 import com.oauth2.User.TakingPill.Repositoty.DosageLogRepository;
 import com.oauth2.User.TakingPill.Repositoty.TakingPillRepository;
 import com.oauth2.User.TakingPill.Repositoty.DosageScheduleRepository;
+import com.oauth2.Util.Encryption.EncryptionUtil;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,10 +34,12 @@ import static com.oauth2.User.TakingPill.Entity.PillStatus.*;
 @RequiredArgsConstructor
 @Transactional
 public class TakingPillService {
+    private static final Logger logger = LoggerFactory.getLogger(TakingPillService.class);
     private final TakingPillRepository takingPillRepository;
     private final DosageScheduleRepository dosageScheduleRepository;
     private final ObjectMapper objectMapper;
     private final DosageLogRepository dosageLogRepository;
+    private final EncryptionUtil encryptionUtil;
 
     /**
      * 복용 중인 약을 추가합니다.
@@ -54,12 +59,12 @@ public class TakingPillService {
                 .user(user)
                 .medicationId(request.getMedicationId())
                 .medicationName(request.getMedicationName())
-                .startYear(request.getStartDate().getYear())
-                .startMonth(request.getStartDate().getMonthValue())
-                .startDay(request.getStartDate().getDayOfMonth())
-                .endYear(request.getEndDate().getYear())
-                .endMonth(request.getEndDate().getMonthValue())
-                .endDay(request.getEndDate().getDayOfMonth())
+                .startYear(request.getStartDate() != null ? request.getStartDate().getYear() : null)
+                .startMonth(request.getStartDate() != null ? request.getStartDate().getMonthValue() : null)
+                .startDay(request.getStartDate() != null ? request.getStartDate().getDayOfMonth() : null)
+                .endYear(request.getEndDate() != null ? request.getEndDate().getYear() : null)
+                .endMonth(request.getEndDate() != null ? request.getEndDate().getMonthValue() : null)
+                .endDay(request.getEndDate() != null ? request.getEndDate().getDayOfMonth() : null)
                 .alarmName(request.getAlarmName())
                 .daysOfWeek(convertDaysOfWeekToJson(request.getDaysOfWeek()))
                 .dosageAmount(request.getDosageAmount())
@@ -85,7 +90,8 @@ public class TakingPillService {
             }
         }
         List<DosageSchedule> schedules = savedTakingPill.getDosageSchedules();
-        if (!schedules.isEmpty()) {
+
+        if (schedules != null && !schedules.isEmpty() && request.getStartDate() != null && request.getEndDate() != null) {
             LocalDate date = request.getStartDate();
             while (!date.isAfter(request.getEndDate())) {
                 if (matchesToday(savedTakingPill, date)) {
@@ -190,12 +196,12 @@ public class TakingPillService {
 
         // TakingPill 정보 업데이트
         takingPill.setMedicationName(request.getMedicationName());
-        takingPill.setStartYear(request.getStartDate().getYear());
-        takingPill.setStartMonth(request.getStartDate().getMonthValue());
-        takingPill.setStartDay(request.getStartDate().getDayOfMonth());
-        takingPill.setEndYear(request.getEndDate().getYear());
-        takingPill.setEndMonth(request.getEndDate().getMonthValue());
-        takingPill.setEndDay(request.getEndDate().getDayOfMonth());
+        takingPill.setStartYear(request.getStartDate() != null ? request.getStartDate().getYear() : null);
+        takingPill.setStartMonth(request.getStartDate() != null ? request.getStartDate().getMonthValue() : null);
+        takingPill.setStartDay(request.getStartDate() != null ? request.getStartDate().getDayOfMonth() : null);
+        takingPill.setEndYear(request.getEndDate() != null ? request.getEndDate().getYear() : null);
+        takingPill.setEndMonth(request.getEndDate() != null ? request.getEndDate().getMonthValue() : null);
+        takingPill.setEndDay(request.getEndDate() != null ? request.getEndDate().getDayOfMonth() : null);
         takingPill.setAlarmName(request.getAlarmName());
         takingPill.setDaysOfWeek(convertDaysOfWeekToJson(request.getDaysOfWeek()));
         takingPill.setDosageAmount(request.getDosageAmount());
@@ -266,8 +272,8 @@ public class TakingPillService {
         List<TakingPillSummaryResponse.TakingPillSummary> summaries = takingPills.stream()
                 .map(pill -> TakingPillSummaryResponse.TakingPillSummary.builder()
                         .medicationId(pill.getMedicationId())
-                        .medicationName(pill.getMedicationName())
-                        .alarmName(pill.getAlarmName())
+                        .medicationName(getDecryptedMedicationName(pill))
+                        .alarmName(getDecryptedAlarmName(pill))
                         .startDate(createSafeLocalDate(pill.getStartYear(), pill.getStartMonth(), pill.getStartDay()))
                         .endDate(createSafeLocalDate(pill.getEndYear(), pill.getEndMonth(), pill.getEndDay()))
                         .dosageAmount(pill.getDosageAmount())
@@ -321,11 +327,11 @@ public class TakingPillService {
     private TakingPillDetailResponse.TakingPillDetail convertToDetailResponse(TakingPill takingPill) {
         return TakingPillDetailResponse.TakingPillDetail.builder()
                 .medicationId(takingPill.getMedicationId())
-                .medicationName(takingPill.getMedicationName())
+                .medicationName(getDecryptedMedicationName(takingPill))
                 .startDate(createSafeLocalDate(takingPill.getStartYear(), takingPill.getStartMonth(), takingPill.getStartDay()))
                 .endDate(createSafeLocalDate(takingPill.getEndYear(), takingPill.getEndMonth(), takingPill.getEndDay()))
-                .alarmName(takingPill.getAlarmName())
-                .daysOfWeek(parseDaysOfWeekFromJson(takingPill.getDaysOfWeek()))
+                .alarmName(getDecryptedAlarmName(takingPill))
+                .daysOfWeek(parseDaysOfWeekFromJson(getDecryptedDaysOfWeek(takingPill)))
                 .dosageAmount(takingPill.getDosageAmount())
                 .dosageSchedules(takingPill.getDosageSchedules().stream()
                         .map(schedule -> TakingPillDetailResponse.DosageScheduleDetail.builder()
@@ -340,9 +346,57 @@ public class TakingPillService {
     }
 
     /**
+     * 암호화된 약물명을 복호화합니다.
+     */
+    private String getDecryptedMedicationName(TakingPill takingPill) {
+        try {
+            String encryptedName = takingPill.getMedicationName();
+            if (encryptedName != null && !encryptedName.isEmpty()) {
+                return encryptionUtil.decrypt(encryptedName);
+            }
+        } catch (Exception e) {
+            logger.warn("Failed to decrypt medication name for takingPill {}: {}", takingPill.getId(), e.getMessage());
+        }
+        return takingPill.getMedicationName(); // 복호화 실패 시 원본 반환
+    }
+
+    /**
+     * 암호화된 알림명을 복호화합니다.
+     */
+    private String getDecryptedAlarmName(TakingPill takingPill) {
+        try {
+            String encryptedName = takingPill.getAlarmName();
+            if (encryptedName != null && !encryptedName.isEmpty()) {
+                return encryptionUtil.decrypt(encryptedName);
+            }
+        } catch (Exception e) {
+            logger.warn("Failed to decrypt alarm name for takingPill {}: {}", takingPill.getId(), e.getMessage());
+        }
+        return takingPill.getAlarmName(); // 복호화 실패 시 원본 반환
+    }
+
+    /**
+     * 암호화된 요일 정보를 복호화합니다.
+     */
+    private String getDecryptedDaysOfWeek(TakingPill takingPill) {
+        try {
+            String encryptedDays = takingPill.getDaysOfWeek();
+            if (encryptedDays != null && !encryptedDays.isEmpty()) {
+                return encryptionUtil.decrypt(encryptedDays);
+            }
+        } catch (Exception e) {
+            logger.warn("Failed to decrypt days of week for takingPill {}: {}", takingPill.getId(), e.getMessage());
+        }
+        return takingPill.getDaysOfWeek(); // 복호화 실패 시 원본 반환
+    }
+
+    /**
      * 요일 리스트를 JSON 문자열로 변환합니다.
      */
     private String convertDaysOfWeekToJson(List<String> daysOfWeek) {
+        if (daysOfWeek == null || daysOfWeek.isEmpty()) {
+            return "[]";
+        }
         try {
             return objectMapper.writeValueAsString(daysOfWeek);
         } catch (JsonProcessingException e) {
@@ -431,8 +485,6 @@ public class TakingPillService {
         return "PM".equalsIgnoreCase(period) ? hour + 12 : hour;
     }
 
-
-
     /**
      * 요청 데이터 검증 메서드
      */
@@ -445,40 +497,36 @@ public class TakingPillService {
             throw new RuntimeException("약품 이름은 필수입니다.");
         }
         
-        if (request.getStartDate() == null) {
-            throw new RuntimeException("시작일은 필수입니다.");
+        // startDate와 endDate가 모두 null이거나 모두 설정되어야 함
+        if ((request.getStartDate() == null) != (request.getEndDate() == null)) {
+            throw new RuntimeException("시작일과 종료일은 모두 설정되거나 모두 null이어야 합니다.");
         }
         
-        if (request.getEndDate() == null) {
-            throw new RuntimeException("종료일은 필수입니다.");
-        }
-        
-        if (request.getStartDate().isAfter(request.getEndDate())) {
-            throw new RuntimeException("시작일은 종료일보다 이전이어야 합니다.");
-        }
-        
-        if (request.getAlarmName() == null || request.getAlarmName().trim().isEmpty()) {
-            throw new RuntimeException("알림명은 필수입니다.");
-        }
-        
-        if (!request.isValidDaysOfWeek()) {
-            throw new RuntimeException("유효하지 않은 요일 정보입니다.");
-        }
-        
-        if (request.getDosageSchedules() == null || request.getDosageSchedules().isEmpty()) {
-            throw new RuntimeException("복용 스케줄은 최소 1개 이상 필요합니다.");
-        }
-        
-        // 복용 스케줄 검증
-        for (TakingPillRequest.DosageSchedule schedule : request.getDosageSchedules()) {
-            if (!schedule.isValidHour()) {
-                throw new RuntimeException("시간은 0-12 사이의 값이어야 합니다.");
+        // startDate와 endDate가 모두 설정된 경우에만 날짜 검증
+        if (request.getStartDate() != null && request.getEndDate() != null) {
+            if (request.getStartDate().isAfter(request.getEndDate())) {
+                throw new RuntimeException("시작일은 종료일보다 이전이어야 합니다.");
             }
-            if (!schedule.isValidMinute()) {
-                throw new RuntimeException("분은 0-59 사이의 값이어야 합니다.");
-            }
-            if (!schedule.isValidPeriod()) {
-                throw new RuntimeException("기간은 AM 또는 PM이어야 합니다.");
+        }
+        
+        // alarmName은 null 허용
+        
+        // daysOfWeek는 null 허용
+        
+        // dosageSchedules는 null 허용 (빈 배열도 허용)
+        
+        // 복용 스케줄이 있는 경우에만 검증
+        if (request.getDosageSchedules() != null && !request.getDosageSchedules().isEmpty()) {
+            for (TakingPillRequest.DosageSchedule schedule : request.getDosageSchedules()) {
+                if (!schedule.isValidHour()) {
+                    throw new RuntimeException("시간은 0-12 사이의 값이어야 합니다.");
+                }
+                if (!schedule.isValidMinute()) {
+                    throw new RuntimeException("분은 0-59 사이의 값이어야 합니다.");
+                }
+                if (!schedule.isValidPeriod()) {
+                    throw new RuntimeException("기간은 AM 또는 PM이어야 합니다.");
+                }
             }
         }
     }

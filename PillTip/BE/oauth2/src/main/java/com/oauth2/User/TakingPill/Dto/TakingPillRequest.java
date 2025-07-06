@@ -22,10 +22,10 @@ public class TakingPillRequest {
     private String medicationName;
     
     @JsonProperty("startDate")
-    private LocalDate startDate; // YYYY-MM-DD
+    private LocalDate startDate;
     
     @JsonProperty("endDate")
-    private LocalDate endDate; // YYYY-MM-DD
+    private LocalDate endDate;
     
     @JsonProperty("alarmName")
     private String alarmName; // 알림명 (아침약, 꼭 먹기! 등)

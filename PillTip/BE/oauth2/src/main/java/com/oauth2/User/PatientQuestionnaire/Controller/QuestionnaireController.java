@@ -25,6 +25,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.oauth2.User.Auth.Service.TokenService;
 import org.springframework.http.HttpStatus;
 import com.oauth2.User.Hospital.HospitalService;
+import com.oauth2.Util.Encryption.EncryptionUtil;
 
 @RestController
 @RequestMapping("/api/questionnaire")
@@ -37,6 +38,7 @@ public class QuestionnaireController {
     private final TokenService tokenService;
     private final HospitalService hospitalService;
     private final UserService userService;
+    private final EncryptionUtil encryptionUtil;
     //동의사항 조회
     @GetMapping("/permissions")
     public ResponseEntity<ApiResponse<UserPermissionsResponse>> getUserPermissions(
@@ -196,7 +198,8 @@ public class QuestionnaireController {
         logger.info("Received createQuestionnaire request for user: {}", user.getId());
         try {
             PatientQuestionnaire questionnaire = patientQuestionnaireService.createQuestionnaire(user, request);
-            PatientQuestionnaireResponse response = PatientQuestionnaireResponse.from(questionnaire);
+            String decryptedPhoneNumber = getDecryptedPhoneNumber(user);
+            PatientQuestionnaireResponse response = PatientQuestionnaireResponse.from(questionnaire, decryptedPhoneNumber);
             logger.info("Successfully created questionnaire for user: {}", user.getId());
             return ResponseEntity.status(201)
                 .body(ApiResponse.success("Questionnaire created successfully", response));
@@ -231,7 +234,8 @@ public class QuestionnaireController {
                 logger.info("Custom token validation result for questionnaireId {}: {}", id, valid);
                 if (valid) {
                     PatientQuestionnaire questionnaire = patientQuestionnaireService.getQuestionnaireByIdPublic(id);
-                    PatientQuestionnaireResponse response = PatientQuestionnaireResponse.from(questionnaire);
+                    String decryptedPhoneNumber = getDecryptedPhoneNumber(questionnaire.getUser());
+                    PatientQuestionnaireResponse response = PatientQuestionnaireResponse.from(questionnaire, decryptedPhoneNumber);
                     logger.info("Successfully retrieved questionnaire by custom token - Questionnaire ID: {}", id);
                     return ResponseEntity.status(200)
                         .body(ApiResponse.success("문진표 조회 성공 (커스텀 토큰)", response));
@@ -246,7 +250,8 @@ public class QuestionnaireController {
                     .body(ApiResponse.error("인증이 필요합니다.", null));
             }
             PatientQuestionnaire questionnaire = patientQuestionnaireService.getQuestionnaireById(user, id);
-            PatientQuestionnaireResponse response = PatientQuestionnaireResponse.from(questionnaire);
+            String decryptedPhoneNumber = getDecryptedPhoneNumber(questionnaire.getUser());
+            PatientQuestionnaireResponse response = PatientQuestionnaireResponse.from(questionnaire, decryptedPhoneNumber);
             logger.info("Successfully retrieved questionnaire for user: {} - Questionnaire ID: {}", user.getId(), id);
             return ResponseEntity.status(200)
                 .body(ApiResponse.success("문진표 조회 성공", response));
@@ -315,7 +320,8 @@ public class QuestionnaireController {
         
         try {
             PatientQuestionnaire updated = patientQuestionnaireService.updateQuestionnaire(user, id, request);
-            PatientQuestionnaireResponse response = PatientQuestionnaireResponse.from(updated);
+            String decryptedPhoneNumber = getDecryptedPhoneNumber(user);
+            PatientQuestionnaireResponse response = PatientQuestionnaireResponse.from(updated, decryptedPhoneNumber);
             return ResponseEntity.ok(ApiResponse.success("문진표 수정 성공", response));
         } catch (JsonProcessingException e) {
             return ResponseEntity.status(400)
@@ -400,8 +406,24 @@ public class QuestionnaireController {
                 .body(ApiResponse.error("유효하지 않은 커스텀 토큰입니다.", null));
         }
         PatientQuestionnaire questionnaire = patientQuestionnaireService.getQuestionnaireByIdPublic(id);
-        PatientQuestionnaireResponse response = PatientQuestionnaireResponse.from(questionnaire);
+        String decryptedPhoneNumber = getDecryptedPhoneNumber(questionnaire.getUser());
+        PatientQuestionnaireResponse response = PatientQuestionnaireResponse.from(questionnaire, decryptedPhoneNumber);
         logger.info("[커스텀 토큰 전용] Successfully retrieved questionnaire by custom token - Questionnaire ID: {}", id);
         return ResponseEntity.ok(ApiResponse.success("문진표 조회 성공 (커스텀 토큰)", response));
+    }
+
+    private String getDecryptedPhoneNumber(User user) {
+        try {
+            if (user.getUserProfile() != null && user.getUserProfile().getPhone() != null) {
+                String encryptedPhone = user.getUserProfile().getPhone();
+                if (encryptedPhone != null && !encryptedPhone.isEmpty()) {
+                    // 명시적으로 복호화
+                    return encryptionUtil.decrypt(encryptedPhone);
+                }
+            }
+        } catch (Exception e) {
+            logger.warn("Failed to get decrypted phone number for user {}: {}", user.getId(), e.getMessage());
+        }
+        return null;
     }
 } 

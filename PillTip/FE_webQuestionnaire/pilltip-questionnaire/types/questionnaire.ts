@@ -2,6 +2,7 @@
 
 export interface MedicationInfo {
   medication_id: string;
+  medication_name?: string;
   submitted: boolean;
 }
 

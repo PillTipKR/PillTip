@@ -6,6 +6,7 @@ import com.oauth2.User.UserInfo.Service.UserService;
 import com.oauth2.User.UserInfo.Dto.PersonalInfoRequest;
 import com.oauth2.User.UserInfo.Dto.ProfilePhotoRequest;
 import com.oauth2.User.UserInfo.Dto.UserResponse;
+import com.oauth2.Util.Encryption.EncryptionUtil;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 public class UserController {
     private static final Logger logger = LoggerFactory.getLogger(UserController.class);
     private final UserService userService;
+    private final EncryptionUtil encryptionUtil;
 
 
     // 현재 로그인한 사용자 정보 조회
@@ -33,7 +35,7 @@ public class UserController {
         try {
             User currentUser = userService.getCurrentUser(user.getId());
             return ResponseEntity.status(200)
-                    .body(ApiResponse.success(new UserResponse(currentUser)));
+                    .body(ApiResponse.success(new UserResponse(currentUser, encryptionUtil)));
         } catch (Exception e) {
             return ResponseEntity.status(400)
                     .body(ApiResponse.error("Failed to get current user: " + e.getMessage(), null));
@@ -53,7 +55,7 @@ public class UserController {
         try {
             User updatedUser = userService.updatePersonalInfo(user, request.getRealName(), request.getAddress());
             return ResponseEntity.status(200)
-                    .body(ApiResponse.success("Personal info updated successfully", new UserResponse(updatedUser)));
+                    .body(ApiResponse.success("Personal info updated successfully", new UserResponse(updatedUser, encryptionUtil)));
         } catch (Exception e) {
             return ResponseEntity.status(400)
                     .body(ApiResponse.error("Failed to update personal info: " + e.getMessage(), null));
@@ -95,7 +97,7 @@ public class UserController {
             logger.info("=== UPDATE NICKNAME END ===");
 
             return ResponseEntity.status(200)
-                    .body(ApiResponse.success("Nickname updated successfully", new UserResponse(updatedUser)));
+                    .body(ApiResponse.success("Nickname updated successfully", new UserResponse(updatedUser, encryptionUtil)));
         } catch (Exception e) {
             logger.error("Error updating nickname for user: {} - Error: {}", user.getId(), e.getMessage(), e);
             return ResponseEntity.status(400)
@@ -125,7 +127,7 @@ public class UserController {
             logger.info("=== UPDATE PROFILE PHOTO END ===");
 
             return ResponseEntity.status(200)
-                    .body(ApiResponse.success("Profile photo updated successfully", new UserResponse(updatedUser)));
+                    .body(ApiResponse.success("Profile photo updated successfully", new UserResponse(updatedUser, encryptionUtil)));
         } catch (Exception e) {
             logger.error("Error updating profile photo for user: {} - Error: {}", user.getId(), e.getMessage(), e);
             return ResponseEntity.status(400)

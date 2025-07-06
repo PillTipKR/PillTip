@@ -31,7 +31,7 @@ public class PatientQuestionnaireResponse {
     private List<Map<String, Object>> chronicDiseaseInfo;
     private List<Map<String, Object>> surgeryHistoryInfo;
 
-    public static PatientQuestionnaireResponse from(PatientQuestionnaire questionnaire) {
+    public static PatientQuestionnaireResponse from(PatientQuestionnaire questionnaire, String decryptedPhoneNumber) {
         ObjectMapper objectMapper = new ObjectMapper();
         
         try {
@@ -40,7 +40,7 @@ public class PatientQuestionnaireResponse {
                     .questionnaireName(questionnaire.getQuestionnaireName())
                     .realName(questionnaire.getUser().getRealName())
                     .address(questionnaire.getUser().getAddress())
-                    .phoneNumber(questionnaire.getUser().getUserProfile() != null ? questionnaire.getUser().getUserProfile().getPhone() : null)
+                    .phoneNumber(decryptedPhoneNumber)
                     .issueDate(questionnaire.getIssueDate())
                     .lastModifiedDate(questionnaire.getLastModifiedDate())
                     .notes(questionnaire.getNotes())
