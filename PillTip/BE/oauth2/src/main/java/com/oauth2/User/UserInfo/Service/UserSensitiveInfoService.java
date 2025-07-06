@@ -50,7 +50,13 @@ public class UserSensitiveInfoService {
     public UserSensitiveInfoDto getSensitiveInfo(User user) {
         UserSensitiveInfo sensitiveInfo = userSensitiveInfoRepository.findByUser(user)
                 .orElse(null);
-        return sensitiveInfo != null ? UserSensitiveInfoDto.from(sensitiveInfo) : null;
+        
+        if (sensitiveInfo == null) {
+            return null;
+        }
+        
+        // EncryptionConverter가 자동으로 복호화하므로 DTO 변환 사용
+        return UserSensitiveInfoDto.from(sensitiveInfo);
     }
 
     /**

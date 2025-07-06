@@ -36,7 +36,7 @@ public class UserSensitiveInfoDto {
             throw new RuntimeException("Failed to convert UserSensitiveInfo to DTO", e);
         }
     }
-
+    
     private static List<String> parseCommaSeparatedToList(String commaSeparated) {
         if (commaSeparated == null || commaSeparated.trim().isEmpty()) {
             return List.of();
@@ -52,6 +52,8 @@ public class UserSensitiveInfoDto {
         }
         return result;
     }
+
+
 
     public static class UserSensitiveInfoRequest {
         private List<String> medicationInfo;
