@@ -8,6 +8,7 @@ import com.oauth2.User.PatientQuestionnaire.Entity.PatientQuestionnaire;
 import com.oauth2.User.Auth.Entity.User;
 import com.oauth2.User.PatientQuestionnaire.Repository.PatientQuestionnaireRepository;
 import com.oauth2.User.UserInfo.Service.UserService;
+import com.oauth2.User.UserInfo.Service.UserSensitiveInfoService;
 import com.oauth2.User.TakingPill.Service.TakingPillService;
 import com.oauth2.User.TakingPill.Dto.TakingPillRequest;
 import com.oauth2.Util.Encryption.EncryptionUtil;
@@ -30,6 +31,7 @@ public class PatientQuestionnaireService {
     private final PatientQuestionnaireRepository questionnaireRepository;
     private final ObjectMapper objectMapper;
     private final UserService userService;
+    private final UserSensitiveInfoService userSensitiveInfoService;
     private final TakingPillService takingPillService;
     private final EncryptionUtil encryptionUtil;
 
@@ -64,6 +66,9 @@ public class PatientQuestionnaireService {
                 .build();
         
         PatientQuestionnaire savedQuestionnaire = questionnaireRepository.save(questionnaire);
+        
+        // 문진표 생성 완료 후 민감정보 동기화
+        syncSensitiveInfoFromQuestionnaire(user, request);
         
         // 문진표 생성 완료 후 별도로 복약 등록 처리
         processMedicationSync(user, request.getMedicationInfo());
@@ -154,6 +159,9 @@ public class PatientQuestionnaireService {
         
         PatientQuestionnaire updatedQuestionnaire = q;
         
+        // 문진표 수정 완료 후 민감정보 동기화
+        syncSensitiveInfoFromQuestionnaire(user, request);
+        
         // 문진표 수정 완료 후 별도로 복약 등록 처리
         processMedicationSync(user, request.getMedicationInfo());
         
@@ -182,6 +190,69 @@ public class PatientQuestionnaireService {
     public PatientQuestionnaire getQuestionnaireByIdPublic(Integer id) {
         return questionnaireRepository.findById(id)
             .orElseThrow(() -> new IllegalArgumentException("문진표를 찾을 수 없습니다."));
+    }
+
+    /**
+     * 문진표에서 민감정보 동기화
+     */
+    private void syncSensitiveInfoFromQuestionnaire(User user, PatientQuestionnaireRequest request) {
+        try {
+            // 문진표의 정보를 민감정보 형식으로 변환
+            String medicationInfo = convertInfoItemsToString(request.getMedicationInfo());
+            String allergyInfo = convertInfoItemsToString(request.getAllergyInfo());
+            String chronicDiseaseInfo = convertInfoItemsToString(request.getChronicDiseaseInfo());
+            String surgeryHistoryInfo = convertInfoItemsToString(request.getSurgeryHistoryInfo());
+            
+            // 민감정보 동기화
+            userSensitiveInfoService.syncFromQuestionnaire(user, medicationInfo, allergyInfo, 
+                                                          chronicDiseaseInfo, surgeryHistoryInfo);
+            
+            logger.info("Successfully synced sensitive info from questionnaire for user: {}", user.getId());
+        } catch (Exception e) {
+            logger.error("Failed to sync sensitive info from questionnaire for user {}: {}", user.getId(), e.getMessage(), e);
+        }
+    }
+    
+    /**
+     * InfoItem 리스트를 쉼표로 구분된 문자열로 변환
+     */
+    private String convertInfoItemsToString(List<PatientQuestionnaireRequest.InfoItem> items) {
+        if (items == null || items.isEmpty()) {
+            return "";
+        }
+        
+        return items.stream()
+                .filter(item -> item != null && isItemValid(item))
+                .map(this::extractItemValue)
+                .filter(value -> value != null && !value.trim().isEmpty())
+                .collect(Collectors.joining(","));
+    }
+    
+    /**
+     * InfoItem이 유효한지 확인
+     */
+    private boolean isItemValid(PatientQuestionnaireRequest.InfoItem item) {
+        return item.getMedicationId() != null || item.getAllergyName() != null || 
+               item.getChronicDiseaseName() != null || item.getSurgeryHistoryName() != null;
+    }
+    
+    /**
+     * InfoItem에서 값을 추출
+     */
+    private String extractItemValue(PatientQuestionnaireRequest.InfoItem item) {
+        if (item.getMedicationId() != null && !item.getMedicationId().trim().isEmpty()) {
+            return item.getMedicationName() != null ? item.getMedicationName() : item.getMedicationId();
+        }
+        if (item.getAllergyName() != null && !item.getAllergyName().trim().isEmpty()) {
+            return item.getAllergyName();
+        }
+        if (item.getChronicDiseaseName() != null && !item.getChronicDiseaseName().trim().isEmpty()) {
+            return item.getChronicDiseaseName();
+        }
+        if (item.getSurgeryHistoryName() != null && !item.getSurgeryHistoryName().trim().isEmpty()) {
+            return item.getSurgeryHistoryName();
+        }
+        return null;
     }
 
     /**

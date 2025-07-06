@@ -22,7 +22,7 @@ public class TakingPillController {
     private final TakingPillService takingPillService;
 
     // 복용 중인 약 추가
-    @PostMapping
+    @PostMapping("")
     public ResponseEntity<ApiResponse<TakingPillDetailResponse>> addTakingPill(
             @AuthenticationPrincipal User user,
             @RequestBody TakingPillRequest request) {
@@ -93,7 +93,7 @@ public class TakingPillController {
     }
 
     // 복용 중인 약 조회 (요약)
-    @GetMapping
+    @GetMapping("")
     public ResponseEntity<ApiResponse<TakingPillSummaryResponse>> getTakingPill(
             @AuthenticationPrincipal User user) {
         logger.info("Received getTakingPill request for user: {}", user.getId());
