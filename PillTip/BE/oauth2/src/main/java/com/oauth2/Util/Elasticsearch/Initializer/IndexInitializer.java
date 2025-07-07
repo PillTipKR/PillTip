@@ -13,7 +13,8 @@ import java.util.List;
 @Order(1)
 public class IndexInitializer implements CommandLineRunner {
 
-    @Value("${elasitc.seed}")
+    //ElasticSearch 재생성 스위치
+    @Value("${elastic.seed}")
     private boolean seed;
 
     private final IndexManager indexManager;
