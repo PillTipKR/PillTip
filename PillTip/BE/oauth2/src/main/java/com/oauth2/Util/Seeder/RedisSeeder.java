@@ -1,7 +1,6 @@
 package com.oauth2.Util.Seeder;
 
 import com.oauth2.Util.Redis.DurRedisLoader;
-import com.oauth2.Util.Elasticsearch.Service.DataSyncService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
@@ -11,19 +10,16 @@ import org.springframework.stereotype.Component;
 @Component
 @Order(2)
 @RequiredArgsConstructor
-public class PillSeeder implements CommandLineRunner {
+public class RedisSeeder implements CommandLineRunner {
 
-    @Value("${app.seed}")
+    @Value("${redis.seed}")
     private boolean seed;
 
-    private final DataSyncService dataSyncService;
     private final DurRedisLoader durRedisLoader;
 
     @Override
     public void run(String... args) throws Exception {
         if(seed) {
-            dataSyncService.loadAll();
-            System.out.println("Index injection complete");
             durRedisLoader.loadAll();
             System.out.println("DUR Redis injection complete");
         }
