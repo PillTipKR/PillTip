@@ -13,8 +13,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Arrays;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor
@@ -115,13 +119,43 @@ public class UserSensitiveInfoService {
                 .orElse(new UserSensitiveInfo());
 
         sensitiveInfo.setUser(user);
-        sensitiveInfo.setMedicationInfo(medicationInfo != null ? medicationInfo : "");
-        sensitiveInfo.setAllergyInfo(allergyInfo != null ? allergyInfo : "");
-        sensitiveInfo.setChronicDiseaseInfo(chronicDiseaseInfo != null ? chronicDiseaseInfo : "");
-        sensitiveInfo.setSurgeryHistoryInfo(surgeryHistoryInfo != null ? surgeryHistoryInfo : "");
+        
+        sensitiveInfo.setMedicationInfo(mergeAndDeduplicate(sensitiveInfo.getMedicationInfo(), medicationInfo));
+        sensitiveInfo.setAllergyInfo(mergeAndDeduplicate(sensitiveInfo.getAllergyInfo(), allergyInfo));
+        sensitiveInfo.setChronicDiseaseInfo(mergeAndDeduplicate(sensitiveInfo.getChronicDiseaseInfo(), chronicDiseaseInfo));
+        sensitiveInfo.setSurgeryHistoryInfo(mergeAndDeduplicate(sensitiveInfo.getSurgeryHistoryInfo(), surgeryHistoryInfo));
 
         UserSensitiveInfo saved = userSensitiveInfoRepository.save(sensitiveInfo);
         return UserSensitiveInfoDto.from(saved);
+    }
+    
+    /**
+     * 기존 정보와 새로운 정보를 병합하고 중복을 제거합니다.
+     * @param existingInfo 기존 정보 (쉼표로 구분된 문자열)
+     * @param newInfo 새로운 정보 (쉼표로 구분된 문자열)
+     * @return 병합되고 중복이 제거된 정보 (쉼표로 구분된 문자열)
+     */
+    private String mergeAndDeduplicate(String existingInfo, String newInfo) {
+        // LinkedHashSet을 사용하여 순서를 유지하면서 중복을 제거
+        LinkedHashSet<String> combinedSet = new LinkedHashSet<>();
+        
+        // 기존 정보를 세트에 추가
+        if (existingInfo != null && !existingInfo.isEmpty()) {
+            Stream.of(existingInfo.split(","))
+                  .map(String::trim)
+                  .filter(s -> !s.isEmpty())
+                  .forEach(combinedSet::add);
+        }
+        
+        // 새로운 정보를 세트에 추가
+        if (newInfo != null && !newInfo.isEmpty()) {
+            Stream.of(newInfo.split(","))
+                  .map(String::trim)
+                  .filter(s -> !s.isEmpty())
+                  .forEach(combinedSet::add);
+        }
+        
+        return String.join(",", combinedSet);
     }
 
     /**

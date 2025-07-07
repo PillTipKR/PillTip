@@ -24,6 +24,8 @@ public class EncryptionUtil {
     private static final String ALGORITHM = "AES/GCM/NoPadding";
     private static final int GCM_IV_LENGTH = 12;
     private static final int GCM_TAG_LENGTH = 16;
+    
+    private SecretKey cachedKey = null;
 
     /**
      * 데이터를 암호화합니다.
@@ -37,7 +39,7 @@ public class EncryptionUtil {
         }
 
         // AES 키 생성, 32바이트 키 생성
-        SecretKey key = generateKey();
+        SecretKey key = getOrCreateKey();
         
         // 랜덤 IV 생성, 12바이트 랜덤 IV 생성
         byte[] iv = generateIV();
@@ -87,7 +89,7 @@ public class EncryptionUtil {
         System.arraycopy(combined, GCM_IV_LENGTH, encryptedData, 0, encryptedData.length);
         
         // AES 키 생성
-        SecretKey key = generateKey();
+        SecretKey key = getOrCreateKey();
         
         // GCM 파라미터 설정
         GCMParameterSpec gcmSpec = new GCMParameterSpec(GCM_TAG_LENGTH * 8, iv);
@@ -97,8 +99,22 @@ public class EncryptionUtil {
         cipher.init(Cipher.DECRYPT_MODE, key, gcmSpec);
         
         byte[] decryptedData = cipher.doFinal(encryptedData);
-        
         return new String(decryptedData, StandardCharsets.UTF_8);
+    }
+
+    /**
+     * 키를 가져오거나 생성합니다. application.properties의 secret-key를 사용합니다.
+     * @return SecretKey 객체
+     * @throws Exception 키 생성 중 오류 발생 시
+     */
+    private SecretKey getOrCreateKey() throws Exception {
+        if (cachedKey != null) {
+            return cachedKey;
+        }
+        
+        // application.properties의 secret-key를 사용하여 키 생성
+        cachedKey = deriveKeyFromSecretString();
+        return cachedKey;
     }
 
     /**
@@ -106,7 +122,7 @@ public class EncryptionUtil {
      * @return SecretKey 객체
      * @throws Exception 키 생성 중 오류 발생 시
      */
-    private SecretKey generateKey() throws Exception {
+    private SecretKey deriveKeyFromSecretString() throws Exception {
         // 시크릿 키 문자열을 바이트 배열로 변환
         byte[] keyBytes = secretKeyString.getBytes(StandardCharsets.UTF_8);
         
