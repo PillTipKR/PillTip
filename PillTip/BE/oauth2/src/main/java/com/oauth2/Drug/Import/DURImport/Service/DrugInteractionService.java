@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -107,14 +108,18 @@ public class DrugInteractionService {
         if(!idList1.isEmpty() && !idList2.isEmpty()) {
             Drug id1 = idList1.get(0);
             Drug id2 = idList2.get(0);
+            List<DrugInteraction> drugInter =
+                    drugInteractionRepository.findByDrugId1AndDrugId2(id1.getId(), id2.getId());
+            if(drugInter.isEmpty()) {
+                DrugInteraction drugInteraction = new DrugInteraction();
+                drugInteraction.setDrugId1(id1.getId());
+                drugInteraction.setDrugId2(id2.getId());
+                drugInteraction.setReason(reason);
+                drugInteraction.setNote(note);
 
-            DrugInteraction drugInteraction = new DrugInteraction();
-            drugInteraction.setDrugId1(id1.getId());
-            drugInteraction.setDrugId2(id2.getId());
-            drugInteraction.setReason(reason);
-            drugInteraction.setNote(note);
+                drugInteractionRepository.save(drugInteraction);
+            }
 
-            drugInteractionRepository.save(drugInteraction);
         }else {
             System.out.println("약품명 [" + pName1 + " 혹은 " + pName2 + "]  을(를) 찾을 수 없습니다.");
         }
