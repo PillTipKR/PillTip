@@ -42,6 +42,8 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
+import androidx.compose.material3.TabRowDefaults.SecondaryIndicator
+import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material3.Text
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
@@ -456,9 +458,6 @@ fun DetailPage(
         tabs.size
     }
     val coroutineScope = rememberCoroutineScope()
-
-
-
     val detailState by searchViewModel.drugDetail.collectAsState()
     val nickname = UserInfoManager.getUserData(LocalContext.current)?.nickname
     val systemUiController = rememberSystemUiController()
@@ -633,11 +632,17 @@ fun DetailPage(
                         modifier = Modifier
                             .fillMaxWidth()
                             .background(Color.White),
-                        contentColor = primaryColor
+                        contentColor = primaryColor,
+                        indicator = { tabPositions ->
+                            SecondaryIndicator(
+                                Modifier.tabIndicatorOffset(tabPositions[pagerState.currentPage]),
+                                color = primaryColor
+                            )
+                        }
                     ) {
                         tabs.forEachIndexed { index, title ->
                             Tab(
-                                modifier = Modifier.weight(1f),
+                                modifier = Modifier.weight(1f).background(Color.White),
                                 selected = pagerState.currentPage == index,
                                 onClick = {
                                     coroutineScope.launch {

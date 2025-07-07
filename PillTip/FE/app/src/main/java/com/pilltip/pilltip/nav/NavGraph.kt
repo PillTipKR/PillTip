@@ -32,6 +32,7 @@ import com.pilltip.pilltip.view.main.EssentialInfoPage
 import com.pilltip.pilltip.view.main.MyDrugInfoPage
 import com.pilltip.pilltip.view.main.MyHealthDetailPage
 import com.pilltip.pilltip.view.main.MyHealthPage
+import com.pilltip.pilltip.view.main.NotificationPage
 import com.pilltip.pilltip.view.main.PillMainPage
 import com.pilltip.pilltip.view.questionnaire.AreYouPage
 import com.pilltip.pilltip.view.questionnaire.EssentialPage
@@ -107,6 +108,10 @@ fun NavGraph(
                 questionnaireViewModel = hiltViewModel(),
                 initialTab = selected
             )
+        }
+
+        composable("NotificationPage"){
+            NotificationPage(navController, searchHiltViewModel)
         }
 
         /* Search */

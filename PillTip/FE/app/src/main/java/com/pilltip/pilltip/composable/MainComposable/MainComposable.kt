@@ -44,7 +44,8 @@ import com.pilltip.pilltip.ui.theme.pretendard
 @Composable
 fun LogoField(
     horizontalPadding: Dp = 22.dp,
-    verticalPadding: Dp = 15.dp
+    verticalPadding: Dp = 15.dp,
+    onClick: () -> Unit
 ) {
     Row(
         modifier = Modifier
@@ -66,6 +67,9 @@ fun LogoField(
             modifier = Modifier
                 .padding(1.dp)
                 .height(24.dp)
+                .noRippleClickable {
+                    onClick()
+                }
         )
     }
 }

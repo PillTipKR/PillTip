@@ -382,11 +382,18 @@ interface DosageLogApi {
     suspend fun toggleDosageTaken(
         @Path("logId") logId: Long
     ): ToggleDosageTakenResponse
+
+    @POST("/api/{logId}/pending")
+    suspend fun getDosageLogMessage(
+        @Path("logId") logId: Long
+    ): ToggleDosageTakenResponse
 }
 
 interface DosageLogRepository {
     suspend fun getDailyDosageLog(date: String): DailyDosageLogResponse
     suspend fun toggleDosageTaken(logId: Long): ToggleDosageTakenResponse
+    suspend fun getDosageLogMessage(logId: Long): ToggleDosageTakenResponse
+
 }
 
 class DosageLogRepositoryImpl(
@@ -398,5 +405,9 @@ class DosageLogRepositoryImpl(
 
     override suspend fun toggleDosageTaken(logId: Long): ToggleDosageTakenResponse {
         return api.toggleDosageTaken(logId)
+    }
+
+    override suspend fun getDosageLogMessage(logId: Long): ToggleDosageTakenResponse {
+        return api.getDosageLogMessage(logId)
     }
 }
