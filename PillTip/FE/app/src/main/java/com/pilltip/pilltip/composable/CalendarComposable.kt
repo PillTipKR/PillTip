@@ -1,9 +1,12 @@
 package com.pilltip.pilltip.composable
 
+import android.util.Log
 import android.widget.Toast
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,12 +17,19 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -36,27 +46,41 @@ import com.pilltip.pilltip.model.search.SearchHiltViewModel
 import com.pilltip.pilltip.ui.theme.gray100
 import com.pilltip.pilltip.ui.theme.gray200
 import com.pilltip.pilltip.ui.theme.gray500
+import com.pilltip.pilltip.ui.theme.gray700
+import com.pilltip.pilltip.ui.theme.gray800
 import com.pilltip.pilltip.ui.theme.gray900
 import com.pilltip.pilltip.ui.theme.pretendard
 import com.pilltip.pilltip.ui.theme.primaryColor
 import com.pilltip.pilltip.ui.theme.primaryColor050
 import java.time.LocalDate
 import java.time.LocalTime
+import java.util.Locale
 
 @Composable
 fun DrugLogCard(
     drugLog: DosageLogPerDrug,
     searchHiltViewModel: SearchHiltViewModel,
-    selectedDate: LocalDate
+    selectedDate: LocalDate,
+    isNotification: Boolean = false,
+    isRead: Boolean = false
 ) {
+    val filteredSchedules = when {
+        !isNotification -> drugLog.dosageSchedule // 전체
+        isRead -> drugLog.dosageSchedule.filter { it.isTaken } // 복용된 것만
+        else -> drugLog.dosageSchedule.filter { !it.isTaken } // 미복용만
+    }
+
+    if (filteredSchedules.isEmpty()) return
+
     Column(
         modifier = Modifier
             .border(width = 0.5.dp, color = gray200, shape = RoundedCornerShape(size = 12.dp))
             .padding(0.25.dp)
             .fillMaxWidth()
-            .background(color = Color(0xFFFFFFFF), shape = RoundedCornerShape(size = 12.dp))
-            .padding(start = 20.dp, top = 24.dp, end = 20.dp, bottom = 24.dp)
+            .background(color = Color.White, shape = RoundedCornerShape(size = 12.dp))
+            .padding(start = 20.dp, top = 24.dp, end = 20.dp, bottom = 8.dp)
     ) {
+        // 약물 이름 + 화살표
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
@@ -68,7 +92,7 @@ fun DrugLogCard(
                     fontSize = 14.sp,
                     fontFamily = pretendard,
                     fontWeight = FontWeight(600),
-                    color = Color(0xFF000000),
+                    color = Color.Black,
                 )
             )
             Image(
@@ -80,20 +104,21 @@ fun DrugLogCard(
                 }
             )
         }
+
         HeightSpacer(28.dp)
-        drugLog.dosageSchedule.forEach { schedule ->
+
+        filteredSchedules.forEach { schedule ->
             DosageTimeItem(schedule, searchHiltViewModel, selectedDate)
             HeightSpacer(16.dp)
         }
     }
-
 }
 
 @Composable
 fun DosageTimeItem(
     schedule: DosageLogSchedule,
     viewModel: SearchHiltViewModel,
-    selectedDate: LocalDate
+    selectedDate: LocalDate,
 ) {
     val time = schedule.scheduledTime.substring(11, 16)
     val context = LocalContext.current
@@ -130,7 +155,6 @@ fun DosageTimeItem(
                 viewModel.toggleDosageTaken(
                     logId = schedule.logId,
                     onSuccess = {
-                        Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
                         viewModel.fetchDailyDosageLog(selectedDate)
                     },
                     onError = {
@@ -177,16 +201,148 @@ fun DrugLogDetailSection(
     viewModel: SearchHiltViewModel,
     selectedDate: LocalDate
 ) {
-    Column(modifier = Modifier.fillMaxWidth().padding(20.dp)) {
+    Column(
+        modifier = Modifier.fillMaxWidth()
+    ) {
         Text(
-            text = drug.medicationName,
-            style = TextStyle(fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            text = "${selectedDate.monthValue}월 ${selectedDate.dayOfMonth}일 ${
+                selectedDate.dayOfWeek.getDisplayName(
+                    java.time.format.TextStyle.SHORT,
+                    Locale.KOREAN
+                )
+            }요일",
+            style = TextStyle(
+                fontSize = 16.sp,
+                fontFamily = pretendard,
+                fontWeight = FontWeight(600),
+                color = gray800,
+            )
         )
         HeightSpacer(16.dp)
 
         drug.dosageSchedule.forEach { schedule ->
-            DosageTimeItem(schedule, viewModel, selectedDate)
+            DosageTimeDetailItem(schedule, viewModel, selectedDate)
             HeightSpacer(16.dp)
+        }
+    }
+}
+
+@Composable
+fun DosageTimeDetailItem(
+    schedule: DosageLogSchedule,
+    viewModel: SearchHiltViewModel,
+    selectedDate: LocalDate
+) {
+    val context = LocalContext.current
+    val time = schedule.scheduledTime.substring(11, 16)
+    val displayTime = try {
+        val parsed = LocalTime.parse(time)
+        when {
+            parsed.hour in 0..10 -> "오전 ${parsed.hour}:${"%02d".format(parsed.minute)}"
+            parsed.hour == 12 -> "오후 12:${"%02d".format(parsed.minute)}"
+            else -> "오후 ${parsed.hour - 12}:${"%02d".format(parsed.minute)}"
+        }
+    } catch (e: Exception) {
+        schedule.scheduledTime
+    }
+
+    var expanded by remember { mutableStateOf(false) }
+
+    Column(
+        modifier = Modifier
+            .border(width = 0.5.dp, color = gray200, shape = RoundedCornerShape(size = 12.dp))
+            .padding(0.25.dp)
+            .fillMaxWidth()
+            .background(color = Color(0xFFFFFFFF), shape = RoundedCornerShape(size = 12.dp))
+            .padding(
+                start = 16.dp,
+                top = 20.dp,
+                end = 16.dp,
+                bottom = if (expanded) 16.dp else 20.dp
+            )
+            .noRippleClickable { expanded = !expanded }
+            .animateContentSize()
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = displayTime,
+                style = TextStyle(
+                    fontSize = 16.sp,
+                    fontFamily = pretendard,
+                    fontWeight = FontWeight(500),
+                    color = gray900,
+                )
+            )
+
+            Box(
+                modifier = Modifier
+                    .background(
+                        color = if (schedule.isTaken) primaryColor050 else gray100,
+                        shape = RoundedCornerShape(1000.dp)
+                    )
+                    .padding(horizontal = 10.dp, vertical = 6.dp)
+            ) {
+                Text(
+                    text = if (schedule.isTaken) "먹었어요" else "미뤘어요",
+                    style = TextStyle(
+                        fontSize = 10.sp,
+                        fontFamily = pretendard,
+                        fontWeight = FontWeight(500),
+                        color = if (schedule.isTaken) primaryColor else gray500,
+                    )
+                )
+            }
+        }
+        if (expanded) {
+            HeightSpacer(20.dp)
+            Row(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                NextButton(
+                    mModifier = Modifier
+                        .weight(1f)
+                        .height(49.dp),
+                    text = "미룰래요",
+                    textSize = 14,
+                    textColor = gray700,
+                    buttonColor = gray100
+                ) {
+                    viewModel.fetchDosageLogMessage(
+                        logId = schedule.logId,
+                        onSuccess = { message ->
+                            Toast.makeText(context, "5분 뒤 복약 알림을 다시 드릴게요!", Toast.LENGTH_SHORT)
+                                .show()
+                        },
+                        onError = { error ->
+                            Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
+                        }
+                    )
+                }
+                WidthSpacer(8.dp)
+                NextButton(
+                    mModifier = Modifier
+                        .weight(1f)
+                        .height(49.dp),
+                    text = if (schedule.isTaken) "안 먹었어요" else "먹었어요",
+                    textColor = Color.White,
+                    textSize = 14,
+                    buttonColor = primaryColor
+                ) {
+                    viewModel.toggleDosageTaken(
+                        logId = schedule.logId,
+                        onSuccess = {
+                            viewModel.fetchDailyDosageLog(selectedDate)
+                        },
+                        onError = {
+                            Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
+                        }
+                    )
+                }
+            }
         }
     }
 }

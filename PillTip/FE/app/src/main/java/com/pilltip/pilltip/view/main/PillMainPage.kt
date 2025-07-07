@@ -100,7 +100,9 @@ fun PillMainPage(
             color = Color.Transparent,
             darkIcons = true
         )
+        systemUiController.isNavigationBarVisible = true
     }
+
     Scaffold(
         bottomBar = {
             BottomBar(
@@ -131,7 +133,9 @@ fun PillMainPage(
 fun HomePage(
     navController: NavController
 ) {
-    LogoField()
+    LogoField(
+        onClick = {navController.navigate("NotificationPage")}
+    )
     MainSearchField(
         onClick = { navController.navigate("SearchPage") }
     )

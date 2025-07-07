@@ -1,6 +1,7 @@
 package com.pilltip.pilltip.view.main
 
 import android.util.Log
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.animateIntAsState
@@ -64,6 +65,11 @@ fun CalenderPage(
             hiltViewModel.fetchDailyDosageLog(it)
         }
     }
+
+    BackHandler(enabled = hiltViewModel.selectedDrugLog != null) {
+        hiltViewModel.selectedDrugLog = null
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -88,6 +94,7 @@ fun CalenderPage(
             selectedDate = selectedDate,
             onDateSelected = {
                 selectedDate = it
+                hiltViewModel.selectedDrugLog = null
             }
         )
         HeightSpacer(10.dp)
@@ -107,7 +114,8 @@ fun CalenderPage(
         ) {
             HeightSpacer(36.dp)
             Text(
-                text = "${selectedDate?.monthValue}월 ${selectedDate?.dayOfMonth}일",
+                text = if (hiltViewModel.selectedDrugLog == null) "${selectedDate?.monthValue}월 ${selectedDate?.dayOfMonth}일"
+                else hiltViewModel.selectedDrugLog!!.medicationName,
                 style = TextStyle(
                     fontSize = 14.sp,
                     lineHeight = 21.sp,
@@ -133,7 +141,8 @@ fun CalenderPage(
                     )
                 )
                 val animatedPercent by animateIntAsState(
-                    targetValue = logData?.percent ?: 0,
+                    targetValue = if (hiltViewModel.selectedDrugLog == null)  logData?.percent ?: 0
+                    else hiltViewModel.selectedDrugLog!!.percent,
                     animationSpec = tween(
                         durationMillis = 500,
                         easing = FastOutSlowInEasing
@@ -152,7 +161,8 @@ fun CalenderPage(
             }
             HeightSpacer(24.dp)
             val animatedProgress by animateFloatAsState(
-                targetValue = (logData?.percent ?: 0) / 100f,
+                targetValue = if (hiltViewModel.selectedDrugLog == null) (logData?.percent ?: 0) / 100f
+                else (hiltViewModel.selectedDrugLog!!.percent) / 100f,
                 animationSpec = tween(
                     durationMillis = 700,
                     easing = FastOutSlowInEasing

@@ -4,6 +4,13 @@ import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Canvas
@@ -50,10 +57,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.asAndroidPath
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -191,8 +202,6 @@ fun DURSearchPage(
     val context = LocalContext.current
 
     val selectedDrugs = remember { mutableStateListOf<SelectedDrug>() }
-    val firstDrug = remember { mutableStateOf("") }
-    val secondDrug = remember { mutableStateOf("") }
 
     LaunchedEffect(Unit) {
         snapshotFlow { inputText }
@@ -427,19 +436,76 @@ fun DURLoadingPage(
     LaunchedEffect(key1 = firstDrug, key2 = secondDrug) {
         searchViewModel.fetchDurAi(firstDrug, secondDrug)
     }
+    Crossfade(targetState = isLoading || durData == null, label = "durLoadingTransition") { loading ->
+        if (loading) {
+            Column(
+                modifier = WhiteScreenModifier,
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                val transition = rememberInfiniteTransition()
+                val translateAnimation by transition.animateFloat(
+                    initialValue = 360f,
+                    targetValue = 0f,
+                    animationSpec = infiniteRepeatable(
+                        animation = tween(
+                            durationMillis = 1200,
+                            easing = FastOutSlowInEasing
+                        ),
+                        repeatMode = RepeatMode.Restart
+                    )
+                )
+                Canvas(modifier = Modifier.size(size = 60.dp)) {
+                    val startAngle = 5f
+                    val sweepAngle = 350f
 
-    if (isLoading || durData == null) {
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
-            CircularProgressIndicator()
+                    rotate(translateAnimation) {
+                        drawArc(
+                            brush = Brush.sweepGradient(
+                                colors = listOf(
+                                    primaryColor,
+                                    primaryColor.copy(0f)
+                                ),
+                                center = Offset(size.width / 2f, size.height / 2f)
+                            ),
+                            startAngle = startAngle,
+                            sweepAngle = sweepAngle,
+                            useCenter = false,
+                            topLeft = Offset(6 / 2f, 6 / 2f),
+                            style = Stroke(width = 6.dp.toPx(), cap = StrokeCap.Round),
+                        )
+                    }
+                }
+                HeightSpacer(28.dp)
+                Text(
+                    text = "상충작용 분석 중",
+                    style = TextStyle(
+                        fontSize = 30.sp,
+                        lineHeight = 40.sp,
+                        fontFamily = pretendard,
+                        fontWeight = FontWeight(700),
+                        color = gray800,
+                        textAlign = TextAlign.Center,
+                    )
+                )
+                HeightSpacer(8.dp)
+                Text(
+                    text = "잠시만 기다려주세요",
+                    style = TextStyle(
+                        fontSize = 14.sp,
+                        lineHeight = 19.6.sp,
+                        fontFamily = pretendard,
+                        fontWeight = FontWeight(600),
+                        color = gray400,
+                    )
+                )
+            }
+        } else {
+            DURResultPage(
+                navController = navController,
+                durData = durData!!
+            )
         }
-    } else {
-        DURResultPage(
-            navController = navController,
-            durData = durData!!
-        )
     }
 }
 

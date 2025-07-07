@@ -58,6 +58,7 @@ fun NextButton(
     text: String = "다음",
     buttonColor: Color = Color(0xFF397CDB),
     textColor: Color = Color.White,
+    textSize: Int = 18,
     onClick: () -> Unit
 ) {
     Button(
@@ -71,7 +72,7 @@ fun NextButton(
             fontFamily = pretendard,
             color = textColor,
             fontWeight = FontWeight.SemiBold,
-            fontSize = 18.sp,
+            fontSize = textSize.sp,
             modifier = Modifier.fillMaxWidth(),
             textAlign = TextAlign.Center,
             style = TextStyle(

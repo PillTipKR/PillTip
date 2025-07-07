@@ -296,11 +296,42 @@ class SearchHiltViewModel @Inject constructor(
                 val response = dosageLogRepo.toggleDosageTaken(logId)
                 if (response.status == "success") {
                     onSuccess(response.data)
+
+                    val latest = dosageLogRepo.getDailyDosageLog(LocalDate.now().toString()).data
+                    _dailyDosageLog.value = latest
+
+                    selectedDrugLog?.let { selected ->
+                        val updated = latest.perDrugLogs.find { it.medicationName == selected.medicationName }
+                        selectedDrugLog = updated
+                    }
                 } else {
                     onError(response.message ?: "실패했습니다.")
                 }
             } catch (e: Exception) {
                 onError(e.localizedMessage ?: "에러가 발생했습니다.")
+            }
+        }
+    }
+
+    fun updateSelectedDrugLog(updatedDrug: DosageLogPerDrug?) {
+        selectedDrugLog = updatedDrug
+    }
+
+    fun fetchDosageLogMessage(
+        logId: Long,
+        onSuccess: (String) -> Unit,
+        onError: (String) -> Unit
+    ) {
+        viewModelScope.launch {
+            try {
+                val response = dosageLogRepo.getDosageLogMessage(logId)
+                if (response.status == "success") {
+                    onSuccess(response.data)
+                } else {
+                    onError(response.message ?: "서버 응답이 실패했어요.")
+                }
+            } catch (e: Exception) {
+                onError(e.localizedMessage ?: "에러가 발생했어요.")
             }
         }
     }
