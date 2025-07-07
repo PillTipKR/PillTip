@@ -169,9 +169,8 @@ class DosageDetailRepositoryImpl(
  * 복약 데이터 수정 API
  */
 interface DosageModifyApi {
-    @PUT("/api/taking-pill/{medicationId}")
+    @PUT("/api/taking-pill")
     suspend fun updateDosage(
-        @Path("medicationId") medicationId: Long,
         @Body request: RegisterDosageRequest
     ): TakingPillSummaryResponse
 }
@@ -190,7 +189,7 @@ class DosageModifyRepositoryImpl(
         medicationId: Long,
         request: RegisterDosageRequest
     ): List<TakingPillSummary> {
-        return api.updateDosage(medicationId, request).data.takingPills
+        return api.updateDosage(request).data.takingPills
     }
 }
 
@@ -314,11 +313,18 @@ interface PermissionApi {
 
     @GET("/api/questionnaire/permissions")
     suspend fun getPermissions(): PermissionResponse
+
+    @PUT("/api/questionnaire/permissions/{permissionType}")
+    suspend fun updateSinglePermission(
+        @Path("permissionType") permissionType: String,
+        @Query("granted") granted: Boolean
+    ): PermissionResponse
 }
 
 interface PermissionRepository {
     suspend fun updatePermissions(request: PermissionRequest): PermissionResponse
     suspend fun getPermissions(): PermissionResponse
+    suspend fun updateSinglePermission(permissionType: String, granted: Boolean): PermissionResponse
 }
 
 class PermissionRepositoryImpl(
@@ -331,9 +337,66 @@ class PermissionRepositoryImpl(
     override suspend fun getPermissions(): PermissionResponse {
         return api.getPermissions()
     }
+
+    override suspend fun updateSinglePermission(permissionType: String, granted: Boolean): PermissionResponse {
+        return api.updateSinglePermission(permissionType, granted)
+    }
 }
 
 /**
  * 민감정보 동의 여부 조회
  */
 
+/**
+ * 건강정보
+ */
+
+interface SensitiveInfoApi {
+    @GET("/api/sensitive-info")
+    suspend fun getSensitiveInfo(): SensitiveInfoResponse
+}
+
+interface SensitiveInfoRepository {
+    suspend fun fetchSensitiveInfo(): SensitiveInfoData
+}
+
+class SensitiveInfoRepositoryImpl(
+    private val api: SensitiveInfoApi
+) : SensitiveInfoRepository {
+    override suspend fun fetchSensitiveInfo(): SensitiveInfoData {
+        return api.getSensitiveInfo().data
+    }
+}
+
+/**
+ * 복약 알림 API
+ */
+
+interface DosageLogApi {
+    @GET("/api/dosageLog/date")
+    suspend fun getDailyDosageLog(
+        @Query("date") date: String
+    ): DailyDosageLogResponse
+
+    @POST("/api/dosageLog/{logId}/taken")
+    suspend fun toggleDosageTaken(
+        @Path("logId") logId: Long
+    ): ToggleDosageTakenResponse
+}
+
+interface DosageLogRepository {
+    suspend fun getDailyDosageLog(date: String): DailyDosageLogResponse
+    suspend fun toggleDosageTaken(logId: Long): ToggleDosageTakenResponse
+}
+
+class DosageLogRepositoryImpl(
+    private val api: DosageLogApi
+) : DosageLogRepository {
+    override suspend fun getDailyDosageLog(date: String): DailyDosageLogResponse {
+        return api.getDailyDosageLog(date)
+    }
+
+    override suspend fun toggleDosageTaken(logId: Long): ToggleDosageTakenResponse {
+        return api.toggleDosageTaken(logId)
+    }
+}

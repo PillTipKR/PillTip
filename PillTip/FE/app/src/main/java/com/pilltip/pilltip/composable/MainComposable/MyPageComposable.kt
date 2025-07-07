@@ -38,6 +38,7 @@ import com.pilltip.pilltip.composable.noRippleClickable
 import com.pilltip.pilltip.model.search.TakingPillSummary
 import com.pilltip.pilltip.ui.theme.gray200
 import com.pilltip.pilltip.ui.theme.gray500
+import com.pilltip.pilltip.ui.theme.gray700
 import com.pilltip.pilltip.ui.theme.pretendard
 import com.pilltip.pilltip.ui.theme.primaryColor
 import com.pilltip.pilltip.ui.theme.primaryColor050
@@ -198,6 +199,63 @@ fun DrugSummaryCard(
                     fontFamily = pretendard,
                     fontWeight = FontWeight.W400,
                     color = gray500
+                )
+            )
+        }
+    }
+}
+
+@Composable
+fun HealthCard(
+    title: String,
+    descriptionHeader: String,
+    description: String,
+    onClick: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .border(width = 0.5.dp, color = gray200, shape = RoundedCornerShape(size = 12.dp))
+            .padding(0.25.dp)
+            .fillMaxWidth()
+            .height(71.dp)
+            .background(color = Color(0xFFFFFFFF), shape = RoundedCornerShape(size = 12.dp))
+            .padding(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 16.dp)
+            .noRippleClickable { onClick() }
+    ) {
+        Text(
+            text = title,
+            style = TextStyle(
+                fontSize = 14.sp,
+                fontFamily = pretendard,
+                fontWeight = FontWeight(700),
+                color = Color(0xFF000000),
+            )
+        )
+        HeightSpacer(8.dp)
+        Row(
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = descriptionHeader,
+                style = TextStyle(
+                    fontSize = 12.sp,
+                    fontFamily = pretendard,
+                    fontWeight = FontWeight(400),
+                    color = gray700,
+                )
+            )
+            Image(
+                imageVector = ImageVector.vectorResource(R.drawable.ic_login_vertical_divider),
+                contentDescription = "수직선",
+                modifier = Modifier.padding(horizontal = 4.dp)
+            )
+            Text(
+                text = description,
+                style = TextStyle(
+                    fontSize = 12.sp,
+                    fontFamily = pretendard,
+                    fontWeight = FontWeight(400),
+                    color = gray500,
                 )
             )
         }

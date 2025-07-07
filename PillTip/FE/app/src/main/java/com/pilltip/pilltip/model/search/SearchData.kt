@@ -324,3 +324,54 @@ data class PermissionData(
     val sensitiveInfoPermission: Boolean,
     val medicalInfoPermission: Boolean
 )
+
+/**
+ * 건강정보 조회
+ */
+data class SensitiveInfoResponse(
+    val status: String,
+    val message: String?,
+    val data: SensitiveInfoData
+)
+
+data class SensitiveInfoData(
+    val medicationInfo: List<String>,
+    val allergyInfo: List<String>,
+    val chronicDiseaseInfo: List<String>,
+    val surgeryHistoryInfo: List<String>
+)
+
+/**
+ * 복약 알람 API
+ */
+data class DailyDosageLogResponse(
+    val status: String,
+    val message: String?,
+    val data: DailyDosageLogData
+)
+
+data class DailyDosageLogData(
+    val percent: Int,
+    val perDrugLogs: List<DosageLogPerDrug>
+)
+
+data class DosageLogPerDrug(
+    val percent: Int,
+    val medicationName: String,
+    val dosageSchedule: List<DosageLogSchedule>
+)
+
+data class DosageLogSchedule(
+    val logId: Long,
+    val scheduledTime: String,
+    val isTaken: Boolean,
+    val takenAt: String?
+)
+
+data class ToggleDosageTakenResponse(
+    val status: String,
+    val message: String?,
+    val data: String
+)
+
+

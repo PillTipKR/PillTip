@@ -1,7 +1,10 @@
 package com.pilltip.pilltip.view.main
 
+import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -9,6 +12,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -56,14 +60,18 @@ import com.pilltip.pilltip.composable.BackButton
 import com.pilltip.pilltip.composable.HeightSpacer
 import com.pilltip.pilltip.composable.IosButton
 import com.pilltip.pilltip.composable.MainComposable.DrugSummaryCard
+import com.pilltip.pilltip.composable.MainComposable.HealthCard
 import com.pilltip.pilltip.composable.MainComposable.ProfileTagButton
 import com.pilltip.pilltip.composable.NextButton
 import com.pilltip.pilltip.composable.WhiteScreenModifier
 import com.pilltip.pilltip.composable.WidthSpacer
 import com.pilltip.pilltip.composable.noRippleClickable
 import com.pilltip.pilltip.model.UserInfoManager
+import com.pilltip.pilltip.model.search.QuestionnaireDetail
+import com.pilltip.pilltip.model.search.QuestionnaireViewModel
 import com.pilltip.pilltip.model.search.SearchHiltViewModel
 import com.pilltip.pilltip.model.signUp.TokenManager
+import com.pilltip.pilltip.ui.theme.gray050
 import com.pilltip.pilltip.ui.theme.gray100
 import com.pilltip.pilltip.ui.theme.gray200
 import com.pilltip.pilltip.ui.theme.gray500
@@ -79,7 +87,8 @@ import kotlinx.coroutines.launch
 @Composable
 fun MyPage(
     navController: NavController,
-    searchHiltViewModel: SearchHiltViewModel
+    searchHiltViewModel: SearchHiltViewModel,
+    questionnaireViewModel: QuestionnaireViewModel
 ) {
     val context = LocalContext.current
     val screenWidth = LocalConfiguration.current.screenWidthDp.dp
@@ -186,7 +195,7 @@ fun MyPage(
             navController.navigate("MyDrugInfoPage")
         }
         MyPageMenuItem(text = "내 건강정보 관리") {
-            // TODO: navController.navigate(...)
+            navController.navigate("MyHealthPage")
         }
         MyPageMenuItem(text = "내 리뷰 관리") {
             // TODO: navController.navigate(...)
@@ -205,7 +214,16 @@ fun MyPage(
         MyPageToggleItem(
             text = "푸시알람 동의",
             isChecked = toggle,
-            onCheckedChange = { toggle = !toggle }
+            onCheckedChange = {
+                toggle = !toggle
+                if (toggle) {
+                    questionnaireViewModel.updateSinglePermission("phone", true)
+                    Toast.makeText(context, "푸시 알림 권한을 허용했어요", Toast.LENGTH_SHORT).show()
+                } else {
+                    questionnaireViewModel.updateSinglePermission("phone", false)
+                    Toast.makeText(context, "앞으로 푸시 알림을 받지 않습니다", Toast.LENGTH_SHORT).show()
+                }
+            }
         )
         MyPageMenuItem(text = "앱 이용 약관") { navController.navigate("EssentialInfoPage") }
         MyPageMenuItem(text = "로그아웃") {
@@ -417,7 +435,7 @@ fun MyDrugInfoPage(
             .padding(horizontal = 22.dp)
     ) {
         BackButton(
-            title = "내 복약정보 관리",
+            title = "복약정보 관리",
             horizontalPadding = 0.dp,
             verticalPadding = 0.dp
         ) { navController.popBackStack() }
@@ -664,19 +682,116 @@ fun EssentialInfoPage(
                         .padding(vertical = 16.dp)
                         .height(58.dp),
                     text = "모두 동의하고 삭제하기",
-                    buttonColor = if (isEssential1Checked && isEssential2Checked) primaryColor else Color(0xFFCADCF5),
+                    buttonColor = if (isEssential1Checked && isEssential2Checked) primaryColor else Color(
+                        0xFFCADCF5
+                    ),
                     onClick = {
-                        if (isEssential1Checked && isEssential2Checked){
+                        if (isEssential1Checked && isEssential2Checked) {
                             scope.launch {
                                 bottomSheetState.hide()
                             }.invokeOnCompletion {
                                 isSheetVisible = false
                             }
-
                         }
                     }
                 )
+            }
+        }
+    }
+}
 
+@Composable
+fun MyHealthPage(
+    navController: NavController,
+    searchHiltViewModel: SearchHiltViewModel
+) {
+    LaunchedEffect(Unit) {
+        searchHiltViewModel.fetchSensitiveInfo()
+    }
+
+    val sensitiveInfo by searchHiltViewModel.sensitiveInfo.collectAsState()
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.White)
+            .systemBarsPadding()
+    ) {
+        BackButton(
+            title = "건강정보 관리",
+            horizontalPadding = 22.dp,
+            verticalPadding = 0.dp
+        ) { navController.popBackStack() }
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(color = gray050)
+                .padding(horizontal = 22.dp, vertical = 24.dp)
+        ) {
+            HealthCard(
+                title = "기저질환 관리",
+                descriptionHeader = "질환",
+                description = sensitiveInfo?.chronicDiseaseInfo?.joinToString(", ")
+                    ?: "등록된 데이터가 없어요",
+                onClick = { navController.navigate("MyHealthDetailPage/chronicDisease") }
+            )
+            HeightSpacer(6.dp)
+            HealthCard(
+                title = "알러지 관리",
+                descriptionHeader = "알러지",
+                description = sensitiveInfo?.allergyInfo?.joinToString(", ") ?: "등록된 데이터가 없어요",
+                onClick = { navController.navigate("MyHealthDetailPage/allergy") }
+            )
+            HeightSpacer(6.dp)
+            HealthCard(
+                title = "수술 이력 관리",
+                descriptionHeader = "수술명",
+                description = sensitiveInfo?.surgeryHistoryInfo?.joinToString(", ")
+                    ?: "등록된 데이터가 없어요",
+                onClick = { navController.navigate("MyHealthDetailPage/surgery") }
+            )
+        }
+    }
+}
+
+@Composable
+fun MyHealthDetailPage(
+    type: String,
+    navController: NavController,
+    searchHiltViewModel: SearchHiltViewModel
+) {
+    val sensitiveInfo by searchHiltViewModel.sensitiveInfo.collectAsState()
+    val list = when (type) {
+        "medication" -> sensitiveInfo?.medicationInfo ?: emptyList()
+        "allergy" -> sensitiveInfo?.allergyInfo ?: emptyList()
+        "chronicDisease" -> sensitiveInfo?.chronicDiseaseInfo ?: emptyList()
+        "surgery" -> sensitiveInfo?.surgeryHistoryInfo ?: emptyList()
+        else -> emptyList()
+    }
+
+    Column(
+        modifier = WhiteScreenModifier
+            .padding(horizontal = 22.dp)
+            .statusBarsPadding()
+    ) {
+        BackButton(
+            title = when (type) {
+                "allergy" -> "약물 알러지 이력"
+                "chronicDisease" -> "기저질환 이력"
+                else -> "수술 이력"
+            },
+            horizontalPadding = 0.dp,
+            verticalPadding = 0.dp
+        ) { navController.popBackStack() }
+        BackHandler { navController.popBackStack() }
+        HeightSpacer(16.dp)
+        list.forEach { item ->
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(text = item)
             }
         }
     }
