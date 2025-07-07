@@ -21,6 +21,14 @@ public interface DosageLogRepository extends JpaRepository<DosageLog, Long> {
             @Param("targetDate") LocalDate targetDate
     );
 
+    @Query("SELECT dl FROM DosageLog dl " +
+            "JOIN dl.user u " +
+            "WHERE u.id = :userId " +
+            "AND DATE(dl.rescheduledTime) = :targetDate")
+    List<DosageLog> findByUserAndRescheduledDate(
+            @Param("userId") Long userId,
+            @Param("targetDate") LocalDate targetDate
+    );
 
     List<DosageLog> findByUserAndMedicationName(User user, String medicationName);
 

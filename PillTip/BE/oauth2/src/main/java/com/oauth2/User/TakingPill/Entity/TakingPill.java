@@ -34,7 +34,6 @@ public class TakingPill {
     private Long medicationId;
 
     @Column(name = "medication_name", nullable = false)
-    @Convert(converter = EncryptionConverter.class)
     private String medicationName;
 
     @Column(name = "start_year", nullable = true)
@@ -60,7 +59,6 @@ public class TakingPill {
     private String alarmName;
 
     @Column(name = "days_of_week", nullable = true)
-    @Convert(converter = EncryptionConverter.class)
     private String daysOfWeek; // JSON 형태로 저장 (["MON", "TUE", "WED"])
 
     @Column(name = "dosage_amount", nullable = false)

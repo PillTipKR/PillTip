@@ -41,7 +41,6 @@ public class DosageLogService {
     public void markPending(Long dosageLogId) {
         DosageLog dosageLog = dosageLogRepository.findById(dosageLogId)
                 .orElseThrow(() -> new IllegalArgumentException("복약 기록을 찾을 수 없습니다."));
-        dosageLog.setIsRescheduled(true);
         dosageLog.setRescheduledTime(LocalDateTime.now().plusMinutes(5));
         dosageLogRepository.save(dosageLog);
     }

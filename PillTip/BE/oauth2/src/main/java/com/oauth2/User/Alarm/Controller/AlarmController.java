@@ -25,9 +25,8 @@ public class AlarmController {
     }
 
 
-    @PostMapping("/{logId}/")
-    public ResponseEntity<ApiResponse<String>> markPending(
-            @AuthenticationPrincipal User user, @PathVariable Long logId) {
+    @PostMapping("/{logId}/pending")
+    public ResponseEntity<ApiResponse<String>> markPending(@PathVariable Long logId) {
         // 복약 완료 처리 로직
         dosageLogService.markPending(logId);
         return ResponseEntity.ok().body(ApiResponse.success("5분 뒤 재전송"));
