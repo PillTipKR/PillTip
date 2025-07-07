@@ -4,6 +4,7 @@ import com.oauth2.Drug.Search.Dto.IngredientDetail;
 
 import java.util.List;
 
+// 검색결과 + dur 태그
 public record SearchDurDto(
         Long id,
         String drugName,

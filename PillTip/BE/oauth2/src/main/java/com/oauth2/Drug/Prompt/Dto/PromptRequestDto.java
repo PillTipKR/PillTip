@@ -5,6 +5,7 @@ import com.oauth2.Drug.DetailPage.Dto.DrugRequestInfoDto;
 
 import java.util.List;
 
+// GPT 개인복약 가이드라인 생성용 입력
 public record PromptRequestDto(
         List<DurTagDto> durInfo,         // DUR 정보 (없을 경우 빈 문자열)
         int age,                  // 사용자 나이

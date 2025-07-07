@@ -4,6 +4,7 @@ import lombok.Data;
 
 import java.util.List;
 
+//GPT 출력 토큰
 @Data
 public class GPTResponse {
     private List<Choice> choices;
