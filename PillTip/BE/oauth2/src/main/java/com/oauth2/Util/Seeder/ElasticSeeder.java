@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class ElasticSeeder implements CommandLineRunner {
 
+    //ElasticSearch 재생성 스위치
     @Value("${elastic.seed}")
     private boolean seed;
 

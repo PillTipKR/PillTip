@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class RedisSeeder implements CommandLineRunner {
 
+    //redis 재생성 스위치
     @Value("${redis.seed}")
     private boolean seed;
 
