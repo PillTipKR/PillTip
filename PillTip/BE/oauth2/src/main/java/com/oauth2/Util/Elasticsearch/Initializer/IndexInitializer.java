@@ -13,7 +13,7 @@ import java.util.List;
 @Order(1)
 public class IndexInitializer implements CommandLineRunner {
 
-    @Value("${app.seed}")
+    @Value("${elasitc.seed}")
     private boolean seed;
 
     private final IndexManager indexManager;
