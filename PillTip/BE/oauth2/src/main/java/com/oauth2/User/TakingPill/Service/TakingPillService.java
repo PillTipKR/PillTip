@@ -13,6 +13,7 @@ import com.oauth2.User.TakingPill.Repositoty.DosageLogRepository;
 import com.oauth2.User.TakingPill.Repositoty.TakingPillCounterRepository;
 import com.oauth2.User.TakingPill.Repositoty.TakingPillRepository;
 import com.oauth2.User.TakingPill.Repositoty.DosageScheduleRepository;
+import com.oauth2.Util.Encryption.EncryptionConverter;
 import com.oauth2.Util.Encryption.EncryptionUtil;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -41,6 +42,7 @@ public class TakingPillService {
     private final EncryptionUtil encryptionUtil;
     private final TakingPillCounterRepository takingPillCounterRepository;
     private final DrugRepository drugRepository;
+    private final EncryptionConverter encryptionConverter;
 
     /**
      * 복용 중인 약을 추가합니다.
@@ -213,7 +215,8 @@ public class TakingPillService {
                         .dosageUnit(schedule.getDosageUnit())
                         .build()
                 ).toList();
-
+        List<String> oldDaysOfWeek = parseDaysOfWeekFromJson(encryptionConverter.convertToEntityAttribute(takingPill.getDaysOfWeek()));
+        System.out.println(oldDaysOfWeek);
         // TakingPill 정보 업데이트
         takingPill.setMedicationName(request.getMedicationName());
         takingPill.setStartYear(request.getStartDate() != null ? request.getStartDate().getYear() : null);
@@ -260,7 +263,7 @@ public class TakingPillService {
         boolean isStartDatePushed = newStartDate.isAfter(oldStartDate);
         boolean isEndDateExtended = newEndDate.isAfter(oldEndDate);
         boolean isEndDateShortened = newEndDate.isBefore(oldEndDate);
-        boolean isScheduleChanged = !isScheduleEqual(oldSchedules, request.getDosageSchedules());
+        boolean isScheduleChanged = !isScheduleEqual(oldSchedules, request.getDosageSchedules(),oldDaysOfWeek,request.getDaysOfWeek());
         System.out.println(isStartDateEarlier + " " + isStartDatePushed + " " + isEndDateExtended + " " + isEndDateShortened);
         System.out.println(isScheduleChanged);
         System.out.println(pillStatus);
@@ -569,12 +572,15 @@ public class TakingPillService {
         List<DosageSchedule> schedules = pill.getDosageSchedules();
         List<LocalDateTime> existingTimes = extractScheduledTimes(existingLogs);
 
+        LocalDate startDate = pillStartDate(pill);
+        LocalDate endDate = pillEndDate(pill);
+
         if (status == COMPLETED) return;
 
         if (isStartDateEarlier && !(isScheduleChanged && status == NEW) && status != ACTIVE) {
             List<DosageLog> backfill = generateDosageLogsBetween(
                     user, medicationName, pill.getAlarmName(),
-                    pillStartDate(pill).minusDays(1), oldStart,
+                    startDate, oldStart.minusDays(1),
                     schedules, pill, existingTimes
             );
             dosageLogRepository.saveAll(backfill);
@@ -583,7 +589,7 @@ public class TakingPillService {
         if (isStartDatePushed && status == NEW) {
             dosageLogRepository.deleteAll(
                     existingLogs.stream()
-                            .filter(log -> log.getScheduledTime().toLocalDate().isBefore(pillStartDate(pill).minusDays(1)))
+                            .filter(log -> log.getScheduledTime().toLocalDate().isBefore(startDate))
                             .collect(Collectors.toList())
             );
         }
@@ -591,7 +597,7 @@ public class TakingPillService {
         if (isEndDateExtended && !isScheduleChanged) {
             List<DosageLog> futureLogs = generateDosageLogsBetween(
                     user, medicationName, pill.getAlarmName(),
-                    oldEnd, pillEndDate(pill).plusDays(1),
+                    oldEnd.plusDays(1), endDate,
                     schedules, pill, existingTimes
             );
             dosageLogRepository.saveAll(futureLogs);
@@ -600,7 +606,7 @@ public class TakingPillService {
         if (isEndDateShortened) {
             dosageLogRepository.deleteAll(
                     existingLogs.stream()
-                            .filter(log -> log.getScheduledTime().toLocalDate().isAfter(pillEndDate(pill).minusDays(1)))
+                            .filter(log -> log.getScheduledTime().toLocalDate().isAfter(endDate))
                             .collect(Collectors.toList())
             );
         }
@@ -611,7 +617,7 @@ public class TakingPillService {
 
                 List<DosageLog> regenerated = generateDosageLogsBetween(
                         user, medicationName, pill.getAlarmName(),
-                        pillStartDate(pill).minusDays(1), pillEndDate(pill).plusDays(1),
+                        startDate, endDate,
                         schedules, pill, List.of()  // NEW는 전체 삭제니까 기존 로그 없음
                 );
                 dosageLogRepository.saveAll(regenerated);
@@ -626,7 +632,7 @@ public class TakingPillService {
 
                 List<DosageLog> regenerated = generateDosageLogsBetween(
                         user, medicationName, pill.getAlarmName(),
-                        now.toLocalDate(), pillEndDate(pill).plusDays(1),
+                        now.toLocalDate(), endDate,
                         schedules, pill, futureLogTimes
                 );
                 dosageLogRepository.saveAll(regenerated);
@@ -686,7 +692,8 @@ public class TakingPillService {
         return createSafeLocalDate(pill.getEndYear(), pill.getEndMonth(), pill.getEndDay());
     }
 
-    private boolean isScheduleEqual(List<DosageSchedule> existing, List<TakingPillRequest.DosageSchedule> updated) {
+    private boolean isScheduleEqual(List<DosageSchedule> existing, List<TakingPillRequest.DosageSchedule> updated,
+            List<String> oldDaysofWeek, List<String> newDaysofWeek) {
         if (existing.size() != updated.size()) return false;
         for (int i = 0; i < existing.size(); i++) {
             DosageSchedule e = existing.get(i);
@@ -696,6 +703,11 @@ public class TakingPillService {
             if (!e.getMinute().equals(u.getMinute())) return false;
             if (!e.getPeriod().equalsIgnoreCase(u.getPeriod())) return false;
             if (!e.getDosageUnit().equalsIgnoreCase(u.getDosageUnit())) return false;
+        }
+        if(oldDaysofWeek.size() != newDaysofWeek.size()) return false;
+        else{
+            for(String day : oldDaysofWeek)
+                if(!newDaysofWeek.contains(day)) return false;
         }
         return true;
     }

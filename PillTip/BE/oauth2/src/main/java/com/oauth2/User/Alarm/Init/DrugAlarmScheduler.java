@@ -30,20 +30,19 @@ public class DrugAlarmScheduler {
         for (User user : users) {
             // TakingPill 엔티티에서 직접 복용 중인 약 정보 조회
             List<DosageLog> dosageLogs = dosageLogRepository.findByUserAndDate(user.getId(),LocalDate.now());
-
+            List<DosageLog> rescheduled = dosageLogRepository.findByUserAndRescheduledDate(user.getId(),LocalDate.now());
             for(DosageLog dosageLog : dosageLogs) {
                 LocalDateTime dateTime = dosageLog.getScheduledTime();
                 if(dateTime.getHour() == now.getHour() && dateTime.getMinute() == now.getMinute()) {
                     alarmService.sendMedicationAlarm(user.getFCMToken(), dosageLog.getId(),
                             dosageLog.getAlarmName(), dosageLog.getMedicationName());
                 }
-
-                if(dosageLog.getIsRescheduled()){
-                    LocalDateTime rescheduledTime = dosageLog.getRescheduledTime();
-                    if(rescheduledTime.getHour() == now.getHour() && rescheduledTime.getMinute() == now.getMinute()) {
-                        alarmService.sendMedicationAlarm(user.getFCMToken(), dosageLog.getId(),
-                                dosageLog.getAlarmName(), dosageLog.getMedicationName());
-                    }
+            }
+            for(DosageLog dosageLog : rescheduled) {
+                LocalDateTime rescheduledTime = dosageLog.getRescheduledTime();
+                if(rescheduledTime.getHour() == now.getHour() && rescheduledTime.getMinute() == now.getMinute()) {
+                    alarmService.sendMedicationAlarm(user.getFCMToken(), dosageLog.getId(),
+                            dosageLog.getAlarmName(), dosageLog.getMedicationName());
                 }
             }
         }
