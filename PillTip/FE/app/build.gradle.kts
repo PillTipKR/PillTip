@@ -96,7 +96,10 @@ dependencies {
     //직렬화
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
 
+    /* AsyncImage */
+    implementation("io.coil-kt:coil-compose:2.4.0")
 
+    
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)

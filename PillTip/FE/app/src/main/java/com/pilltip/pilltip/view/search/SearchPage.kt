@@ -62,6 +62,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalClipboardManager
@@ -77,8 +78,11 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.window.Popup
 import androidx.navigation.NavController
+import coil.compose.AsyncImage
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.pilltip.pilltip.R
 import com.pilltip.pilltip.composable.HeightSpacer
@@ -90,6 +94,7 @@ import com.pilltip.pilltip.composable.SearchComposable.ExpandableInfoBox
 import com.pilltip.pilltip.composable.SearchComposable.ExportAndCopy
 import com.pilltip.pilltip.composable.SearchComposable.PillSearchField
 import com.pilltip.pilltip.composable.SearchComposable.SearchTag
+import com.pilltip.pilltip.composable.SearchComposable.ZoomableImageDialog
 import com.pilltip.pilltip.composable.SearchComposable.shareText
 import com.pilltip.pilltip.composable.WidthSpacer
 import com.pilltip.pilltip.composable.noRippleClickable
@@ -98,7 +103,9 @@ import com.pilltip.pilltip.model.search.DetailDrugData
 import com.pilltip.pilltip.model.search.LogViewModel
 import com.pilltip.pilltip.model.search.SearchHiltViewModel
 import com.pilltip.pilltip.ui.theme.gray050
+import com.pilltip.pilltip.ui.theme.gray100
 import com.pilltip.pilltip.ui.theme.gray200
+import com.pilltip.pilltip.ui.theme.gray300
 import com.pilltip.pilltip.ui.theme.gray400
 import com.pilltip.pilltip.ui.theme.gray500
 import com.pilltip.pilltip.ui.theme.gray700
@@ -374,7 +381,7 @@ fun SearchResultsPage(
                                 Text(
                                     text = result.value,
                                     modifier = Modifier
-                                        .clickable {
+                                        .noRippleClickable {
                                             inputText = result.value
                                             hasUserTyped = false
                                             searchViewModel.fetchDrugSearch(result.value)
@@ -409,11 +416,8 @@ fun SearchResultsPage(
                     }
                 }
             }
-
         }
-
         HeightSpacer(16.dp)
-
         when {
             isLoading -> {
                 Box(modifier = Modifier.fillMaxSize()) {
@@ -461,6 +465,7 @@ fun DetailPage(
     val detailState by searchViewModel.drugDetail.collectAsState()
     val nickname = UserInfoManager.getUserData(LocalContext.current)?.nickname
     val systemUiController = rememberSystemUiController()
+    var isImageViewerOpen by remember { mutableStateOf(false) }
     SideEffect {
         systemUiController.isNavigationBarVisible = true
     }
@@ -473,6 +478,7 @@ fun DetailPage(
         }
 
         else -> {
+            val hasWarning = detail.durTags.any { it.isTrue }
             Box(modifier = Modifier.fillMaxSize()) {
                 Column(
                     modifier = Modifier
@@ -514,14 +520,44 @@ fun DetailPage(
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(260.dp)
+                            .height(230.dp)
                             .background(gray050),
                         contentAlignment = Alignment.Center
                     ) {
-                        Image(
-                            imageVector = ImageVector.vectorResource(R.drawable.logo_pilltip_typo),
-                            contentDescription = "기본 이미지",
-                        )
+                        if (!detail.imageUrl.isNullOrBlank()) {
+                            AsyncImage(
+                                model = detail.imageUrl,
+                                contentDescription = "약 이미지",
+                                contentScale = ContentScale.Fit,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .noRippleClickable {
+                                        isImageViewerOpen = true
+                                    }
+                            )
+                            if (isImageViewerOpen) {
+                                ZoomableImageDialog(
+                                    imageUrl = detail.imageUrl,
+                                    onDismiss = { isImageViewerOpen = false }
+                                )
+                            }
+                        } else {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.Center
+                            ){
+                                Image(
+                                    imageVector = ImageVector.vectorResource(R.drawable.ic_default_pill),
+                                    contentDescription = "기본 이미지"
+                                )
+                                WidthSpacer(30.dp)
+                                Image(
+                                    imageVector = ImageVector.vectorResource(R.drawable.ic_default_pill),
+                                    contentDescription = "기본 이미지"
+                                )
+                            }
+
+                        }
                     }
                     Column(
                         modifier = Modifier
@@ -567,51 +603,43 @@ fun DetailPage(
 
                         }
                         HeightSpacer(8.dp)
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = detail.name,
-                                style = TextStyle(
-                                    fontSize = 16.sp,
-                                    fontFamily = pretendard,
-                                    fontWeight = FontWeight(600),
-                                    color = Color(0xFF000000)
-                                )
+                        Text(
+                            text = detail.name,
+                            style = TextStyle(
+                                fontSize = 16.sp,
+                                fontFamily = pretendard,
+                                fontWeight = FontWeight(600),
+                                color = Color(0xFF000000)
                             )
-                            WidthSpacer(4.dp)
-                            Box(
-                                modifier = Modifier
-                                    .padding(1.dp)
-                                    .width(2.dp)
-                                    .height(2.dp)
-                                    .background(color = gray500)
+                        )
+                        HeightSpacer(6.dp)
+                        Text(
+                            text = detail.manufacturer,
+                            style = TextStyle(
+                                fontSize = 12.sp,
+                                fontFamily = pretendard,
+                                fontWeight = FontWeight(500),
+                                color = gray500
                             )
-                            WidthSpacer(4.dp)
-                            Text(
-                                text = detail.manufacturer,
-                                style = TextStyle(
-                                    fontSize = 12.sp,
-                                    fontFamily = pretendard,
-                                    fontWeight = FontWeight(500),
-                                    color = Color(0xFF000000)
-                                )
-                            )
-                        }
-                        HeightSpacer(14.dp)
+                        )
+                        HeightSpacer(9.63.dp)
                         HorizontalDivider(thickness = 0.5.dp, color = gray200)
-                        HeightSpacer(14.dp)
+                        HeightSpacer(9.63.dp)
                         Row(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Image(
-                                imageVector = ImageVector.vectorResource(R.drawable.ic_search_dur_alert),
+                                imageVector = ImageVector.vectorResource(
+                                    if (hasWarning) R.drawable.ic_search_dur_alert
+                                    else R.drawable.ic_search_dur_ok
+                                ),
                                 contentDescription = "DUR 알림",
                                 modifier = Modifier.size(20.dp)
                             )
-                            WidthSpacer(8.dp)
+                            WidthSpacer(6.dp)
                             Text(
-                                text = "$nickname 님은 섭취에 주의가 필요한 약품이에요!",
+                                text = if (hasWarning) "$nickname 님은 섭취에 주의가 필요한 약품이에요!"
+                                else "$nickname 님! 안심하고 복약하셔도 괜찮아요",
                                 style = TextStyle(
                                     fontSize = 12.sp,
                                     fontFamily = pretendard,
@@ -620,13 +648,41 @@ fun DetailPage(
                                 )
                             )
                         }
-//                    Text(text = "제형: ${detail.form}")
-//                    Text(text = "포장단위: ${detail.packaging}")
-//                    Text(text = "ATC 코드: ${detail.atcCode}")
-//                    Text(text = "승인일: ${detail.approvalDate}")
-                    }
+                        HeightSpacer(14.dp)
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            detail.durTags.forEach { tag ->
+                                Box(
+                                    modifier = Modifier
+                                        .height(24.dp)
+                                        .background(
+                                            color = if (tag.isTrue) primaryColor else gray100,
+                                            shape = RoundedCornerShape(size = 601.70361.dp)
+                                        )
+                                        .padding(
+                                            start = 10.dp,
+                                            top = 6.dp,
+                                            end = 10.dp,
+                                            bottom = 6.dp
+                                        )
+                                ) {
+                                    Text(
+                                        text = tag.title,
+                                        style = TextStyle(
+                                            fontSize = 10.sp,
+                                            fontFamily = pretendard,
+                                            fontWeight = FontWeight(500),
+                                            color = if (tag.isTrue) Color.White else gray500,
+                                        )
+                                    )
+                                }
+                            }
 
-                    HeightSpacer(16.dp)
+                        }
+                    }
+                    HorizontalDivider(thickness = 6.dp, color = gray100)
                     TabRow(
                         selectedTabIndex = pagerState.currentPage,
                         modifier = Modifier
@@ -642,7 +698,9 @@ fun DetailPage(
                     ) {
                         tabs.forEachIndexed { index, title ->
                             Tab(
-                                modifier = Modifier.weight(1f).background(Color.White),
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .background(Color.White),
                                 selected = pagerState.currentPage == index,
                                 onClick = {
                                     coroutineScope.launch {
@@ -665,7 +723,9 @@ fun DetailPage(
 
                     HorizontalPager(
                         state = pagerState,
-                        modifier = Modifier.fillMaxWidth().wrapContentHeight()
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .wrapContentHeight()
                     ) { page ->
                         when (page) {
                             0 -> DrugInfoTab(navController, detail)
@@ -673,20 +733,6 @@ fun DetailPage(
                             2 -> ReviewTab(navController, detail)
                         }
                     }
-
-
-//
-//                HeightSpacer(16.dp)
-//
-//                Text("DUR 정보:")
-//                detail.durTags.forEach { tag ->
-//                    if (tag.isTrue) {
-//                        Text("● ${tag.title}")
-//                        tag.description.forEach {
-//                            Text("- ${it.name}: ${it.reason} (${it.note})")
-//                        }
-//                    }
-//                }
                 }
                 Column(
                     modifier = Modifier
@@ -708,7 +754,7 @@ fun DetailPage(
                         horizontalArrangement = Arrangement.Center
                     ) {
                         Text(
-                            text = "12명이 해당 약품을 복약 중이에요",
+                            text = "${detail.count}명이 해당 약품을 복약했어요",
                             style = TextStyle(
                                 fontSize = 12.sp,
                                 fontFamily = pretendard,
@@ -734,7 +780,11 @@ fun DetailPage(
                                 .padding(vertical = 16.dp)
                                 .padding(start = 22.dp, bottom = 46.dp, end = 5.dp)
                                 .height(58.dp)
-                                .border(1.dp, primaryColor, shape = RoundedCornerShape(size = 16.dp)),
+                                .border(
+                                    1.dp,
+                                    primaryColor,
+                                    shape = RoundedCornerShape(size = 16.dp)
+                                ),
                             text = "복약정보 저장",
                             buttonColor = Color.White,
                             textColor = primaryColor,
@@ -803,9 +853,11 @@ fun DrugInfoTab(
             }
         )
         Row(
-            modifier = Modifier.fillMaxWidth().padding(vertical = 10.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 10.dp),
             horizontalArrangement = Arrangement.End
-        ){
+        ) {
             Text(
                 text = "도움이 되었나요?",
                 style = TextStyle(
@@ -841,14 +893,14 @@ fun DrugInfoTab(
             headerText = "상세성분",
             onCopyClicked = {
                 val text = detail.ingredients.joinToString("\n") {
-                    "- ${it.name} (${it.dose}) ${if (it.main) "[주성분]" else ""}"
+                    "- ${it.name} (${it.dose}) ${if (it.isMain) "[주성분]" else ""}"
                 }
                 clipboardManager.setText(AnnotatedString(text))
                 Toast.makeText(context, "복사되었습니다", Toast.LENGTH_SHORT).show()
             },
             onExportClicked = {
                 val text = detail.ingredients.joinToString("\n") {
-                    "- ${it.name} (${it.dose}) ${if (it.main) "[주성분]" else ""}"
+                    "- ${it.name} (${it.dose}) ${if (it.isMain) "[주성분]" else ""}"
                 }
                 shareText(context, "상세성분", text)
             }
@@ -856,7 +908,7 @@ fun DrugInfoTab(
         ExpandableInfoBox(
             items = detail.ingredients
         ) { ingredient ->
-            Text("- ${ingredient.name} (${ingredient.dose}) ${if (ingredient.main) "[주성분]" else ""}")
+            Text("${if (ingredient.isMain) "[주성분]" else "⸰ "} ${ingredient.name} (${ingredient.dose})}")
         }
         HeightSpacer(42.dp)
         ExportAndCopy(

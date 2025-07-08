@@ -15,10 +15,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -32,10 +34,17 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.pilltip.pilltip.R
 import com.pilltip.pilltip.composable.HeightSpacer
+import com.pilltip.pilltip.composable.WidthSpacer
 import com.pilltip.pilltip.composable.noRippleClickable
 import com.pilltip.pilltip.ui.theme.backgroundColor
+import com.pilltip.pilltip.ui.theme.gray200
 import com.pilltip.pilltip.ui.theme.gray400
+import com.pilltip.pilltip.ui.theme.gray800
 import com.pilltip.pilltip.ui.theme.pretendard
+import com.pilltip.pilltip.ui.theme.primaryColor
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 /**
  * 메인 화면에 있는 로고 이미지 필드 컴포저블 입니다.
@@ -149,7 +158,7 @@ fun SmallTabCard(
                 shape = RoundedCornerShape(size = 12.dp)
             )
             .padding(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 14.dp)
-            .clickable {
+            .noRippleClickable {
                 onClick()
             }
     ) {
@@ -250,6 +259,89 @@ fun AnnouncementCard(announcementText: String = "TEST") {
                 .padding(1.dp)
                 .width(20.dp)
                 .height(20.dp)
+        )
+    }
+}
+
+sealed class DosagePage {
+    data class Overall(val dateText: String, val percent: Int) : DosagePage()
+    data class PerDrug(val medicationName: String, val percent: Int) : DosagePage()
+}
+
+fun formatDate(date: LocalDate): String {
+    val formatter = DateTimeFormatter.ofPattern("M월 d일 E요일")
+        .withLocale(Locale.KOREA)
+    return date.format(formatter)
+}
+
+@Composable
+fun DosageCard(title: String, percent: Int, onClick: () -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 22.dp)
+            .shadow(
+                elevation = 8.dp,
+                spotColor = Color(0x1F000000),
+                ambientColor = Color(0x1F000000)
+            )
+            .height(132.dp)
+            .background(color = Color.White, shape = RoundedCornerShape(12.dp))
+            .padding(start = 20.dp, top = 24.dp, end = 20.dp, bottom = 24.dp)
+            .noRippleClickable {
+                onClick()
+            }
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Image(
+                imageVector = ImageVector.vectorResource(R.drawable.ic_dosage_fire),
+                contentDescription = "복약완료율"
+            )
+            WidthSpacer(6.dp)
+            Text(
+                text = title,
+                style = TextStyle(
+                    fontSize = 14.sp,
+                    lineHeight = 21.sp,
+                    fontFamily = pretendard,
+                    fontWeight = FontWeight(700),
+                    color = primaryColor
+                )
+            )
+        }
+        HeightSpacer(6.dp)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = "복약 완료율",
+                style = TextStyle(
+                    fontSize = 20.sp,
+                    lineHeight = 30.sp,
+                    fontFamily = pretendard,
+                    fontWeight = FontWeight(700),
+                    color = gray800
+                )
+            )
+            Spacer(modifier = Modifier.weight(1f))
+            Text(
+                text = "$percent%",
+                style = TextStyle(
+                    fontSize = 28.sp,
+                    lineHeight = 42.sp,
+                    fontFamily = pretendard,
+                    fontWeight = FontWeight(700),
+                    color = gray800
+                )
+            )
+        }
+        HeightSpacer(22.dp)
+        LinearProgressIndicator(
+            progress = { percent / 100f },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(8.dp)
+                .clip(RoundedCornerShape(100.dp)),
+            color = primaryColor,
+            trackColor = gray200,
         )
     }
 }
