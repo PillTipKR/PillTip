@@ -48,13 +48,16 @@ public class LoginService {
             
             if (u.getLoginId() != null) {
                 try {
-                    String decryptedLoginId = encryptionUtil.decrypt(u.getLoginId());
+                    String decryptedLoginId = u.getLoginId();
                     logger.info("Decrypted loginId for user {}: {}", u.getId(), decryptedLoginId);
+                    logger.info("Comparing decryptedLoginId [{}] with request loginId [{}]", decryptedLoginId, request.getLoginId());
                     
                     if (decryptedLoginId.equals(request.getLoginId())) {
                         user = u;
                         logger.info("Found matching user: {}", u.getId());
                         break;
+                    } else {
+                        logger.info("loginId does not match for user {}: {} != {}", u.getId(), decryptedLoginId, request.getLoginId());
                     }
                 } catch (Exception e) {
                     logger.warn("Failed to decrypt loginId for user {}: {}", u.getId(), e.getMessage());

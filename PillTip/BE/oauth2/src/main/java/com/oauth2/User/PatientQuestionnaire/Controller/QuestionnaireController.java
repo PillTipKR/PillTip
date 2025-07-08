@@ -12,7 +12,6 @@ import com.oauth2.User.UserInfo.Service.UserPermissionsService;
 import com.oauth2.User.PatientQuestionnaire.Dto.PatientQuestionnaireRequest;
 import com.oauth2.User.PatientQuestionnaire.Dto.PatientQuestionnaireResponse;
 import com.oauth2.User.PatientQuestionnaire.Entity.PatientQuestionnaire;
-import com.oauth2.User.UserInfo.Service.UserService;
 import com.oauth2.User.PatientQuestionnaire.Dto.QuestionnaireAvailabilityResponse;
 import com.oauth2.User.PatientQuestionnaire.Dto.QRQuestionnaireResponse;
 import lombok.RequiredArgsConstructor;
@@ -37,7 +36,6 @@ public class QuestionnaireController {
     private final PatientQuestionnaireService patientQuestionnaireService;
     private final TokenService tokenService;
     private final HospitalService hospitalService;
-    private final UserService userService;
     private final EncryptionUtil encryptionUtil;
     //동의사항 조회
     @GetMapping("/permissions")
@@ -382,7 +380,10 @@ public class QuestionnaireController {
             QRQuestionnaireResponse response = QRQuestionnaireResponse.builder()
                 .questionnaireUrl(questionnaireUrl)
                 .patientName(user.getRealName() != null ? user.getRealName() : user.getNickname())
-                .patientPhone(user.getUserProfile().getPhone())
+                .patientPhone(getDecryptedPhoneNumber(user))
+                .patientGender(user.getUserProfile().getGender().toString())
+                .patientPregnant(user.getUserProfile().isPregnant())
+                .patientBirthDate(user.getUserProfile().getBirthDate().toString())
                 .hospitalCode(hospitalCode)
                 .questionnaireId(questionnaire.getQuestionnaireId())
                 .accessToken(jwtToken)
@@ -416,6 +417,7 @@ public class QuestionnaireController {
                 .body(ApiResponse.error("유효하지 않은 커스텀 토큰입니다.", null));
         }
         PatientQuestionnaire questionnaire = patientQuestionnaireService.getQuestionnaireByIdPublic(id);
+        logger.info("[커스텀 토큰 전용] questionnaire: {}", questionnaire);
         String decryptedPhoneNumber = getDecryptedPhoneNumber(questionnaire.getUser());
         String decryptedRealName = getDecryptedRealName(questionnaire.getUser());
         String decryptedAddress = getDecryptedAddress(questionnaire.getUser());

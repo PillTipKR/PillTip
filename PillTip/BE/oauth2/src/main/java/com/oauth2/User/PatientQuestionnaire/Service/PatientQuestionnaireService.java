@@ -11,7 +11,6 @@ import com.oauth2.User.UserInfo.Service.UserService;
 import com.oauth2.User.UserInfo.Service.UserSensitiveInfoService;
 import com.oauth2.User.TakingPill.Service.TakingPillService;
 import com.oauth2.User.TakingPill.Dto.TakingPillRequest;
-import com.oauth2.Util.Encryption.EncryptionUtil;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,7 +32,6 @@ public class PatientQuestionnaireService {
     private final UserService userService;
     private final UserSensitiveInfoService userSensitiveInfoService;
     private final TakingPillService takingPillService;
-    private final EncryptionUtil encryptionUtil;
 
     @Transactional
     public PatientQuestionnaire createQuestionnaire(User user, PatientQuestionnaireRequest request) throws JsonProcessingException {
@@ -333,20 +331,5 @@ public class PatientQuestionnaireService {
                 // 개별 약물 등록 실패가 전체 프로세스를 중단하지 않도록 예외를 다시 던지지 않음
             }
         }
-    }
-
-    /**
-     * TakingPill의 암호화된 약물명을 복호화합니다.
-     */
-    private String getDecryptedMedicationName(com.oauth2.User.TakingPill.Entity.TakingPill pill) {
-        try {
-            String encryptedName = pill.getMedicationName();
-            if (encryptedName != null && !encryptedName.isEmpty()) {
-                return encryptionUtil.decrypt(encryptedName);
-            }
-        } catch (Exception e) {
-            logger.warn("Failed to decrypt medication name for takingPill {}: {}", pill.getId(), e.getMessage());
-        }
-        return pill.getMedicationName(); // 복호화 실패 시 원본 반환
     }
 } 
