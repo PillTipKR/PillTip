@@ -65,9 +65,9 @@ fun DrugLogCard(
     isRead: Boolean = false
 ) {
     val filteredSchedules = when {
-        !isNotification -> drugLog.dosageSchedule // 전체
-        isRead -> drugLog.dosageSchedule.filter { it.isTaken } // 복용된 것만
-        else -> drugLog.dosageSchedule.filter { !it.isTaken } // 미복용만
+        !isNotification -> drugLog.dosageSchedule
+        isRead -> drugLog.dosageSchedule.filter { it.isTaken }
+        else -> drugLog.dosageSchedule.filter { !it.isTaken }
     }
 
     if (filteredSchedules.isEmpty()) return
@@ -80,7 +80,6 @@ fun DrugLogCard(
             .background(color = Color.White, shape = RoundedCornerShape(size = 12.dp))
             .padding(start = 20.dp, top = 24.dp, end = 20.dp, bottom = 8.dp)
     ) {
-        // 약물 이름 + 화살표
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
