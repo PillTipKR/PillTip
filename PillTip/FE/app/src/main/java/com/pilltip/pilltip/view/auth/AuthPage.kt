@@ -134,6 +134,7 @@ fun SplashPage(navController: NavController) {
         visible = true
         delay(3000)
         navController.navigate("SelectPage") {
+            systemUiController.isNavigationBarVisible = true
             popUpTo("SplashPage") { inclusive = true }
         }
     }

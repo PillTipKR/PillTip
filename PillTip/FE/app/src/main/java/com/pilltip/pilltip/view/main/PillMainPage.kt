@@ -153,6 +153,10 @@ fun HomePage(
     navController: NavController,
     searchHiltViewModel: SearchHiltViewModel
 ) {
+    val systemUiController = rememberSystemUiController()
+    SideEffect {
+        systemUiController.isNavigationBarVisible = true
+    }
     LogoField(
         onClick = { navController.navigate("NotificationPage") }
     )
@@ -319,6 +323,10 @@ fun MyQuestionnairePage(
     navController: NavController,
     viewModel: QuestionnaireViewModel
 ) {
+    val systemUiController = rememberSystemUiController()
+    SideEffect {
+        systemUiController.isNavigationBarVisible = true
+    }
     val context = LocalContext.current
     var scrollState = rememberScrollState()
     var firstSelected by remember { mutableStateOf(false) }

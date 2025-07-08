@@ -1,7 +1,13 @@
 package com.pilltip.pilltip.view.main
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.net.Uri
+import android.os.Build
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -34,6 +40,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -54,7 +61,9 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import androidx.navigation.NavController
+import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.pilltip.pilltip.R
 import com.pilltip.pilltip.composable.BackButton
 import com.pilltip.pilltip.composable.HeightSpacer
@@ -90,6 +99,10 @@ fun MyPage(
     searchHiltViewModel: SearchHiltViewModel,
     questionnaireViewModel: QuestionnaireViewModel
 ) {
+    val systemUiController = rememberSystemUiController()
+    SideEffect {
+        systemUiController.isNavigationBarVisible = true
+    }
     val context = LocalContext.current
     val screenWidth = LocalConfiguration.current.screenWidthDp.dp
     var toggle by remember { mutableStateOf(true) }
@@ -97,21 +110,58 @@ fun MyPage(
     val scope = rememberCoroutineScope()
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var isSheetVisible by remember { mutableStateOf(false) }
+    val currentApi = Build.VERSION.SDK_INT
+    val galleryLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent(),
+        onResult = { uri: Uri? ->
+            uri?.let {
+                Toast.makeText(context, "이미지를 선택했어요: $uri", Toast.LENGTH_SHORT).show()
+            }
+        }
+    )
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+        onResult = { isGranted ->
+            if (isGranted) {
+                // 권한이 허용됨 → 갤러리 열기
+                galleryLauncher.launch("image/*")
+            } else {
+                Toast.makeText(context, "갤러리 권한이 필요해요", Toast.LENGTH_SHORT).show()
+            }
+        }
+    )
 
     Column(
-        modifier = WhiteScreenModifier.padding(horizontal = 22.dp)
+        modifier = WhiteScreenModifier
+            .padding(horizontal = 22.dp)
+            .statusBarsPadding()
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Image(
-                imageVector = ImageVector.vectorResource(R.drawable.logo_pilltip_typo),
+                imageVector = ImageVector.vectorResource(R.drawable.ic_mypage_profile),
                 contentDescription = "프로필 이미지",
                 modifier = Modifier
-                    .padding(0.46154.dp)
                     .width(60.dp)
                     .height(60.dp)
                     .background(color = gray200, shape = RoundedCornerShape(size = 46.15385.dp))
+                    .noRippleClickable {
+                        val permission = if (currentApi >= Build.VERSION_CODES.TIRAMISU)
+                            Manifest.permission.READ_MEDIA_IMAGES
+                        else
+                            Manifest.permission.READ_EXTERNAL_STORAGE
+                        when {
+                            ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED -> {
+                                // 이미 권한 있음 → 바로 갤러리 실행
+                                galleryLauncher.launch("image/*")
+                            }
+                            else -> {
+                                // 권한 요청
+                                permissionLauncher.launch(permission)
+                            }
+                        }
+                    }
             )
             WidthSpacer(20.dp)
             Text(
@@ -604,10 +654,10 @@ fun EssentialInfoPage(
                 ) {
                     Image(
                         imageVector =
-                            if (!isEssential1Checked)
-                                ImageVector.vectorResource(R.drawable.btn_gray_checkmark)
-                            else
-                                ImageVector.vectorResource(R.drawable.btn_blue_checkmark),
+                        if (!isEssential1Checked)
+                            ImageVector.vectorResource(R.drawable.btn_gray_checkmark)
+                        else
+                            ImageVector.vectorResource(R.drawable.btn_blue_checkmark),
                         contentDescription = "checkBtn",
                         modifier = Modifier
                             .size(20.dp, 20.dp)
@@ -643,10 +693,10 @@ fun EssentialInfoPage(
                 ) {
                     Image(
                         imageVector =
-                            if (!isEssential2Checked)
-                                ImageVector.vectorResource(R.drawable.btn_gray_checkmark)
-                            else
-                                ImageVector.vectorResource(R.drawable.btn_blue_checkmark),
+                        if (!isEssential2Checked)
+                            ImageVector.vectorResource(R.drawable.btn_gray_checkmark)
+                        else
+                            ImageVector.vectorResource(R.drawable.btn_blue_checkmark),
                         contentDescription = "checkBtn",
                         modifier = Modifier
                             .size(20.dp, 20.dp)
