@@ -6,6 +6,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.Date;
+import java.text.Normalizer;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -342,18 +343,71 @@ public class DrugImportService {
                 String nameKr = line[1].trim();
                 String imageUrl = line[5].trim().toLowerCase();
 
-                List<Drug> drugs = drugRepository.findByNameContaining(nameKr);
-                if (!drugs.isEmpty()) {
-                    Drug drug = drugs.get(0);
+                Drug drug = matchDrugByNameVariants(nameKr);
+                if(drug != null) {
                     drug.setImage(imageUrl);
                     drugList.add(drug);
-                }
+                    //System.out.println(nameKr + " " + imageUrl);
+                }else
+                    System.out.println(nameKr + " 을 찾을 수 없습니다.");
             }
-
             drugRepository.saveAll(drugList);
         } catch (Exception e) {
             logger.error("Error occurred in import image: {}", e.getMessage());
         }
+    }
+
+
+    private String normalizeDrugName(String name) {
+        name = Normalizer.normalize(name, Normalizer.Form.NFKC);
+        name = name.replaceAll("[\\s\\u200B\\uFEFF]+", "");
+        name = removeSquareBrackets(name);
+        return name.trim();
+    }
+
+    private String removeSquareBrackets(String name) {
+        // 예: "약이름 [수출명: 뭐시기]" → "약이름"
+        return name.replaceAll("\\[.*?]", "").trim();
+    }
+
+
+    private String removeLeadingParentheses(String name) {
+        while (name.startsWith("(")) {
+            int depth = 0;
+            for (int i = 0; i < name.length(); i++) {
+                if (name.charAt(i) == '(') depth++;
+                else if (name.charAt(i) == ')') {
+                    depth--;
+                    if (depth == 0) {
+                        name = name.substring(i + 1).strip();
+                        break;
+                    }
+                }
+            }
+        }
+        return name.split("\\(")[0];
+    }
+
+    protected Drug matchDrugByNameVariants(String name) {
+        // 1단계: 원래 이름 기준 매칭
+        for (Drug drug : drugService.findAll()) {
+            if (drug.getName().equals(name)) return drug;
+        }
+
+        // 2단계: 괄호 제거 후 매칭
+        String noParen = removeLeadingParentheses(name);
+        for (Drug drug : drugService.findAll()) {
+            if (removeLeadingParentheses(drug.getName()).equals(noParen)) return drug;
+        }
+
+        // 3단계: 정규화 후 공백 제거 매칭
+        String normalized = normalizeDrugName(noParen);
+        for (Drug drug : drugService.findAll()) {
+            String targetNorm = normalizeDrugName(drug.getName());
+            if (targetNorm.equals(normalized)) return drug;
+        }
+
+        return null;
     }
 
 }

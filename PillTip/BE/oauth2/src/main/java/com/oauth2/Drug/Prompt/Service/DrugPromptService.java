@@ -8,6 +8,7 @@ import com.oauth2.Drug.Prompt.Dto.*;
 import com.oauth2.User.TakingPill.Dto.TakingPillSummaryResponse;
 import com.oauth2.User.Auth.Entity.User;
 import com.oauth2.User.TakingPill.Service.TakingPillService;
+import com.oauth2.User.UserInfo.Dto.UserSensitiveInfoDto;
 import com.oauth2.User.UserInfo.Service.UserSensitiveInfoService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -49,14 +50,21 @@ public class DrugPromptService {
                 .filter(DurTagDto::isTrue)
                 .toList();
 
-        String chronicDiseaseInfo = userSensitiveInfoService.getSensitiveInfo(user) != null ? 
-                userSensitiveInfoService.getSensitiveInfo(user).getChronicDiseaseInfo().toString() : "";
-        
+        UserSensitiveInfoDto userSensitiveInfo = userSensitiveInfoService.getSensitiveInfo(user);
+        String chronicDiseaseInfo = "";
+        String allergyInfo = "";
+        if(userSensitiveInfo != null) {
+            chronicDiseaseInfo = userSensitiveInfo.getChronicDiseaseInfo().toString();
+            allergyInfo = userSensitiveInfo.getAllergyInfo().toString();
+        }
         return new PromptRequestDto(
                 trueTags,
+                user.getNickname(),
                 user.getUserProfile().getAge(),
                 user.getUserProfile().getGender().name(),
+                user.getUserProfile().isPregnant(),
                 chronicDiseaseInfo,
+                allergyInfo,
                 medicationNames,
                 new DrugRequestInfoDto(
                         detail.name(),
@@ -238,9 +246,12 @@ public class DrugPromptService {
 
         // 사용자 정보
         sb.append("사용자 정보: { ")
-                .append(dto.age()).append(", ")
-                .append(dto.gender()).append(", ")
-                .append(dto.underlyingDisease().isEmpty() ? "\"\"" : dto.underlyingDisease()).append(", {");
+                .append("닉네임 : ").append(dto.nickname()).append("\n")
+                .append("나이 : ").append(dto.age()).append("\n")
+                .append("성별 : ").append(dto.gender()).append("\n")
+                .append("임신 여부 : ").append(dto.isPregnant()).append("\n")
+                .append("알러지 : ").append(dto.allegy()).append("\n")
+                .append("기저질환 : ").append(dto.underlyingDisease()).append("\n {");
 
         if (dto.currentDrugs() != null && !dto.currentDrugs().isEmpty()) {
             String drugList = dto.currentDrugs().stream()
@@ -257,7 +268,8 @@ public class DrugPromptService {
         sb.append("출력 형식:\n[사용자 맞춤형 안내. 반드시 해요체. 반드시 280~300자]")
             .append("출력 시 반드시 다음 요소를 포함해야 해요:\n")
             .append("1. 약의 **상세한 기능 또는 작용 기전** (예: 혈압을 낮춰요, 근육통을 줄여줘요 등\n")
-            .append("2. **사용자 조건**과 **위험 내용**을 명확히 연결해서 설명 (예: 노인은 어지럼증 위험이 커요)");
+            .append("2. **사용자 조건**과 **위험 내용**을 명확히 연결해서 설명 (예: 노인은 어지럼증 위험이 커요)")
+            .append("3. 임신여부가 true라면 무조건 **{닉네임}님 임신 축하드려요 💖**로 시작하기. false라면 {닉네임}님 으로 설명 시작하기");
 
         return sb.toString();
     }
