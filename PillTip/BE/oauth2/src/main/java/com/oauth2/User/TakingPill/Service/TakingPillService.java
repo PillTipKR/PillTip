@@ -37,12 +37,11 @@ public class TakingPillService {
     private static final Logger logger = LoggerFactory.getLogger(TakingPillService.class);
     private final TakingPillRepository takingPillRepository;
     private final DosageScheduleRepository dosageScheduleRepository;
-    private final ObjectMapper objectMapper;
     private final DosageLogRepository dosageLogRepository;
-    private final EncryptionUtil encryptionUtil;
     private final TakingPillCounterRepository takingPillCounterRepository;
     private final DrugRepository drugRepository;
-    private final EncryptionConverter encryptionConverter;
+    private final ObjectMapper objectMapper;
+    private final EncryptionUtil encryptionUtil;
 
     /**
      * 복용 중인 약을 추가합니다.
@@ -58,59 +57,46 @@ public class TakingPillService {
         }
         
         // TakingPill 엔티티 생성
-        TakingPill takingPill = TakingPill.builder()
-                .user(user)
-                .medicationId(request.getMedicationId())
-                .medicationName(request.getMedicationName())
-                .startYear(request.getStartDate() != null ? request.getStartDate().getYear() : null)
-                .startMonth(request.getStartDate() != null ? request.getStartDate().getMonthValue() : null)
-                .startDay(request.getStartDate() != null ? request.getStartDate().getDayOfMonth() : null)
-                .endYear(request.getEndDate() != null ? request.getEndDate().getYear() : null)
-                .endMonth(request.getEndDate() != null ? request.getEndDate().getMonthValue() : null)
-                .endDay(request.getEndDate() != null ? request.getEndDate().getDayOfMonth() : null)
-                .alarmName(request.getAlarmName())
-                .daysOfWeek(convertDaysOfWeekToJson(request.getDaysOfWeek()))
-                .dosageAmount(request.getDosageAmount())
-                .build();
-        
-        TakingPill savedTakingPill = takingPillRepository.save(takingPill);
-        
+        TakingPill takingPill = buildTakingPill(request,
+                TakingPill.builder()
+                        .user(user)
+                        .build());
+
         // DosageSchedule 엔티티들 생성 및 저장
         if (request.getDosageSchedules() != null){
             for (TakingPillRequest.DosageSchedule scheduleRequest : request.getDosageSchedules()) {
-                DosageSchedule dosageSchedule = DosageSchedule.builder()
-                        .takingPill(savedTakingPill)
-                        .hour(scheduleRequest.getHour())
-                        .minute(scheduleRequest.getMinute())
-                        .period(scheduleRequest.getPeriod())
-                        .alarmOnOff(scheduleRequest.isAlarmOnOff())
-                        .dosageUnit(scheduleRequest.getDosageUnit())
-                        .build();
+                DosageSchedule dosageSchedule = getDosageSchedule(scheduleRequest,takingPill);
 
                 // 양방향 연관관계 유지
-                savedTakingPill.getDosageSchedules().add(dosageSchedule);
-                dosageScheduleRepository.save(dosageSchedule);
+                takingPill.getDosageSchedules().add(dosageSchedule);
             }
         }
-        List<DosageSchedule> schedules = savedTakingPill.getDosageSchedules();
+        TakingPill savedTakingPill = takingPillRepository.save(takingPill);
 
-        if (schedules != null && !schedules.isEmpty() && request.getStartDate() != null && request.getEndDate() != null) {
+        List<DosageSchedule> schedules = savedTakingPill.getDosageSchedules();
+        List<DosageLog> dosageLogs = savedTakingPill.getDosageLogs();
+        if (schedules != null && !schedules.isEmpty()
+                && request.getStartDate() != null && request.getEndDate() != null) {
             LocalDate date = request.getStartDate();
             while (!date.isAfter(request.getEndDate())) {
                 if (matchesToday(savedTakingPill, date)) {
                     for (DosageSchedule schedule : schedules) {
                         DosageLog dosageLog = DosageLog.builder()
+                                .takingPill(savedTakingPill)
                                 .scheduledTime(LocalDateTime.of(date,
                                         LocalTime.of(to24Hour(schedule.getHour(),schedule.getPeriod()), schedule.getMinute())))
                                 .user(user)
                                 .alarmName(request.getAlarmName())
                                 .medicationName(request.getMedicationName())
+                                .visible(schedule.getAlarmOnOff())
                                 .build();
-                        dosageLogRepository.save(dosageLog);
+                        dosageLogs.add(dosageLog);
                     }
                 }
                 date = date.plusDays(1);
             }
+
+            dosageLogRepository.saveAll(dosageLogs);
         }
 
         TakingPillCounter takingPillCounter = takingPillCounterRepository.findByDrugId(request.getMedicationId()).orElse(null);
@@ -152,7 +138,7 @@ public class TakingPillService {
         }
 
         // 연관된 DosageLog 삭제 정책에 따라 처리
-        List<DosageLog> logs = dosageLogRepository.findByUserAndMedicationName(user, takingPill.getMedicationName());
+        List<DosageLog> logs = dosageLogRepository.findByUserAndTakingPill(user, takingPill);
 
         if (status == NEW) {
             // 전체 삭제
@@ -203,7 +189,7 @@ public class TakingPillService {
         LocalDate oldEndDate = createSafeLocalDate(takingPill.getEndYear(), takingPill.getEndMonth(), takingPill.getEndDay());
 
         // 기존 로그 조회
-        List<DosageLog> existingLogs = dosageLogRepository.findByUserAndMedicationName(user, takingPill.getMedicationName());
+        List<DosageLog> existingLogs = dosageLogRepository.findByUserAndTakingPill(user, takingPill);
         // 깊은 복사
         List<DosageSchedule> oldSchedules = takingPill.getDosageSchedules()
                 .stream()
@@ -215,47 +201,50 @@ public class TakingPillService {
                         .dosageUnit(schedule.getDosageUnit())
                         .build()
                 ).toList();
-        List<String> oldDaysOfWeek = parseDaysOfWeekFromJson(encryptionConverter.convertToEntityAttribute(takingPill.getDaysOfWeek()));
-        System.out.println(oldDaysOfWeek);
+        List<String> oldDaysOfWeek = parseDaysOfWeekFromJson(takingPill.getDaysOfWeek());
+
         // TakingPill 정보 업데이트
-        takingPill.setMedicationName(request.getMedicationName());
-        takingPill.setStartYear(request.getStartDate() != null ? request.getStartDate().getYear() : null);
-        takingPill.setStartMonth(request.getStartDate() != null ? request.getStartDate().getMonthValue() : null);
-        takingPill.setStartDay(request.getStartDate() != null ? request.getStartDate().getDayOfMonth() : null);
-        takingPill.setEndYear(request.getEndDate() != null ? request.getEndDate().getYear() : null);
-        takingPill.setEndMonth(request.getEndDate() != null ? request.getEndDate().getMonthValue() : null);
-        takingPill.setEndDay(request.getEndDate() != null ? request.getEndDate().getDayOfMonth() : null);
-        takingPill.setAlarmName(request.getAlarmName());
-        takingPill.setDaysOfWeek(convertDaysOfWeekToJson(request.getDaysOfWeek()));
-        takingPill.setDosageAmount(request.getDosageAmount());
+        TakingPill updatedTakingPill = buildTakingPill(request,takingPill);
         
         // 기존 DosageSchedule 리스트를 클리어하고 새로운 스케줄로 교체
-        takingPill.getDosageSchedules().clear();
+        updatedTakingPill.getDosageSchedules().clear();
         
         // 새로운 DosageSchedule 생성 및 추가
         if (request.getDosageSchedules() != null) {
             for (TakingPillRequest.DosageSchedule scheduleRequest : request.getDosageSchedules()) {
-                DosageSchedule dosageSchedule = DosageSchedule.builder()
-                        .takingPill(takingPill)
-                        .hour(scheduleRequest.getHour())
-                        .minute(scheduleRequest.getMinute())
-                        .period(scheduleRequest.getPeriod())
-                        .alarmOnOff(scheduleRequest.isAlarmOnOff())
-                        .dosageUnit(scheduleRequest.getDosageUnit())
-                        .build();
+                DosageSchedule dosageSchedule = getDosageSchedule(scheduleRequest,takingPill);
                 
                 takingPill.getDosageSchedules().add(dosageSchedule);
             }
         }
-
         // TakingPill과 연관된 DosageSchedule들을 함께 저장
-        TakingPill updatedTakingPill = takingPillRepository.save(takingPill);
+        updatedTakingPill = takingPillRepository.save(takingPill);
+        PillStatus pillStatus = PillStatus.calculateStatus(oldEndDate,takingPill.getCreatedAt());
+
+        for(DosageLog dosageLog : existingLogs){
+            if (!dosageLog.getScheduledTime().isAfter(LocalDateTime.now()) && (pillStatus != NEW)) continue; // 과거 로그는 스킵
+            LocalTime logTime = dosageLog.getScheduledTime().toLocalTime();
+
+            // logTime이 어떤 DosageSchedule에 해당하는지 확인
+            for (DosageSchedule schedule : updatedTakingPill.getDosageSchedules()) {
+                LocalTime scheduleTime = LocalTime.of(
+                        to24Hour(schedule.getHour(), schedule.getPeriod()),
+                        schedule.getMinute()
+                );
+
+                if (logTime.equals(scheduleTime)) {
+                    System.out.println("알람 수정" + dosageLog.getScheduledTime() + " "+ schedule.getAlarmOnOff());
+                    dosageLog.setVisible(schedule.getAlarmOnOff());
+                    break;
+                }
+            }
+        }
+        dosageLogRepository.saveAll(existingLogs);
 
         LocalDate newStartDate = request.getStartDate();
         LocalDate newEndDate = request.getEndDate();
 
         // 복약 상태 판단
-        PillStatus pillStatus = PillStatus.calculateStatus(oldEndDate,takingPill.getCreatedAt());
         takingPill.setCreatedAt(takingPill.getCreatedAt() != null ? takingPill.getCreatedAt() : LocalDateTime.now());
 
         // 날짜 및 스케줄 변화 감지
@@ -264,13 +253,11 @@ public class TakingPillService {
         boolean isEndDateExtended = newEndDate.isAfter(oldEndDate);
         boolean isEndDateShortened = newEndDate.isBefore(oldEndDate);
         boolean isScheduleChanged = !isScheduleEqual(oldSchedules, request.getDosageSchedules(),oldDaysOfWeek,request.getDaysOfWeek());
-        System.out.println(isStartDateEarlier + " " + isStartDatePushed + " " + isEndDateExtended + " " + isEndDateShortened);
-        System.out.println(isScheduleChanged);
-        System.out.println(pillStatus);
+
         // 상태 기반 처리
         handleDosageLogsOnUpdate(
                 user,
-                takingPill,
+                updatedTakingPill,
                 existingLogs,
                 pillStatus,
                 oldStartDate,
@@ -282,10 +269,36 @@ public class TakingPillService {
                 isScheduleChanged
         );
 
-
         return updatedTakingPill;
     }
 
+    private TakingPill buildTakingPill(TakingPillRequest request, TakingPill takingPill) {
+        takingPill.setMedicationId(request.getMedicationId());
+        takingPill.setMedicationName(request.getMedicationName());
+        takingPill.setStartYear(request.getStartDate() != null ? request.getStartDate().getYear() : null);
+        takingPill.setStartMonth(request.getStartDate() != null ? request.getStartDate().getMonthValue() : null);
+        takingPill.setStartDay(request.getStartDate() != null ? request.getStartDate().getDayOfMonth() : null);
+        takingPill.setEndYear(request.getEndDate() != null ? request.getEndDate().getYear() : null);
+        takingPill.setEndMonth(request.getEndDate() != null ? request.getEndDate().getMonthValue() : null);
+        takingPill.setEndDay(request.getEndDate() != null ? request.getEndDate().getDayOfMonth() : null);
+        takingPill.setAlarmName(request.getAlarmName());
+        takingPill.setDaysOfWeek(convertDaysOfWeekToJson(request.getDaysOfWeek()));
+        takingPill.setDosageAmount(request.getDosageAmount());
+
+        return takingPill;
+
+    }
+
+    private DosageSchedule getDosageSchedule(TakingPillRequest.DosageSchedule scheduleRequest, TakingPill savedTakingPill) {
+        return DosageSchedule.builder()
+                .takingPill(savedTakingPill)
+                .hour(scheduleRequest.getHour())
+                .minute(scheduleRequest.getMinute())
+                .period(scheduleRequest.getPeriod())
+                .alarmOnOff(scheduleRequest.isAlarmOnOff())
+                .dosageUnit(scheduleRequest.getDosageUnit())
+                .build();
+    }
     /**
      * 복용 중인 약 정보를 요약 형태로 반환합니다.
      */
@@ -493,7 +506,6 @@ public class TakingPillService {
 
             // 특정 요일 복용인 경우
             String todayOfWeek = today.getDayOfWeek().name().substring(0, 3); // MON, TUE, WED, etc.
-            System.out.println(todayOfWeek);
             return daysOfWeek.contains(todayOfWeek);
 
         } catch (JsonProcessingException e) {
@@ -623,7 +635,7 @@ public class TakingPillService {
                 dosageLogRepository.saveAll(regenerated);
             } else if (status == ACTIVE) {
                 List<DosageLog> futureLogsToRemove = existingLogs.stream()
-                        .filter(log -> !log.isTaken() && !log.getScheduledTime().isBefore(now))
+                        .filter(log -> !log.getIsTaken() && !log.getScheduledTime().isBefore(now))
                         .collect(Collectors.toList());
 
                 dosageLogRepository.deleteAll(futureLogsToRemove);
@@ -670,9 +682,11 @@ public class TakingPillService {
 
                 DosageLog log = DosageLog.builder()
                         .user(user)
+                        .takingPill(pill)
                         .medicationName(medicationName)
                         .alarmName(alarmName)
                         .scheduledTime(scheduledTime)
+                        .visible(schedule.getAlarmOnOff())
                         .build();
 
                 logs.add(log);
