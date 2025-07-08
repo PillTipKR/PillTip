@@ -2,9 +2,6 @@
 // description : 사용자 민감정보 DTO
 package com.oauth2.User.UserInfo.Dto;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.oauth2.User.UserInfo.Entity.UserSensitiveInfo;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -12,7 +9,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.List;
-import java.util.Map;
 
 @Data
 @Builder
@@ -51,14 +47,5 @@ public class UserSensitiveInfoDto {
             }
         }
         return result;
-    }
-
-
-
-    public static class UserSensitiveInfoRequest {
-        private List<String> medicationInfo;
-        private List<String> allergyInfo;
-        private List<String> chronicDiseaseInfo;
-        private List<String> surgeryHistoryInfo;
     }
 } 

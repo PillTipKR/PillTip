@@ -7,7 +7,6 @@ import com.oauth2.User.Auth.Repository.UserTokenRepository;
 import com.oauth2.User.Auth.Repository.UserRepository;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -135,9 +134,8 @@ public class TokenService {
                 .setSubject(String.valueOf(userId))
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + accessTokenValidityInMinutes * 60 * 1000))
-                .signWith(SignatureAlgorithm.HS512, secretKey)
                 .compact();
-    }
+    }   
 
     /**
      * 리프레시 토큰 생성
@@ -149,7 +147,6 @@ public class TokenService {
                 .setSubject(String.valueOf(userId))
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + refreshTokenValidityInDays * 24 * 60 * 60 * 1000))
-                .signWith(SignatureAlgorithm.HS512, secretKey)
                 .compact();
     }
 
@@ -161,8 +158,9 @@ public class TokenService {
      */
     public boolean validateToken(String token) {
         try {
-            Jwts.parser()
-                .setSigningKey(secretKey)
+            Jwts.parserBuilder()
+                .setSigningKey(secretKey.getBytes())
+                .build()
                 .parseClaimsJws(token);
             return true;
         } catch (ExpiredJwtException e) {
@@ -180,8 +178,9 @@ public class TokenService {
      */
     private Claims getClaimsFromToken(String token) {
         try {
-            return Jwts.parser()
-                .setSigningKey(secretKey)
+            return Jwts.parserBuilder()
+                .setSigningKey(secretKey.getBytes())
+                .build()
                 .parseClaimsJws(token)
                 .getBody();
             } catch (ExpiredJwtException e) {
@@ -215,7 +214,6 @@ public class TokenService {
                 .claim("hospitalCode", hospitalCode)
                 .setIssuedAt(new Date(now))
                 .setExpiration(new Date(now + expiresInSeconds * 1000L))
-                .signWith(SignatureAlgorithm.HS512, this.secretKey)
                 .compact();
         System.out.println("[JWT 생성] userId: " + userId + ", questionnaireId: " + questionnaireId + ", hospitalCode: " + hospitalCode + ", expiresInSeconds: " + expiresInSeconds);
         System.out.println("[JWT 생성] secretKey: " + secretKey);
@@ -229,8 +227,9 @@ public class TokenService {
             System.out.println("[JWT 검증] 전달받은 token: " + token);
             System.out.println("[JWT 검증] 전달받은 questionnaireId 파라미터: " + questionnaireId);
             System.out.println("[JWT 검증] secretKey: " + secretKey);
-            Claims claims = Jwts.parser()
-                .setSigningKey(secretKey)
+            Claims claims = Jwts.parserBuilder()
+                .setSigningKey(secretKey.getBytes())
+                .build()
                 .parseClaimsJws(token)
                 .getBody();
             Integer tokenQid = claims.get("questionnaireId", Integer.class);

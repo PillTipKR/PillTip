@@ -40,9 +40,14 @@ public class AuthController {
     // ID/PW 로그인
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<LoginResponse>> login(@RequestBody LoginRequest request) {
-        LoginResponse loginResponse = loginService.login(request);
-        return ResponseEntity.status(200)
-            .body(ApiResponse.success("Login successful", loginResponse));
+        try {
+            LoginResponse loginResponse = loginService.login(request);
+            return ResponseEntity.status(200)
+                .body(ApiResponse.success("Login successful", loginResponse));
+        } catch (Exception e) {
+            return ResponseEntity.status(400)
+                .body(ApiResponse.error("Login failed: " + e.getMessage(), null));
+        }
     }
 
     // 소셜 로그인
