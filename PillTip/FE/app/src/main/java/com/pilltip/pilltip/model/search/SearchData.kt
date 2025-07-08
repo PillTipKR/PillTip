@@ -353,6 +353,37 @@ data class SensitiveInfoData(
 )
 
 /**
+ * 실명/주소 API
+ */
+data class PersonalInfoUpdateRequest(
+    val realName: String,
+    val address: String
+)
+
+data class PersonalInfoUpdateResponse(
+    val status: String,
+    val message: String?,
+    val data: UserProfileData
+)
+
+data class UserProfileData(
+    val id: Long,
+    val nickname: String,
+    val profilePhoto: String,
+    val terms: Boolean,
+    val age: Int,
+    val gender: String,
+    val birthDate: String,
+    val phone: String,
+    val pregnant: Boolean,
+    val height: String,
+    val weight: String,
+    val realName: String,
+    val address: String,
+    val permissions: Boolean
+)
+
+/**
  * 복약 알람 API
  */
 data class DailyDosageLogResponse(
@@ -385,4 +416,13 @@ data class ToggleDosageTakenResponse(
     val data: String
 )
 
+/**
+ * 회원 탈퇴 API
+ */
+
+data class DeleteAccountResponse(
+    val status: String,
+    val message: String?,
+    val data: String? = null
+)
 

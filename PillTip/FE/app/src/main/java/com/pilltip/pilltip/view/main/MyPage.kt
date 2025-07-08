@@ -1,7 +1,13 @@
 package com.pilltip.pilltip.view.main
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.net.Uri
+import android.os.Build
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -34,6 +40,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -52,21 +59,30 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import androidx.navigation.NavController
+import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.pilltip.pilltip.R
+import com.pilltip.pilltip.composable.AuthComposable.RoundTextField
 import com.pilltip.pilltip.composable.BackButton
 import com.pilltip.pilltip.composable.HeightSpacer
 import com.pilltip.pilltip.composable.IosButton
+import com.pilltip.pilltip.composable.MainComposable.DosageCard
 import com.pilltip.pilltip.composable.MainComposable.DrugSummaryCard
 import com.pilltip.pilltip.composable.MainComposable.HealthCard
 import com.pilltip.pilltip.composable.MainComposable.ProfileTagButton
+import com.pilltip.pilltip.composable.MainComposable.formatDate
 import com.pilltip.pilltip.composable.NextButton
 import com.pilltip.pilltip.composable.WhiteScreenModifier
 import com.pilltip.pilltip.composable.WidthSpacer
+import com.pilltip.pilltip.composable.buttonModifier
 import com.pilltip.pilltip.composable.noRippleClickable
+import com.pilltip.pilltip.model.HandleBackPressToExitApp
 import com.pilltip.pilltip.model.UserInfoManager
+import com.pilltip.pilltip.model.search.PersonalInfoUpdateRequest
 import com.pilltip.pilltip.model.search.QuestionnaireDetail
 import com.pilltip.pilltip.model.search.QuestionnaireViewModel
 import com.pilltip.pilltip.model.search.SearchHiltViewModel
@@ -81,7 +97,9 @@ import com.pilltip.pilltip.ui.theme.gray800
 import com.pilltip.pilltip.ui.theme.gray900
 import com.pilltip.pilltip.ui.theme.pretendard
 import com.pilltip.pilltip.ui.theme.primaryColor
+import com.pilltip.pilltip.ui.theme.primaryColor050
 import kotlinx.coroutines.launch
+import java.time.LocalDate
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -90,6 +108,11 @@ fun MyPage(
     searchHiltViewModel: SearchHiltViewModel,
     questionnaireViewModel: QuestionnaireViewModel
 ) {
+    HandleBackPressToExitApp(navController)
+    val systemUiController = rememberSystemUiController()
+    SideEffect {
+        systemUiController.isNavigationBarVisible = true
+    }
     val context = LocalContext.current
     val screenWidth = LocalConfiguration.current.screenWidthDp.dp
     var toggle by remember { mutableStateOf(true) }
@@ -97,21 +120,66 @@ fun MyPage(
     val scope = rememberCoroutineScope()
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var isSheetVisible by remember { mutableStateOf(false) }
+    val currentApi = Build.VERSION.SDK_INT
+    val galleryLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent(),
+        onResult = { uri: Uri? ->
+            uri?.let {
+                Toast.makeText(context, "이미지를 선택했어요: $uri", Toast.LENGTH_SHORT).show()
+            }
+        }
+    )
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+        onResult = { isGranted ->
+            if (isGranted) {
+                galleryLauncher.launch("image/*")
+            } else {
+                Toast.makeText(context, "갤러리 권한이 필요해요", Toast.LENGTH_SHORT).show()
+            }
+        }
+    )
+
+    val selectedDate by remember { mutableStateOf(LocalDate.now()) }
+    val logData by searchHiltViewModel.dailyDosageLog.collectAsState()
+    val dateText = formatDate(selectedDate)
+    val coroutineScope = rememberCoroutineScope()
+
+    LaunchedEffect(selectedDate) {
+        searchHiltViewModel.fetchDailyDosageLog(selectedDate)
+    }
 
     Column(
-        modifier = WhiteScreenModifier.padding(horizontal = 22.dp)
+        modifier = WhiteScreenModifier
+            .padding(horizontal = 22.dp)
+            .statusBarsPadding()
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Image(
-                imageVector = ImageVector.vectorResource(R.drawable.logo_pilltip_typo),
+                imageVector = ImageVector.vectorResource(R.drawable.ic_mypage_profile),
                 contentDescription = "프로필 이미지",
                 modifier = Modifier
-                    .padding(0.46154.dp)
                     .width(60.dp)
                     .height(60.dp)
                     .background(color = gray200, shape = RoundedCornerShape(size = 46.15385.dp))
+                    .noRippleClickable {
+                        val permission = if (currentApi >= Build.VERSION_CODES.TIRAMISU)
+                            Manifest.permission.READ_MEDIA_IMAGES
+                        else
+                            Manifest.permission.READ_EXTERNAL_STORAGE
+                        when {
+                            ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED -> {
+                                // 이미 권한 있음 → 바로 갤러리 실행
+                                galleryLauncher.launch("image/*")
+                            }
+                            else -> {
+                                // 권한 요청
+                                permissionLauncher.launch(permission)
+                            }
+                        }
+                    }
             )
             WidthSpacer(20.dp)
             Text(
@@ -125,72 +193,25 @@ fun MyPage(
             )
         }
         HeightSpacer(32.dp)
-        Column(
-            modifier = Modifier
-                .shadow(
-                    elevation = 8.dp,
-                    spotColor = Color(0x1F000000),
-                    ambientColor = Color(0x1F000000)
-                )
-                .padding(0.5.dp)
-                .fillMaxWidth()
-                .height(132.dp)
-                .background(color = Color(0xFFFFFFFF), shape = RoundedCornerShape(size = 12.dp))
-                .padding(start = 20.dp, top = 24.dp, end = 20.dp, bottom = 24.dp)
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Image(
-                    imageVector = ImageVector.vectorResource(R.drawable.ic_dosage_fire),
-                    contentDescription = "복약완료율"
-                )
-                WidthSpacer(6.dp)
-                Text(
-                    text = "7월 1일 화요일",
-                    style = TextStyle(
-                        fontSize = 14.sp,
-                        lineHeight = 21.sp,
-                        fontFamily = pretendard,
-                        fontWeight = FontWeight(700),
-                        color = primaryColor,
-                    )
-                )
-            }
-            HeightSpacer(6.dp)
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = "복약 완료율",
-                    style = TextStyle(
-                        fontSize = 20.sp,
-                        lineHeight = 30.sp,
-                        fontFamily = pretendard,
-                        fontWeight = FontWeight(700),
-                        color = gray800,
-                    )
-                )
-                Spacer(modifier = Modifier.weight(1f))
-                Text(
-                    text = "28%",
-                    style = TextStyle(
-                        fontSize = 28.sp,
-                        lineHeight = 42.sp,
-                        fontFamily = pretendard,
-                        fontWeight = FontWeight(700),
-                        color = gray800,
-                    )
-                )
-            }
-            HeightSpacer(22.dp)
-            LinearProgressIndicator(
-                progress = { 24 / 100f },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(8.dp)
-                    .clip(RoundedCornerShape(100.dp)),
-                color = primaryColor,
-                trackColor = gray200,
+        logData?.let {
+            DosageCard(
+                title = dateText,
+                percent = it.percent,
+                horizontalPadding = 0.dp,
+                onClick = { navController.navigate("NotificationPage") }
             )
         }
         HeightSpacer(32.dp)
+        Text(
+            text = "설정",
+            style = TextStyle(
+                fontSize = 16.sp,
+                fontFamily = pretendard,
+                fontWeight = FontWeight(600),
+                color = gray600,
+            )
+        )
+        HeightSpacer(20.dp)
         MyPageMenuItem(text = "내 복약정보 관리") {
             navController.navigate("MyDrugInfoPage")
         }
@@ -200,7 +221,10 @@ fun MyPage(
         MyPageMenuItem(text = "내 리뷰 관리") {
             // TODO: navController.navigate(...)
         }
-        HeightSpacer(24.dp)
+        MyPageMenuItem(text = "내 개인정보 관리") {
+            navController.navigate("MyDataPage")
+        }
+        HeightSpacer(48.dp)
         Text(
             text = "알림",
             style = TextStyle(
@@ -277,7 +301,7 @@ fun MyPage(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 24.dp),
+                    .padding(horizontal = 22.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 HeightSpacer(12.dp)
@@ -308,14 +332,14 @@ fun MyPage(
                         lineHeight = 19.6.sp,
                         fontFamily = pretendard,
                         fontWeight = FontWeight(400),
-                        color = gray500
+                        color = gray500,
+                        textAlign = TextAlign.Center
                     )
                 )
                 HeightSpacer(12.dp)
                 Row(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 22.dp),
+                        .fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     NextButton(
@@ -329,11 +353,25 @@ fun MyPage(
                         onClick = {
                             scope.launch {
                                 bottomSheetState.hide()
+                                searchHiltViewModel.deleteAccount(
+                                    onSuccess = {
+                                        Toast.makeText(context, "그동안 필팁과 함께 해주셔서 감사합니다, 다시 뵙길 바라요", Toast.LENGTH_SHORT).show()
+                                        navController.navigate("SelectPage") {
+                                            popUpTo(0){
+                                                inclusive = true
+                                            }
+                                        }
+                                    },
+                                    onError = {
+                                        Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
+                                    }
+                                )
                             }.invokeOnCompletion {
                                 isSheetVisible = false
                             }
                         }
                     )
+                    WidthSpacer(12.dp)
                     NextButton(
                         mModifier = Modifier
                             .weight(1f)
@@ -604,10 +642,10 @@ fun EssentialInfoPage(
                 ) {
                     Image(
                         imageVector =
-                            if (!isEssential1Checked)
-                                ImageVector.vectorResource(R.drawable.btn_gray_checkmark)
-                            else
-                                ImageVector.vectorResource(R.drawable.btn_blue_checkmark),
+                        if (!isEssential1Checked)
+                            ImageVector.vectorResource(R.drawable.btn_gray_checkmark)
+                        else
+                            ImageVector.vectorResource(R.drawable.btn_blue_checkmark),
                         contentDescription = "checkBtn",
                         modifier = Modifier
                             .size(20.dp, 20.dp)
@@ -643,10 +681,10 @@ fun EssentialInfoPage(
                 ) {
                     Image(
                         imageVector =
-                            if (!isEssential2Checked)
-                                ImageVector.vectorResource(R.drawable.btn_gray_checkmark)
-                            else
-                                ImageVector.vectorResource(R.drawable.btn_blue_checkmark),
+                        if (!isEssential2Checked)
+                            ImageVector.vectorResource(R.drawable.btn_gray_checkmark)
+                        else
+                            ImageVector.vectorResource(R.drawable.btn_blue_checkmark),
                         contentDescription = "checkBtn",
                         modifier = Modifier
                             .size(20.dp, 20.dp)
@@ -793,6 +831,104 @@ fun MyHealthDetailPage(
             ) {
                 Text(text = item)
             }
+        }
+    }
+}
+
+@Composable
+fun MyDataPage(
+    navController: NavController,
+    searchHiltViewModel: SearchHiltViewModel
+){
+    val context = LocalContext.current
+    var name by remember { mutableStateOf("") }
+    var address by remember { mutableStateOf("") }
+    var isValid = name.isNotEmpty() && address.isNotEmpty()
+    Column(
+        modifier = WhiteScreenModifier
+            .padding(horizontal = 22.dp)
+            .statusBarsPadding()
+    ){
+        BackHandler {
+            navController.popBackStack()
+        }
+        BackButton(
+            title = "내 개인정보 수정",
+            horizontalPadding = 0.dp,
+            verticalPadding = 0.dp
+        ) {
+            navController.popBackStack()
+        }
+        HeightSpacer(36.dp)
+        Text(
+            text = "개인 정보",
+            style = TextStyle(
+                fontSize = 18.sp,
+                fontFamily = pretendard,
+                fontWeight = FontWeight(600),
+                color = gray800,
+            )
+        )
+        HeightSpacer(28.dp)
+        Text(
+            text = "닉네임",
+            style = TextStyle(
+                fontSize = 16.sp,
+                fontFamily = pretendard,
+                fontWeight = FontWeight(600),
+                color = gray800,
+            )
+        )
+        HeightSpacer(12.dp)
+        RoundTextField(
+            text = name,
+            textChange = { name = it },
+            placeholder = "실명을 입력해주세요",
+            isLogin = false
+        )
+        HeightSpacer(26.dp)
+        Text(
+            text = "주소",
+            style = TextStyle(
+                fontSize = 16.sp,
+                fontFamily = pretendard,
+                fontWeight = FontWeight(600),
+                color = gray800,
+            )
+        )
+        HeightSpacer(12.dp)
+        RoundTextField(
+            text = address,
+            textChange = { address = it },
+            placeholder = "주소를 입력해주세요",
+            isLogin = false
+        )
+        Spacer(modifier = Modifier.weight(1f))
+        NextButton(
+            mModifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 16.dp)
+                .padding(bottom = 46.dp)
+                .height(58.dp),
+            buttonColor = if(isValid) primaryColor else Color(0xFF348ADF),
+            text = "수정하기"
+        ) {
+            if(isValid) {
+                val request = PersonalInfoUpdateRequest(
+                    realName = name,
+                    address = address
+                )
+                searchHiltViewModel.updatePersonalInfo(
+                    request = request,
+                    onSuccess = {
+                        Toast.makeText(context, "개인정보가 성공적으로 수정됐어요.", Toast.LENGTH_SHORT).show()
+                    },
+                    onError = {
+                        Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
+                    }
+                )
+            }
+
         }
     }
 }

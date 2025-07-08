@@ -1,5 +1,7 @@
 package com.pilltip.pilltip.model.search
 
+import com.kakao.sdk.auth.AuthApi
+import com.pilltip.pilltip.model.signUp.AuthRepository
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.DELETE
@@ -409,5 +411,47 @@ class DosageLogRepositoryImpl(
 
     override suspend fun getDosageLogMessage(logId: Long): ToggleDosageTakenResponse {
         return api.getDosageLogMessage(logId)
+    }
+}
+
+/**
+ * 실명/주소 API
+ */
+interface PersonalInfoApi {
+    @PUT("/api/auth/personal-info")
+    suspend fun updatePersonalInfo(
+        @Body request: PersonalInfoUpdateRequest
+    ): PersonalInfoUpdateResponse
+}
+
+interface PersonalInfoRepository {
+    suspend fun updatePersonalInfo(request: PersonalInfoUpdateRequest): UserProfileData
+}
+
+class PersonalInfoRepositoryImpl(
+    private val api: PersonalInfoApi
+) : PersonalInfoRepository {
+    override suspend fun updatePersonalInfo(request: PersonalInfoUpdateRequest): UserProfileData {
+        return api.updatePersonalInfo(request).data
+    }
+}
+
+/**
+ * 회원탈퇴 API
+ */
+interface DeleteAccountAPI {
+    @DELETE("/api/auth/delete-account")
+    suspend fun deleteAccount(): DeleteAccountResponse
+}
+
+interface DeleteRepository {
+    suspend fun deleteAccount(): DeleteAccountResponse
+}
+
+class DeleteRepositoryImpl(
+    private val api: DeleteAccountAPI
+) : DeleteRepository {
+    override suspend fun deleteAccount(): DeleteAccountResponse {
+        return api.deleteAccount()
     }
 }

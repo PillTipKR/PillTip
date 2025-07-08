@@ -153,6 +153,10 @@ fun HomePage(
     navController: NavController,
     searchHiltViewModel: SearchHiltViewModel
 ) {
+    val systemUiController = rememberSystemUiController()
+    SideEffect {
+        systemUiController.isNavigationBarVisible = true
+    }
     LogoField(
         onClick = { navController.navigate("NotificationPage") }
     )
@@ -277,22 +281,6 @@ fun HomePage(
             pageCount = { items.size }
         )
 
-        /*
-        LaunchedEffect(pagerState) {
-            while (true) {
-                delay(3000)
-                val nextPage = (pagerState.currentPage + 1) % items.size
-                coroutineScope.launch {
-                    pagerState.animateScrollToPage(
-                        page = nextPage,
-                        animationSpec = tween(durationMillis = 600)
-                    )
-                }
-            }
-        }
-
-         */
-
         HorizontalPager(
             state = pagerState,
             modifier = Modifier.fillMaxWidth()
@@ -319,6 +307,10 @@ fun MyQuestionnairePage(
     navController: NavController,
     viewModel: QuestionnaireViewModel
 ) {
+    val systemUiController = rememberSystemUiController()
+    SideEffect {
+        systemUiController.isNavigationBarVisible = true
+    }
     val context = LocalContext.current
     var scrollState = rememberScrollState()
     var firstSelected by remember { mutableStateOf(false) }
