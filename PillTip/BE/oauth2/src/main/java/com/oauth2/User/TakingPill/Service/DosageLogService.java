@@ -5,6 +5,7 @@ import com.oauth2.User.TakingPill.Dto.DosageLogResponse;
 import com.oauth2.User.TakingPill.Dto.DosageScheduleDto;
 import com.oauth2.User.TakingPill.Entity.DosageLog;
 import com.oauth2.User.TakingPill.Repositoty.DosageLogRepository;
+import com.oauth2.User.TakingPill.Repositoty.DosageScheduleRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,18 +23,19 @@ import java.util.stream.Collectors;
 public class DosageLogService {
 
     private final DosageLogRepository dosageLogRepository;
+    private final DosageScheduleRepository dosageScheduleRepository;
 
     public void updateTaken(Long dosageLogId) {
         // 복약 완료 상태 업데이트
         DosageLog dosageLog = dosageLogRepository.findById(dosageLogId)
                 .orElseThrow(() -> new IllegalArgumentException("복약 기록을 찾을 수 없습니다"));
 
-        if(!dosageLog.isTaken()){
+        if(!dosageLog.getIsTaken()){
             dosageLog.setTakenAt(LocalDateTime.now());  // 복약 완료 시간
-            dosageLog.setTaken(true);  // 복약 완료 상태
+            dosageLog.setIsTaken(true);  // 복약 완료 상태
         }else{
             dosageLog.setTakenAt(null);  // 복약 완료 시간
-            dosageLog.setTaken(false);  // 복약 완료 상태
+            dosageLog.setIsTaken(false);  // 복약 완료 상태
         }
         dosageLogRepository.save(dosageLog);
     }
@@ -69,9 +71,9 @@ public class DosageLogService {
                     .map(log -> new DosageScheduleDto(
                             log.getId(),
                             log.getScheduledTime(),
-                            log.isTaken(),
+                            log.getIsTaken(),
                             log.getTakenAt(),
-                            log.getScheduledTime().isBefore(LocalDateTime.now())
+                            log.getVisible()
                     ))
                     .collect(Collectors.toList());
 
@@ -87,7 +89,7 @@ public class DosageLogService {
             responses.add(response);
         }
         total = allLogs.size();
-        takenCount = Math.toIntExact(allLogs.stream().filter(DosageLog::isTaken).count());
+        takenCount = Math.toIntExact(allLogs.stream().filter(DosageLog::getIsTaken).count());
         totalPercent = (int) (total == 0 ? 0.0 : (takenCount * 100.0) / total);
 
         return new AllDosageLogResponse(
