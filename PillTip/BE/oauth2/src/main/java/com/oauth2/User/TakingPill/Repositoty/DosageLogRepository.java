@@ -2,6 +2,7 @@ package com.oauth2.User.TakingPill.Repositoty;
 
 import com.oauth2.User.Auth.Entity.User;
 import com.oauth2.User.TakingPill.Entity.DosageLog;
+import com.oauth2.User.TakingPill.Entity.TakingPill;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -30,7 +31,9 @@ public interface DosageLogRepository extends JpaRepository<DosageLog, Long> {
             @Param("targetDate") LocalDate targetDate
     );
 
-    List<DosageLog> findByUserAndMedicationName(User user, String medicationName);
+    List<DosageLog> findByTakingPillAndScheduledTimeAfter(TakingPill pill, LocalDateTime time);
+
+    List<DosageLog> findByUserAndTakingPill(User user, TakingPill takingPill);
 
     void deleteAllByUserAndMedicationNameAndScheduledTimeAfter(User user, String medicationName, LocalDateTime time);
 

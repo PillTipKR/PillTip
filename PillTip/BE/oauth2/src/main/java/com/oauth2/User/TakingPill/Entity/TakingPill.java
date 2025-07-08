@@ -68,6 +68,9 @@ public class TakingPill {
     @OneToMany(mappedBy = "takingPill", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private List<DosageSchedule> dosageSchedules = new ArrayList<>();
 
+    @OneToMany(mappedBy = "takingPill")
+    private List<DosageLog> dosageLogs = new ArrayList<>();
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
