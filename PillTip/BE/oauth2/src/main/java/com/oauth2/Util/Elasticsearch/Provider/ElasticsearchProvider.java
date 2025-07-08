@@ -38,7 +38,9 @@ public class ElasticsearchProvider implements IndexMappingProvider<Elasticsearch
                                 .fields("edge", f -> f.text(edge -> edge.analyzer(settingsProvider.getAutoEdgeNGramAnalyzer())))
                                 .fields("gram", f -> f.text(gram -> gram.analyzer(settingsProvider.getAutoNGramAnalyzer())))
                         )
-                ).build();
+                )
+                .properties("image", p -> p.keyword(k -> k.index(false)))
+                .build();
     }
     @Override
     public IndexSettings getSettings() {

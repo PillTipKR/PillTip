@@ -28,7 +28,6 @@ public class DosageLog {
 
 
     @Column(nullable = false)
-    @Convert(converter = EncryptionConverter.class)
     private String medicationName;
 
     @Column(nullable = false)

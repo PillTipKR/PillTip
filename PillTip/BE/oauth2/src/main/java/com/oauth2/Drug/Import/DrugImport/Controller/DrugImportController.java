@@ -27,8 +27,8 @@ public class DrugImportController {
     @Value("${drug3}")
     private String drug3;
 
-    @Value("${nameEng}")
-    private String nameEng;
+    @Value("${dir}")
+    private String dir;
 
     @Value("${promptCaution1}")
     private String promptCaution1;
@@ -121,19 +121,31 @@ public class DrugImportController {
 
 
     @PostMapping("/ingredients")
-    public ResponseEntity<?> uploadIngredients() throws IOException {
+    public ResponseEntity<?> uploadIngredients(@RequestParam("file") MultipartFile multipartFile) throws IOException {
 
-        MultipartFile multipartFile = null;
-        Path path = Paths.get(nameEng);
+        // 저장 경로 지정
+        Path path = Paths.get(dir + multipartFile.getOriginalFilename());
+
+        // 파일 저장
         multipartFile.transferTo(path);
+
         ingredientImportService.importIngredientsFromCsv(multipartFile);
         return ResponseEntity.ok("성분 데이터 임포트 완료");
     }
 
     @PostMapping("/image")
-    public ResponseEntity<?> uploadImage(@RequestParam MultipartFile file) {
-        drugImportService.importImageFromCsv(file);
-        return ResponseEntity.ok("이미지 세팅");
+    public ResponseEntity<?> uploadImage(@RequestParam("file") MultipartFile multipartFile) throws IOException {
+        // 저장 경로 지정
+        Path path = Paths.get(dir + multipartFile.getOriginalFilename());
+
+        // 파일 저장
+        multipartFile.transferTo(path);
+
+        // 이후 서비스 호출
+        drugImportService.importImageFromCsv(multipartFile);
+
+        return ResponseEntity.ok("이미지 세팅 완료");
     }
+
 
 } 

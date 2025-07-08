@@ -48,23 +48,24 @@ public class DataSyncService {
         List<Ingredient> ingredients = ingredientRepository.findAll();
         Set<String> manufacturers = new HashSet<>();
         for (Drug pill : pills){
-            injectIndex(drugName, pill.getId(), pill.getName());
+            injectIndex(drugName, pill.getId(), pill.getName(), pill.getImage());
             if (manufacturers.add(pill.getManufacturer())) {
-                injectIndex(manufacturer, 0L, pill.getManufacturer());
+                injectIndex(manufacturer, 0L, pill.getManufacturer(), null);
             }
         }
         for(Ingredient ingredient : ingredients){
-            injectIndex(ingredientName,ingredient.getId(),ingredient.getNameKr());
+            injectIndex(ingredientName,ingredient.getId(),ingredient.getNameKr(),null);
         }
         System.out.println("index injection completed");
     }
 
-    private void injectIndex(String type,Long id, String value) throws IOException {
+    private void injectIndex(String type,Long id, String value, String imageUrl) throws IOException {
         // 중복 방지를 위한 고유 ID 생성
         ElasticsearchDTO elasticsearchDTO = new ElasticsearchDTO(
                 type,
                 id,
-                value
+                value,
+                imageUrl
         );
 
         IndexRequest<ElasticsearchDTO> indexRequest = new IndexRequest.Builder<ElasticsearchDTO>()
