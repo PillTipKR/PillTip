@@ -13,6 +13,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import io.jsonwebtoken.ExpiredJwtException;
 import org.springframework.security.authentication.BadCredentialsException;
+import io.jsonwebtoken.SignatureAlgorithm;
+import javax.crypto.spec.SecretKeySpec;
+import java.security.Key;
+import java.nio.charset.StandardCharsets;
 
 import java.time.LocalDateTime;
 import java.util.Date;
@@ -130,10 +134,12 @@ public class TokenService {
      * @return 생성된 액세스 토큰
      */
     private String generateAccessToken(Long userId) {
+        Key key = new SecretKeySpec(secretKey.getBytes(StandardCharsets.UTF_8), SignatureAlgorithm.HS256.getJcaName());
         return Jwts.builder()
                 .setSubject(String.valueOf(userId))
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + accessTokenValidityInMinutes * 60 * 1000))
+                .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
     }   
 
@@ -143,10 +149,12 @@ public class TokenService {
      * @return 생성된 리프레시 토큰
      */
     private String generateRefreshToken(Long userId) {
+        Key key = new SecretKeySpec(secretKey.getBytes(StandardCharsets.UTF_8), SignatureAlgorithm.HS256.getJcaName());
         return Jwts.builder()
                 .setSubject(String.valueOf(userId))
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + refreshTokenValidityInDays * 24 * 60 * 60 * 1000))
+                .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
     }
 
