@@ -54,12 +54,6 @@ interface ServerAuthAPI {
 @Module
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
-//    val client = OkHttpClient.Builder()
-//        .addInterceptor(HttpLoggingInterceptor().apply {
-//            level = HttpLoggingInterceptor.Level.BODY
-//        })
-//        .build()
-
     fun createTrustedOkHttpClient(context: Context): OkHttpClient {
         val certificateFactory = CertificateFactory.getInstance("X.509")
         val input = context.resources.openRawResource(R.raw.server)

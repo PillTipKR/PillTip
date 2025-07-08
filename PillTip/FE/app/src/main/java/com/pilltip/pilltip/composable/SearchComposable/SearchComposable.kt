@@ -10,6 +10,9 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.rememberTransformableState
+import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -60,14 +63,18 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.SubcomposeLayout
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
@@ -80,7 +87,10 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.navigation.NavController
+import coil.compose.AsyncImage
 import com.pilltip.pilltip.R
 import com.pilltip.pilltip.composable.HeightSpacer
 import com.pilltip.pilltip.composable.WidthSpacer
@@ -376,7 +386,7 @@ fun DrugSearchResultCard(
     onClick: () -> Unit
 ) {
     val nickname = UserInfoManager.getUserData(LocalContext.current)?.nickname
-
+    var isImageViewerOpen by remember { mutableStateOf(false) }
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -385,23 +395,66 @@ fun DrugSearchResultCard(
             .background(color = Color(0xFFFFFFFF), shape = RoundedCornerShape(size = 14.dp))
             .padding(top = 22.dp, bottom = 16.dp, start = 20.dp, end = 20.dp)
     ) {
-        Row() {
-            Image(
-                imageVector = ImageVector.vectorResource(R.drawable.logo_pilltip_blue_pill),
-                contentDescription = "기본 이미지",
-                Modifier
-                    .border(
-                        width = 0.6.dp,
-                        color = gray200,
-                        shape = RoundedCornerShape(size = 10.8.dp)
+        Row(
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            if (!drug.imageUrl.isNullOrBlank()) {
+                Box(
+                    modifier = Modifier
+                        .border(
+                            width = 0.6.dp,
+                            color = gray200,
+                            shape = RoundedCornerShape(10.8.dp)
+                        )
+                        .width(90.dp)
+                        .height(90.dp)
+                        .background(color = gray050, shape = RoundedCornerShape(10.8.dp)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    AsyncImage(
+                        model = drug.imageUrl,
+                        contentDescription = "약물 이미지",
+                        modifier = Modifier
+                            .border(
+                                width = 0.6.dp,
+                                color = gray200,
+                                shape = RoundedCornerShape(10.8.dp)
+                            )
+                            .width(90.dp)
+                            .background(color = gray050, shape = RoundedCornerShape(10.8.dp))
+                            .noRippleClickable {
+                                isImageViewerOpen = true
+                            }
                     )
-                    .width(90.dp)
-                    .height(90.dp)
-                    .background(color = gray050, shape = RoundedCornerShape(size = 10.8.dp))
-                    .padding(start = 19.79992.dp, end = 19.80008.dp)
-            )
+                    if (isImageViewerOpen) {
+                        ZoomableImageDialog(
+                            imageUrl = drug.imageUrl,
+                            onDismiss = { isImageViewerOpen = false }
+                        )
+                    }
+                }
+            } else {
+                Box(
+                    modifier = Modifier
+                        .border(
+                            width = 0.6.dp,
+                            color = gray200,
+                            shape = RoundedCornerShape(10.8.dp)
+                        )
+                        .width(90.dp)
+                        .height(90.dp)
+                        .background(color = gray050, shape = RoundedCornerShape(10.8.dp)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Image(
+                        painter = painterResource(R.drawable.img_pill),
+                        contentDescription = "기본 이미지",
+                        modifier = Modifier.width(50.dp)
+                    )
+                }
+            }
             WidthSpacer(14.dp)
-            Column() {
+            Column {
                 Text(
                     text = drug.drugName,
                     fontSize = 14.sp,
@@ -448,7 +501,7 @@ fun DrugSearchResultCard(
                     )
                     WidthSpacer(4.dp)
                     Text(
-                        text = "${drug.manufacturer}",
+                        text = drug.manufacturer,
                         fontSize = 12.sp,
                         fontFamily = pretendard,
                         fontWeight = FontWeight(400),
@@ -456,10 +509,22 @@ fun DrugSearchResultCard(
                     )
                 }
                 Spacer(modifier = Modifier.height(6.dp))
-                drug.ingredients.forEach { ingredient ->
+                val ingredients = drug.ingredients
+                val visibleCount = 2
+                val remainingCount = ingredients.size - visibleCount
+                ingredients.take(visibleCount).forEach { ingredient ->
+                    val isMainText = if (ingredient.isMain) " [주성분]" else ""
                     Text(
-                        text = "- ${ingredient.name} (${ingredient.dose})" + if (ingredient.main) " [주성분]" else "",
-                        style = MaterialTheme.typography.bodySmall
+                        text = "⸰ $isMainText ${ingredient.name} (${ingredient.dose})",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = gray800
+                    )
+                }
+                if (remainingCount > 0) {
+                    Text(
+                        text = "… 외 ${remainingCount}개 성분",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = gray500
                     )
                 }
                 Spacer(modifier = Modifier.height(6.dp))
@@ -515,17 +580,18 @@ fun <T> ExpandableInfoBox(
         label = "ExpandableHeight"
     )
 
-    SubcomposeLayout(modifier = modifier) { constraints ->
+    SubcomposeLayout(modifier = modifier.fillMaxWidth()) { constraints ->
         val fullContentPlaceable = subcompose("content") {
             Box(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(12.dp))  // 실제 visible UI와 일치
-                    .background(gray100)
+                modifier = Modifier.fillMaxWidth()
+//                    .clip(RoundedCornerShape(12.dp))
+//                    .background(gray100)
             ) {
                 Column(
                     modifier = Modifier
+                        .fillMaxWidth()
                         .padding(horizontal = 10.dp, vertical = 12.dp)
-                        .wrapContentHeight() // 💡 wrapContent로 실제 높이 추정
+                        .wrapContentHeight()
                 ) {
                     items.forEach {
                         itemContent(it)
@@ -547,12 +613,13 @@ fun <T> ExpandableInfoBox(
 
         val visiblePlaceables = subcompose("visibleContent") {
             Box(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(gray100)
+                modifier = Modifier.fillMaxWidth()
+//                    .clip(RoundedCornerShape(12.dp))
+//                    .background(gray100)
             ) {
                 Column(
                     modifier = Modifier
+                        .fillMaxWidth()
                         .padding(horizontal = 10.dp, vertical = 12.dp)
                         .height(animatedHeightDp)
                 ) {
@@ -578,7 +645,7 @@ fun <T> ExpandableInfoBox(
                             )
                             .padding(start = 8.dp, top = 6.dp, end = 10.dp, bottom = 6.dp)
                             .align(Alignment.BottomCenter)
-                            .clickable { expanded = !expanded }
+                            .noRippleClickable { expanded = !expanded }
                     ) {
                         Text(
                             text = if (expanded) "－ 접기" else "＋ 확대하기",
@@ -726,7 +793,9 @@ fun ExportAndCopy(
         Image(
             imageVector = ImageVector.vectorResource(R.drawable.btn_details_share),
             contentDescription = "공유",
-            modifier = Modifier.height(16.dp).noRippleClickable { onExportClicked() }
+            modifier = Modifier
+                .height(16.dp)
+                .noRippleClickable { onExportClicked() }
 
         )
         WidthSpacer(12.dp)
@@ -747,4 +816,49 @@ fun shareText(context: Context, title: String, text: String) {
         putExtra(Intent.EXTRA_TEXT, text)
     }
     context.startActivity(Intent.createChooser(shareIntent, "공유하기"))
+}
+
+@Composable
+fun ZoomableImageDialog(
+    imageUrl: String,
+    onDismiss: () -> Unit
+) {
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        var scale by remember { mutableStateOf(1f) }
+        var offsetX by remember { mutableStateOf(0f) }
+        var offsetY by remember { mutableStateOf(0f) }
+
+        val state = rememberTransformableState { zoomChange, offsetChange, _ ->
+            scale = (scale * zoomChange).coerceIn(1f, 4f)
+            offsetX += offsetChange.x
+            offsetY += offsetChange.y
+        }
+
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black)
+                .pointerInput(Unit) {
+                    detectTapGestures(onTap = { onDismiss() })
+                },
+            contentAlignment = Alignment.Center
+        ) {
+            AsyncImage(
+                model = imageUrl,
+                contentDescription = "확대 이미지",
+                contentScale = ContentScale.Fit,
+                modifier = Modifier
+                    .graphicsLayer(
+                        scaleX = scale,
+                        scaleY = scale,
+                        translationX = offsetX,
+                        translationY = offsetY
+                    )
+                    .transformable(state)
+            )
+        }
+    }
 }

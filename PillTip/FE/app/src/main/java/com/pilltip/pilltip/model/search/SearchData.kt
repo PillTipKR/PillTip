@@ -1,5 +1,7 @@
 package com.pilltip.pilltip.model.search
 
+import com.google.gson.annotations.SerializedName
+
 /**
  * 약품 자동검색 API
  * http://164.125.253.20:20022/api/autocomplete/drugs?input=타이레놀&page=0
@@ -21,6 +23,8 @@ data class SearchData( // 리스트 내부의 약품 정보 단위
  *
  * */
 data class DrugSearchResponse(
+    val status: String,
+    val message: String?,
     val data: List<DrugSearchResult>
 )
 
@@ -28,13 +32,15 @@ data class DrugSearchResult(
     val id: Long,
     val drugName: String,
     val ingredients: List<Ingredient>,
-    val manufacturer: String
+    val manufacturer: String,
+    val imageUrl: String?,
+    val durTags: List<DurTag>
 )
 
 data class Ingredient(
     val name: String,
     val dose: String,
-    val main: Boolean
+    val isMain: Boolean
 )
 
 /**
@@ -58,11 +64,16 @@ data class DetailDrugData(
     val atcCode: String,
     val tag: String,
     val approvalDate: String,
-    val storageDetails: List<StorageDetail>,
+    val imageUrl: String?,
+    val container: StorageDetail,
+    val temperature: StorageDetail,
+    val light: StorageDetail,
+    val humid: StorageDetail,
     val effect: EffectDetail,
     val usage: EffectDetail,
     val caution: EffectDetail,
-    val durTags: List<DurTag>
+    val durTags: List<DurTag>,
+    val count: Int
 )
 
 data class StorageDetail(
@@ -72,13 +83,13 @@ data class StorageDetail(
 )
 
 data class EffectDetail(
-    val Type: String,
+    val type: String,
     val effect: String
 )
 
 data class DurTag(
     val title: String,
-    val description: List<DurDto>,
+    val durDtos: List<DurDto>,
     val isTrue: Boolean
 )
 
