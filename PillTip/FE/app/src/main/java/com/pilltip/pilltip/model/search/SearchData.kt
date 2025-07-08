@@ -385,4 +385,13 @@ data class ToggleDosageTakenResponse(
     val data: String
 )
 
+/**
+ * 회원 탈퇴 API
+ */
+
+data class DeleteAccountResponse(
+    val status: String,
+    val message: String?,
+    val data: String? = null
+)
 

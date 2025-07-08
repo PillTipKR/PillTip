@@ -281,22 +281,6 @@ fun HomePage(
             pageCount = { items.size }
         )
 
-        /*
-        LaunchedEffect(pagerState) {
-            while (true) {
-                delay(3000)
-                val nextPage = (pagerState.currentPage + 1) % items.size
-                coroutineScope.launch {
-                    pagerState.animateScrollToPage(
-                        page = nextPage,
-                        animationSpec = tween(durationMillis = 600)
-                    )
-                }
-            }
-        }
-
-         */
-
         HorizontalPager(
             state = pagerState,
             modifier = Modifier.fillMaxWidth()

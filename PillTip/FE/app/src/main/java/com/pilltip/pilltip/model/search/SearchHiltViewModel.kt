@@ -44,7 +44,9 @@ class SearchHiltViewModel @Inject constructor(
     private val fcmRepo: FcmTokenRepository,
     private val durGptRepo: DurGptRepository,
     private val sensitiveInfoRepo: SensitiveInfoRepository,
-    private val dosageLogRepo: DosageLogRepository
+    private val dosageLogRepo: DosageLogRepository,
+    private val deleteRepo: DeleteRepository
+
 ) : ViewModel() {
 
     /* 약품명 자동 완성 API*/
@@ -340,6 +342,25 @@ class SearchHiltViewModel @Inject constructor(
                 }
             } catch (e: Exception) {
                 onError(e.localizedMessage ?: "에러가 발생했어요.")
+            }
+        }
+    }
+
+    private val _deleteAccountResult = MutableStateFlow<String?>(null)
+    val deleteAccountResult: StateFlow<String?> = _deleteAccountResult
+
+    fun deleteAccount(onSuccess: () -> Unit, onError: (String) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val response = deleteRepo.deleteAccount()
+                if (response.status == "success") {
+                    _deleteAccountResult.value = response.message
+                    onSuccess()
+                } else {
+                    onError(response.message ?: "계정 삭제 실패")
+                }
+            } catch (e: Exception) {
+                onError("에러: ${e.localizedMessage}")
             }
         }
     }
