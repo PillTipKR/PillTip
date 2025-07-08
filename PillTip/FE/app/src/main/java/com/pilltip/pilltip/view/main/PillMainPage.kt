@@ -2,6 +2,8 @@ package com.pilltip.pilltip.view.main
 
 import android.util.Log
 import android.widget.Toast
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -21,23 +23,29 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -56,10 +64,13 @@ import com.pilltip.pilltip.composable.HeightSpacer
 import com.pilltip.pilltip.composable.MainComposable.AnnouncementCard
 import com.pilltip.pilltip.composable.MainComposable.BottomBar
 import com.pilltip.pilltip.composable.MainComposable.BottomTab
+import com.pilltip.pilltip.composable.MainComposable.DosageCard
+import com.pilltip.pilltip.composable.MainComposable.DosagePage
 import com.pilltip.pilltip.composable.MainComposable.LogoField
 import com.pilltip.pilltip.composable.MainComposable.MainSearchField
 import com.pilltip.pilltip.composable.MainComposable.ProfileTagButton
 import com.pilltip.pilltip.composable.MainComposable.SmallTabCard
+import com.pilltip.pilltip.composable.MainComposable.formatDate
 import com.pilltip.pilltip.composable.QuestionnaireComposable.QuestionnaireCard
 import com.pilltip.pilltip.composable.WidthSpacer
 import com.pilltip.pilltip.model.HandleBackPressToExitApp
@@ -73,6 +84,9 @@ import com.pilltip.pilltip.ui.theme.pretendard
 import com.pilltip.pilltip.ui.theme.primaryColor
 import com.pilltip.pilltip.ui.theme.primaryColor050
 import com.pilltip.pilltip.ui.theme.primaryColor100
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import java.time.LocalDate
 
 @Composable
 fun PillMainPage(
@@ -119,22 +133,28 @@ fun PillMainPage(
                 .background(backgroundColor)
         ) {
             when (selectedTab) {
-                BottomTab.Home -> HomePage(navController)
+                BottomTab.Home -> HomePage(navController, searchHiltViewModel)
                 BottomTab.Interaction -> navController.navigate("DURPage")
                 BottomTab.Chart -> MyQuestionnairePage(navController, questionnaireViewModel)
                 BottomTab.Calendar -> CalenderPage(navController, searchHiltViewModel)
-                BottomTab.MyPage -> MyPage(navController, searchHiltViewModel, questionnaireViewModel)
+                BottomTab.MyPage -> MyPage(
+                    navController,
+                    searchHiltViewModel,
+                    questionnaireViewModel
+                )
             }
         }
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun HomePage(
-    navController: NavController
+    navController: NavController,
+    searchHiltViewModel: SearchHiltViewModel
 ) {
     LogoField(
-        onClick = {navController.navigate("NotificationPage")}
+        onClick = { navController.navigate("NotificationPage") }
     )
     MainSearchField(
         onClick = { navController.navigate("SearchPage") }
@@ -183,7 +203,7 @@ fun HomePage(
                 )
             }
             Image(
-                imageVector = ImageVector.vectorResource(id = R.drawable.img_recommend_person),
+                imageVector = ImageVector.vectorResource(id = R.drawable.img_doc),
                 contentDescription = "logo",
                 modifier = Modifier
                     .padding(1.dp)
@@ -201,7 +221,7 @@ fun HomePage(
             SmallTabCard(
                 HeaderText = "복약 관리",
                 SubHeaderText = "약 관리를\n간편하게",
-                ImageField = R.drawable.logo_pilltip_blue_pill
+                ImageField = R.drawable.img_pill
             )
             HeightSpacer(12.dp)
             SmallTabCard(
@@ -212,7 +232,7 @@ fun HomePage(
         }
     }
     HeightSpacer(14.dp)
-    AnnouncementCard("필팁은 여러분의 가장 안전한 복약도우미입니다. 더욱 노력하겠습니다.")
+    AnnouncementCard("당신만의 스마트한 복약 관리, 필팁")
     HeightSpacer(34.dp)
     Row(
         modifier = Modifier
@@ -229,13 +249,68 @@ fun HomePage(
         Spacer(modifier = Modifier.weight(1f))
         Image(
             imageVector = ImageVector.vectorResource(R.drawable.btn_right_gray_arrow),
-            contentDescription = "통계/리뷰 보러가기",
+            contentDescription = "내 복약 일정",
             modifier = Modifier
                 .padding(1.dp)
                 .width(20.dp)
                 .height(20.dp)
         )
-        R.drawable.logo_pilltip_blue_pill
+    }
+    HeightSpacer(24.dp)
+    val selectedDate by remember { mutableStateOf(LocalDate.now()) }
+    val logData by searchHiltViewModel.dailyDosageLog.collectAsState()
+    val dateText = formatDate(selectedDate)
+    val coroutineScope = rememberCoroutineScope()
+
+    LaunchedEffect(selectedDate) {
+        searchHiltViewModel.fetchDailyDosageLog(selectedDate)
+    }
+
+    logData?.let { data ->
+        val items = listOf(DosagePage.Overall(dateText, data.percent)) +
+                data.perDrugLogs.map {
+                    DosagePage.PerDrug(it.medicationName, it.percent)
+                }
+
+        val pagerState = rememberPagerState(
+            initialPage = 0,
+            pageCount = { items.size }
+        )
+
+        /*
+        LaunchedEffect(pagerState) {
+            while (true) {
+                delay(3000)
+                val nextPage = (pagerState.currentPage + 1) % items.size
+                coroutineScope.launch {
+                    pagerState.animateScrollToPage(
+                        page = nextPage,
+                        animationSpec = tween(durationMillis = 600)
+                    )
+                }
+            }
+        }
+
+         */
+
+        HorizontalPager(
+            state = pagerState,
+            modifier = Modifier.fillMaxWidth()
+        ) { page ->
+            when (val item = items[page]) {
+                is DosagePage.Overall -> DosageCard(
+                    title = item.dateText,
+                    percent = item.percent,
+                    onClick = { navController.navigate("NotificationPage") }
+                )
+
+                is DosagePage.PerDrug -> DosageCard(
+                    title = item.medicationName,
+                    percent = item.percent,
+                    onClick = { navController.navigate("NotificationPage") }
+                )
+            }
+        }
     }
 }
 
