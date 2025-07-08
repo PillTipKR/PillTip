@@ -45,8 +45,8 @@ class SearchHiltViewModel @Inject constructor(
     private val durGptRepo: DurGptRepository,
     private val sensitiveInfoRepo: SensitiveInfoRepository,
     private val dosageLogRepo: DosageLogRepository,
-    private val deleteRepo: DeleteRepository
-
+    private val deleteRepo: DeleteRepository,
+    private val personalInfoRepo: PersonalInfoRepository
 ) : ViewModel() {
 
     /* 약품명 자동 완성 API*/
@@ -361,6 +361,21 @@ class SearchHiltViewModel @Inject constructor(
                 }
             } catch (e: Exception) {
                 onError("에러: ${e.localizedMessage}")
+            }
+        }
+    }
+
+    private val _updatedProfile = MutableStateFlow<UserProfileData?>(null)
+    val updatedProfile: StateFlow<UserProfileData?> = _updatedProfile.asStateFlow()
+
+    fun updatePersonalInfo(request: PersonalInfoUpdateRequest, onSuccess: () -> Unit, onError: (String) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val result = personalInfoRepo.updatePersonalInfo(request)
+                _updatedProfile.value = result
+                onSuccess()
+            } catch (e: Exception) {
+                onError("수정 실패: ${e.localizedMessage}")
             }
         }
     }
@@ -722,5 +737,25 @@ object RepositoryModule {
     @Provides
     fun provideDosageLogRepository(api: DosageLogApi): DosageLogRepository {
         return DosageLogRepositoryImpl(api)
+    }
+
+    @Provides
+    fun providePersonalInfoApi(@Named("SearchRetrofit") retrofit: Retrofit): PersonalInfoApi {
+        return retrofit.create(PersonalInfoApi::class.java)
+    }
+
+    @Provides
+    fun providePersonalInfoRepository(api: PersonalInfoApi): PersonalInfoRepository {
+        return PersonalInfoRepositoryImpl(api)
+    }
+
+    @Provides
+    fun provideDeleteAccountApi(@Named("SearchRetrofit") retrofit: Retrofit): DeleteAccountAPI {
+        return retrofit.create(DeleteAccountAPI::class.java)
+    }
+
+    @Provides
+    fun provideDeleteRepository(api: DeleteAccountAPI): DeleteRepository {
+        return DeleteRepositoryImpl(api)
     }
 }

@@ -29,6 +29,7 @@ import com.pilltip.pilltip.view.main.DURPage
 import com.pilltip.pilltip.view.main.DURResultPage
 import com.pilltip.pilltip.view.main.DURSearchPage
 import com.pilltip.pilltip.view.main.EssentialInfoPage
+import com.pilltip.pilltip.view.main.MyDataPage
 import com.pilltip.pilltip.view.main.MyDrugInfoPage
 import com.pilltip.pilltip.view.main.MyHealthDetailPage
 import com.pilltip.pilltip.view.main.MyHealthPage
@@ -287,6 +288,9 @@ fun NavGraph(
         composable("MyHealthDetailPage/{type}") { backStackEntry ->
             val type = backStackEntry.arguments?.getString("type") ?: ""
             MyHealthDetailPage(type = type, navController = navController, searchHiltViewModel = searchHiltViewModel)
+        }
+        composable("MyDataPage"){
+            MyDataPage(navController, searchHiltViewModel)
         }
 
     }

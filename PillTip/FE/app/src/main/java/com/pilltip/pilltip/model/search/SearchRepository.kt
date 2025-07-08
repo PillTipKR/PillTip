@@ -415,9 +415,31 @@ class DosageLogRepositoryImpl(
 }
 
 /**
+ * 실명/주소 API
+ */
+interface PersonalInfoApi {
+    @PUT("/api/auth/personal-info")
+    suspend fun updatePersonalInfo(
+        @Body request: PersonalInfoUpdateRequest
+    ): PersonalInfoUpdateResponse
+}
+
+interface PersonalInfoRepository {
+    suspend fun updatePersonalInfo(request: PersonalInfoUpdateRequest): UserProfileData
+}
+
+class PersonalInfoRepositoryImpl(
+    private val api: PersonalInfoApi
+) : PersonalInfoRepository {
+    override suspend fun updatePersonalInfo(request: PersonalInfoUpdateRequest): UserProfileData {
+        return api.updatePersonalInfo(request).data
+    }
+}
+
+/**
  * 회원탈퇴 API
  */
-interface deleteAccountAPI {
+interface DeleteAccountAPI {
     @DELETE("/api/auth/delete-account")
     suspend fun deleteAccount(): DeleteAccountResponse
 }
@@ -427,7 +449,7 @@ interface DeleteRepository {
 }
 
 class DeleteRepositoryImpl(
-    private val api: AuthApi
+    private val api: DeleteAccountAPI
 ) : DeleteRepository {
     override suspend fun deleteAccount(): DeleteAccountResponse {
         return api.deleteAccount()

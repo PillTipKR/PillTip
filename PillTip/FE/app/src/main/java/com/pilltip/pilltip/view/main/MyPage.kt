@@ -66,6 +66,7 @@ import androidx.core.content.ContextCompat
 import androidx.navigation.NavController
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.pilltip.pilltip.R
+import com.pilltip.pilltip.composable.AuthComposable.RoundTextField
 import com.pilltip.pilltip.composable.BackButton
 import com.pilltip.pilltip.composable.HeightSpacer
 import com.pilltip.pilltip.composable.IosButton
@@ -77,9 +78,11 @@ import com.pilltip.pilltip.composable.MainComposable.formatDate
 import com.pilltip.pilltip.composable.NextButton
 import com.pilltip.pilltip.composable.WhiteScreenModifier
 import com.pilltip.pilltip.composable.WidthSpacer
+import com.pilltip.pilltip.composable.buttonModifier
 import com.pilltip.pilltip.composable.noRippleClickable
 import com.pilltip.pilltip.model.HandleBackPressToExitApp
 import com.pilltip.pilltip.model.UserInfoManager
+import com.pilltip.pilltip.model.search.PersonalInfoUpdateRequest
 import com.pilltip.pilltip.model.search.QuestionnaireDetail
 import com.pilltip.pilltip.model.search.QuestionnaireViewModel
 import com.pilltip.pilltip.model.search.SearchHiltViewModel
@@ -94,6 +97,7 @@ import com.pilltip.pilltip.ui.theme.gray800
 import com.pilltip.pilltip.ui.theme.gray900
 import com.pilltip.pilltip.ui.theme.pretendard
 import com.pilltip.pilltip.ui.theme.primaryColor
+import com.pilltip.pilltip.ui.theme.primaryColor050
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 
@@ -216,6 +220,9 @@ fun MyPage(
         }
         MyPageMenuItem(text = "내 리뷰 관리") {
             // TODO: navController.navigate(...)
+        }
+        MyPageMenuItem(text = "내 개인정보 관리") {
+            navController.navigate("MyDataPage")
         }
         HeightSpacer(48.dp)
         Text(
@@ -824,6 +831,104 @@ fun MyHealthDetailPage(
             ) {
                 Text(text = item)
             }
+        }
+    }
+}
+
+@Composable
+fun MyDataPage(
+    navController: NavController,
+    searchHiltViewModel: SearchHiltViewModel
+){
+    val context = LocalContext.current
+    var name by remember { mutableStateOf("") }
+    var address by remember { mutableStateOf("") }
+    var isValid = name.isNotEmpty() && address.isNotEmpty()
+    Column(
+        modifier = WhiteScreenModifier
+            .padding(horizontal = 22.dp)
+            .statusBarsPadding()
+    ){
+        BackHandler {
+            navController.popBackStack()
+        }
+        BackButton(
+            title = "내 개인정보 수정",
+            horizontalPadding = 0.dp,
+            verticalPadding = 0.dp
+        ) {
+            navController.popBackStack()
+        }
+        HeightSpacer(36.dp)
+        Text(
+            text = "개인 정보",
+            style = TextStyle(
+                fontSize = 18.sp,
+                fontFamily = pretendard,
+                fontWeight = FontWeight(600),
+                color = gray800,
+            )
+        )
+        HeightSpacer(28.dp)
+        Text(
+            text = "닉네임",
+            style = TextStyle(
+                fontSize = 16.sp,
+                fontFamily = pretendard,
+                fontWeight = FontWeight(600),
+                color = gray800,
+            )
+        )
+        HeightSpacer(12.dp)
+        RoundTextField(
+            text = name,
+            textChange = { name = it },
+            placeholder = "실명을 입력해주세요",
+            isLogin = false
+        )
+        HeightSpacer(26.dp)
+        Text(
+            text = "주소",
+            style = TextStyle(
+                fontSize = 16.sp,
+                fontFamily = pretendard,
+                fontWeight = FontWeight(600),
+                color = gray800,
+            )
+        )
+        HeightSpacer(12.dp)
+        RoundTextField(
+            text = address,
+            textChange = { address = it },
+            placeholder = "주소를 입력해주세요",
+            isLogin = false
+        )
+        Spacer(modifier = Modifier.weight(1f))
+        NextButton(
+            mModifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 16.dp)
+                .padding(bottom = 46.dp)
+                .height(58.dp),
+            buttonColor = if(isValid) primaryColor else Color(0xFF348ADF),
+            text = "수정하기"
+        ) {
+            if(isValid) {
+                val request = PersonalInfoUpdateRequest(
+                    realName = name,
+                    address = address
+                )
+                searchHiltViewModel.updatePersonalInfo(
+                    request = request,
+                    onSuccess = {
+                        Toast.makeText(context, "개인정보가 성공적으로 수정됐어요.", Toast.LENGTH_SHORT).show()
+                    },
+                    onError = {
+                        Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
+                    }
+                )
+            }
+
         }
     }
 }
