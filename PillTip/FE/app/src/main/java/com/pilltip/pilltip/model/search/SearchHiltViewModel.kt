@@ -286,6 +286,14 @@ class SearchHiltViewModel @Inject constructor(
         }
     }
 
+    private val _selectedDate = MutableStateFlow(LocalDate.now())
+    val selectedDate: StateFlow<LocalDate> = _selectedDate
+
+    fun updateSelectedDate(date: LocalDate) {
+        _selectedDate.value = date
+        fetchDailyDosageLog(date)
+    }
+
     fun toggleDosageTaken(
         logId: Long,
         onSuccess: (String) -> Unit,
@@ -297,7 +305,7 @@ class SearchHiltViewModel @Inject constructor(
                 if (response.status == "success") {
                     onSuccess(response.data)
 
-                    val latest = dosageLogRepo.getDailyDosageLog(LocalDate.now().toString()).data
+                    val latest = dosageLogRepo.getDailyDosageLog(_selectedDate.value.toString()).data
                     _dailyDosageLog.value = latest
 
                     selectedDrugLog?.let { selected ->
