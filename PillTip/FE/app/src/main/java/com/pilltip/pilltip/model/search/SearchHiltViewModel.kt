@@ -181,10 +181,15 @@ class SearchHiltViewModel @Inject constructor(
     }
 
     /* 복약 세부 데이터 */
-    fun fetchTakingPillDetail(medicationId: Long) {
+    fun fetchTakingPillDetail(
+        medicationId: Long,
+        onSuccess: ((TakingPillDetailData) -> Unit)? = null
+    ) {
         viewModelScope.launch {
             try {
-                _pillDetail.value = dosageDetailRepo.getDosageDetail(medicationId)
+                val result = dosageDetailRepo.getDosageDetail(medicationId)
+                _pillDetail.value = result
+                onSuccess?.invoke(result)
             } catch (e: Exception) {
                 _pillDetail.value = null
                 Log.e("DosageDetail", "상세 조회 실패: ${e.message}")
