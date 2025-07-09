@@ -176,9 +176,13 @@ public class ReviewService {
 
         RatingStatsResponse ratingStats = computeRatingStatsFromReviews(reviews);
         Map<TagType, TagStatsDto> tagStats = computeTagStatsFromReviews(reviews);
-
+        Long like = ratingStats.getRatingCounts().entrySet().stream()
+                .filter(entry -> entry.getKey() >= 4)
+                .mapToLong(Map.Entry::getValue)
+                .sum();
         return new ReviewStats(
                 (long) reviews.size(),
+                like,
                 ratingStats,
                 tagStats
         );
