@@ -90,8 +90,8 @@ public class DrugPromptService {
         String interactExplanation = result.interact();
 
         return new DurResponse(
-                removeParentheses(durAnalysisResponse.durA().drugName()),
-                removeParentheses(durAnalysisResponse.durB().drugName()),
+                durAnalysisResponse.durA().drugName(),
+                durAnalysisResponse.durB().drugName(),
                 drugAExplanation,
                 drugBExplanation,
                 interactExplanation,
@@ -99,14 +99,6 @@ public class DrugPromptService {
                 !durAnalysisResponse.durB().durtags().isEmpty(),
                 !durAnalysisResponse.interact().durtags().isEmpty()
         );
-    }
-
-    private String removeParentheses(String text) {
-        if (text == null) {
-            System.out.println("[removeParentheses] text is null!");
-            return "";
-        }
-        return text.replaceAll("(\\(.*?\\)|\\[.*?\\])", "").trim();
     }
 
     private String askGPT(String prompt) {
@@ -168,33 +160,35 @@ public class DrugPromptService {
         sb.append("아래는 사용자가 복용 전 확인 중인 두 가지 약물과 병용 조합의 DUR 정보예요.\n")
                 .append("사용자는 아직 어떤 약도 복용하지 않았으며, 복용 전 주의사항을 확인하려는 중이에요.\n\n")
 
-                .append("각 설명은 반드시 해요체로 작성하고, 환자가 이해하기 쉬운 자연스러운 말투를 사용해 주세요.\n")
-                .append("전문 용어나 딱딱한 표현은 피하고, 문장이 부드럽게 이어지도록 작성해 주세요.\n\n")
+                .append("모든 설명은 해요체(~요)로, 부드럽고 자연스럽게 작성해 주세요. '~니다'나 딱딱한 표현은 사용하지 말고, 환자가 이해하기 쉽게 풀어주세요.\n\n")
 
                 .append("각 항목은 다음 지침을 따라 주세요:\n\n")
 
                 .append("1. 약물 A, B 설명:\n")
-                .append("- durtags가 비어 있고, isTakingOtherDrugs가 true인 경우: '지금 드시는 약들과는 특별한 상호작용이 없어요'처럼 안심시키는 문장을 넣어 주세요.\n")
+                .append("- durtags가 비어 있고, isTakingOtherDrugs가 true인 경우: '지금 드시는 약들과는 특별한 상호작용이 없어요'를 넣으며 안심시키는 문장을 넣어 주세요.\n")
                 .append("- durtags가 있을 경우: 모든 title 항목(예: 임부금기, 노인금기 등)을 하나도 빠짐없이 설명해 주세요.\n")
                 .append("  각 title 안의 reason, note를 자연스럽게 해요체 문단으로 풀어 주세요.\n\n")
 
                 .append("2. 병용 DUR 설명:\n")
                 .append("- 두 약의 조합에 대해서만 설명하고, 다른 약들과의 관계는 언급하지 마세요.\n")
-                .append("- durtags가 없으면 '두 약을 함께 복용해도 특별한 주의사항은 없어요'처럼 간단하게 작성해 주세요.\n")
-                .append("- durtags가 있을 경우, 모든 title을 하나도 생략하지 말고 각각 해요체 문단으로 설명해 주세요.\n")
+                .append("- durtags가 없으면 '두 약 사이에 특별한 상호작용은 없어요'처럼 간단하게 작성해 주세요.\n")
+                .append("- durtags가 있을 경우, 부드러운 말투로 안내해 주세요. 예: '{약물 A}와 {약물 B}는 함께 복용하면 안 되는 조합이에요.'\n")
                 .append("- '현재 다른 약들과 문제는 없어요'라는 문장은 병용 DUR 설명에 절대 포함하지 마세요.\n\n")
 
+                .append("[출력 조건]\n")
+                .append("- 마크다운을 사용하지 마세요.\n")
+                .append("- 각 설명은 줄바꿈으로 구분될 수 있도록 해주세요\n")
+                .append("- 각 설명은 180자에서 200자 사이로 작성해 주세요.\n\n")
+
                 .append("출력 형식:\n")
-                .append("[약물 A 설명]\n...\n")
-                .append("[약물 B 설명]\n...\n")
-                .append("[병용 DUR 설명]\n...\n\n")
+                .append("'{약물 A 이름}은' ~ 으로 시작해 해요체로 설명\n")
+                .append("'{약물 B 이름}은' 으로 시작해 해요체로 설명\n")
+                .append("마지막 문단은 두 약의 병용에 대한 설명으로 마무리해 주세요\n\n")
 
                 .append("※ 주의: 사용자는 아직 어떤 약도 복용하지 않았어요.\n")
-                .append("'복용 중이시군요', '복용하고 계신다면' 같은 표현은 사용하지 마시고,\n")
-                .append("'복용할 때 주의해야 해요', '복용 전에는 이런 점을 확인해 주세요'처럼 안내해 주세요.\n")
+                .append("'복용 중이시군요', '복용하고 계신다면' 같은 표현은 사용하지 마세요.\n")
+                .append("'복용할 때 주의해야 해요', '복용 전에는 이런 점을 확인해 주세요' 처럼 안내해 주세요.\n");
 
-                .append("- 마크다운을 사용하지 마세요.\n")
-                .append("- 각 설명은 180자에서 200자 사이로 작성해 주세요.\n");
 
         return sb.toString();
     }
@@ -269,29 +263,25 @@ public class DrugPromptService {
             .append("출력 시 반드시 다음 요소를 포함해야 해요:\n")
             .append("1. 약의 **상세한 기능 또는 작용 기전** (예: 혈압을 낮춰요, 근육통을 줄여줘요 등\n")
             .append("2. **사용자 조건**과 **위험 내용**을 명확히 연결해서 설명 (예: 노인은 어지럼증 위험이 커요)")
-            .append("3. 임신여부가 true라면 무조건 **{닉네임}님 임신 축하드려요 💖**로 시작하기. false라면 {닉네임}님 으로 설명 시작하기");
+            .append("3. 임신여부가 true라면 무조건 '{닉네임}님 임신 축하드려요 💖' 로 시작하기. false라면 '{닉네임}님' 으로 설명 시작하기");
 
         return sb.toString();
     }
 
     public DurExplanationResult parseCombinedResponse(String gptResponse) {
         // 섹션을 "[약물 A 설명]" 등의 헤더 기준으로 분리
-        String[] parts = gptResponse.split(
-                "(?i)[\\[\\(]?\\s*약물 A 설명\\s*[\\]\\)]?" +
-                        "|[\\[\\(]?\\s*약물 B 설명\\s*[\\]\\)]?" +
-                        "|[\\[\\(]?\\s*병용 DUR 설명\\s*[\\]\\)]?"
-        );
+        String[] parts = gptResponse.split("\\n");
 
-        if (parts.length < 4) {
-            System.out.println(gptResponse);
-            throw new IllegalArgumentException("응답 형식이 예상과 달라서 3가지 설명으로 나눌 수 없어요.");
+        String[] dur = new String[3];
+        int idx = 0;
+        for(String str : parts) {
+            str = str.trim();
+            if(!str.isEmpty())
+                dur[idx++] = str;
+            if(idx==3) break;
         }
 
-        String drugA = parts[1].trim();
-        String drugB = parts[2].trim();
-        String interact = parts[3].trim();
-
-        return new DurExplanationResult(drugA, drugB, interact);
+        return new DurExplanationResult(dur[0],dur[1],dur[2]);
     }
 
 }

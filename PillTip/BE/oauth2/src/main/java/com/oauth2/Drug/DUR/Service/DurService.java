@@ -39,15 +39,17 @@ public class DurService {
         List<DurTagDto> tagsForDrug2 = durCheckService.checkForDrug(drug2Opt.get(), user.getUserProfile(), userContext);
         List<DurTagDto> interactionTags = checkInteractionBetweenTwoDrugs(drug1Opt.get(), drug2Opt.get());
 
+        String drugName1 = removeParentheses(drug1Opt.get().getName());
+        String drugName2 = removeParentheses(drug2Opt.get().getName());
         return new DurAnalysisResponse(
                 new DurPerDrugDto(
-                        drug1Opt.get().getName(),
+                        drugName1,
                         tagsForDrug1.stream().filter(DurTagDto::isTrue).toList()),
                 new DurPerDrugDto(
-                        drug2Opt.get().getName(),
+                        drugName2,
                         tagsForDrug2.stream().filter(DurTagDto::isTrue).toList()),
                 new DurPerDrugDto(
-                        drug1Opt.get().getName() + " + " + drug2Opt.get().getName(),
+                        drugName1 + " + " + drugName2,
                         interactionTags.stream().filter(DurTagDto::isTrue).toList()),
                 !userContext.userInteractionDrugNames().isEmpty()
         );
@@ -92,6 +94,14 @@ public class DurService {
             }
         }
         return tags;
+    }
+
+    private String removeParentheses(String text) {
+        if (text == null) {
+            System.out.println("[removeParentheses] text is null!");
+            return "";
+        }
+        return text.replaceAll("(\\(.*?\\)|\\[.*?\\])", "").trim();
     }
 
     private Map<String, String> readJsonFromRedis(String key) throws JsonProcessingException {
