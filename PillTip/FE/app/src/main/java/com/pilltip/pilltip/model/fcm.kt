@@ -1,5 +1,7 @@
 package com.pilltip.pilltip.model
 
+import android.Manifest
+import android.app.AlarmManager
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -10,6 +12,7 @@ import android.media.RingtoneManager
 import android.os.Build
 import android.util.Log
 import android.widget.Toast
+import androidx.annotation.RequiresPermission
 import androidx.core.app.NotificationCompat
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
@@ -27,7 +30,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
         Log.d("FCM", "알림 수신 성공")
 
         val title = remoteMessage.data["title"] ?: "PillTip"
-        val body = remoteMessage.data["body"] ?: "알림을 보내드려요!"
+        val body = remoteMessage.data["body"] ?: "복약 알림이에요!"
 
         sendNotification(title, body)
     }
@@ -44,18 +47,22 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_ONE_SHOT
         )
 
-        val readIntent = Intent(this, ReadReceiver::class.java).apply {
+        // 5분 뒤 다시 알림 버튼
+        val snoozeIntent = Intent(this, SnoozeReceiver::class.java).apply {
             putExtra("notification_id", 0)
+            putExtra("title", title)
+            putExtra("body", messageBody)
         }
-        val readPendingIntent = PendingIntent.getBroadcast(
-            this, 1, readIntent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        val snoozePendingIntent = PendingIntent.getBroadcast(
+            this, 1, snoozeIntent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
 
-        val replyIntent = Intent(this, ReplyReceiver::class.java).apply {
+        // 복약 완료 버튼
+        val markAsTakenIntent = Intent(this, MarkAsTakenReceiver::class.java).apply {
             putExtra("notification_id", 0)
         }
-        val replyPendingIntent = PendingIntent.getBroadcast(
-            this, 2, replyIntent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        val markAsTakenPendingIntent = PendingIntent.getBroadcast(
+            this, 2, markAsTakenIntent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
 
         val channelId = "default_channel"
@@ -68,8 +75,8 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
             .setAutoCancel(true)
             .setSound(defaultSoundUri)
             .setContentIntent(pendingIntent)
-            .addAction(0, "읽음", readPendingIntent)
-            .addAction(0, "답장", replyPendingIntent)
+            .addAction(0, "5분 뒤 다시 알림", snoozePendingIntent)
+            .addAction(0, "복약 완료", markAsTakenPendingIntent)
 
         val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
@@ -86,26 +93,44 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
     }
 }
 
-class ReadReceiver : BroadcastReceiver() {
+class SnoozeReceiver : BroadcastReceiver() {
+    @RequiresPermission(Manifest.permission.SCHEDULE_EXACT_ALARM)
     override fun onReceive(context: Context, intent: Intent) {
         val id = intent.getIntExtra("notification_id", 0)
-        Log.d("FCM", "읽음 버튼 클릭됨 (id=$id)")
+        val title = intent.getStringExtra("title") ?: "PillTip"
+        val body = intent.getStringExtra("body") ?: "다시 알림을 보내드려요!"
 
-        // 예시: 알림 제거
-        val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        manager.cancel(id)
+        Log.d("FCM", "5분 뒤 다시 알림 예약됨 (id=$id)")
 
-        // TODO: 서버로 "읽음" 상태 전송 등
+        val newIntent = Intent(context, MyFirebaseMessagingService::class.java).apply {
+            action = "RE_NOTIFY"
+            putExtra("title", title)
+            putExtra("body", body)
+        }
+
+        val pendingIntent = PendingIntent.getService(
+            context, 99, newIntent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+
+        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        val triggerTime = System.currentTimeMillis() + 5 * 60 * 1000 // 5분 후
+
+        alarmManager.setExact(AlarmManager.RTC_WAKEUP, triggerTime, pendingIntent)
+
+        Toast.makeText(context, "5분 뒤 다시 알림을 설정했어요.", Toast.LENGTH_SHORT).show()
     }
 }
 
-class ReplyReceiver : BroadcastReceiver() {
+class MarkAsTakenReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         val id = intent.getIntExtra("notification_id", 0)
-        Log.d("FCM", "답장 버튼 클릭됨 (id=$id)")
+        Log.d("FCM", "복약 완료 버튼 클릭됨 (id=$id)")
 
-        Toast.makeText(context, "답장 기능은 구현 중입니다.", Toast.LENGTH_SHORT).show()
+        val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        manager.cancel(id)
 
-        // TODO: 답장 UI 열기 or 서버 전송 로직
+        Toast.makeText(context, "복약 완료로 처리했어요!", Toast.LENGTH_SHORT).show()
+
+        // TODO: 서버로 복약 완료 상태 전송 등 처리
     }
 }
