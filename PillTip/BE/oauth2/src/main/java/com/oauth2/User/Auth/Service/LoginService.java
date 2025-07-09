@@ -34,7 +34,7 @@ public class LoginService {
 
     // ID/PW 로그인
     public LoginResponse login(LoginRequest request) {
-        logger.info("Login attempt for loginId: {}", request.getLoginId());
+        logger.info("Login attempt for loginId: {}", request.loginId());
         
         // 모든 사용자를 조회하여 loginId를 복호화하여 비교
         List<User> allUsers = userRepository.findAll();
@@ -50,14 +50,14 @@ public class LoginService {
                 try {
                     String decryptedLoginId = u.getLoginId();
                     logger.info("Decrypted loginId for user {}: {}", u.getId(), decryptedLoginId);
-                    logger.info("Comparing decryptedLoginId [{}] with request loginId [{}]", decryptedLoginId, request.getLoginId());
+                    logger.info("Comparing decryptedLoginId [{}] with request loginId [{}]", decryptedLoginId, request.loginId());
                     
-                    if (decryptedLoginId.equals(request.getLoginId())) {
+                    if (decryptedLoginId.equals(request.loginId())) {
                         user = u;
                         logger.info("Found matching user: {}", u.getId());
                         break;
                     } else {
-                        logger.info("loginId does not match for user {}: {} != {}", u.getId(), decryptedLoginId, request.getLoginId());
+                        logger.info("loginId does not match for user {}: {} != {}", u.getId(), decryptedLoginId, request.loginId());
                     }
                 } catch (Exception e) {
                     logger.warn("Failed to decrypt loginId for user {}: {}", u.getId(), e.getMessage());
@@ -66,7 +66,7 @@ public class LoginService {
         }
         
         if (user == null) {
-            logger.error("No user found with loginId: {}", request.getLoginId());
+            logger.error("No user found with loginId: {}", request.loginId());
             throw new RuntimeException("User not found");
         }
 
@@ -74,16 +74,16 @@ public class LoginService {
             throw new RuntimeException("This account is not an ID/PW account");
         }
 
-        if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
+        if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
             throw new RuntimeException("Invalid password");
         }
 
         UserToken userToken = tokenService.generateTokens(user.getId());
         updateFCMToken(user);
-        return LoginResponse.builder()
-                .accessToken(userToken.getAccessToken())
-                .refreshToken(userToken.getRefreshToken())
-                .build();
+        return new LoginResponse(
+                    userToken.getAccessToken(),
+                    userToken.getRefreshToken()
+                );
     }
 
     // 소셜 로그인
@@ -156,10 +156,10 @@ public class LoginService {
 
             updateFCMToken(user);
 
-            return LoginResponse.builder()
-                    .accessToken(userToken.getAccessToken())
-                    .refreshToken(userToken.getRefreshToken())
-                    .build();
+            return new LoginResponse(
+                    userToken.getAccessToken(),
+                    userToken.getRefreshToken()
+            );
         } catch (Exception e) {
             logger.error("Error occurred in social login: {}", e.getMessage());
             throw e;
@@ -176,10 +176,10 @@ public class LoginService {
         User user = userRepository.findById(userToken.getUserId())
                 .orElseThrow(() -> new RuntimeException("User not found"));
         updateFCMToken(user);
-        return LoginResponse.builder()
-                .accessToken(userToken.getAccessToken())
-                .refreshToken(userToken.getRefreshToken())
-                .build();
+        return new LoginResponse(
+                userToken.getAccessToken(),
+                userToken.getRefreshToken()
+        );
     }
 
     private void updateFCMToken(User user) {

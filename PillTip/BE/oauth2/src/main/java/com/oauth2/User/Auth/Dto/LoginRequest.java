@@ -3,12 +3,7 @@
 
 package com.oauth2.User.Auth.Dto;
 
-import lombok.Getter;
-import lombok.Setter;
-
-@Getter
-@Setter
-public class LoginRequest {
-    private String loginId;
-    private String password;
-}
+public record LoginRequest (
+    String loginId,
+    String password
+){}
