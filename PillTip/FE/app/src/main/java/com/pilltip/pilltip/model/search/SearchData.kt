@@ -13,6 +13,7 @@ data class SearchResponse( // JSON 전체 응답을 나타냄
 
 data class SearchData( // 리스트 내부의 약품 정보 단위
     val type: String,
+    val imageUrl: String?,
     val id: Long,
     val value: String
 )
