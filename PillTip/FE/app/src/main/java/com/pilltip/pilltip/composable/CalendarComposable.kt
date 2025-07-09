@@ -123,11 +123,15 @@ fun DosageTimeItem(
     val context = LocalContext.current
     val displayTime = try {
         val parsed = LocalTime.parse(time)
-        when {
-            parsed.hour in 0..10 -> "오전 ${parsed.hour}:${"%02d".format(parsed.minute)}"
-            parsed.hour == 12 -> "오후 12:${"%02d".format(parsed.minute)}"
-            else -> "오후 ${parsed.hour - 12}:${"%02d".format(parsed.minute)}"
+        val hour = parsed.hour
+        val minute = "%02d".format(parsed.minute)
+        val period = if (hour < 12) "오전" else "오후"
+        val displayHour = when {
+            hour == 0 -> 12
+            hour in 1..12 -> hour
+            else -> hour - 12
         }
+        "$period $displayHour:$minute"
     } catch (e: Exception) {
         schedule.scheduledTime
     }
@@ -236,11 +240,15 @@ fun DosageTimeDetailItem(
     val time = schedule.scheduledTime.substring(11, 16)
     val displayTime = try {
         val parsed = LocalTime.parse(time)
-        when {
-            parsed.hour in 0..10 -> "오전 ${parsed.hour}:${"%02d".format(parsed.minute)}"
-            parsed.hour == 12 -> "오후 12:${"%02d".format(parsed.minute)}"
-            else -> "오후 ${parsed.hour - 12}:${"%02d".format(parsed.minute)}"
+        val hour = parsed.hour
+        val minute = "%02d".format(parsed.minute)
+        val period = if (hour < 12) "오전" else "오후"
+        val displayHour = when {
+            hour == 0 -> 12
+            hour in 1..12 -> hour
+            else -> hour - 12
         }
+        "$period $displayHour:$minute"
     } catch (e: Exception) {
         schedule.scheduledTime
     }
