@@ -113,9 +113,11 @@ fun MyPage(
     SideEffect {
         systemUiController.isNavigationBarVisible = true
     }
+    LaunchedEffect(Unit) {
+        questionnaireViewModel.loadPermissions()
+    }
     val context = LocalContext.current
     val screenWidth = LocalConfiguration.current.screenWidthDp.dp
-    var toggle by remember { mutableStateOf(true) }
     val nickname = UserInfoManager.getUserData(LocalContext.current)?.nickname
     val scope = rememberCoroutineScope()
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -148,6 +150,8 @@ fun MyPage(
     LaunchedEffect(selectedDate) {
         searchHiltViewModel.fetchDailyDosageLog(selectedDate)
     }
+    val permissionState = questionnaireViewModel.permissionState
+    val toggle = permissionState?.phonePermission ?: false
 
     Column(
         modifier = WhiteScreenModifier
@@ -238,15 +242,10 @@ fun MyPage(
         MyPageToggleItem(
             text = "푸시알람 동의",
             isChecked = toggle,
-            onCheckedChange = {
-                toggle = !toggle
-                if (toggle) {
-                    questionnaireViewModel.updateSinglePermission("phone", true)
-                    Toast.makeText(context, "푸시 알림 권한을 허용했어요", Toast.LENGTH_SHORT).show()
-                } else {
-                    questionnaireViewModel.updateSinglePermission("phone", false)
-                    Toast.makeText(context, "앞으로 푸시 알림을 받지 않습니다", Toast.LENGTH_SHORT).show()
-                }
+            onCheckedChange = { newValue ->
+                questionnaireViewModel.updateSinglePermission("phone", newValue)
+                val msg = if (newValue) "푸시 알림 권한을 허용했어요" else "앞으로 푸시 알림을 받지 않습니다"
+                Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
             }
         )
         MyPageMenuItem(text = "앱 이용 약관") { navController.navigate("EssentialInfoPage") }

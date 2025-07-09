@@ -248,8 +248,7 @@ class SearchHiltViewModel @Inject constructor(
     fun sendFcmToken(token: String) {
         viewModelScope.launch {
             try {
-                val result = fcmRepo.sendToken(token)
-                Log.d("FCM", "서버 응답: ${result.status} - ${result.message}")
+                fcmRepo.sendToken(token)
             } catch (e: Exception) {
                 Log.e("FCM", "토큰 전송 실패: ${e.message}")
             }
@@ -433,6 +432,7 @@ class QuestionnaireViewModel @Inject constructor(
             try {
                 val response = permissionRepository.updateSinglePermission(permissionType, granted)
                 _permissionUpdateResult.value = response.data
+                permissionState = response.data
                 Log.d("Permission", "업데이트 완료: $permissionType = $granted")
             } catch (e: Exception) {
                 Log.e("Permission", "업데이트 실패: ${e.message}")
