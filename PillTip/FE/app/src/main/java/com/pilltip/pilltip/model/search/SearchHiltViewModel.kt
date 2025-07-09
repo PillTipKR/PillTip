@@ -181,10 +181,15 @@ class SearchHiltViewModel @Inject constructor(
     }
 
     /* 복약 세부 데이터 */
-    fun fetchTakingPillDetail(medicationId: Long) {
+    fun fetchTakingPillDetail(
+        medicationId: Long,
+        onSuccess: ((TakingPillDetailData) -> Unit)? = null
+    ) {
         viewModelScope.launch {
             try {
-                _pillDetail.value = dosageDetailRepo.getDosageDetail(medicationId)
+                val result = dosageDetailRepo.getDosageDetail(medicationId)
+                _pillDetail.value = result
+                onSuccess?.invoke(result)
             } catch (e: Exception) {
                 _pillDetail.value = null
                 Log.e("DosageDetail", "상세 조회 실패: ${e.message}")
@@ -248,8 +253,7 @@ class SearchHiltViewModel @Inject constructor(
     fun sendFcmToken(token: String) {
         viewModelScope.launch {
             try {
-                val result = fcmRepo.sendToken(token)
-                Log.d("FCM", "서버 응답: ${result.status} - ${result.message}")
+                fcmRepo.sendToken(token)
             } catch (e: Exception) {
                 Log.e("FCM", "토큰 전송 실패: ${e.message}")
             }
@@ -433,6 +437,7 @@ class QuestionnaireViewModel @Inject constructor(
             try {
                 val response = permissionRepository.updateSinglePermission(permissionType, granted)
                 _permissionUpdateResult.value = response.data
+                permissionState = response.data
                 Log.d("Permission", "업데이트 완료: $permissionType = $granted")
             } catch (e: Exception) {
                 Log.e("Permission", "업데이트 실패: ${e.message}")
