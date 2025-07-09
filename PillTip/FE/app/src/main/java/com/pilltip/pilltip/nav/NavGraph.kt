@@ -29,7 +29,9 @@ import com.pilltip.pilltip.view.main.DURPage
 import com.pilltip.pilltip.view.main.DURResultPage
 import com.pilltip.pilltip.view.main.DURSearchPage
 import com.pilltip.pilltip.view.main.EssentialInfoPage
+import com.pilltip.pilltip.view.main.MyDataPage
 import com.pilltip.pilltip.view.main.MyDrugInfoPage
+import com.pilltip.pilltip.view.main.MyDrugManagementPage
 import com.pilltip.pilltip.view.main.MyHealthDetailPage
 import com.pilltip.pilltip.view.main.MyHealthPage
 import com.pilltip.pilltip.view.main.NotificationPage
@@ -110,7 +112,7 @@ fun NavGraph(
             )
         }
 
-        composable("NotificationPage"){
+        composable("NotificationPage") {
             NotificationPage(navController, searchHiltViewModel)
         }
 
@@ -280,13 +282,24 @@ fun NavGraph(
                 secondDrug = secondDrug.toLong(),
             )
         }
-        composable("MyHealthPage"){
+        composable("MyHealthPage") {
             MyHealthPage(navController, searchHiltViewModel)
         }
 
         composable("MyHealthDetailPage/{type}") { backStackEntry ->
             val type = backStackEntry.arguments?.getString("type") ?: ""
-            MyHealthDetailPage(type = type, navController = navController, searchHiltViewModel = searchHiltViewModel)
+            MyHealthDetailPage(
+                type = type,
+                navController = navController,
+                searchHiltViewModel = searchHiltViewModel
+            )
+        }
+        composable("MyDataPage") {
+            MyDataPage(navController, searchHiltViewModel)
+        }
+        composable("MyDrugManagementPage/{id}") { backStackEntry ->
+            val id = backStackEntry.arguments?.getString("id") ?: ""
+            MyDrugManagementPage(navController, searchHiltViewModel, id.toLong())
         }
 
     }

@@ -44,7 +44,9 @@ class SearchHiltViewModel @Inject constructor(
     private val fcmRepo: FcmTokenRepository,
     private val durGptRepo: DurGptRepository,
     private val sensitiveInfoRepo: SensitiveInfoRepository,
-    private val dosageLogRepo: DosageLogRepository
+    private val dosageLogRepo: DosageLogRepository,
+    private val deleteRepo: DeleteRepository,
+    private val personalInfoRepo: PersonalInfoRepository
 ) : ViewModel() {
 
     /* 약품명 자동 완성 API*/
@@ -179,10 +181,15 @@ class SearchHiltViewModel @Inject constructor(
     }
 
     /* 복약 세부 데이터 */
-    fun fetchTakingPillDetail(medicationId: Long) {
+    fun fetchTakingPillDetail(
+        medicationId: Long,
+        onSuccess: ((TakingPillDetailData) -> Unit)? = null
+    ) {
         viewModelScope.launch {
             try {
-                _pillDetail.value = dosageDetailRepo.getDosageDetail(medicationId)
+                val result = dosageDetailRepo.getDosageDetail(medicationId)
+                _pillDetail.value = result
+                onSuccess?.invoke(result)
             } catch (e: Exception) {
                 _pillDetail.value = null
                 Log.e("DosageDetail", "상세 조회 실패: ${e.message}")
@@ -246,8 +253,7 @@ class SearchHiltViewModel @Inject constructor(
     fun sendFcmToken(token: String) {
         viewModelScope.launch {
             try {
-                val result = fcmRepo.sendToken(token)
-                Log.d("FCM", "서버 응답: ${result.status} - ${result.message}")
+                fcmRepo.sendToken(token)
             } catch (e: Exception) {
                 Log.e("FCM", "토큰 전송 실패: ${e.message}")
             }
@@ -286,6 +292,14 @@ class SearchHiltViewModel @Inject constructor(
         }
     }
 
+    private val _selectedDate = MutableStateFlow(LocalDate.now())
+    val selectedDate: StateFlow<LocalDate> = _selectedDate
+
+    fun updateSelectedDate(date: LocalDate) {
+        _selectedDate.value = date
+        fetchDailyDosageLog(date)
+    }
+
     fun toggleDosageTaken(
         logId: Long,
         onSuccess: (String) -> Unit,
@@ -297,7 +311,7 @@ class SearchHiltViewModel @Inject constructor(
                 if (response.status == "success") {
                     onSuccess(response.data)
 
-                    val latest = dosageLogRepo.getDailyDosageLog(LocalDate.now().toString()).data
+                    val latest = dosageLogRepo.getDailyDosageLog(_selectedDate.value.toString()).data
                     _dailyDosageLog.value = latest
 
                     selectedDrugLog?.let { selected ->
@@ -332,6 +346,40 @@ class SearchHiltViewModel @Inject constructor(
                 }
             } catch (e: Exception) {
                 onError(e.localizedMessage ?: "에러가 발생했어요.")
+            }
+        }
+    }
+
+    private val _deleteAccountResult = MutableStateFlow<String?>(null)
+    val deleteAccountResult: StateFlow<String?> = _deleteAccountResult
+
+    fun deleteAccount(onSuccess: () -> Unit, onError: (String) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val response = deleteRepo.deleteAccount()
+                if (response.status == "success") {
+                    _deleteAccountResult.value = response.message
+                    onSuccess()
+                } else {
+                    onError(response.message ?: "계정 삭제 실패")
+                }
+            } catch (e: Exception) {
+                onError("에러: ${e.localizedMessage}")
+            }
+        }
+    }
+
+    private val _updatedProfile = MutableStateFlow<UserProfileData?>(null)
+    val updatedProfile: StateFlow<UserProfileData?> = _updatedProfile.asStateFlow()
+
+    fun updatePersonalInfo(request: PersonalInfoUpdateRequest, onSuccess: () -> Unit, onError: (String) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val result = personalInfoRepo.updatePersonalInfo(request)
+                _updatedProfile.value = result
+                onSuccess()
+            } catch (e: Exception) {
+                onError("수정 실패: ${e.localizedMessage}")
             }
         }
     }
@@ -389,6 +437,7 @@ class QuestionnaireViewModel @Inject constructor(
             try {
                 val response = permissionRepository.updateSinglePermission(permissionType, granted)
                 _permissionUpdateResult.value = response.data
+                permissionState = response.data
                 Log.d("Permission", "업데이트 완료: $permissionType = $granted")
             } catch (e: Exception) {
                 Log.e("Permission", "업데이트 실패: ${e.message}")
@@ -693,5 +742,25 @@ object RepositoryModule {
     @Provides
     fun provideDosageLogRepository(api: DosageLogApi): DosageLogRepository {
         return DosageLogRepositoryImpl(api)
+    }
+
+    @Provides
+    fun providePersonalInfoApi(@Named("SearchRetrofit") retrofit: Retrofit): PersonalInfoApi {
+        return retrofit.create(PersonalInfoApi::class.java)
+    }
+
+    @Provides
+    fun providePersonalInfoRepository(api: PersonalInfoApi): PersonalInfoRepository {
+        return PersonalInfoRepositoryImpl(api)
+    }
+
+    @Provides
+    fun provideDeleteAccountApi(@Named("SearchRetrofit") retrofit: Retrofit): DeleteAccountAPI {
+        return retrofit.create(DeleteAccountAPI::class.java)
+    }
+
+    @Provides
+    fun provideDeleteRepository(api: DeleteAccountAPI): DeleteRepository {
+        return DeleteRepositoryImpl(api)
     }
 }

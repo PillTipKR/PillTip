@@ -275,11 +275,11 @@ fun formatDate(date: LocalDate): String {
 }
 
 @Composable
-fun DosageCard(title: String, percent: Int, onClick: () -> Unit) {
+fun DosageCard(title: String, percent: Int, horizontalPadding: Dp = 22.dp, onClick: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 22.dp)
+            .padding(horizontal = horizontalPadding)
             .shadow(
                 elevation = 8.dp,
                 spotColor = Color(0x1F000000),

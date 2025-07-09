@@ -64,12 +64,12 @@ fun CalenderPage(
     navController: NavController,
     hiltViewModel: SearchHiltViewModel
 ) {
-    var selectedDate by remember { mutableStateOf<LocalDate?>(LocalDate.now()) }
+    val selectedDate by hiltViewModel.selectedDate.collectAsState()
     val logData by hiltViewModel.dailyDosageLog.collectAsState()
     val selectedDrugLog = hiltViewModel.selectedDrugLog
 
     LaunchedEffect(selectedDate) {
-        selectedDate?.let {
+        selectedDate.let {
             hiltViewModel.fetchDailyDosageLog(it)
         }
     }
@@ -101,7 +101,7 @@ fun CalenderPage(
         CalendarView(
             selectedDate = selectedDate,
             onDateSelected = {
-                selectedDate = it
+                hiltViewModel.updateSelectedDate(it)
                 hiltViewModel.selectedDrugLog = null
             }
         )
@@ -195,10 +195,10 @@ fun CalenderPage(
         ) {
             if (selectedDrugLog == null) {
                 logData?.perDrugLogs?.forEach { drug ->
-                    selectedDate?.let { DrugLogCard(drug, hiltViewModel, it) }
+                    DrugLogCard(drug, hiltViewModel, selectedDate)
                 }
             } else {
-                selectedDate?.let { DrugLogDetailSection(selectedDrugLog, hiltViewModel, it) }
+                DrugLogDetailSection(selectedDrugLog, hiltViewModel, selectedDate)
             }
         }
     }

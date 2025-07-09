@@ -320,13 +320,22 @@ fun AutoCompleteList(
                     .padding(horizontal = 22.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Image(
-                    imageVector = ImageVector.vectorResource(R.drawable.logo_pilltip_blue_pill),
-                    contentDescription = null,
-                    modifier = Modifier
-                        .width(42.dp)
-                        .height(36.dp)
-                )
+                if (item.imageUrl != null) {
+                    AsyncImage(
+                        model = item.imageUrl,
+                        contentDescription = "약물 이미지",
+                        modifier = Modifier.width(50.dp)
+                    )
+                } else {
+                    Image(
+                        painter = painterResource(R.drawable.img_pill),
+                        contentDescription = null,
+                        modifier = Modifier
+                            .width(50.dp)
+                            .padding(horizontal = 6.dp)
+                    )
+                }
+
                 Spacer(modifier = Modifier.width(14.dp))
 
                 Box(modifier = Modifier.weight(1f)) {

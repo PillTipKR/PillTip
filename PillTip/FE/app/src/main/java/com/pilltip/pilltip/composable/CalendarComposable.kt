@@ -65,9 +65,9 @@ fun DrugLogCard(
     isRead: Boolean = false
 ) {
     val filteredSchedules = when {
-        !isNotification -> drugLog.dosageSchedule // 전체
-        isRead -> drugLog.dosageSchedule.filter { it.isTaken } // 복용된 것만
-        else -> drugLog.dosageSchedule.filter { !it.isTaken } // 미복용만
+        !isNotification -> drugLog.dosageSchedule
+        isRead -> drugLog.dosageSchedule.filter { it.isTaken }
+        else -> drugLog.dosageSchedule.filter { !it.isTaken }
     }
 
     if (filteredSchedules.isEmpty()) return
@@ -80,7 +80,6 @@ fun DrugLogCard(
             .background(color = Color.White, shape = RoundedCornerShape(size = 12.dp))
             .padding(start = 20.dp, top = 24.dp, end = 20.dp, bottom = 8.dp)
     ) {
-        // 약물 이름 + 화살표
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
@@ -124,11 +123,15 @@ fun DosageTimeItem(
     val context = LocalContext.current
     val displayTime = try {
         val parsed = LocalTime.parse(time)
-        when {
-            parsed.hour in 0..10 -> "오전 ${parsed.hour}:${"%02d".format(parsed.minute)}"
-            parsed.hour == 12 -> "오후 12:${"%02d".format(parsed.minute)}"
-            else -> "오후 ${parsed.hour - 12}:${"%02d".format(parsed.minute)}"
+        val hour = parsed.hour
+        val minute = "%02d".format(parsed.minute)
+        val period = if (hour < 12) "오전" else "오후"
+        val displayHour = when {
+            hour == 0 -> 12
+            hour in 1..12 -> hour
+            else -> hour - 12
         }
+        "$period $displayHour:$minute"
     } catch (e: Exception) {
         schedule.scheduledTime
     }
@@ -237,11 +240,15 @@ fun DosageTimeDetailItem(
     val time = schedule.scheduledTime.substring(11, 16)
     val displayTime = try {
         val parsed = LocalTime.parse(time)
-        when {
-            parsed.hour in 0..10 -> "오전 ${parsed.hour}:${"%02d".format(parsed.minute)}"
-            parsed.hour == 12 -> "오후 12:${"%02d".format(parsed.minute)}"
-            else -> "오후 ${parsed.hour - 12}:${"%02d".format(parsed.minute)}"
+        val hour = parsed.hour
+        val minute = "%02d".format(parsed.minute)
+        val period = if (hour < 12) "오전" else "오후"
+        val displayHour = when {
+            hour == 0 -> 12
+            hour in 1..12 -> hour
+            else -> hour - 12
         }
+        "$period $displayHour:$minute"
     } catch (e: Exception) {
         schedule.scheduledTime
     }

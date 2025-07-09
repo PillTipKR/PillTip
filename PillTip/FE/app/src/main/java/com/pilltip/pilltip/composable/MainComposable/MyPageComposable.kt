@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -29,16 +30,20 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.pilltip.pilltip.R
 import com.pilltip.pilltip.composable.HeightSpacer
 import com.pilltip.pilltip.composable.WidthSpacer
 import com.pilltip.pilltip.composable.noRippleClickable
+import com.pilltip.pilltip.model.search.DosageScheduleDetail
 import com.pilltip.pilltip.model.search.TakingPillSummary
 import com.pilltip.pilltip.ui.theme.gray200
 import com.pilltip.pilltip.ui.theme.gray500
+import com.pilltip.pilltip.ui.theme.gray600
 import com.pilltip.pilltip.ui.theme.gray700
+import com.pilltip.pilltip.ui.theme.gray800
 import com.pilltip.pilltip.ui.theme.pretendard
 import com.pilltip.pilltip.ui.theme.primaryColor
 import com.pilltip.pilltip.ui.theme.primaryColor050
@@ -89,7 +94,8 @@ fun ProfileTagButton(
 fun DrugSummaryCard(
     pill: TakingPillSummary,
     onDelete: (TakingPillSummary) -> Unit = {},
-    onEdit: (TakingPillSummary) -> Unit = {}
+    onEdit: (TakingPillSummary) -> Unit = {},
+    onClick: () -> Unit
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
 
@@ -101,6 +107,9 @@ fun DrugSummaryCard(
             .height(93.dp)
             .background(color = Color(0xFFFFFFFF), shape = RoundedCornerShape(size = 12.dp))
             .padding(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 16.dp)
+            .noRippleClickable{
+                onClick()
+            }
     ) {
         Column {
             Row(
@@ -260,4 +269,43 @@ fun HealthCard(
             )
         }
     }
+}
+
+@Composable
+fun DrugManagementRowTab(
+    title : String,
+    description: String
+){
+    Row(
+        verticalAlignment = Alignment.CenterVertically
+    ){
+        Text(
+            text = title,
+            style = TextStyle(
+                fontSize = 14.sp,
+                fontFamily = pretendard,
+                fontWeight = FontWeight(500),
+                color = gray600,
+                textAlign = TextAlign.Justify,
+            ),
+            modifier = Modifier.width(84.dp)
+        )
+        Text(
+            text = description,
+            style = TextStyle(
+                fontSize = 14.sp,
+                fontFamily = pretendard,
+                fontWeight = FontWeight(500),
+                color = gray800,
+                textAlign = TextAlign.Justify,
+            )
+        )
+    }
+}
+
+fun DosageScheduleDetail.toDisplayStrings(): Pair<String, String> {
+    val periodLabel = if (period == "AM") "오전" else "오후"
+    val timeStr = String.format("%s %d:%02d", periodLabel, hour, minute)
+    val alarmStr = if (alarmOnOff) "[알람 O]" else "[알람 X]"
+    return timeStr to alarmStr
 }
