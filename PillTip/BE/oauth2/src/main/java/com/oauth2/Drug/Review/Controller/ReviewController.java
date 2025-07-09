@@ -14,11 +14,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/reviews")
+@RequestMapping("/api/review")
 @RequiredArgsConstructor
 public class ReviewController {
 
@@ -30,10 +31,11 @@ public class ReviewController {
      */
     @PostMapping("/create")
     public ResponseEntity<ApiResponse<Long>> createReview(
-            @AuthenticationPrincipal User user,
-            @RequestBody ReviewCreateRequest request
+            @RequestPart("review") ReviewCreateRequest request,
+            @RequestPart(value = "images", required = false) List<MultipartFile> images,
+            @AuthenticationPrincipal User user
     ) {
-        Long reviewId = reviewService.createReview(user, request);
+        Long reviewId = reviewService.createReview(user, request, images);
         return ResponseEntity.ok(ApiResponse.success("리뷰가 등록되었습니다", reviewId));
     }
 

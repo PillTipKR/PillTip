@@ -2,12 +2,7 @@
 // description : 로그인 return 정보
 package com.oauth2.User.Auth.Dto;
 
-import lombok.Builder;
-import lombok.Getter;
-
-@Getter
-@Builder
-public class LoginResponse {
-    private String accessToken;
-    private String refreshToken;
-}
+public record LoginResponse (
+    String accessToken,
+    String refreshToken
+){}
