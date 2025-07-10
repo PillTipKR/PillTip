@@ -4,7 +4,7 @@ import com.oauth2.User.Auth.Dto.*;
 import com.oauth2.User.Auth.Entity.User;
 import com.oauth2.User.UserInfo.Service.UserService;
 import com.oauth2.User.UserInfo.Dto.PersonalInfoRequest;
-import com.oauth2.User.UserInfo.Dto.ProfilePhotoRequest;
+// import com.oauth2.User.UserInfo.Dto.ProfilePhotoRequest;
 import com.oauth2.User.UserInfo.Dto.UserResponse;
 import com.oauth2.Util.Encryption.EncryptionUtil;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +13,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import java.io.File;
+import java.io.IOException;
 
 
 @RestController
@@ -105,30 +108,43 @@ public class UserController {
         }
     }
 
-    // 프로필 사진 업데이트
     @PutMapping("/profile-photo")
     public ResponseEntity<ApiResponse<UserResponse>> updateProfilePhoto(
             @AuthenticationPrincipal User user,
-            @RequestBody ProfilePhotoRequest request) {
+            @RequestParam("file") MultipartFile file) {
         if (user == null) {
             return ResponseEntity.status(400)
                     .body(ApiResponse.error("User not authenticated", null));
         }
 
         try {
-            // 디버깅을 위한 로그 추가
             logger.info("=== UPDATE PROFILE PHOTO START ===");
             logger.info("Received profile photo update request for user: {}", user.getId());
-            logger.info("Photo URL: '{}'", request.getPhotoUrl());
 
-            User updatedUser = userService.updateProfilePhoto(user, request.getPhotoUrl());
+            String uploadDir = System.getProperty("user.dir") + "/upload/profile/";
+            File dir = new File(uploadDir);
+            if (!dir.exists()) {
+                boolean created = dir.mkdirs();
+                if (!created) {
+                    throw new RuntimeException("프로필 사진 저장 폴더 생성 실패: " + uploadDir);
+                }
+            }
+
+            String fileName = "profile_" + user.getId() + "_" + System.currentTimeMillis() + ".jpg";
+            File dest = new File(dir, fileName);
+            file.transferTo(dest);
+
+            String fileUrl = "/profile/" + fileName;
+
+            User updatedUser = userService.updateProfilePhoto(user, fileUrl);
+
             logger.info("Successfully updated profile photo for user: {} - New photo URL: '{}'",
                     user.getId(), updatedUser.getProfilePhoto());
             logger.info("=== UPDATE PROFILE PHOTO END ===");
 
             return ResponseEntity.status(200)
                     .body(ApiResponse.success("Profile photo updated successfully", new UserResponse(updatedUser, encryptionUtil)));
-        } catch (Exception e) {
+        } catch (IOException e) {
             logger.error("Error updating profile photo for user: {} - Error: {}", user.getId(), e.getMessage(), e);
             return ResponseEntity.status(400)
                     .body(ApiResponse.error("Failed to update profile photo: " + e.getMessage(), null));

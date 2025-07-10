@@ -52,3 +52,5 @@ src/main/resources/ssl/keystore.*
 **/.DS_Store
 
 **/ssl/*
+
+**/upload/*
