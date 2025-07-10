@@ -455,3 +455,67 @@ class DeleteRepositoryImpl(
         return api.deleteAccount()
     }
 }
+
+/**
+ * 리뷰 통계 API
+ */
+interface ReviewStatsApi {
+    @GET("/api/review/drug/{drugId}/stats")
+    suspend fun getReviewStats(
+        @Path("drugId") drugId: Long
+    ): ReviewStatsResponse
+}
+
+interface ReviewStatsRepository {
+    suspend fun getReviewStats(drugId: Long): ReviewStatsData
+}
+
+class ReviewStatsRepositoryImpl(
+    private val api: ReviewStatsApi
+) : ReviewStatsRepository {
+    override suspend fun getReviewStats(drugId: Long): ReviewStatsData {
+        return api.getReviewStats(drugId).data
+    }
+}
+
+/**
+ * 리뷰 데이터 API
+ */
+
+interface ReviewApi {
+    @GET("/api/review/drug")
+    suspend fun getDrugReviews(
+        @Query("drugId") drugId: Long,
+        @Query("page") page: Int,
+        @Query("size") size: Int,
+        @Query("sortKey") sortKey: String,
+        @Query("direction") direction: String
+    ): ReviewListResponse
+}
+
+interface ReviewRepository {
+    suspend fun getDrugReviews(
+        drugId: Long,
+        page: Int,
+        size: Int,
+        sortKey: String,
+        direction: String
+    ): ReviewListData
+}
+
+class ReviewRepositoryImpl(
+    private val api: ReviewApi
+) : ReviewRepository {
+
+    override suspend fun getDrugReviews(
+        drugId: Long,
+        page: Int,
+        size: Int,
+        sortKey: String,
+        direction: String
+    ): ReviewListData {
+        return api.getDrugReviews(drugId, page, size, sortKey, direction).data
+    }
+}
+
+

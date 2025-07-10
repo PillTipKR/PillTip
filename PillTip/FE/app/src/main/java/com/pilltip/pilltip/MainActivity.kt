@@ -29,6 +29,7 @@ import com.kakao.vectormap.KakaoMapSdk
 import com.pilltip.pilltip.model.UserInfoManager
 import com.pilltip.pilltip.model.search.LogViewModel
 import com.pilltip.pilltip.model.search.QuestionnaireViewModel
+import com.pilltip.pilltip.model.search.ReviewViewModel
 import com.pilltip.pilltip.model.search.SearchHiltViewModel
 import com.pilltip.pilltip.model.signUp.ServerAuthAPI
 import com.pilltip.pilltip.model.signUp.SignUpViewModel
@@ -65,6 +66,7 @@ class MainActivity : ComponentActivity() {
             val signUpViewModel: SignUpViewModel = hiltViewModel()
             val logViewModel: LogViewModel = viewModel()
             val questionnaireViewModel : QuestionnaireViewModel = hiltViewModel()
+            val reviewViewModel : ReviewViewModel = hiltViewModel()
             val context = LocalContext.current
             Log.d("KeyHash", "${Utility.getKeyHash(this)}")
 
@@ -110,7 +112,8 @@ class MainActivity : ComponentActivity() {
                 signUpViewModel = signUpViewModel,
                 searchHiltViewModel = searchHiltViewModel,
                 logViewModel = logViewModel,
-                questionnaireViewModel = questionnaireViewModel
+                questionnaireViewModel = questionnaireViewModel,
+                reviewViewModel = reviewViewModel
             )
         }
     }

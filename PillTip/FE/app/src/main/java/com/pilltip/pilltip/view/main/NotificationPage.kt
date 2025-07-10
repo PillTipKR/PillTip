@@ -41,9 +41,6 @@ import com.pilltip.pilltip.ui.theme.gray050
 import com.pilltip.pilltip.ui.theme.gray500
 import com.pilltip.pilltip.ui.theme.pretendard
 import com.pilltip.pilltip.ui.theme.primaryColor
-import com.pilltip.pilltip.view.search.DrugInfoTab
-import com.pilltip.pilltip.view.search.ReviewTab
-import com.pilltip.pilltip.view.search.StorageInfoTab
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 
