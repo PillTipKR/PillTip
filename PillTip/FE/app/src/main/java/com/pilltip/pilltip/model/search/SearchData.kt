@@ -427,3 +427,85 @@ data class DeleteAccountResponse(
     val data: String? = null
 )
 
+/**
+ * 리뷰 통계 API
+ * */
+data class ReviewStatsResponse(
+    val status: String,
+    val message: String?,
+    val data: ReviewStatsData
+)
+
+data class ReviewStatsData(
+    val total: Int,
+    val like: Int,
+    val ratingStatsResponse: RatingStats,
+    val tagStatsByType: Map<String, TagStats>
+)
+
+data class RatingStats(
+    val average: Double,
+    val ratingCounts: Map<String, Int>
+)
+
+data class TagStats(
+    val mostUsedTagName: String,
+    val mostUsedTagCount: Int,
+    val totalTagCount: Int
+)
+
+/**
+ * 리뷰 데이터 API
+ */
+
+data class ReviewListResponse(
+    val status: String,
+    val message: String?,
+    val data: ReviewListData
+)
+
+data class ReviewListData(
+    val content: List<ReviewItem>,
+    val pageable: PageableData,
+    val last: Boolean,
+    val totalElements: Int,
+    val totalPages: Int,
+    val size: Int,
+    val number: Int,
+    val sort: SortInfo,
+    val first: Boolean,
+    val numberOfElements: Int,
+    val empty: Boolean
+)
+
+data class ReviewItem(
+    val id: Long,
+    val userNickname: String,
+    val gender: String,
+    val isMine: Boolean,
+    val isLiked: Boolean,
+    val rating: Float,
+    val likeCount: Int,
+    val content: String,
+    val imageUrls: List<String>,
+    val efficacyTags: List<String>,
+    val sideEffectTags: List<String>,
+    val otherTags: List<String>,
+    val createdAt: String,
+    val updatedAt: String
+)
+
+data class PageableData(
+    val pageNumber: Int,
+    val pageSize: Int,
+    val sort: SortInfo,
+    val offset: Int,
+    val paged: Boolean,
+    val unpaged: Boolean
+)
+
+data class SortInfo(
+    val empty: Boolean,
+    val sorted: Boolean,
+    val unsorted: Boolean
+)
