@@ -232,7 +232,11 @@ public class ReviewService {
                 }
             }
 
-            result.put(type, new TagStatsDto(mostUsed, max, total));
+            result.put(type, new TagStatsDto(
+                    mostUsed != null? mostUsed:"",
+                    max,
+                    total
+            ));
         }
 
         return result;
