@@ -5,7 +5,6 @@ import com.oauth2.User.TakingPill.Dto.DosageLogResponse;
 import com.oauth2.User.TakingPill.Dto.DosageScheduleDto;
 import com.oauth2.User.TakingPill.Entity.DosageLog;
 import com.oauth2.User.TakingPill.Repositoty.DosageLogRepository;
-import com.oauth2.User.TakingPill.Repositoty.DosageScheduleRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,7 +22,6 @@ import java.util.stream.Collectors;
 public class DosageLogService {
 
     private final DosageLogRepository dosageLogRepository;
-    private final DosageScheduleRepository dosageScheduleRepository;
 
     public void updateTaken(Long dosageLogId) {
         // 복약 완료 상태 업데이트
@@ -37,6 +35,19 @@ public class DosageLogService {
             dosageLog.setTakenAt(null);  // 복약 완료 시간
             dosageLog.setIsTaken(false);  // 복약 완료 상태
         }
+        dosageLogRepository.save(dosageLog);
+    }
+
+    public void alarmTaken(Long dosageLogId) {
+        // 복약 완료 상태 업데이트
+        DosageLog dosageLog = dosageLogRepository.findById(dosageLogId)
+                .orElseThrow(() -> new IllegalArgumentException("복약 기록을 찾을 수 없습니다"));
+
+        if(!dosageLog.getIsTaken()){
+            dosageLog.setTakenAt(LocalDateTime.now());  // 복약 완료 시간
+            dosageLog.setIsTaken(true);  // 복약 완료 상태
+        }
+
         dosageLogRepository.save(dosageLog);
     }
 
