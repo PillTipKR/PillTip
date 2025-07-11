@@ -34,10 +34,12 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
         // 소셜 ID 추출
         String socialId = getSocialId(registrationId, attributes);
-        
+
         // 기존 사용자 확인
-        User user = userRepository.findBySocialId(socialId)
-                .orElseGet(() -> createNewUser(registrationId, attributes));
+        User user = userRepository.findBySocialId(socialId).orElse(null);
+        if (user == null) {
+            user = createNewUser(registrationId, attributes);
+        }
 
         return oauth2User;
     }
@@ -62,11 +64,16 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         if (registrationId.equalsIgnoreCase("google")) {
             socialNickname = (String) attributes.get("name");
         } else if (registrationId.equalsIgnoreCase("kakao")) {
-            Map<String, Object> kakaoAccount = (Map<String, Object>) attributes.get("kakao_account");
-            if (kakaoAccount != null) {
-                Map<String, Object> profile = (Map<String, Object>) kakaoAccount.get("profile");
-                if (profile != null) {
-                    socialNickname = (String) profile.get("nickname");
+            Object kakaoAccountObj = attributes.get("kakao_account");
+            if (kakaoAccountObj instanceof Map) { // kakao_account 객체가 Map인지 확인
+                Map<?, ?> kakaoAccountMap = (Map<?, ?>) kakaoAccountObj;
+                Object profileObj = kakaoAccountMap.get("profile");
+                if (profileObj instanceof Map) { // profile 객체가 Map인지 확인
+                    Map<?, ?> profileMap = (Map<?, ?>) profileObj;
+                    Object nicknameObj = profileMap.get("nickname");
+                    if (nicknameObj instanceof String) { // nickname 객체가 String인지 확인
+                        socialNickname = (String) nicknameObj;
+                    }
                 }
             }
         }

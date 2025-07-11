@@ -6,6 +6,7 @@ import java.util.Map;
 
 public record ReviewStats(
     Long total,
+    Long like,
     RatingStatsResponse ratingStatsResponse,
     Map<TagType, TagStatsDto> tagStatsByType
 ){}

@@ -40,9 +40,14 @@ public class AuthController {
     // ID/PW 로그인
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<LoginResponse>> login(@RequestBody LoginRequest request) {
-        LoginResponse loginResponse = loginService.login(request);
-        return ResponseEntity.status(200)
-            .body(ApiResponse.success("Login successful", loginResponse));
+        try {
+            LoginResponse loginResponse = loginService.login(request);
+            return ResponseEntity.status(200)
+                .body(ApiResponse.success("Login successful", loginResponse));
+        } catch (Exception e) {
+            return ResponseEntity.status(400)
+                .body(ApiResponse.error("Login failed: " + e.getMessage(), null));
+        }
     }
 
     // 소셜 로그인
@@ -89,8 +94,8 @@ public class AuthController {
     // 중복 체크 API
     @PostMapping("/check-duplicate")
     public ResponseEntity<ApiResponse<Boolean>> checkDuplicate(@RequestBody DuplicateCheckRequest request) {
-        boolean isDuplicate = userService.isDuplicate(request.getValue(), request.getType());
-        String message = isDuplicate ? "이미 사용 중인 " + request.getType() + "입니다." : "사용 가능한 " + request.getType() + "입니다.";
+        boolean isDuplicate = userService.isDuplicate(request.value(), request.type());
+        String message = isDuplicate ? "이미 사용 중인 " + request.type() + "입니다." : "사용 가능한 " + request.type() + "입니다.";
         return ResponseEntity.status(200)
             .body(ApiResponse.success(message, !isDuplicate));
     }

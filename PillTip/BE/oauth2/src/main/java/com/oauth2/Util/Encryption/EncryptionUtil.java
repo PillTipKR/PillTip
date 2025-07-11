@@ -7,7 +7,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.Cipher;
-import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
@@ -34,6 +33,7 @@ public class EncryptionUtil {
      * @throws Exception 암호화 중 오류 발생 시
      */
     public String encrypt(String plainText) throws Exception {
+        System.out.println("[EncryptionUtil] 암호화에 사용되는 키: " + secretKeyString);
         if (plainText == null || plainText.isEmpty()) {
             return plainText;
         }
@@ -74,6 +74,7 @@ public class EncryptionUtil {
      * @throws Exception 복호화 중 오류 발생 시
      */
     public String decrypt(String encryptedText) throws Exception {
+        System.out.println("[EncryptionUtil] 복호화에 사용되는 키: " + secretKeyString);
         if (encryptedText == null || encryptedText.isEmpty()) {
             return encryptedText;
         }
@@ -165,6 +166,25 @@ public class EncryptionUtil {
             return decoded.length >= GCM_IV_LENGTH + 1;
         } catch (Exception e) {
             return false;
+        }
+    }
+
+    // 암호화/복호화 유틸 단독 실행용 main 메서드
+    public static void main(String[] args) throws Exception {
+        EncryptionUtil util = new EncryptionUtil();
+        util.secretKeyString = System.getenv().getOrDefault("ENCRYPTION_SECRET_KEY", "defaultSecretKeyForPillTip2024");
+        String plain = "test_login_id";
+        String encrypted = util.encrypt(plain);
+        System.out.println("[EncryptionUtil] 암호화 결과: " + encrypted);
+        String decrypted = util.decrypt(encrypted);
+        System.out.println("[EncryptionUtil] 복호화 결과: " + decrypted);
+        // DB에 저장된 암호문 복호화 테스트
+        String dbEncrypted = "IAEhqQ+WVLnkr4WoXDX/7bUeB9T+ydj2+guY5CzvM3oo";
+        try {
+            String dbDecrypted = util.decrypt(dbEncrypted);
+            System.out.println("[EncryptionUtil] DB 암호문 복호화 결과: " + dbDecrypted);
+        } catch (Exception e) {
+            System.out.println("[EncryptionUtil] DB 암호문 복호화 실패: " + e.getMessage());
         }
     }
 } 

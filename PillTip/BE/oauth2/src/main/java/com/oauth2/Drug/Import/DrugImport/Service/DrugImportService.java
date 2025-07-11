@@ -340,8 +340,8 @@ public class DrugImportService {
             List<Drug> drugList = new ArrayList<>();
 
             while ((line = reader.readNext()) != null) {
-                String nameKr = line[1].trim();
-                String imageUrl = line[5].trim().toLowerCase();
+                String nameKr = line[0].trim();
+                String imageUrl = line[1].trim();
 
                 Drug drug = matchDrugByNameVariants(nameKr);
                 if(drug != null) {

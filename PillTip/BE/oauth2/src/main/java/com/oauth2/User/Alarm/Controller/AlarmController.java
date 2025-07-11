@@ -10,7 +10,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/alarm")
 @RequiredArgsConstructor
 public class AlarmController {
 
@@ -32,4 +32,12 @@ public class AlarmController {
         return ResponseEntity.ok().body(ApiResponse.success("5분 뒤 재전송"));
     }
 
+
+    @PostMapping("/{logId}/taken")
+    public ResponseEntity<ApiResponse<String>> markAsTaken(
+            @PathVariable Long logId) {
+        // 복약 완료 처리 로직
+        dosageLogService.alarmTaken(logId);
+        return ResponseEntity.ok().body(ApiResponse.success("복용 이력 수정!"));
+    }
 }

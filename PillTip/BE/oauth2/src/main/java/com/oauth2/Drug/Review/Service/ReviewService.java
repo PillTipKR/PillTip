@@ -10,7 +10,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -30,33 +33,55 @@ public class ReviewService {
     /**
      * 리뷰 생성
      */
-    public Long createReview(User user, ReviewCreateRequest request) {
-        Drug drug = drugRepository.findById(request.getDrugId())
+    public Long createReview(User user, ReviewCreateRequest request, List<MultipartFile> images) {
+        Drug drug = drugRepository.findById(request.drugId())
                 .orElseThrow(() -> new RuntimeException("약을 찾을 수 없습니다"));
 
         Review review = new Review();
         review.setUser(user);
         review.setDrug(drug);
-        review.setRating(request.getRating());
-        review.setContent(request.getContent());
+        review.setRating(request.rating());
+        review.setContent(request.content());
 
         reviewRepository.save(review);
 
         // 이미지 저장
-        List<String> imageUrls = request.getImageUrls(); // Firebase 업로드 후 전달됨
-        if (imageUrls != null) {
-            for (int i = 0; i < imageUrls.size(); i++) {
+        if (images != null && !images.isEmpty()) {
+            String baseDir = System.getProperty("user.dir") + "/upload/review/";
+            File dir = new File(baseDir);
+            if (!dir.exists()) {
+                boolean created = dir.mkdirs();
+                if (!created) {
+                    throw new RuntimeException("이미지 저장 폴더 생성 실패: " + baseDir);
+                }
+            }
+
+
+            for (int i = 0; i < images.size(); i++) {
+                MultipartFile file = images.get(i);
+                String fileName = UUID.randomUUID() + "_" + file.getOriginalFilename();
+                File saveFile = new File(dir, fileName);
+                System.out.println("실제 저장 경로: " + saveFile.getAbsolutePath());
+                try {
+                    file.transferTo(saveFile);
+                } catch (IOException e) {
+                    throw new RuntimeException("이미지 저장 실패", e);
+                }
+
+                // 저장된 이미지 URL 생성
+                String imageUrl = "/review/" + fileName; // 접근 URL 기준 (ex. http://localhost:8080/review/abc.jpg)
+
                 ReviewImage image = new ReviewImage();
                 image.setReview(review);
-                image.setImageUrl(imageUrls.get(i));
+                image.setImageUrl(imageUrl);
                 image.setSortOrder(i);
                 reviewImageRepository.save(image);
             }
         }
 
         // 태그 저장
-        request.getTags().forEach((typeStr, tagNames) -> {
-            TagType type = TagType.valueOf(typeStr.toUpperCase());
+        request.tags().forEach((typeStr, tagNames) -> {
+            TagType type = TagType.from(typeStr);
             for (String tagName : tagNames) {
                 Tag tag = tagRepository.findByNameAndType(tagName, type)
                         .orElseGet(() -> tagRepository.save(new Tag(tagName, type)));
@@ -151,9 +176,13 @@ public class ReviewService {
 
         RatingStatsResponse ratingStats = computeRatingStatsFromReviews(reviews);
         Map<TagType, TagStatsDto> tagStats = computeTagStatsFromReviews(reviews);
-
+        Long like = ratingStats.getRatingCounts().entrySet().stream()
+                .filter(entry -> entry.getKey() >= 4)
+                .mapToLong(Map.Entry::getValue)
+                .sum();
         return new ReviewStats(
                 (long) reviews.size(),
+                like,
                 ratingStats,
                 tagStats
         );
@@ -203,7 +232,11 @@ public class ReviewService {
                 }
             }
 
-            result.put(type, new TagStatsDto(mostUsed, max, total));
+            result.put(type, new TagStatsDto(
+                    mostUsed != null? mostUsed:"",
+                    max,
+                    total
+            ));
         }
 
         return result;

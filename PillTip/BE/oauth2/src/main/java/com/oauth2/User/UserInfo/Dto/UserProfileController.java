@@ -4,7 +4,6 @@ import com.oauth2.User.Auth.Dto.ApiResponse;
 import com.oauth2.User.Auth.Entity.User;
 import com.oauth2.User.UserInfo.Entity.UserProfile;
 import com.oauth2.User.UserInfo.Service.UserProfileService;
-import com.oauth2.User.UserInfo.Service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,7 +18,6 @@ import com.oauth2.User.UserInfo.Entity.Gender;
 public class UserProfileController {
 
     private final UserProfileService userProfileService;
-    private final UserService userService;
     private static final Logger logger = LoggerFactory.getLogger(UserProfileController.class);
 
     // 임신 여부 업데이트

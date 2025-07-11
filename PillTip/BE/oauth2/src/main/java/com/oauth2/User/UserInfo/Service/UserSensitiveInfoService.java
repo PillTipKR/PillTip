@@ -3,7 +3,6 @@
 package com.oauth2.User.UserInfo.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.oauth2.User.Auth.Entity.User;
 import com.oauth2.User.UserInfo.Dto.UserSensitiveInfoDto;
 import com.oauth2.User.UserInfo.Dto.UserSensitiveInfoDeleteRequest;
@@ -13,11 +12,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Service
@@ -25,7 +21,6 @@ import java.util.stream.Stream;
 public class UserSensitiveInfoService {
 
     private final UserSensitiveInfoRepository userSensitiveInfoRepository;
-    private final ObjectMapper objectMapper;
 
     /**
      * 사용자 민감정보 저장 또는 업데이트
