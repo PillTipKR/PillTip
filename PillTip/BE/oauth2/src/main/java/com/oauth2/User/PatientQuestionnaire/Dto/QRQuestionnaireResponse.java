@@ -12,10 +12,7 @@ import lombok.NoArgsConstructor;
 public class QRQuestionnaireResponse {
     private String questionnaireUrl;
     private String patientName;
-    private String patientPhone;
-    private String patientGender;
     private boolean patientPregnant;
-    private String patientBirthDate;
     private String hospitalCode;
     private Integer questionnaireId;
     private String accessToken;

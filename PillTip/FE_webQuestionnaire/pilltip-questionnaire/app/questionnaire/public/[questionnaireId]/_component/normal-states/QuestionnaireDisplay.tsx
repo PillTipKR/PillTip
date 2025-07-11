@@ -77,28 +77,30 @@ export default function QuestionnaireDisplay({
             <h1 className={styles.title}>
               {questionnaire.data.questionnaireName}
             </h1>
-            <p className={styles.subtitle}>문진표 정보</p>
             <div className={styles.questionnaireId}>
-              문진표 ID: {questionnaire.data.questionnaireId}
+              {questionnaire.data.questionnaireId}
             </div>
-            <button
-              onClick={() => {
-                setIsDownloading(true);
-                downloadTxtFile({
-                  ...questionnaire.data,
-                  medicationInfo,
-                  allergyInfo,
-                  chronicDiseaseInfo,
-                  surgeryHistoryInfo,
-                });
-                setIsDownloading(false);
-              }}
-              disabled={isDownloading}
-              className={styles.downloadButton}
-            >
-              {isDownloading ? "다운로드 중..." : "📄 TXT 다운로드"}
-            </button>
           </div>
+
+          <button
+            onClick={() => {
+              setIsDownloading(true);
+              downloadTxtFile({
+                ...questionnaire.data,
+                medicationInfo,
+                allergyInfo,
+                chronicDiseaseInfo,
+                surgeryHistoryInfo,
+              });
+              setIsDownloading(false);
+            }}
+            disabled={isDownloading}
+            className={styles.downloadButton}
+          >
+            {isDownloading ? "다운로드 중..." : "TXT 파일 다운로드"}
+          </button>
+
+          <div className={styles.divider} />
 
           <div className={styles.grid}>
             <BasicInfo data={questionnaire.data} />
@@ -107,8 +109,11 @@ export default function QuestionnaireDisplay({
             <ChronicDiseaseInfoBlock chronicDiseaseInfo={chronicDiseaseInfo} />
             <SurgeryHistoryInfoBlock surgeryHistoryInfo={surgeryHistoryInfo} />
           </div>
-
-          <Notes notes={questionnaire.data.notes ?? ""} />
+          <div className={styles.divider} />
+          <div className={styles.infoItem}>
+            <Notes notes={questionnaire.data.notes ?? ""} />
+            <span> 작성일 : {questionnaire.data.lastModifiedDate}</span>
+          </div>
         </div>
       </div>
     </div>

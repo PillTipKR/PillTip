@@ -76,19 +76,3 @@ export async function GET(
     );
   }
 }
-
-export async function POST(request: Request) {
-  const jwtToken =
-    "Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiIzIiwiaWF0IjoxNzQ5MTk5NjIxLCJleHAiOjc3NDkxOTk1NjF9.9qrDulbKvu4FW6jjM2BBN7MOyyTbCqhwoVoeTHEBrPekwz3b5QEu6MtDLvNCv7Y4-bRyj8E__5XebmDPpwfZ2w";
-  const response = NextResponse.json({ success: true });
-
-  response.cookies.set("jwtToken", jwtToken, {
-    httpOnly: true,
-    path: "/",
-    maxAge: 60 * 60 * 24,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-  });
-
-  return response;
-}

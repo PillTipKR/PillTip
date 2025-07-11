@@ -1,4 +1,4 @@
-import styles from "./QuestionnaireDisplay.module.css";
+import styles from "./SurgeryHistoryInfo.module.css";
 import { SurgeryHistoryInfo } from "@/types/questionnaire";
 
 export default function SurgeryHistoryInfoBlock({
@@ -9,18 +9,15 @@ export default function SurgeryHistoryInfoBlock({
   if (!surgeryHistoryInfo.some((surgery) => surgery.submitted)) return null;
   return (
     <div className={`${styles.infoCard} ${styles.surgeryHistoryInfo}`}>
-      <h2 className={`${styles.infoTitle} ${styles.surgeryHistoryInfoTitle}`}>
-        수술 이력
-      </h2>
+      <p className={styles.infoTitle}>수술 이력</p>
       <div className={styles.infoList}>
         {surgeryHistoryInfo
           .filter((surgery) => surgery.submitted)
           .map((surgery, idx) => (
-            <div
-              key={idx}
-              className={`${styles.infoItem} ${styles.surgeryHistoryInfoItem}`}
-            >
-              • {surgery.surgeryHistory_name}
+            <div key={idx} className={styles.infoItem}>
+              <span className={styles.infoValue}>
+                {surgery.surgeryHistory_name}
+              </span>
             </div>
           ))}
       </div>
