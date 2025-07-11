@@ -16,9 +16,10 @@ public enum ErrorCode {
     BAD_CREDENTIALS(HttpStatus.BAD_REQUEST, "C005", "bad credentials"),
 
 
-    NOT_EXIST_USER(HttpStatus.BAD_REQUEST, "U001", "존재하지 않는 사용자 입니다."),
-    MISSING_FCMTOKEN(HttpStatus.BAD_REQUEST, "A001", "FCM 토큰이 없습니다."),
-    NOT_FRIEND(HttpStatus.BAD_REQUEST, "F001", "친구가 아닙니다.");
+    NOT_EXIST_USER(HttpStatus.BAD_REQUEST, "U001", "존재하지 않는 사용자에요!"),
+    NOT_EXIST_DOSAGELOG(HttpStatus.BAD_REQUEST, "L001", "존재하지 않는 복약 이력이에요!"),
+    MISSING_FCMTOKEN(HttpStatus.BAD_REQUEST, "A001", "FCM 토큰이 없어요!"),
+    NOT_FRIEND(HttpStatus.BAD_REQUEST, "F001", "서로 친구가 아니에요!");
 
 
     private final HttpStatus status;

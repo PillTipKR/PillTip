@@ -1,5 +1,6 @@
 package com.oauth2.Util.Exception;
 
+import com.oauth2.Util.Exception.CustomException.NotExistDosageLogException;
 import com.oauth2.Util.Exception.CustomException.NotExistUserException;
 import com.oauth2.Util.Exception.Model.ErrorResponse;
 import com.oauth2.Util.Exception.CustomException.MissingFCMTokenException;
@@ -56,6 +57,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler
     protected ResponseEntity<ErrorResponse> handleMissingFCMException(MissingFCMTokenException e) {
         final ErrorResponse response = ErrorResponse.of(MISSING_FCMTOKEN, e.getMessage());
+        return new ResponseEntity<>(response, response.getStatus());
+    }
+
+    @ExceptionHandler
+    protected ResponseEntity<ErrorResponse> handleNotExistDosagelogException(NotExistDosageLogException e) {
+        final ErrorResponse response = ErrorResponse.of(NOT_EXIST_DOSAGELOG, e.getMessage());
         return new ResponseEntity<>(response, response.getStatus());
     }
 

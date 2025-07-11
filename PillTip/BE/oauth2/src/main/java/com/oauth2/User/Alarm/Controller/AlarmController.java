@@ -7,6 +7,7 @@ import com.oauth2.User.Auth.Repository.UserRepository;
 import com.oauth2.User.Friend.Service.FriendService;
 import com.oauth2.User.TakingPill.Entity.DosageLog;
 import com.oauth2.User.TakingPill.Service.DosageLogService;
+import com.oauth2.Util.Exception.CustomException.NotExistDosageLogException;
 import com.oauth2.Util.Exception.CustomException.NotExistUserException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -63,7 +64,8 @@ public class AlarmController {
         friendService.assertIsFriend(user.getId(), friendId);
 
         DosageLog dosageLog = dosageLogService.getDosageLog(logId);
-
+        if(dosageLog == null) throw new NotExistDosageLogException();
+        if(dosageLog.getIsTaken()) throw new IllegalStateException("이미 친구가 복용한 약이에요!");
         alarmService.sendFriendMedicationReminder(
                 friend.getFCMToken(),
                 dosageLog.getId(),
