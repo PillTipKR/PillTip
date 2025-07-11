@@ -254,4 +254,24 @@ public class TokenService {
             return false;
         }
     }
+
+    // 친구 추가용 jwt 생성
+    public String createFriendInviteToken(Long inviterId, int expiresInSeconds) {
+        Key key = new SecretKeySpec(secretKey.getBytes(StandardCharsets.UTF_8), SignatureAlgorithm.HS256.getJcaName());
+        return Jwts.builder()
+                .setSubject("friend-invite")
+                .claim("inviterId", inviterId)
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + expiresInSeconds * 1000L))
+                .signWith(key, SignatureAlgorithm.HS256)
+                .compact();
+    }
+
+    // 검증 코드
+    public Long getInviterIdFromFriendToken(String token) {
+        Claims claims = getClaimsFromToken(token);
+        return claims.get("inviterId", Long.class);
+    }
+
+
 }

@@ -3,6 +3,7 @@
 package com.oauth2.User.UserInfo.Service;
 
 import com.oauth2.User.Auth.Entity.User;
+import com.oauth2.User.Friend.Repository.FriendRepository;
 import com.oauth2.User.UserInfo.Entity.UserProfile;
 import com.oauth2.User.Auth.Repository.UserRepository;
 import com.oauth2.User.UserInfo.Repository.UserProfileRepository;
@@ -20,6 +21,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final UserProfileRepository userProfileRepository;
     private final EncryptionUtil encryptionUtil;
+    private final FriendRepository friendRepository;
 
     // 현재 로그인한 사용자 정보 조회
     public User getCurrentUser(Long userId) {
@@ -178,6 +180,9 @@ public class UserService {
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         // 연관된 모든 데이터 삭제
+        friendRepository.deleteAllByUserId(user.getId());
+        friendRepository.deleteAllByFriendId(user.getId());
+
         userRepository.delete(user);
     }
 }
