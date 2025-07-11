@@ -33,7 +33,6 @@ public class EncryptionUtil {
      * @throws Exception 암호화 중 오류 발생 시
      */
     public String encrypt(String plainText) throws Exception {
-        System.out.println("[EncryptionUtil] 암호화에 사용되는 키: " + secretKeyString);
         if (plainText == null || plainText.isEmpty()) {
             return plainText;
         }
@@ -74,7 +73,6 @@ public class EncryptionUtil {
      * @throws Exception 복호화 중 오류 발생 시
      */
     public String decrypt(String encryptedText) throws Exception {
-        System.out.println("[EncryptionUtil] 복호화에 사용되는 키: " + secretKeyString);
         if (encryptedText == null || encryptedText.isEmpty()) {
             return encryptedText;
         }
