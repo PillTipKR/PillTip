@@ -3,11 +3,15 @@
 
 package com.oauth2.User.Auth.Dto;
 
-import lombok.Getter;
-import lombok.Setter;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-@Getter
-@Setter
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class SocialLoginRequest {
     private String token;      // OAuth2 access token
     private String provider;   // "google" 또는 "kakao"

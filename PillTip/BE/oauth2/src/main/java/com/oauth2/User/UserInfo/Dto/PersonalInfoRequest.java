@@ -1,10 +1,14 @@
 package com.oauth2.User.UserInfo.Dto;
 
-import lombok.Getter;
-import lombok.Setter;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-@Getter
-@Setter
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class PersonalInfoRequest {
     private String realName;
     private String address;

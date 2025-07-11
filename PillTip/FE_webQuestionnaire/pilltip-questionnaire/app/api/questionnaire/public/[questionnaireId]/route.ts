@@ -4,7 +4,7 @@ import { cookies } from "next/headers";
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 
 // BE API 엔드포인트 설정
-const BE_BASE_URL = process.env.BE_API_URL || "https://localhost:20022";
+const BE_BASE_URL = process.env.BE_API_URL || "http://localhost:20022";
 
 export async function GET(
   request: NextRequest,
@@ -34,9 +34,7 @@ export async function GET(
     const beUrl = `${BE_BASE_URL}/api/questionnaire/public/${questionnaireId}?jwtToken=${jwtToken}`;
     const response = await fetch(beUrl, {
       method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: headers,
     });
 
     console.log(`[DEBUG] BE response status:`, response.status);

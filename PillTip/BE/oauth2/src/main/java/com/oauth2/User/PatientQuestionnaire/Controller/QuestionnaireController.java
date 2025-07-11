@@ -196,11 +196,7 @@ public class QuestionnaireController {
         logger.info("Received createQuestionnaire request for user: {}", user.getId());
         try {
             PatientQuestionnaire questionnaire = patientQuestionnaireService.createQuestionnaire(user, request);
-            // POST 요청에서는 request에서 받은 phoneNumber를 사용
-            String phoneNumber = request.getPhoneNumber();
-            String decryptedRealName = getDecryptedRealName(user);
-            String decryptedAddress = getDecryptedAddress(user);
-            PatientQuestionnaireResponse response = PatientQuestionnaireResponse.from(questionnaire, phoneNumber, decryptedRealName, decryptedAddress, encryptionUtil);
+            PatientQuestionnaireResponse response = PatientQuestionnaireResponse.from(questionnaire, request.getPhoneNumber(), user.getRealName(), user.getAddress(), encryptionUtil);
             logger.info("Successfully created questionnaire for user: {}", user.getId());
             return ResponseEntity.status(201)
                 .body(ApiResponse.success("Questionnaire created successfully", response));
@@ -235,10 +231,7 @@ public class QuestionnaireController {
                 logger.info("Custom token validation result for questionnaireId {}: {}", id, valid);
                 if (valid) {
                     PatientQuestionnaire questionnaire = patientQuestionnaireService.getQuestionnaireByIdPublic(id);
-                    String decryptedPhoneNumber = getDecryptedPhoneNumber(questionnaire.getUser());
-                    String decryptedRealName = getDecryptedRealName(questionnaire.getUser());
-                    String decryptedAddress = getDecryptedAddress(questionnaire.getUser());
-                    PatientQuestionnaireResponse response = PatientQuestionnaireResponse.from(questionnaire, decryptedPhoneNumber, decryptedRealName, decryptedAddress, encryptionUtil);
+                    PatientQuestionnaireResponse response = PatientQuestionnaireResponse.from(questionnaire, questionnaire.getUser().getUserProfile().getPhone(), questionnaire.getUser().getRealName(), questionnaire.getUser().getAddress(), encryptionUtil);
                     logger.info("Successfully retrieved questionnaire by custom token - Questionnaire ID: {}", id);
                     return ResponseEntity.status(200)
                         .body(ApiResponse.success("문진표 조회 성공 (커스텀 토큰)", response));
@@ -253,10 +246,7 @@ public class QuestionnaireController {
                     .body(ApiResponse.error("인증이 필요합니다.", null));
             }
             PatientQuestionnaire questionnaire = patientQuestionnaireService.getQuestionnaireById(user, id);
-            String decryptedPhoneNumber = getDecryptedPhoneNumber(questionnaire.getUser());
-            String decryptedRealName = getDecryptedRealName(questionnaire.getUser());
-            String decryptedAddress = getDecryptedAddress(questionnaire.getUser());
-            PatientQuestionnaireResponse response = PatientQuestionnaireResponse.from(questionnaire, decryptedPhoneNumber, decryptedRealName, decryptedAddress, encryptionUtil);
+            PatientQuestionnaireResponse response = PatientQuestionnaireResponse.from(questionnaire, questionnaire.getUser().getUserProfile().getPhone(), questionnaire.getUser().getRealName(), questionnaire.getUser().getAddress(), encryptionUtil);
             logger.info("Successfully retrieved questionnaire for user: {} - Questionnaire ID: {}", user.getId(), id);
             return ResponseEntity.status(200)
                 .body(ApiResponse.success("문진표 조회 성공", response));
@@ -325,11 +315,7 @@ public class QuestionnaireController {
         
         try {
             PatientQuestionnaire updated = patientQuestionnaireService.updateQuestionnaire(user, id, request);
-            // PUT 요청에서는 request에서 받은 phoneNumber를 사용
-            String phoneNumber = request.getPhoneNumber();
-            String decryptedRealName = getDecryptedRealName(user);
-            String decryptedAddress = getDecryptedAddress(user);
-            PatientQuestionnaireResponse response = PatientQuestionnaireResponse.from(updated, phoneNumber, decryptedRealName, decryptedAddress, encryptionUtil);
+            PatientQuestionnaireResponse response = PatientQuestionnaireResponse.from(updated, request.getPhoneNumber(), user.getRealName(), user.getAddress(), encryptionUtil);
             return ResponseEntity.ok(ApiResponse.success("문진표 수정 성공", response));
         } catch (JsonProcessingException e) {
             return ResponseEntity.status(400)
@@ -380,10 +366,6 @@ public class QuestionnaireController {
             QRQuestionnaireResponse response = QRQuestionnaireResponse.builder()
                 .questionnaireUrl(questionnaireUrl)
                 .patientName(user.getRealName() != null ? user.getRealName() : user.getNickname())
-                .patientPhone(getDecryptedPhoneNumber(user))
-                .patientGender(user.getUserProfile().getGender().toString())
-                .patientPregnant(user.getUserProfile().isPregnant())
-                .patientBirthDate(user.getUserProfile().getBirthDate().toString())
                 .hospitalCode(hospitalCode)
                 .questionnaireId(questionnaire.getQuestionnaireId())
                 .accessToken(jwtToken)
@@ -418,55 +400,8 @@ public class QuestionnaireController {
         }
         PatientQuestionnaire questionnaire = patientQuestionnaireService.getQuestionnaireByIdPublic(id);
         logger.info("[커스텀 토큰 전용] questionnaire: {}", questionnaire);
-        String decryptedPhoneNumber = getDecryptedPhoneNumber(questionnaire.getUser());
-        String decryptedRealName = getDecryptedRealName(questionnaire.getUser());
-        String decryptedAddress = getDecryptedAddress(questionnaire.getUser());
-        PatientQuestionnaireResponse response = PatientQuestionnaireResponse.from(questionnaire, decryptedPhoneNumber, decryptedRealName, decryptedAddress, encryptionUtil);
+        PatientQuestionnaireResponse response = PatientQuestionnaireResponse.from(questionnaire, questionnaire.getUser().getUserProfile().getPhone(), questionnaire.getUser().getRealName(), questionnaire.getUser().getAddress(), encryptionUtil);
         logger.info("[커스텀 토큰 전용] Successfully retrieved questionnaire by custom token - Questionnaire ID: {}", id);
         return ResponseEntity.ok(ApiResponse.success("문진표 조회 성공 (커스텀 토큰)", response));
-    }
-
-    private String getDecryptedPhoneNumber(User user) {
-        try {
-            if (user.getUserProfile() != null && user.getUserProfile().getPhone() != null) {
-                String encryptedPhone = user.getUserProfile().getPhone();
-                if (encryptedPhone != null && !encryptedPhone.isEmpty()) {
-                    // 명시적으로 복호화
-                    return encryptionUtil.decrypt(encryptedPhone);
-                }
-            }
-            // UserProfile이 null이거나 phone이 null인 경우 로그 출력
-            logger.warn("UserProfile or phone is null for user {}: userProfile={}, phone={}", 
-                user.getId(), 
-                user.getUserProfile() != null, 
-                user.getUserProfile() != null ? user.getUserProfile().getPhone() != null : false);
-        } catch (Exception e) {
-            logger.warn("Failed to get decrypted phone number for user {}: {}", user.getId(), e.getMessage());
-        }
-        return null;
-    }
-
-    private String getDecryptedRealName(User user) {
-        try {
-            String encryptedName = user.getRealName();
-            if (encryptedName != null && !encryptedName.isEmpty()) {
-                return encryptionUtil.decrypt(encryptedName);
-            }
-        } catch (Exception e) {
-            logger.warn("Failed to get decrypted real name for user {}: {}", user.getId(), e.getMessage());
-        }
-        return user.getRealName(); // 복호화 실패 시 원본 반환
-    }
-
-    private String getDecryptedAddress(User user) {
-        try {
-            String encryptedAddress = user.getAddress();
-            if (encryptedAddress != null && !encryptedAddress.isEmpty()) {
-                return encryptionUtil.decrypt(encryptedAddress);
-            }
-        } catch (Exception e) {
-            logger.warn("Failed to get decrypted address for user {}: {}", user.getId(), e.getMessage());
-        }
-        return user.getAddress(); // 복호화 실패 시 원본 반환
     }
 } 

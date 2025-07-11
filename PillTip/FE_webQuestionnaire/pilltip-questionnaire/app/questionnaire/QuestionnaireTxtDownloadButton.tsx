@@ -12,6 +12,18 @@ function generateQuestionnaireTxt(questionnaire: any): string {
   // 기본 정보
   content += "[기본 정보]\n";
   content += `환자명: ${questionnaire.realName || "미입력"}\n`;
+  content += `생년월일: ${questionnaire.birthDate || "미입력"}\n`;
+  content += `성별: ${questionnaire.gender || "미입력"}\n`;
+  content += `키: ${questionnaire.height || "미입력"}cm\n`;
+  content += `몸무게: ${questionnaire.weight || "미입력"}kg\n`;
+  if (questionnaire.patientGender === "FEMALE") {
+    if (questionnaire.pregnant) {
+      content += `임신 여부 : 임신 중\n`;
+    } else {
+      content += `임신 여부 : 임신 중 아님\n`;
+    }
+  }
+  content += "\n";
   content += `주소: ${questionnaire.address || "미입력"}\n`;
   content += `전화번호: ${questionnaire.phoneNumber || "미입력"}\n`;
   content += `작성일: ${questionnaire.issueDate || "미입력"}\n`;
@@ -37,7 +49,6 @@ function generateQuestionnaireTxt(questionnaire: any): string {
           ? `${medicationName} (ID: ${medicationId})`
           : `약물 ID: ${medicationId}`
       }\n`;
-      content += `   복용 여부: 복용 중\n`;
     });
   } else {
     content += "복용 중인 약물 없음\n";
@@ -55,7 +66,6 @@ function generateQuestionnaireTxt(questionnaire: any): string {
       content += `${index + 1}. 알레르기: ${
         allergy.allergyName || allergy.allergy_name || "미입력"
       }\n`;
-      content += `   알레르기 여부: 있음\n`;
     });
   } else {
     content += "알레르기 정보 없음\n";
@@ -73,7 +83,6 @@ function generateQuestionnaireTxt(questionnaire: any): string {
       content += `${index + 1}. 질환: ${
         disease.chronicDiseaseName || disease.chronicDisease_name || "미입력"
       }\n`;
-      content += `   보유 여부: 있음\n`;
     });
   } else {
     content += "만성질환 정보 없음\n";
@@ -91,7 +100,6 @@ function generateQuestionnaireTxt(questionnaire: any): string {
       content += `${index + 1}. 수술: ${
         surgery.surgeryHistoryName || surgery.surgeryHistory_name || "미입력"
       }\n`;
-      content += `   수술 여부: 있음\n`;
     });
   } else {
     content += "수술 이력 없음\n";

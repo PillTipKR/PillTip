@@ -2,15 +2,19 @@
 // description : OAuth2 사용자 정보
 package com.oauth2.User.Auth.Dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Getter;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-@Getter
+@Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class OAuth2UserInfo {
-    private final String socialId;
-    private final String email;
-    private final String name;
-    private final String profileImage;
-    private final String provider;
+    private String socialId;
+    private String email;
+    private String name;
+    private String profileImage;
+    private String provider;
 }

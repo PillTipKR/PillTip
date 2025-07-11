@@ -24,6 +24,11 @@ public class PatientQuestionnaireResponse {
     private String realName;
     private String address;
     private String phoneNumber;
+    private String gender;
+    private String birthDate;
+    private String height;
+    private String weight;
+    private String pregnant;
     private LocalDate issueDate;
     private LocalDate lastModifiedDate;
     private String notes;
@@ -42,6 +47,20 @@ public class PatientQuestionnaireResponse {
                     .realName(decryptedRealName)
                     .address(decryptedAddress)
                     .phoneNumber(decryptedPhoneNumber)
+                    .gender(questionnaire.getUser().getUserProfile() != null ? 
+                           questionnaire.getUser().getUserProfile().getGender() != null ? 
+                           questionnaire.getUser().getUserProfile().getGender().name() : null : null)
+                    .birthDate(questionnaire.getUser().getUserProfile() != null && 
+                             questionnaire.getUser().getUserProfile().getBirthDate() != null ? 
+                             questionnaire.getUser().getUserProfile().getBirthDate().toString() : null)
+                    .height(questionnaire.getUser().getUserProfile() != null && 
+                           questionnaire.getUser().getUserProfile().getHeight() != null ? 
+                           questionnaire.getUser().getUserProfile().getHeight().toString() : null)
+                    .weight(questionnaire.getUser().getUserProfile() != null && 
+                           questionnaire.getUser().getUserProfile().getWeight() != null ? 
+                           questionnaire.getUser().getUserProfile().getWeight().toString() : null)
+                    .pregnant(questionnaire.getUser().getUserProfile() != null ? 
+                            questionnaire.getUser().getUserProfile().isPregnant() ? "Y" : "N" : null)
                     .issueDate(questionnaire.getIssueDate())
                     .lastModifiedDate(questionnaire.getLastModifiedDate())
                     .notes(questionnaire.getNotes())

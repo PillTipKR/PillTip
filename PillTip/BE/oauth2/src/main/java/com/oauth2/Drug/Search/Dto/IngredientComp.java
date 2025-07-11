@@ -2,14 +2,14 @@ package com.oauth2.Drug.Search.Dto;
 
 
 import lombok.AllArgsConstructor;
-import lombok.Getter;
+import lombok.Builder;
+import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
+@Data
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Setter
-@Getter
 public class IngredientComp implements Comparable<IngredientComp> {
     private String name;
     private Float dose;
