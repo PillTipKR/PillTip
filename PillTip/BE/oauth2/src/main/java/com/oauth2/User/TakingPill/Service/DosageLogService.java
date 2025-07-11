@@ -1,16 +1,17 @@
 package com.oauth2.User.TakingPill.Service;
 
-import com.oauth2.User.TakingPill.Dto.AllDosageLogResponse;
-import com.oauth2.User.TakingPill.Dto.DosageLogResponse;
-import com.oauth2.User.TakingPill.Dto.DosageScheduleDto;
+import com.oauth2.User.TakingPill.Dto.*;
 import com.oauth2.User.TakingPill.Entity.DosageLog;
 import com.oauth2.User.TakingPill.Repositoty.DosageLogRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.util.TreeMap;
 
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -108,5 +109,40 @@ public class DosageLogService {
                 responses
         );
     }
+
+    public WeekDosageLogResponse getWeeklySummary(Long userId, LocalDate today) {
+        LocalDate startOfWeek = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.SUNDAY));
+        LocalDate endOfWeek = today.with(TemporalAdjusters.nextOrSame(DayOfWeek.SATURDAY));
+
+        List<DosageLog> logs = dosageLogRepository.findWeeklyDosageLogs(userId, startOfWeek, endOfWeek);
+
+        // 날짜별 응답
+        Map<LocalDate, List<DosageLog>> logsByDate = logs.stream()
+                .collect(Collectors.groupingBy(
+                        log -> log.getScheduledTime().toLocalDate(),
+                        TreeMap::new,
+                        Collectors.toList()
+                ));
+
+
+        List<DayDosageDto> dailyResponses = new ArrayList<>();
+        for (Map.Entry<LocalDate, List<DosageLog>> entry : logsByDate.entrySet()) {
+            Map<String, List<DosageLog>> grouped = entry.getValue().stream()
+                    .collect(Collectors.groupingBy(DosageLog::getMedicationName));
+            dailyResponses.add(new DayDosageDto(
+                    entry.getKey(),
+                    convertToDosageLogResponses(grouped)
+            ));
+        }
+
+        // 전체 복약률 계산
+        int total = logs.size();
+        int taken = (int) logs.stream().filter(DosageLog::getIsTaken).count();
+        int percent = total == 0 ? 0 : (int) ((taken * 100.0) / total);
+
+        return new WeekDosageLogResponse(percent, dailyResponses);
+    }
+
+
 
 }

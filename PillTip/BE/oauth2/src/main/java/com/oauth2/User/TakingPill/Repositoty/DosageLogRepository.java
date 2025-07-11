@@ -31,6 +31,16 @@ public interface DosageLogRepository extends JpaRepository<DosageLog, Long> {
             @Param("targetDate") LocalDate targetDate
     );
 
+    @Query("SELECT dl FROM DosageLog dl " +
+            "JOIN dl.user u " +
+            "WHERE u.id = :userId " +
+            "AND DATE(dl.scheduledTime) BETWEEN :startDate AND :endDate")
+    List<DosageLog> findWeeklyDosageLogs(
+            @Param("userId") Long userId,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate
+    );
+
     List<DosageLog> findByTakingPillAndScheduledTimeAfter(TakingPill pill, LocalDateTime time);
 
     List<DosageLog> findByUserAndTakingPill(User user, TakingPill takingPill);
@@ -40,4 +50,5 @@ public interface DosageLogRepository extends JpaRepository<DosageLog, Long> {
     void deleteAllByUserAndMedicationNameAndScheduledTimeBetween(User user, String medicationName, LocalDateTime from, LocalDateTime to);
 
 
+    Long user(User user);
 }

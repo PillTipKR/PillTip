@@ -4,6 +4,7 @@ import com.oauth2.User.Auth.Dto.ApiResponse;
 import com.oauth2.User.Auth.Entity.User;
 import com.oauth2.User.Friend.Service.FriendService;
 import com.oauth2.User.TakingPill.Dto.AllDosageLogResponse;
+import com.oauth2.User.TakingPill.Dto.WeekDosageLogResponse;
 import com.oauth2.User.TakingPill.Service.DosageLogService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -26,6 +27,15 @@ public class DosageLogController {
            @AuthenticationPrincipal User user,
             @RequestParam LocalDate date) {
         AllDosageLogResponse responses = dosageLogService.getDateLog(user.getId(), date);
+        return ResponseEntity.ok().body(ApiResponse.success(responses));
+    }
+
+
+    @GetMapping("/week")
+    public ResponseEntity<ApiResponse<WeekDosageLogResponse>> getWeekLogs(
+            @AuthenticationPrincipal User user,
+            @RequestParam LocalDate date) {
+        WeekDosageLogResponse responses = dosageLogService.getWeeklySummary(user.getId(), date);
         return ResponseEntity.ok().body(ApiResponse.success(responses));
     }
 
