@@ -130,6 +130,20 @@ public class UserController {
                 }
             }
 
+            // 기존 프로필 사진 삭제
+            if (user.getProfilePhoto() != null && !user.getProfilePhoto().isEmpty()) {
+                try {
+                    String oldFileName = user.getProfilePhoto().substring(user.getProfilePhoto().lastIndexOf("/") + 1);
+                    File oldFile = new File(uploadDir, oldFileName);
+                    if (oldFile.exists()) {
+                        oldFile.delete();
+                        logger.info("Deleted old profile photo: {}", oldFile.getPath());
+                    }
+                } catch (Exception e) {
+                    logger.warn("Could not delete old profile photo: {}", e.getMessage());
+                }
+            }
+
             String fileName = "profile_" + user.getId() + "_" + System.currentTimeMillis() + ".jpg";
             File dest = new File(dir, fileName);
             file.transferTo(dest);
