@@ -143,6 +143,8 @@ public class DosageLogService {
         return new WeekDosageLogResponse(percent, dailyResponses);
     }
 
-
+    public DosageLog getDosageLog(Long logId) {
+        return dosageLogRepository.findById(logId).orElse(null);
+    }
 
 }

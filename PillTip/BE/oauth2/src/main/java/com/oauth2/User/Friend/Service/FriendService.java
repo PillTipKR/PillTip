@@ -6,12 +6,13 @@ import com.oauth2.User.Auth.Service.TokenService;
 import com.oauth2.User.Friend.Dto.FriendListDto;
 import com.oauth2.User.Friend.Entity.Friend;
 import com.oauth2.User.Friend.Repository.FriendRepository;
+import com.oauth2.Util.Exception.CustomException.NotExistUserException;
+import com.oauth2.Util.Exception.CustomException.NotFriendException;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.nio.file.AccessDeniedException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -43,9 +44,9 @@ public class FriendService {
         }
 
         User inviter = userRepository.findById(inviterId)
-                .orElseThrow(() -> new EntityNotFoundException("초대자 없음"));
+                .orElseThrow(NotExistUserException::new);
         User receiver = userRepository.findById(receiverId)
-                .orElseThrow(() -> new EntityNotFoundException("수락자 없음"));
+                .orElseThrow(NotExistUserException::new);
 
         // 2. 이미 친구인 경우 무시
         if (friendRepository.existsByUserIdAndFriendId(inviter.getId(), receiver.getId())) return;
@@ -78,9 +79,9 @@ public class FriendService {
                 .toList();
     }
 
-    public void assertIsFriend(Long myId, Long friendId) throws AccessDeniedException {
+    public void assertIsFriend(Long myId, Long friendId){
         if (!friendRepository.existsByUserIdAndFriendId(myId, friendId)) {
-            throw new AccessDeniedException("이 사용자는 당신의 친구가 아닙니다.");
+            throw new NotFriendException();
         }
     }
 
