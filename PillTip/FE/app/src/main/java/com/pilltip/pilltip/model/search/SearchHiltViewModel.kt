@@ -46,7 +46,8 @@ class SearchHiltViewModel @Inject constructor(
     private val sensitiveInfoRepo: SensitiveInfoRepository,
     private val dosageLogRepo: DosageLogRepository,
     private val deleteRepo: DeleteRepository,
-    private val personalInfoRepo: PersonalInfoRepository
+    private val personalInfoRepo: PersonalInfoRepository,
+    private val reviewStatsRepo: ReviewStatsRepository
 ) : ViewModel() {
 
     /* 약품명 자동 완성 API*/
@@ -383,6 +384,21 @@ class SearchHiltViewModel @Inject constructor(
             }
         }
     }
+
+    /* 리뷰 통계 API */
+    private val _reviewStats = MutableStateFlow<ReviewStatsData?>(null)
+    val reviewStats: StateFlow<ReviewStatsData?> = _reviewStats.asStateFlow()
+
+    fun fetchReviewStats(drugId: Long) {
+        viewModelScope.launch {
+            try {
+                _reviewStats.value = reviewStatsRepo.getReviewStats(drugId)
+            } catch (e: Exception) {
+                Log.e("ReviewStats", "조회 실패: ${e.message}")
+                _reviewStats.value = null
+            }
+        }
+    }
 }
 
 @HiltViewModel
@@ -581,6 +597,82 @@ class QuestionnaireViewModel @Inject constructor(
     }
 }
 
+@HiltViewModel
+class ReviewViewModel @Inject constructor(
+    private val reviewRepository: ReviewRepository
+) : ViewModel() {
+
+    private val _reviewListData = MutableStateFlow<ReviewListData?>(null)
+    val reviewListData: StateFlow<ReviewListData?> = _reviewListData.asStateFlow()
+
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+
+    private val _errorMessage = MutableStateFlow<String?>(null)
+    val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
+
+    private var currentPage = 0
+    private val pageSize = 10
+    private var currentSortKey = "createdAt"
+    private var currentDirection = "DESC"
+    private var currentDrugId: Long = -1L
+
+    fun loadReviews(
+        drugId: Long,
+        reset: Boolean = false,
+        sortKey: String = "createdAt",
+        direction: String = "DESC"
+    ) {
+        viewModelScope.launch {
+            try {
+                _isLoading.value = true
+
+                if (reset || drugId != currentDrugId) {
+                    currentPage = 0
+                    _reviewListData.value = null
+                }
+
+                currentDrugId = drugId
+                currentSortKey = sortKey
+                currentDirection = direction
+
+                val response = reviewRepository.getDrugReviews(
+                    drugId = drugId,
+                    page = currentPage,
+                    size = pageSize,
+                    sortKey = sortKey,
+                    direction = direction
+                )
+
+                val currentData = _reviewListData.value
+
+                val updatedContent = if (currentData == null || reset) {
+                    response.content
+                } else {
+                    currentData.content + response.content
+                }
+
+                _reviewListData.value = response.copy(content = updatedContent)
+                currentPage++
+            } catch (e: Exception) {
+                _errorMessage.value = e.message
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
+    fun refreshReviews(drugId: Long) {
+        loadReviews(drugId = drugId, reset = true)
+    }
+
+    fun clearError() {
+        _errorMessage.value = null
+    }
+}
+
+
+
 @Module
 @InstallIn(SingletonComponent::class)
 object RepositoryModule {
@@ -763,4 +855,25 @@ object RepositoryModule {
     fun provideDeleteRepository(api: DeleteAccountAPI): DeleteRepository {
         return DeleteRepositoryImpl(api)
     }
+
+    @Provides
+    fun provideReviewStatsApi(@Named("SearchRetrofit") retrofit: Retrofit): ReviewStatsApi {
+        return retrofit.create(ReviewStatsApi::class.java)
+    }
+
+    @Provides
+    fun provideReviewStatsRepository(api: ReviewStatsApi): ReviewStatsRepository {
+        return ReviewStatsRepositoryImpl(api)
+    }
+
+    @Provides
+    fun provideReviewApi(@Named("SearchRetrofit") retrofit: Retrofit): ReviewApi {
+        return retrofit.create(ReviewApi::class.java)
+    }
+
+    @Provides
+    fun provideReviewRepository(api: ReviewApi): ReviewRepository {
+        return ReviewRepositoryImpl(api)
+    }
+
 }

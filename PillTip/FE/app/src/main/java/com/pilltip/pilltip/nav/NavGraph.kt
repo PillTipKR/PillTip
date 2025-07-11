@@ -12,6 +12,7 @@ import androidx.navigation.navArgument
 import com.pilltip.pilltip.composable.MainComposable.BottomTab
 import com.pilltip.pilltip.model.search.LogViewModel
 import com.pilltip.pilltip.model.search.QuestionnaireViewModel
+import com.pilltip.pilltip.model.search.ReviewViewModel
 import com.pilltip.pilltip.model.search.SearchHiltViewModel
 import com.pilltip.pilltip.model.signUp.SignUpViewModel
 import com.pilltip.pilltip.view.auth.FindMyInfoPage
@@ -54,7 +55,8 @@ fun NavGraph(
     signUpViewModel: SignUpViewModel,
     searchHiltViewModel: SearchHiltViewModel,
     logViewModel: LogViewModel = viewModel(),
-    questionnaireViewModel: QuestionnaireViewModel
+    questionnaireViewModel: QuestionnaireViewModel,
+    reviewViewModel: ReviewViewModel
 ) {
     val navController = rememberNavController()
     val myPageNavController = rememberNavController()
@@ -132,7 +134,8 @@ fun NavGraph(
         composable("DetailPage") {
             DetailPage(
                 navController,
-                searchHiltViewModel
+                searchHiltViewModel,
+                reviewViewModel
             )
         }
         composable(

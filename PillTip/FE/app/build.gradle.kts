@@ -99,7 +99,9 @@ dependencies {
     /* AsyncImage */
     implementation("io.coil-kt:coil-compose:2.4.0")
 
-    
+    /* RatingBar */
+    implementation ("com.github.a914-gowtham:compose-ratingbar:1.3.12")
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
