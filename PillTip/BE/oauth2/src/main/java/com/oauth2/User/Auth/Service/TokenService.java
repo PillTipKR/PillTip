@@ -216,12 +216,14 @@ public class TokenService {
     // 커스텀 JWT 토큰 생성 (userId, questionnaireId, hospitalCode, 만료초)
     public String createCustomJwtToken(Long userId, Integer questionnaireId, String hospitalCode, int expiresInSeconds) {
         long now = System.currentTimeMillis();
+        Key key = new SecretKeySpec(secretKey.getBytes(StandardCharsets.UTF_8), SignatureAlgorithm.HS256.getJcaName());
         String token = Jwts.builder()
                 .setSubject(String.valueOf(userId))
                 .claim("questionnaireId", questionnaireId)
                 .claim("hospitalCode", hospitalCode)
                 .setIssuedAt(new Date(now))
                 .setExpiration(new Date(now + expiresInSeconds * 1000L))
+                .signWith(key, SignatureAlgorithm.HS256)    
                 .compact();
         System.out.println("[JWT 생성] userId: " + userId + ", questionnaireId: " + questionnaireId + ", hospitalCode: " + hospitalCode + ", expiresInSeconds: " + expiresInSeconds);
         System.out.println("[JWT 생성] secretKey: " + secretKey);

@@ -44,7 +44,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             requestURI.equals("/api/auth/login") || 
             requestURI.equals("/api/auth/check-duplicate") ||
             requestURI.equals("/api/auth/refresh") ||
-            requestURI.startsWith("/oauth2/")) {
+            requestURI.startsWith("/oauth2/") ||
+            requestURI.startsWith("/api/questionnaire/public/")) {
             System.out.println("Skipping JWT validation for: " + requestURI); // 디버깅 로그
             filterChain.doFilter(request, response);
             return;

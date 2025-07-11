@@ -12,8 +12,6 @@ import com.oauth2.User.TakingPill.Entity.*;
 import com.oauth2.User.TakingPill.Repositoty.DosageLogRepository;
 import com.oauth2.User.TakingPill.Repositoty.TakingPillCounterRepository;
 import com.oauth2.User.TakingPill.Repositoty.TakingPillRepository;
-import com.oauth2.User.TakingPill.Repositoty.DosageScheduleRepository;
-import com.oauth2.Util.Encryption.EncryptionConverter;
 import com.oauth2.Util.Encryption.EncryptionUtil;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -36,7 +34,6 @@ import static com.oauth2.User.TakingPill.Entity.PillStatus.*;
 public class TakingPillService {
     private static final Logger logger = LoggerFactory.getLogger(TakingPillService.class);
     private final TakingPillRepository takingPillRepository;
-    private final DosageScheduleRepository dosageScheduleRepository;
     private final DosageLogRepository dosageLogRepository;
     private final TakingPillCounterRepository takingPillCounterRepository;
     private final DrugRepository drugRepository;

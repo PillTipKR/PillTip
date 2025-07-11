@@ -2,14 +2,18 @@ package com.oauth2.User.TakingPill.Dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Arrays;
 
-@Getter
-@Setter
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class TakingPillRequest {
     // 요일 상수 정의
     public static final List<String> VALID_DAYS = Arrays.asList("MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN");
@@ -63,8 +67,10 @@ public class TakingPillRequest {
     }
     
     // 복용 스케줄 내부 클래스
-    @Getter
-    @Setter
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class DosageSchedule {
         // 시간대
         @JsonProperty("hour")
@@ -81,10 +87,6 @@ public class TakingPillRequest {
         
         @JsonProperty("dosageUnit")
         private String dosageUnit; // 복용 단위
-
-        public String getDosageUnit() {
-            return dosageUnit;
-        }
 
         // 시간 검증 메서드
         @JsonIgnore
@@ -112,5 +114,4 @@ public class TakingPillRequest {
         String today = now.getDayOfWeek().name().substring(0, 3);
         return daysOfWeek.contains(today);
     }
-
 }

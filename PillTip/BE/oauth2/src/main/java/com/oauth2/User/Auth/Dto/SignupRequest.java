@@ -4,11 +4,15 @@
 package com.oauth2.User.Auth.Dto;
 
 import com.oauth2.User.Auth.Entity.LoginType;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-@Getter
-@Setter
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class SignupRequest {
     // User 엔티티의 필드와 매핑
     private LoginType loginType;
