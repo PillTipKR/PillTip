@@ -1,7 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import QuestionnaireDisplay from "./QuestionnaireDisplay";
+import QuestionnaireDisplay from "./normal-states/QuestionnaireDisplay";
+import LoadingState from "./common-states/LoadingState";
+import ErrorState from "./error-states/ErrorState";
+import NotFoundState from "./error-states/NotFoundState";
 import {
   Questionnaire,
   QuestionnaireComponentDeciderProps,
@@ -24,6 +27,7 @@ export default function QuestionnaireComponentDecider({
   const fetchQuestionnaire = async () => {
     try {
       setLoading(true);
+      setError(null);
 
       // URL에서 JWT 토큰 추출 (쿼리 파라미터 또는 localStorage)
       const urlParams = new URLSearchParams(window.location.search);
@@ -48,12 +52,30 @@ export default function QuestionnaireComponentDecider({
       );
 
       if (!response.ok) {
-        // 404 에러가 발생해도 더미 데이터가 반환되므로 에러를 던지지 않음
-        console.log(`문진표 ${questionnaireId} 조회 실패, 더미 데이터 사용`);
+        if (response.status === 401) {
+          // JWT 토큰 만료 또는 인증 실패
+          setError("JWT 토큰이 만료되었습니다. 다시 문진표를 받아 주세요.");
+          return;
+        } else if (response.status === 404) {
+          // 404 에러가 발생해도 더미 데이터가 반환되므로 에러를 던지지 않음
+          console.log(`문진표 ${questionnaireId} 조회 실패, 더미 데이터 사용`);
+        } else {
+          // 기타 에러
+          const errorData = await response.json().catch(() => ({}));
+          setError(
+            errorData.error ||
+              `문진표를 불러올 수 없습니다. (상태 코드: ${response.status})`
+          );
+          return;
+        }
       }
 
       const data = await response.json();
-      setQuestionnaire(data);
+
+      // 401 에러가 아닌 경우에만 데이터 설정
+      if (response.ok || response.status === 404) {
+        setQuestionnaire(data);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "오류가 발생했습니다.");
     } finally {
@@ -62,41 +84,15 @@ export default function QuestionnaireComponentDecider({
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">문진표를 불러오는 중...</p>
-        </div>
-      </div>
-    );
+    return <LoadingState />;
   }
 
   if (error) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-red-600 text-xl mb-4">⚠️</div>
-          <p className="text-gray-600 mb-4">{error}</p>
-          <button
-            onClick={fetchQuestionnaire}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-          >
-            다시 시도
-          </button>
-        </div>
-      </div>
-    );
+    return <ErrorState error={error} onRetry={fetchQuestionnaire} />;
   }
 
   if (!questionnaire) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-gray-600">문진표를 찾을 수 없습니다.</p>
-        </div>
-      </div>
-    );
+    return <NotFoundState />;
   }
 
   // 데이터 가공: 각 *Info 필드가 문자열이면 JSON.parse로 변환
