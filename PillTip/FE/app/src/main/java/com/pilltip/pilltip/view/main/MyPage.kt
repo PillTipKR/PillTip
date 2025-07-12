@@ -1094,17 +1094,7 @@ fun MyDataPage(
         }
         HeightSpacer(36.dp)
         Text(
-            text = "개인 정보",
-            style = TextStyle(
-                fontSize = 18.sp,
-                fontFamily = pretendard,
-                fontWeight = FontWeight(600),
-                color = gray800,
-            )
-        )
-        HeightSpacer(28.dp)
-        Text(
-            text = "닉네임",
+            text = "실명",
             style = TextStyle(
                 fontSize = 16.sp,
                 fontFamily = pretendard,
@@ -1143,7 +1133,7 @@ fun MyDataPage(
                 .padding(vertical = 16.dp)
                 .padding(bottom = 46.dp)
                 .height(58.dp),
-            buttonColor = if (isValid) primaryColor else Color(0xFF348ADF),
+            buttonColor = if (isValid) primaryColor else Color(0xFFCADCF5),
             text = "수정하기"
         ) {
             if (isValid) {
@@ -1161,7 +1151,6 @@ fun MyDataPage(
                     }
                 )
             }
-
         }
     }
 }
