@@ -694,7 +694,7 @@ object RepositoryModule {
     @Named("SearchRetrofit")
     fun provideRetrofit(okHttpClient: OkHttpClient): Retrofit {
         return Retrofit.Builder()
-            .baseUrl("https://164.125.253.20:20022")
+            .baseUrl("https://pilltip.com:20022")
             .addConverterFactory(GsonConverterFactory.create())
             .client(okHttpClient)
             .build()

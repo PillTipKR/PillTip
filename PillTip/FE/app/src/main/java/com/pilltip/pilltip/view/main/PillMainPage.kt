@@ -27,6 +27,7 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -46,9 +47,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.TextStyle
@@ -66,6 +72,7 @@ import com.pilltip.pilltip.composable.MainComposable.BottomBar
 import com.pilltip.pilltip.composable.MainComposable.BottomTab
 import com.pilltip.pilltip.composable.MainComposable.DosageCard
 import com.pilltip.pilltip.composable.MainComposable.DosagePage
+import com.pilltip.pilltip.composable.MainComposable.FeatureButton
 import com.pilltip.pilltip.composable.MainComposable.LogoField
 import com.pilltip.pilltip.composable.MainComposable.MainSearchField
 import com.pilltip.pilltip.composable.MainComposable.ProfileTagButton
@@ -79,6 +86,7 @@ import com.pilltip.pilltip.model.search.SearchHiltViewModel
 import com.pilltip.pilltip.ui.theme.backgroundColor
 import com.pilltip.pilltip.ui.theme.gray050
 import com.pilltip.pilltip.ui.theme.gray200
+import com.pilltip.pilltip.ui.theme.gray600
 import com.pilltip.pilltip.ui.theme.gray800
 import com.pilltip.pilltip.ui.theme.pretendard
 import com.pilltip.pilltip.ui.theme.primaryColor
@@ -97,6 +105,17 @@ fun PillMainPage(
 ) {
     var selectedTab by remember { mutableStateOf(BottomTab.Home) }
     val systemUiController = rememberSystemUiController()
+    val scrollState = rememberScrollState()
+
+    val baseColor = Color(0xFFD0E6FD)
+    val endColor = Color.White
+    val steps = 12
+
+    val gradientColors = remember {
+        List(steps) { i ->
+            lerp(baseColor, endColor, i / (steps - 1).toFloat())
+        }
+    }
     HandleBackPressToExitApp(navController)
     FirebaseMessaging.getInstance().token
         .addOnCompleteListener { task ->
@@ -130,7 +149,15 @@ fun PillMainPage(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .background(backgroundColor)
+                .verticalScroll(rememberScrollState())
+                .drawBehind {
+                    val gradient = Brush.verticalGradient(
+                        colors = gradientColors,
+                        startY = 0f,
+                        endY = size.height
+                    )
+                    drawRect(brush = gradient)
+                }
         ) {
             when (selectedTab) {
                 BottomTab.Home -> HomePage(navController, searchHiltViewModel)
@@ -155,6 +182,10 @@ fun HomePage(
 ) {
     val systemUiController = rememberSystemUiController()
     SideEffect {
+        systemUiController.setStatusBarColor(
+            color = Color(0xFFD0E6FD),
+            darkIcons = true
+        )
         systemUiController.isNavigationBarVisible = true
     }
     LogoField(
@@ -170,41 +201,51 @@ fun HomePage(
         Box(
             modifier = Modifier
                 .shadow(
-                    elevation = 8.dp,
-                    spotColor = Color(0x14000000),
-                    ambientColor = Color(0x14000000)
+                    elevation = 5.dp,
+                    spotColor = gray600,
+                    ambientColor = Color(0x14000000),
+                    clip = false,
+                    shape = RoundedCornerShape(size = 12.dp)
                 )
                 .weight(1f)
                 .height(243.11111.dp)
                 .background(color = Color.White, shape = RoundedCornerShape(size = 12.dp))
-                .padding(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 16.dp),
+                .padding(start = 16.dp, top = 20.dp, end = 20.dp, bottom = 16.dp),
             contentAlignment = Alignment.BottomEnd
         ) {
             Column(
                 Modifier
                     .fillMaxSize()
-                    .padding(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 16.dp)
             ) {
                 Text(
-                    text = "약 검색",
+                    text = "빠른 약 검색",
                     style = TextStyle(
-                        fontSize = 20.sp,
+                        fontSize = 18.sp,
                         fontFamily = pretendard,
                         fontWeight = FontWeight(600),
-                        color = Color(0xFF323439)
+                        color = gray800
                     )
                 )
-                HeightSpacer(8.dp)
-                Text(
-                    text = "모든 약 검색은\n여기서",
-                    style = TextStyle(
-                        fontSize = 12.sp,
-                        lineHeight = 16.sp,
-                        fontFamily = pretendard,
-                        fontWeight = FontWeight(500),
-                        color = Color(0xFF858C9A)
+                HeightSpacer(6.dp)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "내 복약 찾아보기",
+                        style = TextStyle(
+                            fontSize = 12.sp,
+                            fontFamily = pretendard,
+                            fontWeight = FontWeight(600),
+                            color = Color(0xFF408AF1),
+                        )
                     )
-                )
+                    WidthSpacer(1.dp)
+                    Image(
+                        imageVector = ImageVector.vectorResource(R.drawable.btn_main_blue_right_arrow),
+                        contentDescription = "우측 arrow"
+                    )
+                }
+
             }
             Image(
                 imageVector = ImageVector.vectorResource(id = R.drawable.img_doc),
@@ -213,7 +254,7 @@ fun HomePage(
                     .padding(1.dp)
                     .width(124.dp)
                     .height(134.dp)
-                    .offset(x = -1.dp, y = 4.dp)
+                    .offset(x = 10.dp, y = 4.dp)
             )
         }
         WidthSpacer(12.dp)
@@ -223,44 +264,67 @@ fun HomePage(
                 .weight(1f)
         ) {
             SmallTabCard(
-                HeaderText = "복약 관리",
-                SubHeaderText = "약 관리를\n간편하게",
+                HeaderText = "잊지말고 드세요",
+                SubHeaderText = "복약 관리",
                 ImageField = R.drawable.img_pill
             )
             HeightSpacer(12.dp)
             SmallTabCard(
-                HeaderText = "스마트 문진표",
-                SubHeaderText = "내 정보\n 편하고 안전하게",
+                HeaderText = "간편한 내 기록 관리",
+                SubHeaderText = "스마트 문진표",
                 ImageField = R.drawable.logo_pilltip_blue_pill
             )
         }
     }
-    HeightSpacer(14.dp)
-    AnnouncementCard("당신만의 스마트한 복약 관리, 필팁")
-    HeightSpacer(34.dp)
+    HeightSpacer(24.dp)
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 22.dp)
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 22.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Text(
-            text = "통계/ 리뷰",
-            fontSize = 16.sp,
-            fontFamily = pretendard,
-            fontWeight = FontWeight(700),
-            color = gray800
+        FeatureButton(
+            imageResource = R.drawable.ic_main_friend,
+            description = "친구 추가"
         )
-        Spacer(modifier = Modifier.weight(1f))
-        Image(
-            imageVector = ImageVector.vectorResource(R.drawable.btn_right_gray_arrow),
-            contentDescription = "내 복약 일정",
-            modifier = Modifier
-                .padding(1.dp)
-                .width(20.dp)
-                .height(20.dp)
+        FeatureButton(
+            imageResource = R.drawable.ic_main_cute_baby,
+            description = "자녀 관리"
+        )
+        FeatureButton(
+            imageResource = R.drawable.ic_main_qrcode,
+            description = "문진표 QR"
+        )
+        FeatureButton(
+            imageResource = R.drawable.ic_main_review,
+            description = "최신 리뷰"
         )
     }
-    HeightSpacer(24.dp)
+//    AnnouncementCard("당신만의 스마트한 복약 관리, 필팁")
+    HeightSpacer(40.dp)
+    Text(
+        text = "내 복약 관리",
+        style = TextStyle(
+            fontSize = 12.sp,
+            fontFamily = pretendard,
+            fontWeight = FontWeight(600),
+            color = primaryColor,
+        ),
+        modifier = Modifier.padding(start = 22.dp)
+    )
+    HeightSpacer(4.dp)
+    Text(
+        text = "오늘의 내 복약률",
+        style = TextStyle(
+            fontSize = 16.sp,
+            lineHeight = 22.4.sp,
+            fontFamily = pretendard,
+            fontWeight = FontWeight(700),
+            color = Color(0xFF010913),
+        ),
+        modifier = Modifier.padding(start = 22.dp)
+    )
+
+    HeightSpacer(20.dp)
     val selectedDate by remember { mutableStateOf(LocalDate.now()) }
     val logData by searchHiltViewModel.dailyDosageLog.collectAsState()
     val dateText = formatDate(selectedDate)
@@ -307,8 +371,13 @@ fun MyQuestionnairePage(
     navController: NavController,
     viewModel: QuestionnaireViewModel
 ) {
+
     val systemUiController = rememberSystemUiController()
     SideEffect {
+        systemUiController.setStatusBarColor(
+            color = gray050,
+            darkIcons = true
+        )
         systemUiController.isNavigationBarVisible = true
     }
     val context = LocalContext.current
@@ -319,6 +388,8 @@ fun MyQuestionnairePage(
     var sortOption by remember { mutableStateOf("최신순") }
     val list by remember { derivedStateOf { viewModel.questionnaireList } }
     val loading by remember { derivedStateOf { viewModel.isListLoading } }
+    val localHeight = LocalConfiguration.current.screenHeightDp
+
 
     LaunchedEffect(Unit) {
         viewModel.fetchQuestionnaireList()
@@ -326,9 +397,10 @@ fun MyQuestionnairePage(
 
     Column(
         modifier = Modifier
-            .fillMaxSize()
-            .statusBarsPadding()
+            .fillMaxWidth()
+            .height(localHeight.dp)
             .background(color = gray050)
+            .statusBarsPadding()
     ) {
         Text(
             text = "내 문진표",
