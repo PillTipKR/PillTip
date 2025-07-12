@@ -766,7 +766,6 @@ fun EssentialInfoPage(
     navController: NavController,
     searchHiltViewModel: SearchHiltViewModel
 ) {
-    var toggle by remember { mutableStateOf(true) }
     val scope = rememberCoroutineScope()
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var isSheetVisible by remember { mutableStateOf(false) }
@@ -794,11 +793,6 @@ fun EssentialInfoPage(
         MyPageMenuItem(text = "내 민감정보 삭제") {
             isSheetVisible = true
         }
-        MyPageToggleItem(
-            text = "푸시알람 동의",
-            isChecked = toggle,
-            onCheckedChange = { toggle = !toggle }
-        )
     }
     if (isSheetVisible) {
         LaunchedEffect(Unit) {

@@ -53,27 +53,13 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            /*
-            WindowCompat.setDecorFitsSystemWindows(window, true)
-            val systemUiController = rememberSystemUiController()
-            SideEffect {
-                systemUiController.setStatusBarColor(
-                    color = Color.White,
-                    darkIcons = true
-                )
-                systemUiController.setNavigationBarColor(
-                    color = Color.White,
-                    darkIcons = true
-                )
-            }
-             */
             val searchHiltViewModel: SearchHiltViewModel = hiltViewModel()
             val signUpViewModel: SignUpViewModel = hiltViewModel()
             val logViewModel: LogViewModel = viewModel()
             val questionnaireViewModel : QuestionnaireViewModel = hiltViewModel()
             val reviewViewModel : ReviewViewModel = hiltViewModel()
             val context = LocalContext.current
-            Log.d("KeyHash", "${Utility.getKeyHash(this)}")
+            Log.d("KeyHash", Utility.getKeyHash(this))
 
             FirebaseApp.initializeApp(context)
             FirebaseAppCheck.getInstance().installAppCheckProviderFactory(
@@ -119,7 +105,7 @@ class MainActivity : ComponentActivity() {
     }
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        setIntent(intent) // ✅ 꼭 있어야 함! 카카오 SDK가 이 intent를 내부에서 처리할 수 있게 함
+        setIntent(intent)
     }
 }
 
