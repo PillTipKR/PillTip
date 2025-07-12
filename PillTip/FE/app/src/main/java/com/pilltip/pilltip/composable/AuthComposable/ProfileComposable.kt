@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -133,7 +134,7 @@ fun RoundTextField(
     BasicTextField(
         value = text,
         onValueChange = {
-            if (it.length <= 20) textChange(it)
+            if (it.length <= 50) textChange(it)
         },
         modifier = modifier
             .border(
@@ -144,7 +145,7 @@ fun RoundTextField(
                 shape = RoundedCornerShape(size = 12.dp)
             )
             .fillMaxWidth()
-            .height(51.dp)
+            .wrapContentHeight()
             .background(
                 color = if (isLogin && text.isEmpty()) gray050 else Color.White,
                 shape = RoundedCornerShape(size = 12.dp)
@@ -172,7 +173,7 @@ fun RoundTextField(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(22.dp),
+                    .wrapContentHeight(),
                 contentAlignment = Alignment.CenterStart
             ) {
                 if (text.isEmpty()) {
