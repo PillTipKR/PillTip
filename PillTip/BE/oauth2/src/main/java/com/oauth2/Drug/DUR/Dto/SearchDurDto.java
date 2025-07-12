@@ -11,6 +11,7 @@ public record SearchDurDto(
         List<IngredientDetail> ingredients,
         String manufacturer,
         String imageUrl,
-        List<DurTagDto> durTags
+        List<DurTagDto> durTags,
+        Boolean isTaking
 )
 {}

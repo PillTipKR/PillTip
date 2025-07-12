@@ -8,6 +8,8 @@ import com.oauth2.Drug.DrugInfo.Domain.Drug;
 import com.oauth2.Drug.DrugInfo.Repository.DrugRepository;
 import com.oauth2.Drug.Search.Dto.SearchIndexDTO;
 import com.oauth2.User.Auth.Entity.User;
+import com.oauth2.User.TakingPill.Entity.TakingPill;
+import com.oauth2.User.TakingPill.Repositoty.TakingPillRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -20,6 +22,7 @@ public class DurTaggingService {
 
     private final DrugRepository drugRepository;
     private final DurCheckService durCheckService; // 새로 추가된 서비스
+    private final TakingPillRepository takingPillRepository;
 
     public List<SearchDurDto> generateTagsForDrugs(User user, List<SearchIndexDTO> drugs) throws JsonProcessingException {
         DurUserContext userContext = durCheckService.buildUserContext(user);
@@ -28,11 +31,14 @@ public class DurTaggingService {
         Map<Long, Drug> drugMap = drugRepository.findAllById(drugIds).stream()
                 .collect(Collectors.toMap(Drug::getId, drug -> drug));
 
+        List<Long> takingPills = takingPillRepository.findAllByUserId(user.getId()).stream()
+                .map(TakingPill::getId).toList();
+
         List<SearchDurDto> result = new ArrayList<>();
         for (SearchIndexDTO drugDto : drugs) {
             Drug drug = drugMap.get(drugDto.id());
             if (drug == null) continue; // 약 정보를 찾을 수 없는 경우 건너뛰기
-
+            Boolean isTaking = takingPills.contains(drugDto.id());
             List<DurTagDto> tags = durCheckService.checkForDrug(drug, user.getUserProfile(), userContext);
 
             result.add(new SearchDurDto(
@@ -41,7 +47,8 @@ public class DurTaggingService {
                     drugDto.ingredient(),
                     drug.getManufacturer(),
                     drug.getImage(),
-                    tags
+                    tags,
+                    isTaking
             ));
         }
         return result;
