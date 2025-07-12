@@ -105,6 +105,7 @@ import com.pilltip.pilltip.ui.theme.gray100
 import com.pilltip.pilltip.ui.theme.gray200
 import com.pilltip.pilltip.ui.theme.gray400
 import com.pilltip.pilltip.ui.theme.gray500
+import com.pilltip.pilltip.ui.theme.gray600
 import com.pilltip.pilltip.ui.theme.gray700
 import com.pilltip.pilltip.ui.theme.gray800
 import com.pilltip.pilltip.ui.theme.pretendard
@@ -143,6 +144,10 @@ fun SearchPage(
 
     val systemUiController = rememberSystemUiController()
     SideEffect {
+        systemUiController.setStatusBarColor(
+            color = Color.White,
+            darkIcons = true
+        )
         systemUiController.isNavigationBarVisible = true
     }
 
@@ -167,25 +172,34 @@ fun SearchPage(
         )
         HeightSpacer(28.dp)
         if (inputText.isEmpty()) {
-            Text(
-                text = "인기 검색어",
-                style = TextStyle(
-                    fontSize = 14.sp,
-                    fontFamily = pretendard,
-                    fontWeight = FontWeight(600),
-                    color = gray700,
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "최근 검색어",
+                    style = TextStyle(
+                        fontSize = 14.sp,
+                        fontFamily = pretendard,
+                        fontWeight = FontWeight(600),
+                        color = gray700,
+                    )
                 )
-            )
-            HeightSpacer(26.dp)
-            Text(
-                text = "최근 검색어",
-                style = TextStyle(
-                    fontSize = 14.sp,
-                    fontFamily = pretendard,
-                    fontWeight = FontWeight(600),
-                    color = gray700,
+                Spacer(modifier = Modifier.weight(1f))
+                Text(
+                    text = "전체 삭제",
+                    style = TextStyle(
+                        fontSize = 12.sp,
+                        fontFamily = pretendard,
+                        fontWeight = FontWeight(500),
+                        color = gray600,
+                        textDecoration = TextDecoration.Underline,
+                    ),
+                    modifier = Modifier.noRippleClickable {
+                        logViewModel.clearSearchQueries()
+                    }
                 )
-            )
+            }
+
             HeightSpacer(18.dp)
             FlowRow(
                 horizontalArrangement = Arrangement.spacedBy(2.dp),
@@ -332,7 +346,15 @@ fun SearchResultsPage(
                     searchBoxSize = coordinates.size
                 }
                 .fillMaxWidth()
-                .padding(horizontal = 22.dp),
+                .padding(horizontal = 22.dp)
+                .noRippleClickable{
+                    navController.navigate("SearchPage") {
+                        popUpTo("SearchPage") {
+                            inclusive = false
+                        }
+                        launchSingleTop = true
+                    }
+                },
             contentAlignment = Alignment.Center
         ) {
             PillSearchField(
@@ -543,7 +565,7 @@ fun DetailPage(
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.Center
-                                ){
+                                ) {
                                     Image(
                                         imageVector = ImageVector.vectorResource(R.drawable.ic_default_pill),
                                         contentDescription = "기본 이미지"
@@ -727,7 +749,12 @@ fun DetailPage(
                             when (page) {
                                 0 -> DrugInfoTab(navController, detail)
                                 1 -> StorageInfoTab(navController, detail)
-                                2 -> ReviewTab(navController, detail, searchViewModel, reviewViewModel)
+                                2 -> ReviewTab(
+                                    navController,
+                                    detail,
+                                    searchViewModel,
+                                    reviewViewModel
+                                )
                             }
                         }
                     }

@@ -144,7 +144,7 @@ interface ApiService {
 }
 
 object ApiClient {
-    private const val BASE_URL = "https://164.125.253.20:20022/"
+    private const val BASE_URL = "https://pilltip.com:20022/"
 
     fun getInstance(context: Context): ApiService {
         val client = OkHttpClient.Builder()

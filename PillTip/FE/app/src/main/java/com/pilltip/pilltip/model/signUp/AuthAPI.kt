@@ -54,48 +54,15 @@ interface ServerAuthAPI {
 @Module
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
-    fun createTrustedOkHttpClient(context: Context): OkHttpClient {
-        val certificateFactory = CertificateFactory.getInstance("X.509")
-        val input = context.resources.openRawResource(R.raw.server)
-        val certificate = certificateFactory.generateCertificate(input)
-        input.close()
 
-        val keyStore = KeyStore.getInstance(KeyStore.getDefaultType())
-        keyStore.load(null)
-        keyStore.setCertificateEntry("server", certificate)
-
-        val trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm())
-        trustManagerFactory.init(keyStore)
-
-        val sslContext = SSLContext.getInstance("TLS")
-        sslContext.init(null, trustManagerFactory.trustManagers, null)
-
-        val trustManager = trustManagerFactory.trustManagers[0] as X509TrustManager
-
-        return OkHttpClient.Builder()
-            .sslSocketFactory(sslContext.socketFactory, trustManager)
-            .hostnameVerifier { _, _ -> true } // 필수: IP 주소 사용 시 hostname mismatch 회피
-            .addInterceptor(HttpLoggingInterceptor().apply {
-                level = HttpLoggingInterceptor.Level.BODY
-            })
-            .build()
-    }
-
-    @Provides
-    @Singleton
-    @Named("CertClient")
-    fun provideOkHttpClient(@ApplicationContext context: Context): OkHttpClient {
-        return createTrustedOkHttpClient(context)
-    }
 
     @Provides
     @Singleton
     @Named("AuthRetrofit")
-    fun provideRetrofit(@Named("CertClient") client: OkHttpClient): Retrofit {
+    fun provideRetrofit(client: OkHttpClient): Retrofit {
         val gson = GsonBuilder().setLenient().serializeNulls().create()
         return Retrofit.Builder()
-            .baseUrl("https://164.125.253.20:20022/")
-            .client(client)
+            .baseUrl("https://pilltip.com:20022/")
             .addConverterFactory(GsonConverterFactory.create(gson))
             .build()
     }

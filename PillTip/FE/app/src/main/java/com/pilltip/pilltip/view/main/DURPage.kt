@@ -93,6 +93,7 @@ import com.pilltip.pilltip.composable.buttonModifier
 import com.pilltip.pilltip.composable.noRippleClickable
 import com.pilltip.pilltip.model.search.DurGptData
 import com.pilltip.pilltip.model.search.SearchHiltViewModel
+import com.pilltip.pilltip.ui.theme.gray050
 import com.pilltip.pilltip.ui.theme.gray200
 import com.pilltip.pilltip.ui.theme.gray400
 import com.pilltip.pilltip.ui.theme.gray500
@@ -110,6 +111,14 @@ import kotlinx.coroutines.flow.filter
 fun DURPage(
     navController: NavController,
 ) {
+    val systemUiController = rememberSystemUiController()
+    SideEffect {
+        systemUiController.setStatusBarColor(
+            color = Color.White,
+            darkIcons = true
+        )
+        systemUiController.isNavigationBarVisible = true
+    }
     Column(
         modifier = WhiteScreenModifier
             .statusBarsPadding()

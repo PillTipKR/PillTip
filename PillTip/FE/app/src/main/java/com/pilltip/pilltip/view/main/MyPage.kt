@@ -110,6 +110,10 @@ fun MyPage(
     HandleBackPressToExitApp(navController)
     val systemUiController = rememberSystemUiController()
     SideEffect {
+        systemUiController.setStatusBarColor(
+            color = Color.White,
+            darkIcons = true
+        )
         systemUiController.isNavigationBarVisible = true
     }
     LaunchedEffect(Unit) {

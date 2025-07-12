@@ -2,6 +2,8 @@ package com.pilltip.pilltip.nav
 
 import android.util.Log
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
+import androidx.compose.ui.graphics.Color
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
@@ -9,6 +11,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.pilltip.pilltip.composable.MainComposable.BottomTab
 import com.pilltip.pilltip.model.search.LogViewModel
 import com.pilltip.pilltip.model.search.QuestionnaireViewModel
@@ -99,6 +102,14 @@ fun NavGraph(
 
         /* Main */
         composable("PillMainPage") {
+            val systemUiController = rememberSystemUiController()
+            SideEffect {
+                systemUiController.setStatusBarColor(
+                    color = Color(0xFFD0E6FD),
+                    darkIcons = true
+                )
+                systemUiController.isNavigationBarVisible = true
+            }
             PillMainPage(navController, searchHiltViewModel, questionnaireViewModel)
         }
 

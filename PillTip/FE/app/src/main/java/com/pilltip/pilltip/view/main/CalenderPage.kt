@@ -25,6 +25,7 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -36,6 +37,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -43,6 +45,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.pilltip.pilltip.R
 import com.pilltip.pilltip.composable.DrugLogCard
 import com.pilltip.pilltip.composable.DrugLogDetailSection
@@ -67,6 +70,15 @@ fun CalenderPage(
     val selectedDate by hiltViewModel.selectedDate.collectAsState()
     val logData by hiltViewModel.dailyDosageLog.collectAsState()
     val selectedDrugLog = hiltViewModel.selectedDrugLog
+    val localHeight = LocalConfiguration.current.screenHeightDp
+    val systemUiController = rememberSystemUiController()
+    SideEffect {
+        systemUiController.setStatusBarColor(
+            color = gray050,
+            darkIcons = true
+        )
+        systemUiController.isNavigationBarVisible = true
+    }
 
     LaunchedEffect(selectedDate) {
         selectedDate.let {
@@ -80,7 +92,8 @@ fun CalenderPage(
 
     Column(
         modifier = Modifier
-            .fillMaxSize()
+            .fillMaxWidth()
+            .height(localHeight.dp)
             .background(gray050)
             .statusBarsPadding()
             .verticalScroll(rememberScrollState())
