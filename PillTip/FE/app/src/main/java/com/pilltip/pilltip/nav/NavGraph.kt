@@ -42,6 +42,7 @@ import com.pilltip.pilltip.view.main.NotificationPage
 import com.pilltip.pilltip.view.main.PillMainPage
 import com.pilltip.pilltip.view.questionnaire.AreYouPage
 import com.pilltip.pilltip.view.questionnaire.EssentialPage
+import com.pilltip.pilltip.view.questionnaire.NameAddressPage
 import com.pilltip.pilltip.view.questionnaire.QuestionnaireCheckPage
 import com.pilltip.pilltip.view.questionnaire.QuestionnairePage
 import com.pilltip.pilltip.view.questionnaire.QuestionnaireSearchPage
@@ -181,6 +182,9 @@ fun NavGraph(
         }
         composable("EssentialPage") {
             EssentialPage(navController, questionnaireViewModel)
+        }
+        composable("NameAddressPage"){
+            NameAddressPage(navController, searchHiltViewModel, questionnaireViewModel, signUpViewModel)
         }
         composable("AreYouPage/{query}") { backStackEntry ->
             val query = backStackEntry.arguments?.getString("query") ?: ""

@@ -1,6 +1,7 @@
 package com.pilltip.pilltip.view.questionnaire
 
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
@@ -101,10 +102,13 @@ import com.pilltip.pilltip.model.search.AllergyEntry
 import com.pilltip.pilltip.model.search.ChronicDiseaseEntry
 import com.pilltip.pilltip.model.search.LogViewModel
 import com.pilltip.pilltip.model.search.MedicationEntry
+import com.pilltip.pilltip.model.search.PersonalInfoUpdateRequest
 import com.pilltip.pilltip.model.search.QuestionnaireDetail
 import com.pilltip.pilltip.model.search.QuestionnaireViewModel
 import com.pilltip.pilltip.model.search.SearchHiltViewModel
 import com.pilltip.pilltip.model.search.SurgeryHistoryEntry
+import com.pilltip.pilltip.model.signUp.SignUpViewModel
+import com.pilltip.pilltip.model.signUp.TokenManager
 import com.pilltip.pilltip.ui.theme.gray200
 import com.pilltip.pilltip.ui.theme.gray400
 import com.pilltip.pilltip.ui.theme.gray500
@@ -446,10 +450,113 @@ fun EssentialPage(
                         sensitiveInfo = true,
                         medicalInfo = true
                     )
-                    navController.navigate("AreYouPage/약")
+                    navController.navigate("NameAddressPage")
                 }
             }
         )
+    }
+}
+
+@Composable
+fun NameAddressPage(
+    navController: NavController,
+    searchHiltViewModel: SearchHiltViewModel,
+    questionnaireViewModel: QuestionnaireViewModel,
+    signUpViewModel: SignUpViewModel
+) {
+    val context = LocalContext.current
+    var name by remember { mutableStateOf("") }
+    var address by remember { mutableStateOf("") }
+    var isValid = name.isNotEmpty() && address.isNotEmpty()
+    val systemUiController = rememberSystemUiController()
+    SideEffect {
+        systemUiController.setStatusBarColor(
+            color = Color.White,
+            darkIcons = true
+        )
+        systemUiController.isNavigationBarVisible = true
+    }
+    Column(
+        modifier = WhiteScreenModifier
+            .padding(horizontal = 22.dp)
+            .statusBarsPadding()
+    ) {
+        BackHandler {
+            navController.popBackStack()
+        }
+        BackButton(
+            title = "내 개인정보 수정",
+            horizontalPadding = 0.dp,
+            verticalPadding = 0.dp
+        ) {
+            navController.popBackStack()
+        }
+        HeightSpacer(36.dp)
+        Text(
+            text = "실명",
+            style = TextStyle(
+                fontSize = 16.sp,
+                fontFamily = pretendard,
+                fontWeight = FontWeight(600),
+                color = gray800,
+            )
+        )
+        HeightSpacer(12.dp)
+        RoundTextField(
+            text = name,
+            textChange = { name = it },
+            placeholder = "실명을 입력해주세요",
+            isLogin = false
+        )
+        HeightSpacer(26.dp)
+        Text(
+            text = "주소",
+            style = TextStyle(
+                fontSize = 16.sp,
+                fontFamily = pretendard,
+                fontWeight = FontWeight(600),
+                color = gray800,
+            )
+        )
+        HeightSpacer(12.dp)
+        RoundTextField(
+            text = address,
+            textChange = { address = it },
+            placeholder = "주소를 입력해주세요",
+            isLogin = false
+        )
+        Spacer(modifier = Modifier.weight(1f))
+        NextButton(
+            mModifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 16.dp)
+                .padding(bottom = 46.dp)
+                .height(58.dp),
+            buttonColor = if (isValid) primaryColor else Color(0xFFCADCF5),
+            text = "수정하기"
+        ) {
+            if (isValid) {
+                val request = PersonalInfoUpdateRequest(
+                    realName = name,
+                    address = address
+                )
+                searchHiltViewModel.updatePersonalInfo(
+                    request = request,
+                    onSuccess = {
+                        questionnaireViewModel.realName = name
+                        questionnaireViewModel.address = address
+                        Toast.makeText(context, "개인정보가 업데이트 되었어요", Toast.LENGTH_SHORT).show()
+                        signUpViewModel.fetchMyInfo(TokenManager.getAccessToken(context).toString()) { userData ->
+                            UserInfoManager.saveUserData(context, userData)
+                            navController.navigate("AreYouPage/약")
+                        }
+                    },
+                    onError = {
+                        Toast.makeText(context, "통신 오류 발생, 죄송해요. 다시 시도해주세요.", Toast.LENGTH_SHORT).show()
+                    }
+                )
+            }
+        }
     }
 }
 
@@ -485,7 +592,7 @@ fun AreYouPage(
             }
 
             if (finalTarget == "QuestionnairePage") {
-                navController.navigate(finalTarget) {
+                navController.navigate("NameAddressPage") {
                     popUpTo("AreYouPage/$query") { inclusive = true }
                 }
             } else {
@@ -511,7 +618,7 @@ fun AreYouPage(
             }
 
             if (finalTarget == "QuestionnairePage") {
-                navController.navigate(finalTarget) {
+                navController.navigate("NameAddressPage") {
                     popUpTo("AreYouPage/$query") { inclusive = true }
                 }
             } else {
@@ -678,6 +785,7 @@ fun QuestionnaireSearchPage(
                         onAddClick = { selected ->
                             if (selectedDrugs.none { it.id == selected.id }) {
                                 keyboardController?.hide()
+                                inputText = ""
                                 selectedDrugs.add(
                                     SelectedDrug(
                                         id = selected.id,
