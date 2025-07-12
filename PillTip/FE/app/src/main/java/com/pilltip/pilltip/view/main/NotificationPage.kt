@@ -94,10 +94,6 @@ fun NotificationPage(
                         inclusive = true
                     }
                 }
-            },
-            iconDrawable = R.drawable.btn_vertical_dots,
-            onClick = {
-
             }
         )
         TabRow(
