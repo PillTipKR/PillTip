@@ -97,6 +97,7 @@ public class DrugDetailService {
                 .light(new StorageDetail(light.getCategory(), light.getValue(), light.isActive()))
                 .humid(new StorageDetail(humid.getCategory(), humid.getValue(), humid.isActive()))
                 .durTags(searchDurDto.durTags())
+                .isTaking(searchDurDto.isTaking())
                 .count(count)
                 .build()).orElse(null);
     }

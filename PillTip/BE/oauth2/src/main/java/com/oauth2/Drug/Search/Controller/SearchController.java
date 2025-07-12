@@ -69,8 +69,7 @@ public class SearchController {
                     .body(ApiResponse.error("User not authenticated", null));
         }
         List<SearchIndexDTO> searchIndexDTOList = searchService.getDrugSearch(input, field, pageSize, page);
-         List<SearchDurDto> result = durTaggingService.generateTagsForDrugs(
-                user, searchIndexDTOList);
+        List<SearchDurDto> result = durTaggingService.generateTagsForDrugs(user, searchIndexDTOList);
         return ResponseEntity.ok(ApiResponse.success(result));
     }
 }

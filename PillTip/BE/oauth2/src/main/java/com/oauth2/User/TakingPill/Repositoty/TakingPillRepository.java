@@ -18,4 +18,8 @@ public interface TakingPillRepository extends JpaRepository<TakingPill, Long> {
 
    @Query("SELECT DISTINCT tp FROM TakingPill tp LEFT JOIN FETCH tp.dosageSchedules WHERE tp.user = :user")
    List<TakingPill> findByUserWithDosageSchedules(@Param("user") User user);
+
+   @Query("SELECT t FROM TakingPill t WHERE t.user.id = :userId")
+   List<TakingPill> findAllByUserId(@Param("userId") Long userId);
+
 }

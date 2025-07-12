@@ -28,5 +28,6 @@ public record DrugDetail (
         EffectDetail usage,
         EffectDetail caution,
         List<DurTagDto> durTags,
-        int count
+        Boolean isTaking,
+        Integer count
 ) {}

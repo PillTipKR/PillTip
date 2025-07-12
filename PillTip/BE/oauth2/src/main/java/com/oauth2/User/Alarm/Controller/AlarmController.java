@@ -14,9 +14,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import java.nio.file.AccessDeniedException;
-import java.time.LocalDateTime;
-
 @RestController
 @RequestMapping("/api/alarm")
 @RequiredArgsConstructor
