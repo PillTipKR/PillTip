@@ -19,7 +19,7 @@ public interface TakingPillRepository extends JpaRepository<TakingPill, Long> {
 
    @Query("SELECT DISTINCT tp FROM TakingPill tp LEFT JOIN FETCH tp.dosageSchedules WHERE tp.user = :user")
    List<TakingPill> findByUserWithDosageSchedules(@Param("user") User user);
-
+  
    @Modifying
    @Query("DELETE FROM TakingPill tp WHERE tp.endYear < :year OR " +
            "(tp.endYear = :year AND tp.endMonth < :month) OR " +
