@@ -120,7 +120,8 @@ fun PillSearchField(
     navController: NavController,
     nowTyping: (String) -> Unit,
     searching: (String) -> Unit,
-    onNavigateToResult: (String) -> Unit
+    onNavigateToResult: (String) -> Unit,
+    from: String = "main"
 ) {
     var inputText by remember { mutableStateOf(initialQuery) }
     val keyboardController = LocalSoftwareKeyboardController.current
@@ -190,38 +191,64 @@ fun PillSearchField(
                     }
                 }
             )
-            Image(
-                imageVector = ImageVector.vectorResource(R.drawable.btn_search_mic),
-                contentDescription = "음성 검색",
-                modifier = Modifier
-                    .size(20.dp)
-                    .padding(1.dp)
-                    .noRippleClickable {
-                        navController.navigate("AudioSearchPage")
-                    }
-            )
-        }
-        WidthSpacer(6.dp)
-        Box(
-            modifier = Modifier
-                .width(44.dp)
-                .height(44.dp)
-                .background(color = primaryColor, shape = RoundedCornerShape(size = 12.dp))
-                .padding(start = 13.dp, top = 8.dp, end = 13.dp, bottom = 8.dp)
-                .noRippleClickable { }
-        ) {
-            Column() {
+            if(from != "main" && inputText.isNotEmpty()){
                 Image(
-                    imageVector = ImageVector.vectorResource(R.drawable.btn_search_camera),
-                    contentDescription = "카메라 검색"
+                    imageVector = ImageVector.vectorResource(R.drawable.btn_textfield_eraseall),
+                    contentDescription = "입력 텍스트 삭제",
+                    modifier = Modifier
+                        .noRippleClickable {
+                            inputText = ""
+                        }
                 )
-                Text(
-                    text = "검색",
-                    fontSize = 10.sp,
-                    fontFamily = pretendard,
-                    fontWeight = FontWeight(400),
-                    color = Color(0xFFFDFDFD)
-                )
+            }
+            if (from == "main") {
+                if(inputText.isEmpty()) {
+                    Image(
+                        imageVector = ImageVector.vectorResource(R.drawable.btn_search_mic),
+                        contentDescription = "음성 검색",
+                        modifier = Modifier
+                            .size(20.dp)
+                            .padding(1.dp)
+                            .noRippleClickable {
+                                navController.navigate("AudioSearchPage")
+                            }
+                    )
+                } else {
+                    Image(
+                        imageVector = ImageVector.vectorResource(R.drawable.btn_textfield_eraseall),
+                        contentDescription = "입력 텍스트 삭제",
+                        modifier = Modifier
+                            .noRippleClickable {
+                                inputText = ""
+                            }
+                    )
+                }
+            }
+
+        }
+        if (from == "main") {
+            WidthSpacer(6.dp)
+            Box(
+                modifier = Modifier
+                    .width(44.dp)
+                    .height(44.dp)
+                    .background(color = primaryColor, shape = RoundedCornerShape(size = 12.dp))
+                    .padding(start = 13.dp, top = 8.dp, end = 13.dp, bottom = 8.dp)
+                    .noRippleClickable { }
+            ) {
+                Column() {
+                    Image(
+                        imageVector = ImageVector.vectorResource(R.drawable.btn_search_camera),
+                        contentDescription = "카메라 검색"
+                    )
+                    Text(
+                        text = "검색",
+                        fontSize = 10.sp,
+                        fontFamily = pretendard,
+                        fontWeight = FontWeight(400),
+                        color = Color(0xFFFDFDFD)
+                    )
+                }
             }
         }
     }
@@ -565,8 +592,9 @@ fun DrugSearchResultCard(
         ) {
             Image(
                 imageVector = ImageVector.vectorResource(
-                    if(isRisky)R.drawable.ic_search_dur_alert
-                else R.drawable.ic_details_blue_common_pills),
+                    if (isRisky) R.drawable.ic_search_dur_alert
+                    else R.drawable.ic_details_blue_common_pills
+                ),
                 contentDescription = "DUR 알림",
                 modifier = Modifier.size(20.dp)
             )
