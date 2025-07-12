@@ -143,18 +143,41 @@ fun QuestionnairePage(
                 horizontalPadding = 22.dp,
                 verticalPadding = 0.dp
             ) {
-                navController.navigate("DetailPage") {
-                    popUpTo("DetailPage") {
-                        inclusive = false
+                val backStackEntryExists = navController.backQueue.any {
+                    it.destination.route == "DetailPage"
+                }
 
+                if (backStackEntryExists) {
+                    navController.navigate("DetailPage") {
+                        popUpTo("DetailPage") {
+                            inclusive = false
+                        }
+                    }
+                } else {
+                    navController.navigate("PillMainPage") {
+                        popUpTo("PillMainPage") {
+                            inclusive = false
+                        }
                     }
                 }
             }
 
             BackHandler {
-                navController.navigate("DetailPage") {
-                    popUpTo("DetailPage") {
-                        inclusive = false
+                val backStackEntryExists = navController.backQueue.any {
+                    it.destination.route == "DetailPage"
+                }
+
+                if (backStackEntryExists) {
+                    navController.navigate("DetailPage") {
+                        popUpTo("DetailPage") {
+                            inclusive = false
+                        }
+                    }
+                } else {
+                    navController.navigate("PillMainPage") {
+                        popUpTo("PillMainPage") {
+                            inclusive = false
+                        }
                     }
                 }
             }
@@ -255,6 +278,9 @@ fun EssentialPage(
         animationSpec = tween(durationMillis = 600),
         label = "optional_arrow_rotation"
     )
+    val detailExists = navController.backQueue.any {
+        it.destination.route == "DetailPage"
+    }
     Column(
         modifier = WhiteScreenModifier
             .statusBarsPadding()
@@ -264,18 +290,31 @@ fun EssentialPage(
             horizontalPadding = 0.dp,
             verticalPadding = 0.dp
         ) {
-            navController.navigate("DetailPage") {
-                popUpTo("DetailPage") {
-                    inclusive = false
-
+            if (detailExists) {
+                navController.navigate("DetailPage") {
+                    popUpTo("DetailPage") { inclusive = false }
+                }
+            } else {
+                navController.navigate("PillMainPage") {
+                    popUpTo("PillMainPage") {
+                        inclusive = false
+                    }
+                    launchSingleTop = true
                 }
             }
         }
 
         BackHandler {
-            navController.navigate("DetailPage") {
-                popUpTo("DetailPage") {
-                    inclusive = false
+            if (detailExists) {
+                navController.navigate("DetailPage") {
+                    popUpTo("DetailPage") { inclusive = false }
+                }
+            } else {
+                navController.navigate("PillMainPage") {
+                    popUpTo("PillMainPage") {
+                        inclusive = false
+                    }
+                    launchSingleTop = true
                 }
             }
         }
@@ -341,6 +380,7 @@ fun EssentialPage(
                 modifier = Modifier
                     .noRippleClickable {
                         isEssentialExpanded = !isEssentialExpanded
+                        isOptionalExpanded = false
                     }
                     .graphicsLayer(rotationZ = essentialRotation)
             )
@@ -381,6 +421,7 @@ fun EssentialPage(
                 modifier = Modifier
                     .noRippleClickable {
                         isOptionalExpanded = !isOptionalExpanded
+                        isEssentialExpanded = false
                     }
                     .graphicsLayer(rotationZ = optionalRotation)
             )
@@ -433,8 +474,22 @@ fun AreYouPage(
                 else -> "QuestionnairePage"
             }
 
-            navController.navigate(target) {
-                popUpTo("AreYouPage/$query") { inclusive = true }
+            val questionnaireExists = navController.backQueue.any {
+                it.destination.route == "QuestionnairePage"
+            }
+
+            val finalTarget = if (query in listOf("알러지", "기저질환", "수술")) {
+                target
+            } else {
+                if (questionnaireExists) "QuestionnairePage" else "PillMainPage"
+            }
+
+            if (finalTarget == "QuestionnairePage") {
+                navController.navigate(finalTarget) {
+                    popUpTo("AreYouPage/$query") { inclusive = true }
+                }
+            } else {
+                navController.popBackStack()
             }
         }
         BackHandler {
@@ -445,8 +500,22 @@ fun AreYouPage(
                 else -> "QuestionnairePage"
             }
 
-            navController.navigate(target) {
-                popUpTo("AreYouPage/$query") { inclusive = true }
+            val questionnaireExists = navController.backQueue.any {
+                it.destination.route == "QuestionnairePage"
+            }
+
+            val finalTarget = if (query in listOf("알러지", "기저질환", "수술")) {
+                target
+            } else {
+                if (questionnaireExists) "QuestionnairePage" else "PillMainPage"
+            }
+
+            if (finalTarget == "QuestionnairePage") {
+                navController.navigate(finalTarget) {
+                    popUpTo("AreYouPage/$query") { inclusive = true }
+                }
+            } else {
+                navController.popBackStack()
             }
         }
         HeightSpacer(62.dp)

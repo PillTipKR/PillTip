@@ -82,7 +82,9 @@ import com.pilltip.pilltip.composable.MainComposable.SmallTabCard
 import com.pilltip.pilltip.composable.MainComposable.formatDate
 import com.pilltip.pilltip.composable.QuestionnaireComposable.QuestionnaireCard
 import com.pilltip.pilltip.composable.WidthSpacer
+import com.pilltip.pilltip.composable.noRippleClickable
 import com.pilltip.pilltip.model.HandleBackPressToExitApp
+import com.pilltip.pilltip.model.UserInfoManager
 import com.pilltip.pilltip.model.search.QuestionnaireViewModel
 import com.pilltip.pilltip.model.search.SearchHiltViewModel
 import com.pilltip.pilltip.ui.theme.backgroundColor
@@ -392,7 +394,7 @@ fun MyQuestionnairePage(
     val list by remember { derivedStateOf { viewModel.questionnaireList } }
     val loading by remember { derivedStateOf { viewModel.isListLoading } }
     val localHeight = LocalConfiguration.current.screenHeightDp
-
+    val permission = UserInfoManager.getUserData(LocalContext.current)?.permissions
 
     LaunchedEffect(Unit) {
         viewModel.fetchQuestionnaireList()
@@ -494,9 +496,11 @@ fun MyQuestionnairePage(
                 contentPadding = PaddingValues(vertical = 12.dp)
             ) {
                 if (list.isEmpty()) {
-                    item{
+                    item {
                         Column(
-                            modifier = Modifier.fillMaxWidth().fillMaxHeight(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .fillMaxHeight(),
                             verticalArrangement = Arrangement.Center,
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
@@ -517,8 +521,41 @@ fun MyQuestionnairePage(
                                     textAlign = TextAlign.Center,
                                 )
                             )
-                            Spacer(modifier = Modifier.weight(1f))
-
+                            HeightSpacer(20.dp)
+                            Box(
+                                modifier = Modifier
+                                    .border(
+                                        width = 1.dp,
+                                        color = primaryColor,
+                                        shape = RoundedCornerShape(size = 12.dp)
+                                    )
+                                    .height(45.dp)
+                                    .background(
+                                        color = primaryColor,
+                                        shape = RoundedCornerShape(size = 12.dp)
+                                    )
+                                    .padding(
+                                        start = 22.dp,
+                                        top = 14.dp,
+                                        end = 22.dp,
+                                        bottom = 14.dp
+                                    )
+                                    .noRippleClickable {
+                                        if (permission == true) navController.navigate("AreYouPage/약")
+                                        else navController.navigate("QuestionnairePage")
+                                    },
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = "문진표 추가하기",
+                                    style = TextStyle(
+                                        fontSize = 14.sp,
+                                        fontFamily = pretendard,
+                                        fontWeight = FontWeight(600),
+                                        color = Color.White,
+                                    )
+                                )
+                            }
                         }
                     }
                 } else {
