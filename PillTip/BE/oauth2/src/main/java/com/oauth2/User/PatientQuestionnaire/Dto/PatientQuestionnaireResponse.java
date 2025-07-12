@@ -11,6 +11,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -36,6 +37,7 @@ public class PatientQuestionnaireResponse {
     private List<Map<String, Object>> allergyInfo;
     private List<Map<String, Object>> chronicDiseaseInfo;
     private List<Map<String, Object>> surgeryHistoryInfo;
+    private LocalDateTime expirationDate;
 
     public static PatientQuestionnaireResponse from(PatientQuestionnaire questionnaire, String decryptedPhoneNumber, String decryptedRealName, String decryptedAddress, EncryptionUtil encryptionUtil) {
         ObjectMapper objectMapper = new ObjectMapper();
@@ -68,6 +70,7 @@ public class PatientQuestionnaireResponse {
                     .allergyInfo(parseEncryptedJsonToList(questionnaire.getAllergyInfo(), objectMapper, encryptionUtil))
                     .chronicDiseaseInfo(parseEncryptedJsonToList(questionnaire.getChronicDiseaseInfo(), objectMapper, encryptionUtil))
                     .surgeryHistoryInfo(parseEncryptedJsonToList(questionnaire.getSurgeryHistoryInfo(), objectMapper, encryptionUtil))
+                    .expirationDate(LocalDateTime.now().plusMinutes(3))
                     .build();
         } catch (JsonProcessingException e) {
             throw new RuntimeException("Failed to parse questionnaire data", e);
