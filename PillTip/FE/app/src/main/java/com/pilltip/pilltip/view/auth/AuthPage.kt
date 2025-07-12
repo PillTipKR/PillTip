@@ -1498,8 +1498,17 @@ fun InterestPage(
                             viewModel.submitTerms(
                                 token = accessToken,
                                 onSuccess = {
-                                    navController.navigate("PillMainPage") {
-                                        popUpTo(0) { inclusive = true }
+                                    viewModel.fetchMyInfo(accessToken) { userData ->
+                                        TokenManager.saveTokens(context, accessToken, refreshToken)
+                                        UserInfoManager.saveUserData(context, userData)
+                                        Toast.makeText(
+                                            context,
+                                            "${userData.nickname}님, 필팁에 오신 걸 환영해요!",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                        navController.navigate("PillMainPage") {
+                                            popUpTo(0) { inclusive = true }
+                                        }
                                     }
                                 },
                                 onFailure = { error ->
