@@ -25,7 +25,7 @@ public class UserService {
 
     // 현재 로그인한 사용자 정보 조회
     public User getCurrentUser(Long userId) {
-        return userRepository.findByIdWithQuestionnaires(userId)
+        return userRepository.findByIdWithQuestionnaire(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
     }
 

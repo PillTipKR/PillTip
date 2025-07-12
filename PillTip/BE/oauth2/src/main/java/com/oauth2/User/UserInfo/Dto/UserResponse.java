@@ -90,7 +90,7 @@ public class UserResponse {
     private String getDecryptedPhone(UserProfile profile, EncryptionUtil encryptionUtil) {
         try {
             String encryptedPhone = profile.getPhone();
-            if (encryptedPhone != null && !encryptedPhone.isEmpty()) {
+            if (encryptedPhone != null && !encryptedPhone.isEmpty() && isEncrypted(encryptedPhone)) {
                 return encryptionUtil.decrypt(encryptedPhone);
             }
         } catch (Exception e) {
@@ -105,7 +105,7 @@ public class UserResponse {
     private String getDecryptedRealName(User user, EncryptionUtil encryptionUtil) {
         try {
             String encryptedName = user.getRealName();
-            if (encryptedName != null && !encryptedName.isEmpty()) {
+            if (encryptedName != null && !encryptedName.isEmpty() && isEncrypted(encryptedName)) {
                 return encryptionUtil.decrypt(encryptedName);
             }
         } catch (Exception e) {
@@ -120,12 +120,34 @@ public class UserResponse {
     private String getDecryptedAddress(User user, EncryptionUtil encryptionUtil) {
         try {
             String encryptedAddress = user.getAddress();
-            if (encryptedAddress != null && !encryptedAddress.isEmpty()) {
+            if (encryptedAddress != null && !encryptedAddress.isEmpty() && isEncrypted(encryptedAddress)) {
                 return encryptionUtil.decrypt(encryptedAddress);
             }
         } catch (Exception e) {
             logger.warn("Failed to decrypt address for user {}: {}", user.getId(), e.getMessage());
         }
         return user.getAddress(); // 복호화 실패 시 원본 반환
+    }
+
+    /**
+     * 값이 암호화되어 있는지 확인합니다.
+     * Base64로 인코딩된 암호화 데이터는 특정 패턴을 가집니다.
+     */
+    private boolean isEncrypted(String value) {
+        if (value == null || value.isEmpty()) {
+            return false;
+        }
+        
+        // Base64 패턴 확인 (암호화된 데이터는 보통 Base64로 인코딩됨)
+        // 일반 텍스트는 Base64 패턴을 따르지 않음
+        try {
+            // Base64 디코딩 시도
+            java.util.Base64.getDecoder().decode(value);
+            // Base64 디코딩이 성공하면 암호화된 데이터로 간주
+            return true;
+        } catch (IllegalArgumentException e) {
+            // Base64 디코딩이 실패하면 일반 텍스트로 간주
+            return false;
+        }
     }
 }

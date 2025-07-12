@@ -16,6 +16,7 @@ import com.oauth2.Util.Encryption.EncryptionUtil;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -45,14 +46,7 @@ public class TakingPillService {
      */
     public TakingPill addTakingPill(User user, TakingPillRequest request) {
         // 요청 데이터 검증
-        validateTakingPillRequest(request);
-        
-        // 기존에 같은 약품이 있는지 확인
-        List<TakingPill> existingPills = takingPillRepository.findByUserAndMedicationId(user, request.getMedicationId());
-        if (!existingPills.isEmpty()) {
-            throw new RuntimeException("이미 복용 중인 약품입니다.");
-        }
-        
+        validateTakingPillRequest(request);        
         // TakingPill 엔티티 생성
         TakingPill takingPill = buildTakingPill(request,
                 TakingPill.builder()
@@ -156,24 +150,8 @@ public class TakingPillService {
         // 요청 데이터 검증
         validateTakingPillRequest(request);
         
-        logger.info("=== Update TakingPill Debug ===");
-        logger.info("User ID: {}", user.getId());
-        logger.info("Request Medication ID: {}", request.getMedicationId());
-        
-        // 데이터베이스의 모든 TakingPill 조회 (디버깅용)
-        List<TakingPill> allPills = takingPillRepository.findAll();
-        logger.info("=== Database Debug ===");
-        logger.info("Total TakingPills in database: {}", allPills.size());
-        
-        for (TakingPill pill : allPills) {
-            logger.info("DB TakingPill - ID: {}, User ID: {}, Medication ID: {}, Medication Name: {}", 
-                pill.getId(), pill.getUser().getId(), pill.getMedicationId(), pill.getMedicationName());
-        }
-        
         // 기존 TakingPill 찾기 (트랜잭션 격리 문제 해결을 위해 직접 조회)
         List<TakingPill> existingPills = takingPillRepository.findByUserAndMedicationId(user, request.getMedicationId());
-        logger.info("Found {} TakingPills with medicationId {} for user {}", 
-            existingPills.size(), request.getMedicationId(), user.getId());
         
         if (existingPills.isEmpty()) {
             throw new RuntimeException("수정할 약품을 찾을 수 없습니다.");
@@ -721,6 +699,14 @@ public class TakingPillService {
                 if(!newDaysofWeek.contains(day)) return false;
         }
         return true;
+    }
+
+    @Transactional
+    @Scheduled(cron = "0 0 0 * * *")
+    public void removeExpiredTakingPills() {
+        LocalDate today = LocalDate.now();
+        takingPillRepository.deleteExpiredPills(today.getYear(), today.getMonthValue(), today.getDayOfMonth());
+        logger.info("Removed expired taking pills at {}", LocalDateTime.now());
     }
 
 } 

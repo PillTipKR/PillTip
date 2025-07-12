@@ -6,7 +6,10 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.oauth2.User.Auth.Entity.User;
 import com.oauth2.User.UserInfo.Dto.UserSensitiveInfoDeleteRequest;
 import com.oauth2.User.UserInfo.Dto.UserSensitiveInfoDto;
+import com.oauth2.User.UserInfo.Dto.UserProfileUpdateRequest;
+import com.oauth2.User.UserInfo.Dto.UserProfileUpdateResponse;
 import com.oauth2.User.UserInfo.Service.UserSensitiveInfoService;
+import com.oauth2.User.UserInfo.Service.UserService;
 import com.oauth2.User.Auth.Dto.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -24,6 +27,43 @@ public class UserSensitiveInfoController {
 
     private static final Logger logger = LoggerFactory.getLogger(UserSensitiveInfoController.class);
     private final UserSensitiveInfoService userSensitiveInfoService;
+    private final UserService userService;
+
+    /**
+     * 사용자 프로필 정보 전체 업데이트 (realName, address, phoneNumber, sensitiveInfo)
+     */
+    @PutMapping("/profile")
+    public ResponseEntity<ApiResponse<UserProfileUpdateResponse>> updateUserProfile(
+            @AuthenticationPrincipal User user,
+            @RequestBody UserProfileUpdateRequest request) {
+        logger.info("Received updateUserProfile request for user: {}", user.getId());
+        
+        try {
+            // 1. 사용자 기본 정보 업데이트
+            userService.updatePersonalInfo(user, request.getRealName(), request.getAddress());
+            userService.updatePhoneNumber(user, request.getPhoneNumber());
+            
+            // 2. 민감정보 업데이트
+            UserSensitiveInfoDto sensitiveInfo = userSensitiveInfoService.saveOrUpdateSensitiveInfo(
+                    user, request.getAllergyInfo(), request.getChronicDiseaseInfo(), request.getSurgeryHistoryInfo());
+            
+            // 3. 응답 생성
+            UserProfileUpdateResponse response = UserProfileUpdateResponse.builder()
+                    .realName(request.getRealName())
+                    .address(request.getAddress())
+                    .phoneNumber(request.getPhoneNumber())
+                    .sensitiveInfo(sensitiveInfo)
+                    .build();
+            
+            logger.info("Successfully updated user profile for user: {}", user.getId());
+            return ResponseEntity.status(200)
+                .body(ApiResponse.success("사용자 프로필 업데이트 성공", response));
+        } catch (Exception e) {
+            logger.error("Error updating user profile for user: {} - Error: {}", user.getId(), e.getMessage(), e);
+            return ResponseEntity.status(400)
+                .body(ApiResponse.error("사용자 프로필 업데이트 실패: " + e.getMessage(), null));
+        }
+    }
 
     /**
      * 사용자 민감정보 조회
@@ -60,13 +100,12 @@ public class UserSensitiveInfoController {
         logger.info("Received updateSensitiveInfo request for user: {}", user.getId());
         
         try {
-            List<String> medicationInfo = request.getMedicationInfo();
             List<String> allergyInfo = request.getAllergyInfo();
             List<String> chronicDiseaseInfo = request.getChronicDiseaseInfo();
             List<String> surgeryHistoryInfo = request.getSurgeryHistoryInfo();
             
             UserSensitiveInfoDto sensitiveInfo = userSensitiveInfoService.saveOrUpdateSensitiveInfo(
-                user, medicationInfo, allergyInfo, chronicDiseaseInfo, surgeryHistoryInfo);
+                    user, allergyInfo, chronicDiseaseInfo, surgeryHistoryInfo);
             
             logger.info("Successfully updated sensitive info for user: {}", user.getId());
             return ResponseEntity.status(200)

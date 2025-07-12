@@ -12,12 +12,12 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @AllArgsConstructor
 public class PatientQuestionnaireSummaryResponse {
-    private Integer questionnaireId;
+    private Long questionnaireId;
     private String questionnaireName;
     private LocalDate issueDate;
     private LocalDate lastModifiedDate;
     
-    public static PatientQuestionnaireSummaryResponse from(Integer questionnaireId, String questionnaireName, LocalDate issueDate, LocalDate lastModifiedDate) {
+    public static PatientQuestionnaireSummaryResponse from(Long questionnaireId, String questionnaireName, LocalDate issueDate, LocalDate lastModifiedDate) {
         return PatientQuestionnaireSummaryResponse.builder()
                 .questionnaireId(questionnaireId)
                 .questionnaireName(questionnaireName)

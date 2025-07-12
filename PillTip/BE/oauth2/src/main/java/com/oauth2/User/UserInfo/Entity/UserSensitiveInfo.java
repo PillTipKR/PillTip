@@ -26,11 +26,6 @@ public class UserSensitiveInfo {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    // 약물 정보 (JSON 형태로 저장) - 암호화
-    @Column(name = "medication_info", columnDefinition = "TEXT")
-    @Convert(converter = EncryptionConverter.class)
-    private String medicationInfo;
-
     // 알러지 정보 (JSON 형태로 저장) - 암호화
     @Column(name = "allergy_info", columnDefinition = "TEXT")
     @Convert(converter = EncryptionConverter.class)

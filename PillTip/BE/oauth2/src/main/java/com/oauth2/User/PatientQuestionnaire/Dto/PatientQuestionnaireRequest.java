@@ -14,6 +14,7 @@ import java.util.List;
 public class PatientQuestionnaireRequest {
     private String questionnaireName;
 
+    // 수정 시에만 사용 (생성 시에는 Taking Pill에서 자동으로 가져옴)
     private List<InfoItem> medicationInfo;
     private List<InfoItem> allergyInfo;
     private List<InfoItem> chronicDiseaseInfo;
@@ -31,13 +32,10 @@ public class PatientQuestionnaireRequest {
     @AllArgsConstructor
     @Builder
     public static class InfoItem {
-        private String id;
-        private String medicationId;
-        private String medicationName;
-        private String phoneNumber;
-        private String allergyName;
-        private String chronicDiseaseName;
-        private String surgeryHistoryName;
+        private String medicationName;  // 복용 중인 약물 이름만
+        private String allergyName;     // 알레르기 이름
+        private String chronicDiseaseName;  // 만성질환 이름
+        private String surgeryHistoryName;  // 수술 이력 이름
         private boolean submitted;
     }
 } 

@@ -26,7 +26,7 @@ public class UserSensitiveInfoService {
      * 사용자 민감정보 저장 또는 업데이트
      */
     @Transactional
-    public UserSensitiveInfoDto saveOrUpdateSensitiveInfo(User user, List<String> medicationInfo,
+    public UserSensitiveInfoDto saveOrUpdateSensitiveInfo(User user,
                                                          List<String> allergyInfo,
                                                          List<String> chronicDiseaseInfo,
                                                          List<String> surgeryHistoryInfo) throws JsonProcessingException {
@@ -34,7 +34,6 @@ public class UserSensitiveInfoService {
                 .orElse(new UserSensitiveInfo());
 
         sensitiveInfo.setUser(user);
-        sensitiveInfo.setMedicationInfo(convertListToCommaSeparated(medicationInfo));
         sensitiveInfo.setAllergyInfo(convertListToCommaSeparated(allergyInfo));
         sensitiveInfo.setChronicDiseaseInfo(convertListToCommaSeparated(chronicDiseaseInfo));
         sensitiveInfo.setSurgeryHistoryInfo(convertListToCommaSeparated(surgeryHistoryInfo));
@@ -84,9 +83,6 @@ public class UserSensitiveInfoService {
         sensitiveInfo.setUser(user);
 
         switch (category.toLowerCase()) {
-            case "medication":
-                sensitiveInfo.setMedicationInfo(convertListToCommaSeparated(data));
-                break;
             case "allergy":
                 sensitiveInfo.setAllergyInfo(convertListToCommaSeparated(data));
                 break;
@@ -108,14 +104,12 @@ public class UserSensitiveInfoService {
      * 문진표에서 민감정보 동기화
      */
     @Transactional
-    public UserSensitiveInfoDto syncFromQuestionnaire(User user, String medicationInfo, String allergyInfo,
+    public UserSensitiveInfoDto syncFromQuestionnaire(User user, String allergyInfo,
                                                      String chronicDiseaseInfo, String surgeryHistoryInfo) {
         UserSensitiveInfo sensitiveInfo = userSensitiveInfoRepository.findByUser(user)
                 .orElse(new UserSensitiveInfo());
 
         sensitiveInfo.setUser(user);
-        
-        sensitiveInfo.setMedicationInfo(mergeAndDeduplicate(sensitiveInfo.getMedicationInfo(), medicationInfo));
         sensitiveInfo.setAllergyInfo(mergeAndDeduplicate(sensitiveInfo.getAllergyInfo(), allergyInfo));
         sensitiveInfo.setChronicDiseaseInfo(mergeAndDeduplicate(sensitiveInfo.getChronicDiseaseInfo(), chronicDiseaseInfo));
         sensitiveInfo.setSurgeryHistoryInfo(mergeAndDeduplicate(sensitiveInfo.getSurgeryHistoryInfo(), surgeryHistoryInfo));
@@ -165,9 +159,6 @@ public class UserSensitiveInfoService {
             return null;
         }
 
-        if (!request.isKeepMedicationInfo()) {
-            sensitiveInfo.setMedicationInfo("");
-        }
         if (!request.isKeepAllergyInfo()) {
             sensitiveInfo.setAllergyInfo("");
         }

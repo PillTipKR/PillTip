@@ -8,7 +8,6 @@ import com.oauth2.User.Friend.Entity.Friend;
 import com.oauth2.User.Friend.Repository.FriendRepository;
 import com.oauth2.Util.Exception.CustomException.NotExistUserException;
 import com.oauth2.Util.Exception.CustomException.NotFriendException;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -84,7 +83,5 @@ public class FriendService {
             throw new NotFriendException();
         }
     }
-
-
 }
 

@@ -36,13 +36,13 @@ public interface UserRepository extends JpaRepository<User, Long> {
     """)
     List<User> findAllActiveUsersWithPillInfo();
 
-    // 현재 사용자 정보 조회 (questionnaires 포함)
+    // 현재 사용자 정보 조회 (questionnaire 포함)
     @Query("""
     SELECT u FROM User u
-    LEFT JOIN FETCH u.questionnaires
+    LEFT JOIN FETCH u.questionnaire
     WHERE u.id = :userId
     """)
-    Optional<User> findByIdWithQuestionnaires(Long userId);
+    Optional<User> findByIdWithQuestionnaire(Long userId);
 
     // 전화번호로 사용자 조회 (UserProfile을 통해)
     @Query("""
