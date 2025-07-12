@@ -134,12 +134,12 @@ class SnoozeReceiver : BroadcastReceiver() {
 }
 
 interface ApiService {
-    @POST("api/dosageLog/{logId}/taken")
+    @POST("api/alarm/{logId}/taken")
     fun markDosageAsTaken(
         @Path("logId") logId: Long
     ): Call<TakenResponse>
 
-    @POST("api/{logId}/pending")
+    @POST("api/alarm/{logId}/pending")
     fun markDosageAsPending(@Path("logId") logId: Long): Call<PendingResponse>
 }
 

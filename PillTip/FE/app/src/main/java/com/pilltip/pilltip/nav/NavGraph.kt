@@ -46,11 +46,13 @@ import com.pilltip.pilltip.view.questionnaire.QuestionnaireCheckPage
 import com.pilltip.pilltip.view.questionnaire.QuestionnairePage
 import com.pilltip.pilltip.view.questionnaire.QuestionnaireSearchPage
 import com.pilltip.pilltip.view.questionnaire.WritePage
+import com.pilltip.pilltip.view.search.AudioSearchPage
 import com.pilltip.pilltip.view.search.DetailPage
 import com.pilltip.pilltip.view.search.DosageAlarmPage
 import com.pilltip.pilltip.view.search.DosagePage
 import com.pilltip.pilltip.view.search.SearchPage
 import com.pilltip.pilltip.view.search.SearchResultsPage
+import kotlin.math.log
 
 @Composable
 fun NavGraph(
@@ -132,6 +134,9 @@ fun NavGraph(
         /* Search */
         composable("SearchPage") {
             SearchPage(navController, logViewModel, searchHiltViewModel)
+        }
+        composable("AudioSearchPage") {
+            AudioSearchPage(navController, searchHiltViewModel, logViewModel)
         }
         composable("SearchResultsPage/{query}") { backStackEntry ->
             val query = backStackEntry.arguments?.getString("query") ?: ""

@@ -1,6 +1,7 @@
 package com.pilltip.pilltip
 
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
@@ -45,6 +46,10 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var serverAuthAPI: ServerAuthAPI
     override fun onCreate(savedInstanceState: Bundle?) {
+        val kakaoKey = BuildConfig.KAKAO_KEY
+        Log.d("KakaoKey", kakaoKey)
+        KakaoSdk.init(this, kakaoKey)
+        KakaoMapSdk.init(this, kakaoKey)
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
@@ -91,11 +96,6 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
-            val kakaoKey = BuildConfig.KAKAO_KEY
-            Log.d("KakaoKey", kakaoKey)
-            KakaoSdk.init(this, kakaoKey)
-            KakaoMapSdk.init(this, kakaoKey)
-
             val startDestination by produceState(initialValue = "SplashPage", context, serverAuthAPI) {
                 value = withContext(Dispatchers.IO) {
                     val accessToken = TokenManager.getAccessToken(context)
@@ -117,7 +117,10 @@ class MainActivity : ComponentActivity() {
             )
         }
     }
-
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent) // ✅ 꼭 있어야 함! 카카오 SDK가 이 intent를 내부에서 처리할 수 있게 함
+    }
 }
 
 suspend fun isAccessTokenValid(api: ServerAuthAPI, accessToken: String, context: Context): Boolean {

@@ -196,7 +196,9 @@ fun PillSearchField(
                 modifier = Modifier
                     .size(20.dp)
                     .padding(1.dp)
-                    .noRippleClickable { }
+                    .noRippleClickable {
+                        navController.navigate("AudioSearchPage")
+                    }
             )
         }
         WidthSpacer(6.dp)
@@ -396,6 +398,13 @@ fun DrugSearchResultCard(
 ) {
     val nickname = UserInfoManager.getUserData(LocalContext.current)?.nickname
     var isImageViewerOpen by remember { mutableStateOf(false) }
+    val isRisky = drug.durTags.any { it.isTrue }
+    val durMessage = if (isRisky) {
+        "$nickname 님은 복약 시 의사와 상의가 필요한 약품이에요!"
+    } else {
+        "$nickname 님 맞춤 DUR 결과 상 별다른 주의사항은 없어요."
+    }
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -555,13 +564,15 @@ fun DrugSearchResultCard(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Image(
-                imageVector = ImageVector.vectorResource(R.drawable.ic_search_dur_alert),
+                imageVector = ImageVector.vectorResource(
+                    if(isRisky)R.drawable.ic_search_dur_alert
+                else R.drawable.ic_details_blue_common_pills),
                 contentDescription = "DUR 알림",
                 modifier = Modifier.size(20.dp)
             )
             WidthSpacer(8.dp)
             Text(
-                text = "$nickname 님은 섭취에 주의가 필요한 약품이에요!",
+                text = durMessage,
                 style = TextStyle(
                     fontSize = 12.sp,
                     fontFamily = pretendard,

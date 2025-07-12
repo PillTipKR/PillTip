@@ -496,6 +496,14 @@ fun MyDrugInfoPage(
     var expanded by remember { mutableStateOf(false) }
     var sortOption by remember { mutableStateOf("최신순") }
     val pillDetail by viewModel.pillDetail.collectAsState()
+    val systemUiController = rememberSystemUiController()
+    SideEffect {
+        systemUiController.setStatusBarColor(
+            color = Color.White,
+            darkIcons = true
+        )
+        systemUiController.isNavigationBarVisible = true
+    }
 
     LaunchedEffect(Unit) {
         viewModel.fetchDosageSummary()
@@ -598,6 +606,14 @@ fun MyDrugManagementPage(
     searchHiltViewModel: SearchHiltViewModel,
     medicationId: Long
 ) {
+    val systemUiController = rememberSystemUiController()
+    SideEffect {
+        systemUiController.setStatusBarColor(
+            color = Color.White,
+            darkIcons = true
+        )
+        systemUiController.isNavigationBarVisible = true
+    }
     LaunchedEffect(Unit) {
         searchHiltViewModel.fetchTakingPillDetail(medicationId)
     }
@@ -756,6 +772,14 @@ fun EssentialInfoPage(
     var isSheetVisible by remember { mutableStateOf(false) }
     var isEssential1Checked by remember { mutableStateOf(false) }
     var isEssential2Checked by remember { mutableStateOf(false) }
+    val systemUiController = rememberSystemUiController()
+    SideEffect {
+        systemUiController.setStatusBarColor(
+            color = Color.White,
+            darkIcons = true
+        )
+        systemUiController.isNavigationBarVisible = true
+    }
     Column(
         modifier = WhiteScreenModifier
             .padding(horizontal = 22.dp)
@@ -939,6 +963,14 @@ fun MyHealthPage(
     }
 
     val sensitiveInfo by searchHiltViewModel.sensitiveInfo.collectAsState()
+    val systemUiController = rememberSystemUiController()
+    SideEffect {
+        systemUiController.setStatusBarColor(
+            color = Color.White,
+            darkIcons = true
+        )
+        systemUiController.isNavigationBarVisible = true
+    }
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -996,6 +1028,14 @@ fun MyHealthDetailPage(
         "surgery" -> sensitiveInfo?.surgeryHistoryInfo ?: emptyList()
         else -> emptyList()
     }
+    val systemUiController = rememberSystemUiController()
+    SideEffect {
+        systemUiController.setStatusBarColor(
+            color = Color.White,
+            darkIcons = true
+        )
+        systemUiController.isNavigationBarVisible = true
+    }
 
     Column(
         modifier = WhiteScreenModifier
@@ -1035,6 +1075,14 @@ fun MyDataPage(
     var name by remember { mutableStateOf("") }
     var address by remember { mutableStateOf("") }
     var isValid = name.isNotEmpty() && address.isNotEmpty()
+    val systemUiController = rememberSystemUiController()
+    SideEffect {
+        systemUiController.setStatusBarColor(
+            color = Color.White,
+            darkIcons = true
+        )
+        systemUiController.isNavigationBarVisible = true
+    }
     Column(
         modifier = WhiteScreenModifier
             .padding(horizontal = 22.dp)

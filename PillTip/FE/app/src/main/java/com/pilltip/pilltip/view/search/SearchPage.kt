@@ -1,8 +1,12 @@
 package com.pilltip.pilltip.view.search
 
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.util.Log
 import android.widget.Toast
+import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
@@ -23,9 +27,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
@@ -50,6 +56,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -60,6 +67,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -67,6 +75,7 @@ import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
@@ -78,10 +87,13 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Popup
+import androidx.compose.ui.zIndex
+import androidx.core.content.ContextCompat
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.pilltip.pilltip.R
+import com.pilltip.pilltip.composable.BackButton
 import com.pilltip.pilltip.composable.HeightSpacer
 import com.pilltip.pilltip.composable.NextButton
 import com.pilltip.pilltip.composable.SearchComposable.AutoCompleteList
@@ -93,8 +105,10 @@ import com.pilltip.pilltip.composable.SearchComposable.PillSearchField
 import com.pilltip.pilltip.composable.SearchComposable.SearchTag
 import com.pilltip.pilltip.composable.SearchComposable.ZoomableImageDialog
 import com.pilltip.pilltip.composable.SearchComposable.shareText
+import com.pilltip.pilltip.composable.TagButton
 import com.pilltip.pilltip.composable.WidthSpacer
 import com.pilltip.pilltip.composable.noRippleClickable
+import com.pilltip.pilltip.model.RecognizeSpeech
 import com.pilltip.pilltip.model.UserInfoManager
 import com.pilltip.pilltip.model.search.DetailDrugData
 import com.pilltip.pilltip.model.search.LogViewModel
@@ -347,7 +361,7 @@ fun SearchResultsPage(
                 }
                 .fillMaxWidth()
                 .padding(horizontal = 22.dp)
-                .noRippleClickable{
+                .noRippleClickable {
                     navController.navigate("SearchPage") {
                         popUpTo("SearchPage") {
                             inclusive = false
@@ -1060,6 +1074,132 @@ fun StorageInfoTab(
                     color = gray800,
                     textAlign = TextAlign.Center,
                 )
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+fun AudioSearchPage(
+    navController: NavController,
+    searchViewModel: SearchHiltViewModel,
+    logViewModel: LogViewModel
+) {
+    val allKeywords = List(5) { index -> "키워드~${index + 1}" }
+    val selectedKeywords = remember { mutableStateListOf<String>() }
+
+    val context = LocalContext.current
+
+    val speechLauncher = rememberLauncherForActivityResult(
+        contract = RecognizeSpeech(),
+        onResult = { result: String? ->
+            result?.let { ttsText ->
+                searchViewModel.fetchDrugSearch(ttsText)
+                logViewModel.addSearchQuery(ttsText)
+                navController.popBackStack()
+                navController.navigate("SearchResultsPage/${ttsText}") {
+                    popUpTo("MainPage") { inclusive = false }
+                    launchSingleTop = true
+                }
+            }
+        }
+    )
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+        onResult = { isGranted ->
+            if (isGranted) {
+                speechLauncher.launch(Unit)
+            } else {
+                Toast.makeText(context, "마이크 권한이 필요해요", Toast.LENGTH_SHORT).show()
+            }
+        }
+    )
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFFFDFDFD))
+            .statusBarsPadding()
+            .navigationBarsPadding()
+            .padding(horizontal = 22.dp)
+    ) {
+        BackButton(
+            horizontalPadding = 0.dp,
+            verticalPadding = 0.dp
+        ) {
+            navController.popBackStack()
+        }
+        HeightSpacer(50.dp)
+        Text(
+            text = "어떤 점이 궁금하신가요?",
+            style = TextStyle(
+                fontSize = 24.sp,
+                lineHeight = 33.6.sp,
+                fontFamily = pretendard,
+                fontWeight = FontWeight(700),
+                color = Color(0xFF323439),
+            )
+        )
+        HeightSpacer(31.dp)
+        Text(
+            text = "가장 많이 검색된 내용이에요",
+            style = TextStyle(
+                fontSize = 14.sp,
+                fontFamily = pretendard,
+                fontWeight = FontWeight(600),
+                color = gray400,
+            )
+        )
+        HeightSpacer(24.dp)
+        FlowRow(
+            modifier = Modifier
+                .fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            allKeywords.forEach { keyword ->
+                val isSelected = keyword in selectedKeywords
+                TagButton(
+                    keyword = keyword,
+                    isSelected = isSelected,
+                    onClick = {
+                        if (isSelected) {
+                            selectedKeywords.remove(keyword)
+                        } else if (selectedKeywords.size < 5) {
+                            selectedKeywords.add(keyword)
+                        }
+                    }
+                )
+            }
+        }
+        HeightSpacer(50.dp)
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f)
+                .noRippleClickable {
+                    if (ContextCompat.checkSelfPermission(
+                            context,
+                            android.Manifest.permission.RECORD_AUDIO
+                        ) == PackageManager.PERMISSION_GRANTED
+                    ) {
+                        speechLauncher.launch(Unit)
+                    } else {
+                        permissionLauncher.launch(android.Manifest.permission.RECORD_AUDIO)
+                    }
+                },
+            contentAlignment = Alignment.Center
+        ) {
+            Image(
+                painter = painterResource(R.drawable.btn_audio),
+                contentDescription = "뒤로가기 버튼",
+                modifier = Modifier.zIndex(1f)
+            )
+            Image(
+                imageVector = ImageVector.vectorResource(R.drawable.ic_audio_shadow),
+                contentDescription = "버튼 그림자",
+                modifier = Modifier
             )
         }
     }

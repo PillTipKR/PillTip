@@ -182,6 +182,10 @@ fun SelectPage(
     }
 
     SideEffect {
+        systemUiController.setStatusBarColor(
+            color = Color.White,
+            darkIcons = true
+        )
         systemUiController.isNavigationBarVisible = true
     }
     Column(

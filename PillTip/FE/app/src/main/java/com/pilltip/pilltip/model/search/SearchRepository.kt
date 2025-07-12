@@ -286,7 +286,7 @@ class DurGptRepositoryImpl(
  */
 //SearcgRepository.kt
 interface FcmApi {
-    @POST("/api/token")
+    @POST("/api/alarm/token")
     suspend fun sendFcmToken(
         @Query("token") token: String
     ): FcmTokenResponse
@@ -385,7 +385,7 @@ interface DosageLogApi {
         @Path("logId") logId: Long
     ): ToggleDosageTakenResponse
 
-    @POST("/api/{logId}/pending")
+    @POST("/api/alarm/{logId}/pending")
     suspend fun getDosageLogMessage(
         @Path("logId") logId: Long
     ): ToggleDosageTakenResponse
