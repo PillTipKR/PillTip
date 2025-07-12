@@ -639,7 +639,7 @@ fun DURResultPage(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 DURText(
-                    title = "${durData.drugA} 성분 검사지",
+                    title = "${durData.drugA}",
                     isOk = durData.durTrueA,
                     description = durData.durA
                 )
@@ -647,7 +647,7 @@ fun DURResultPage(
                 DottedDivider()
                 HeightSpacer(30.dp)
                 DURText(
-                    title = "${durData.drugB} 성분 검사지",
+                    title = "${durData.drugB}",
                     isOk = durData.durTrueB,
                     description = durData.durB
                 )
@@ -672,6 +672,16 @@ fun DURResultPage(
                 HeightSpacer(4.dp)
                 Text(
                     text = "PillTip의 AI 인프라를 기반으로 제공됩니다",
+                    style = TextStyle(
+                        fontSize = 10.sp,
+                        fontFamily = pretendard,
+                        fontWeight = FontWeight(600),
+                        color = gray400,
+                    )
+                )
+                HeightSpacer(6.dp)
+                Text(
+                    text = "정부 제공 데이터가 없는 경우 부정확 할 수 있으니 반드시 의사와 상의하세요",
                     style = TextStyle(
                         fontSize = 10.sp,
                         fontFamily = pretendard,
