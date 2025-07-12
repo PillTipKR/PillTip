@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -56,6 +57,7 @@ import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -278,7 +280,9 @@ fun HomePage(
     }
     HeightSpacer(24.dp)
     Row(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 22.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 22.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
@@ -383,7 +387,6 @@ fun MyQuestionnairePage(
     val context = LocalContext.current
     var scrollState = rememberScrollState()
     var firstSelected by remember { mutableStateOf(false) }
-    var secondSelected by remember { mutableStateOf(false) }
     var expanded by remember { mutableStateOf(false) }
     var sortOption by remember { mutableStateOf("최신순") }
     val list by remember { derivedStateOf { viewModel.questionnaireList } }
@@ -422,21 +425,6 @@ fun MyQuestionnairePage(
                 .horizontalScroll(scrollState)
                 .padding(start = 22.dp)
         ) {
-            ProfileTagButton(
-                text = "처방약만",
-                selected = firstSelected,
-                onClick = { firstSelected = !firstSelected }
-            )
-
-            Image(
-                imageVector = ImageVector.vectorResource(R.drawable.ic_login_vertical_divider),
-                contentDescription = "디바이더",
-                modifier = Modifier
-                    .padding(horizontal = 6.dp)
-                    .width(1.dp)
-                    .background(gray200)
-                    .height(20.dp)
-            )
             Box {
                 ProfileTagButton(
                     text = sortOption,
@@ -465,35 +453,35 @@ fun MyQuestionnairePage(
                 }
             }
         }
-        HeightSpacer(10.dp)
-        Row(
-            modifier = Modifier
-                .border(
-                    width = 0.5.dp,
-                    color = primaryColor100,
-                    shape = RoundedCornerShape(size = 12.dp)
-                )
-                .padding(0.25.dp)
-                .fillMaxWidth()
-                .height(50.dp)
-                .background(color = primaryColor050, shape = RoundedCornerShape(size = 12.dp))
-                .padding(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 16.dp)
-        ) {
-            Image(
-                imageVector = ImageVector.vectorResource(R.drawable.ic_announce_speakerphone),
-                contentDescription = "문진표 공지"
-            )
-            WidthSpacer(8.dp)
-            Text(
-                text = "스마트 문진표에 대해 알려드려요",
-                style = TextStyle(
-                    fontSize = 14.sp,
-                    fontFamily = pretendard,
-                    fontWeight = FontWeight(600),
-                    color = primaryColor,
-                )
-            )
-        }
+//        HeightSpacer(10.dp)
+//        Row(
+//            modifier = Modifier
+//                .border(
+//                    width = 0.5.dp,
+//                    color = primaryColor100,
+//                    shape = RoundedCornerShape(size = 12.dp)
+//                )
+//                .padding(0.25.dp)
+//                .fillMaxWidth()
+//                .height(50.dp)
+//                .background(color = primaryColor050, shape = RoundedCornerShape(size = 12.dp))
+//                .padding(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 16.dp)
+//        ) {
+//            Image(
+//                imageVector = ImageVector.vectorResource(R.drawable.ic_announce_speakerphone),
+//                contentDescription = "문진표 공지"
+//            )
+//            WidthSpacer(8.dp)
+//            Text(
+//                text = "스마트 문진표에 대해 알려드려요",
+//                style = TextStyle(
+//                    fontSize = 14.sp,
+//                    fontFamily = pretendard,
+//                    fontWeight = FontWeight(600),
+//                    color = primaryColor,
+//                )
+//            )
+//        }
         HeightSpacer(12.dp)
         if (loading) {
             CircularProgressIndicator()
@@ -505,26 +493,57 @@ fun MyQuestionnairePage(
                 verticalArrangement = Arrangement.spacedBy(6.dp),
                 contentPadding = PaddingValues(vertical = 12.dp)
             ) {
-                items(list) { item ->
-                    QuestionnaireCard(
-                        questionnaire = item,
-                        onClick = { navController.navigate("questionnaire_check/${item.questionnaireId}") },
-                        onEdit = {
-
-                        },
-                        onDelete = {
-                            viewModel.delete(
-                                id = item.questionnaireId,
-                                onSuccess = {
-                                    Toast.makeText(context, "삭제 완료", Toast.LENGTH_SHORT).show()
-                                    viewModel.fetchQuestionnaireList()
-                                },
-                                onError = {
-                                    Toast.makeText(context, "삭제 실패: $it", Toast.LENGTH_SHORT).show()
-                                }
+                if (list.isEmpty()) {
+                    item{
+                        Column(
+                            modifier = Modifier.fillMaxWidth().fillMaxHeight(),
+                            verticalArrangement = Arrangement.Center,
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            HeightSpacer(200.dp)
+                            Image(
+                                painter = painterResource(R.drawable.ic_questionnaire_none),
+                                contentDescription = "문진표 없음"
                             )
+                            HeightSpacer(10.dp)
+                            Text(
+                                text = "문진표가 없어요\n문진표를 추가해보세요",
+                                style = TextStyle(
+                                    fontSize = 16.sp,
+                                    lineHeight = 22.4.sp,
+                                    fontFamily = pretendard,
+                                    fontWeight = FontWeight(500),
+                                    color = gray600,
+                                    textAlign = TextAlign.Center,
+                                )
+                            )
+                            Spacer(modifier = Modifier.weight(1f))
+
                         }
-                    )
+                    }
+                } else {
+                    items(list) { item ->
+                        QuestionnaireCard(
+                            questionnaire = item,
+                            onClick = { navController.navigate("questionnaire_check/${item.questionnaireId}") },
+                            onEdit = {
+
+                            },
+                            onDelete = {
+                                viewModel.delete(
+                                    id = item.questionnaireId,
+                                    onSuccess = {
+                                        Toast.makeText(context, "삭제 완료", Toast.LENGTH_SHORT).show()
+                                        viewModel.fetchQuestionnaireList()
+                                    },
+                                    onError = {
+                                        Toast.makeText(context, "삭제 실패: $it", Toast.LENGTH_SHORT)
+                                            .show()
+                                    }
+                                )
+                            }
+                        )
+                    }
                 }
             }
         }
