@@ -933,7 +933,7 @@ fun DrugInfoTab(
             headerText = "상세성분",
             onCopyClicked = {
                 val text = detail.ingredients.joinToString("\n") {
-                    "- ${it.name} (${it.dose}) ${if (it.isMain) "[주성분]" else ""}"
+                    "- ${it.name} (${it.dose}${if (it.isMain) ", 주성분" else ""})"
                 }
                 clipboardManager.setText(AnnotatedString(text))
                 Toast.makeText(context, "복사되었습니다", Toast.LENGTH_SHORT).show()
@@ -948,7 +948,7 @@ fun DrugInfoTab(
         ExpandableInfoBox(
             items = detail.ingredients
         ) { ingredient ->
-            Text("${if (ingredient.isMain) "[주성분]" else "⸰ "} ${ingredient.name} (${ingredient.dose})}")
+            Text("${if (ingredient.isMain) "[주성분]" else "⸰ "} ${ingredient.name} (${ingredient.dose})")
         }
         HeightSpacer(42.dp)
         ExportAndCopy(

@@ -49,6 +49,11 @@ interface ServerAuthAPI {
     suspend fun getMyInfo(
         @Header("Authorization") token: String
     ): Response<AuthMeResponse>
+
+    @POST("api/auth/check-duplicate")
+    suspend fun checkDuplicate(
+        @Body request: DuplicateCheckRequest
+    ): Response<DuplicateCheckResponse>
 }
 
 @Module

@@ -227,6 +227,16 @@ class SignUpViewModel @Inject constructor(
             }
         }
     }
+
+    fun checkLoginIdDuplicate(
+        loginId: String,
+        onResult: (isSuccess: Boolean, isAvailable: Boolean?) -> Unit
+    ) {
+        viewModelScope.launch {
+            val (success, isAvailable) = authRepository.checkDuplicate(loginId, "loginid")
+            onResult(success, isAvailable)
+        }
+    }
 }
 
 @HiltViewModel
