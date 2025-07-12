@@ -369,7 +369,7 @@ public class QuestionnaireController {
                 .hospitalCode(hospitalCode)
                 .questionnaireId(questionnaire.getQuestionnaireId())
                 .accessToken(jwtToken)
-                .expiresIn(300)
+                .expiresInMinutes(3)
                 .build();
 
             logger.info("Successfully generated QR questionnaire URL for user: {} - Hospital: {} - Questionnaire ID: {}", 

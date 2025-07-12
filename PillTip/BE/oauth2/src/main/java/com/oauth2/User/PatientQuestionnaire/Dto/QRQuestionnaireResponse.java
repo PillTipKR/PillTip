@@ -16,5 +16,5 @@ public class QRQuestionnaireResponse {
     private String hospitalCode;
     private Integer questionnaireId;
     private String accessToken;
-    private long expiresIn;  // 만료 시간 (초)
+    private int expiresInMinutes;
 } 

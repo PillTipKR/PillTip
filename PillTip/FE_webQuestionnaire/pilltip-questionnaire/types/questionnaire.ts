@@ -39,8 +39,9 @@ export interface Questionnaire {
   id: string;
   title: string;
   description: string;
-  data: QuestionnaireData;
-  status: "draft" | "published" | "completed";
+  data: any;
+  status: string;
+  expirationDate?: Date;
 }
 
 // API 응답 타입

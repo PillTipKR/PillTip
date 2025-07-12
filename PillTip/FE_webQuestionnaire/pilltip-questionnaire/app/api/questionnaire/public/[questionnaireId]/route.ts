@@ -58,6 +58,7 @@ export async function GET(
         description: "문진표",
         data: result.data,
         status: "published",
+        expirationDate: result.data.expirationDate,
       };
 
       return NextResponse.json(questionnaire);

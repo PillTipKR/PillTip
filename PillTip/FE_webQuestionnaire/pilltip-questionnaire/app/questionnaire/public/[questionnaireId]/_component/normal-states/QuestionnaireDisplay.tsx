@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import styles from "./QuestionnaireDisplay.module.css";
 import BasicInfo from "./BasicInfo";
 import MedicationInfoBlock from "./MedicationInfo";
@@ -68,6 +68,28 @@ export default function QuestionnaireDisplay({
       submitted: item.submitted,
     })
   );
+
+  useEffect(() => {
+    if (questionnaire && questionnaire.expirationDate) {
+      const expirationTime = new Date(questionnaire.expirationDate).getTime();
+      const currentTime = new Date().getTime();
+      const remainingTime = expirationTime - currentTime;
+
+      if (remainingTime > 0) {
+        const timer = setTimeout(() => {
+          console.log("문진표가 만료되어 새로고침합니다.");
+          window.location.reload();
+        }, remainingTime);
+
+        // 컴포넌트 언마운트 시 타이머 정리
+        return () => clearTimeout(timer);
+      } else {
+        // 이미 만료된 경우 바로 새로고침
+        console.log("문진표가 이미 만료되어 새로고침합니다.");
+        window.location.reload();
+      }
+    }
+  }, [questionnaire]);
 
   return (
     <div className={styles.container}>
