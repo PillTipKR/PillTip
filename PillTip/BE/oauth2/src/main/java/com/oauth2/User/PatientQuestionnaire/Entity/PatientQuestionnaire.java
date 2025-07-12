@@ -20,17 +20,17 @@ import java.time.LocalDate;
 @Builder
 public class PatientQuestionnaire {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "questionnaireId")
-    private Integer questionnaireId;
+    private Long questionnaireId;
+
+    @JsonBackReference
+    @OneToOne
+    @MapsId
+    @JoinColumn(name = "questionnaireId")
+    private User user;
 
     @Column(name = "questionnaireName")
     private String questionnaireName; // 문진표 이름
-
-    @JsonBackReference
-    @ManyToOne
-    @JoinColumn(name = "uuid")
-    private User user;
 
     @Column(name = "issueDate")
     private LocalDate issueDate; // 작성일

@@ -214,7 +214,7 @@ public class TokenService {
     }
 
     // 커스텀 JWT 토큰 생성 (userId, questionnaireId, hospitalCode, 만료초)
-    public String createCustomJwtToken(Long userId, Integer questionnaireId, String hospitalCode, int expiresInSeconds) {
+    public String createCustomJwtToken(Long userId, Long questionnaireId, String hospitalCode, int expiresInSeconds) {
         long now = System.currentTimeMillis();
         Key key = new SecretKeySpec(secretKey.getBytes(StandardCharsets.UTF_8), SignatureAlgorithm.HS256.getJcaName());
         String token = Jwts.builder()
@@ -232,7 +232,7 @@ public class TokenService {
     }
 
     // 커스텀 JWT 토큰 검증 (questionnaireId 일치)
-    public boolean validateCustomJwtToken(String token, Integer questionnaireId) {
+    public boolean validateCustomJwtToken(String token, Long questionnaireId) {
         try {
             System.out.println("[JWT 검증] 전달받은 token: " + token);
             System.out.println("[JWT 검증] 전달받은 questionnaireId 파라미터: " + questionnaireId);
@@ -242,7 +242,7 @@ public class TokenService {
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
-            Integer tokenQid = claims.get("questionnaireId", Integer.class);
+            Long tokenQid = claims.get("questionnaireId", Long.class);
             System.out.println("[JWT 검증] token 내 claim의 questionnaireId: " + tokenQid);
             if (!questionnaireId.equals(tokenQid)) {
                 System.out.println("[JWT 검증] 파라미터와 claim의 questionnaireId 불일치");

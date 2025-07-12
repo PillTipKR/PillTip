@@ -22,7 +22,6 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.oauth2.User.Auth.Service.TokenService;
-import org.springframework.http.HttpStatus;
 import com.oauth2.User.Hospital.HospitalService;
 import com.oauth2.Util.Encryption.EncryptionUtil;
 
@@ -37,6 +36,7 @@ public class QuestionnaireController {
     private final TokenService tokenService;
     private final HospitalService hospitalService;
     private final EncryptionUtil encryptionUtil;
+    
     //동의사항 조회
     @GetMapping("/permissions")
     public ResponseEntity<ApiResponse<UserPermissionsResponse>> getUserPermissions(
@@ -167,6 +167,30 @@ public class QuestionnaireController {
             .body(ApiResponse.success("문진표 리스트 조회 성공", list));
     }
     
+    // 현재 접속한 유저의 문진표 조회
+    @GetMapping("")
+    public ResponseEntity<ApiResponse<PatientQuestionnaireResponse>> getCurrentUserQuestionnaire(
+            @AuthenticationPrincipal User user) {
+        
+        logger.info("Received getCurrentUserQuestionnaire request for user: {}", user.getId());
+        
+        try {
+            PatientQuestionnaire questionnaire = patientQuestionnaireService.getCurrentUserQuestionnaire(user);
+            PatientQuestionnaireResponse response = PatientQuestionnaireResponse.from(questionnaire, null, user.getRealName(), user.getAddress(), encryptionUtil);
+            logger.info("Successfully retrieved current user questionnaire for user: {}", user.getId());
+            return ResponseEntity.status(200)
+                .body(ApiResponse.success("현재 유저 문진표 조회 성공", response));
+        } catch (IllegalArgumentException e) {
+            logger.warn("No questionnaire found for user: {} - Error: {}", user.getId(), e.getMessage());
+            return ResponseEntity.status(404)
+                .body(ApiResponse.error("작성된 문진표가 없습니다.", null));
+        } catch (Exception e) {
+            logger.error("Error retrieving current user questionnaire for user: {} - Error: {}", user.getId(), e.getMessage(), e);
+            return ResponseEntity.status(400)
+                .body(ApiResponse.error("문진표 조회 중 오류가 발생했습니다: " + e.getMessage(), null));
+        }
+    }
+    
     // 문진표 작성
     @PostMapping("")
     public ResponseEntity<ApiResponse<PatientQuestionnaireResponse>> createQuestionnaire(
@@ -215,180 +239,169 @@ public class QuestionnaireController {
     @GetMapping("/{id:\\d+}")
     public ResponseEntity<ApiResponse<PatientQuestionnaireResponse>> getQuestionnaireById(
             @AuthenticationPrincipal User user,
-            @PathVariable Integer id,
+            @PathVariable Long id,
             @RequestParam(value = "jwtToken", required = false) String jwtToken,
             @RequestHeader(value = "Authorization", required = false) String authorizationHeader) {
-        logger.info("Received getQuestionnaireById request for user: {} - Questionnaire ID: {}", user != null ? user.getId() : null, id);
+        
+        logger.info("Received getQuestionnaireById request for user: {} - ID: {}", user.getId(), id);
+        
         try {
-            // 1. 커스텀 토큰(문진표 열람용) 우선 검증
-            String token = jwtToken;
-            if ((token == null || token.isEmpty()) && authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
-                token = authorizationHeader.substring(7);
-            }
-            if (token != null && !token.isEmpty()) {
-                logger.info("Trying custom token validation for questionnaireId: {}, token: {}", id, token);
-                boolean valid = tokenService.validateCustomJwtToken(token, id);
+            // JWT 토큰이 제공된 경우 커스텀 검증
+            if (jwtToken != null && !jwtToken.trim().isEmpty()) {
+                logger.info("Trying custom token validation for questionnaireId: {}, token: {}", id, jwtToken);
+                boolean valid = tokenService.validateCustomJwtToken(jwtToken, id);
                 logger.info("Custom token validation result for questionnaireId {}: {}", id, valid);
+                
                 if (valid) {
+                    // 토큰이 유효하면 소유자 검증 없이 조회
                     PatientQuestionnaire questionnaire = patientQuestionnaireService.getQuestionnaireByIdPublic(id);
-                    PatientQuestionnaireResponse response = PatientQuestionnaireResponse.from(questionnaire, questionnaire.getUser().getUserProfile().getPhone(), questionnaire.getUser().getRealName(), questionnaire.getUser().getAddress(), encryptionUtil);
-                    logger.info("Successfully retrieved questionnaire by custom token - Questionnaire ID: {}", id);
+                    PatientQuestionnaireResponse response = PatientQuestionnaireResponse.from(questionnaire, null, null, null, encryptionUtil);
+                    logger.info("Successfully retrieved questionnaire by custom token for ID: {}", id);
                     return ResponseEntity.status(200)
-                        .body(ApiResponse.success("문진표 조회 성공 (커스텀 토큰)", response));
+                        .body(ApiResponse.success("문진표 조회 성공", response));
                 } else {
                     logger.warn("Custom token validation failed for questionnaireId: {}", id);
+                    return ResponseEntity.status(401)
+                        .body(ApiResponse.error("유효하지 않은 토큰입니다.", null));
                 }
             }
-            // 2. 일반 사용자 인증 (기존 방식)
-            if (user == null) {
-                logger.warn("User not authenticated and no valid custom token");
-                return ResponseEntity.status(401)
-                    .body(ApiResponse.error("인증이 필요합니다.", null));
-            }
+            
+            // 일반적인 소유자 검증을 통한 조회
             PatientQuestionnaire questionnaire = patientQuestionnaireService.getQuestionnaireById(user, id);
-            PatientQuestionnaireResponse response = PatientQuestionnaireResponse.from(questionnaire, questionnaire.getUser().getUserProfile().getPhone(), questionnaire.getUser().getRealName(), questionnaire.getUser().getAddress(), encryptionUtil);
-            logger.info("Successfully retrieved questionnaire for user: {} - Questionnaire ID: {}", user.getId(), id);
+            PatientQuestionnaireResponse response = PatientQuestionnaireResponse.from(questionnaire, null, user.getRealName(), user.getAddress(), encryptionUtil);
+            logger.info("Successfully retrieved questionnaire for user: {} - ID: {}", user.getId(), id);
             return ResponseEntity.status(200)
                 .body(ApiResponse.success("문진표 조회 성공", response));
-        } catch (IllegalArgumentException e) {
-            logger.error("Questionnaire not found for user: {} - Questionnaire ID: {} - Error: {}", user != null ? user.getId() : null, id, e.getMessage());
-            return ResponseEntity.status(404)
-                .body(ApiResponse.error("문진표를 찾을 수 없습니다: " + e.getMessage(), null));
+                
         } catch (SecurityException e) {
-            logger.error("Access denied for user: {} - Questionnaire ID: {} - Error: {}", user != null ? user.getId() : null, id, e.getMessage());
+            logger.warn("Security violation for questionnaire access - User: {} - ID: {} - Error: {}", user.getId(), id, e.getMessage());
             return ResponseEntity.status(403)
-                .body(ApiResponse.error("접근 권한이 없습니다: " + e.getMessage(), null));
+                .body(ApiResponse.error("본인 문진표만 조회할 수 있습니다.", null));
+        } catch (IllegalArgumentException e) {
+            logger.warn("Questionnaire not found - User: {} - ID: {} - Error: {}", user.getId(), id, e.getMessage());
+            return ResponseEntity.status(404)
+                .body(ApiResponse.error("문진표를 찾을 수 없습니다.", null));
         } catch (Exception e) {
-            logger.error("Error retrieving questionnaire for user: {} - Questionnaire ID: {} - Error: {}", user != null ? user.getId() : null, id, e.getMessage(), e);
+            logger.error("Error retrieving questionnaire for user: {} - ID: {} - Error: {}", user.getId(), id, e.getMessage(), e);
             return ResponseEntity.status(400)
-                .body(ApiResponse.error("문진표 조회 실패: " + e.getMessage(), null));
+                .body(ApiResponse.error("문진표 조회 중 오류가 발생했습니다: " + e.getMessage(), null));
         }
     }
-    // 문진표 삭제 (숫자 ID만 허용)
-    @DeleteMapping("/{id:\\d+}")
-    public ResponseEntity<ApiResponse<java.util.List<PatientQuestionnaireSummaryResponse>>> deleteQuestionnaire(
-            @AuthenticationPrincipal User user,
-            @PathVariable Integer id) {
-        // 권한 체크
-        try {
-            UserPermissionsResponse permissions = userPermissionsService.getUserPermissions(user);
-            if (!permissions.isSensitiveInfoPermission() || !permissions.isMedicalInfoPermission()) {
-                return ResponseEntity.status(403)
-                    .body(ApiResponse.error("문진표 삭제를 위한 권한이 없습니다. 민감정보 및 의료정보 동의가 필요합니다.", null));
-            }
-        } catch (Exception e) {
-            logger.error("Error checking permissions for user: {} - Error: {}", user.getId(), e.getMessage(), e);
-            return ResponseEntity.status(400)
-                .body(ApiResponse.error("권한 확인 중 오류가 발생했습니다: " + e.getMessage(), null));
-        }
+    
+    // 현재 유저의 문진표 삭제
+    @DeleteMapping("")
+    public ResponseEntity<ApiResponse<String>> deleteCurrentUserQuestionnaire(
+            @AuthenticationPrincipal User user) {
         
-        java.util.List<PatientQuestionnaireSummaryResponse> list = patientQuestionnaireService.deleteQuestionnaireAndReturnList(user, id);
-        return ResponseEntity.status(200)
-            .body(ApiResponse.success("문진표 삭제 성공", list));
+        logger.info("Received deleteCurrentUserQuestionnaire request for user: {}", user.getId());
+        
+        try {
+            patientQuestionnaireService.deleteCurrentUserQuestionnaire(user);
+            logger.info("Successfully deleted current user questionnaire for user: {}", user.getId());
+            return ResponseEntity.status(200)
+                .body(ApiResponse.success("문진표 삭제 성공", "문진표가 성공적으로 삭제되었습니다."));
+        } catch (IllegalArgumentException e) {
+            logger.warn("No questionnaire found for deletion - User: {} - Error: {}", user.getId(), e.getMessage());
+            return ResponseEntity.status(404)
+                .body(ApiResponse.error("작성된 문진표가 없습니다.", null));
+        } catch (Exception e) {
+            logger.error("Error deleting current user questionnaire for user: {} - Error: {}", user.getId(), e.getMessage(), e);
+            return ResponseEntity.status(400)
+                .body(ApiResponse.error("문진표 삭제 중 오류가 발생했습니다: " + e.getMessage(), null));
+        }
     }
-    // 문진표 수정 (숫자 ID만 허용)
-    @PutMapping("/{id:\\d+}")
-    public ResponseEntity<ApiResponse<PatientQuestionnaireResponse>> updateQuestionnaire(
+    
+    // 현재 유저의 문진표 수정
+    @PutMapping("")
+    public ResponseEntity<ApiResponse<PatientQuestionnaireResponse>> updateCurrentUserQuestionnaire(
             @AuthenticationPrincipal User user,
-            @PathVariable Integer id,
             @RequestBody PatientQuestionnaireRequest request) {
-        // Validate realName and address
-        if (request.getRealName() == null || request.getRealName().trim().isEmpty() ||
-            request.getAddress() == null || request.getAddress().trim().isEmpty() ||
-            request.getPhoneNumber() == null || request.getPhoneNumber().trim().isEmpty()) {
-            return ResponseEntity.status(400)
-                .body(ApiResponse.error("실명과 주소, 전화번호는 필수입니다.", null));
-        }
         
-        // 권한 체크
+        logger.info("Received updateCurrentUserQuestionnaire request for user: {}", user.getId());
+        
         try {
-            UserPermissionsResponse permissions = userPermissionsService.getUserPermissions(user);
-            if (!permissions.isSensitiveInfoPermission() || !permissions.isMedicalInfoPermission()) {
-                return ResponseEntity.status(403)
-                    .body(ApiResponse.error("문진표 수정을 위한 권한이 없습니다. 민감정보 및 의료정보 동의가 필요합니다.", null));
+            PatientQuestionnaire questionnaire = patientQuestionnaireService.updateCurrentUserQuestionnaire(user, request);
+            // 업데이트된 User 정보를 사용하여 응답 생성
+            PatientQuestionnaireResponse response = PatientQuestionnaireResponse.from(questionnaire, request.getPhoneNumber(), request.getRealName(), request.getAddress(), encryptionUtil);
+            logger.info("Successfully updated current user questionnaire for user: {}", user.getId());
+            return ResponseEntity.status(200)
+                .body(ApiResponse.success("문진표 수정 성공", response));
+        } catch (IllegalArgumentException e) {
+            // 약물 검증 실패인지 확인
+            if (e.getMessage().contains("복용 중인 약 목록에 없습니다")) {
+                logger.warn("Invalid medication for update - User: {} - Error: {}", user.getId(), e.getMessage());
+                return ResponseEntity.status(400)
+                    .body(ApiResponse.error(e.getMessage(), null));
+            } else {
+                logger.warn("No questionnaire found for update - User: {} - Error: {}", user.getId(), e.getMessage());
+                return ResponseEntity.status(404)
+                    .body(ApiResponse.error("작성된 문진표가 없습니다.", null));
             }
         } catch (Exception e) {
-            logger.error("Error checking permissions for user: {} - Error: {}", user.getId(), e.getMessage(), e);
+            logger.error("Error updating current user questionnaire for user: {} - Error: {}", user.getId(), e.getMessage(), e);
             return ResponseEntity.status(400)
-                .body(ApiResponse.error("권한 확인 중 오류가 발생했습니다: " + e.getMessage(), null));
-        }
-        
-        try {
-            PatientQuestionnaire updated = patientQuestionnaireService.updateQuestionnaire(user, id, request);
-            PatientQuestionnaireResponse response = PatientQuestionnaireResponse.from(updated, request.getPhoneNumber(), user.getRealName(), user.getAddress(), encryptionUtil);
-            return ResponseEntity.ok(ApiResponse.success("문진표 수정 성공", response));
-        } catch (JsonProcessingException e) {
-            return ResponseEntity.status(400)
-                .body(ApiResponse.error("Failed to serialize questionnaire info: " + e.getMessage(), null));
-        } catch (Exception e) {
-            return ResponseEntity.status(400)
-                .body(ApiResponse.error("Failed to update questionnaire: " + e.getMessage(), null));
+                .body(ApiResponse.error("문진표 수정 중 오류가 발생했습니다: " + e.getMessage(), null));
         }
     }
-    // QR 코드를 통한 문진표 URL 생성 API (문진표 ID 명시)
-    @PostMapping("/qr-url/{hospitalCode}/{questionnaireId}")
-    public ResponseEntity<ApiResponse<QRQuestionnaireResponse>> generateQRQuestionnaireUrl(
+    // QR 코드를 통한 문진표 URL 생성 API (현재 유저의 문진표)
+    @PostMapping("/qr-url/{hospitalCode}")
+    public ResponseEntity<QRQuestionnaireResponse> generateQRUrl(
             @AuthenticationPrincipal User user,
-            @PathVariable String hospitalCode,
-            @PathVariable Integer questionnaireId) {
-        logger.info("=== QR QUESTIONNAIRE URL GENERATION START ===");
-        logger.info("User ID: {}, Hospital Code: {}, Questionnaire ID: {}", user.getId(), hospitalCode, questionnaireId);
+            @PathVariable String hospitalCode) {
+        
+        logger.info("User ID: {}, Hospital Code: {}", user.getId(), hospitalCode);
         
         try {
             // 1. 병원 코드 유효성 검사
             if (!hospitalService.existsByHospitalCode(hospitalCode)) {
                 logger.warn("Invalid hospital code: {}", hospitalCode);
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(ApiResponse.error("존재하지 않는 병원 코드입니다.", null));
+                return ResponseEntity.notFound().build();
             }
-
-            // 2. 해당 문진표가 본인 소유인지 검증
-            PatientQuestionnaire questionnaire = patientQuestionnaireService.getQuestionnaireById(user, questionnaireId);
-            if (questionnaire == null) {
-                logger.warn("Questionnaire not found for user: {} - Questionnaire ID: {}", user.getId(), questionnaireId);
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(ApiResponse.error("등록된 문진표가 없습니다.", null));
-            }
-
-            // 3. 5분(300초) 유효한 JWT 토큰 생성
+            
+            // 2. 현재 유저의 문진표 존재 여부 확인
+            PatientQuestionnaire questionnaire = patientQuestionnaireService.getCurrentUserQuestionnaire(user);
+            
+            // 3. JWT 토큰 생성 (3분)
             String jwtToken = tokenService.createCustomJwtToken(
                 user.getId(),
                 questionnaire.getQuestionnaireId(),
                 hospitalCode,
-                300 // 5분
+                180
             );
-
-            // 4. URL 생성 (로컬 테스트용)
-            String questionnaireUrl = String.format("http://localhost:3000/questionnaire/public/%d?jwtToken=%s",
-                    questionnaire.getQuestionnaireId(), jwtToken);
-
-            // 5. 응답 생성
+            
+            // 4. QR URL 생성
+            String qrUrl = String.format("http://localhost:3000/api/questionnaire/public/%s?token=%s",
+                questionnaire.getQuestionnaireId(),
+                jwtToken);
+            
             QRQuestionnaireResponse response = QRQuestionnaireResponse.builder()
-                .questionnaireUrl(questionnaireUrl)
+                .questionnaireId(questionnaire.getQuestionnaireId())
+                .qrUrl(qrUrl)
                 .patientName(user.getRealName() != null ? user.getRealName() : user.getNickname())
                 .hospitalCode(hospitalCode)
-                .questionnaireId(questionnaire.getQuestionnaireId())
                 .accessToken(jwtToken)
-                .expiresInMinutes(3)
+                .expiresInMinutes(180) // 3분
                 .build();
-
-            logger.info("Successfully generated QR questionnaire URL for user: {} - Hospital: {} - Questionnaire ID: {}", 
-                user.getId(), hospitalCode, questionnaireId);
-            logger.info("=== QR QUESTIONNAIRE URL GENERATION END ===");
-
-            return ResponseEntity.status(HttpStatus.OK)
-                .body(ApiResponse.success("QR 문진표 URL 생성 성공", response));
+            
+            logger.info("QR URL generated successfully for user: {} - Hospital Code: {}", 
+                user.getId(), hospitalCode);
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (IllegalArgumentException e) {
+            logger.warn("No questionnaire found for QR generation - User: {} - Error: {}", user.getId(), e.getMessage());
+            return ResponseEntity.notFound().build();
         } catch (Exception e) {
-            logger.error("Error generating QR questionnaire URL - Error: {}", e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(ApiResponse.error("QR 문진표 URL 생성 실패: " + e.getMessage(), null));
+            logger.error("Error generating QR URL for user: {} - Hospital Code: {}", 
+                user.getId(), hospitalCode, e);
+            return ResponseEntity.internalServerError().build();
         }
     }
 
     // 커스텀 토큰(문진표 열람용) 전용 공개 API
     @GetMapping("/public/{id:\\d+}")
     public ResponseEntity<ApiResponse<PatientQuestionnaireResponse>> getQuestionnaireByCustomToken(
-            @PathVariable Integer id,
+            @PathVariable Long id,
             @RequestParam("jwtToken") String jwtToken) {
         logger.info("[커스텀 토큰 전용] getQuestionnaireByCustomToken called. id: {}, jwtToken: {}", id, jwtToken != null ? jwtToken.substring(0, Math.min(jwtToken.length(), 20)) + "..." : null);
         boolean valid = tokenService.validateCustomJwtToken(jwtToken, id);

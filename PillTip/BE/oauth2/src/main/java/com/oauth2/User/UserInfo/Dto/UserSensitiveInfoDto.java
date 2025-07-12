@@ -15,7 +15,6 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class UserSensitiveInfoDto {
-    private List<String> medicationInfo;
     private List<String> allergyInfo;
     private List<String> chronicDiseaseInfo;
     private List<String> surgeryHistoryInfo;
@@ -23,7 +22,6 @@ public class UserSensitiveInfoDto {
     public static UserSensitiveInfoDto from(UserSensitiveInfo entity) {
         try {
             return UserSensitiveInfoDto.builder()
-                    .medicationInfo(parseCommaSeparatedToList(entity.getMedicationInfo()))
                     .allergyInfo(parseCommaSeparatedToList(entity.getAllergyInfo()))
                     .chronicDiseaseInfo(parseCommaSeparatedToList(entity.getChronicDiseaseInfo()))
                     .surgeryHistoryInfo(parseCommaSeparatedToList(entity.getSurgeryHistoryInfo()))

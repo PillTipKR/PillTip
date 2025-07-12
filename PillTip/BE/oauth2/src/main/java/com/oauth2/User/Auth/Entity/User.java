@@ -110,10 +110,10 @@ public class User {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ReviewLike> likes = new ArrayList<>();
 
-    // 유저 문진표 1대 N 관계
+    // 유저 문진표 1대 1 관계
     @JsonManagedReference
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
-    private List<PatientQuestionnaire> questionnaires;
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
+    private PatientQuestionnaire questionnaire;
 
     // 복용 중인 약 1대 N 관계
     @JsonManagedReference

@@ -11,10 +11,11 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class QRQuestionnaireResponse {
     private String questionnaireUrl;
+    private String qrUrl;
     private String patientName;
     private boolean patientPregnant;
     private String hospitalCode;
-    private Integer questionnaireId;
+    private Long questionnaireId;
     private String accessToken;
     private int expiresInMinutes;
 } 

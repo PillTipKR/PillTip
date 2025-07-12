@@ -3,6 +3,7 @@ package com.oauth2.User.TakingPill.Repositoty;
 import com.oauth2.User.TakingPill.Entity.TakingPill;
 import com.oauth2.User.Auth.Entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -18,8 +19,10 @@ public interface TakingPillRepository extends JpaRepository<TakingPill, Long> {
 
    @Query("SELECT DISTINCT tp FROM TakingPill tp LEFT JOIN FETCH tp.dosageSchedules WHERE tp.user = :user")
    List<TakingPill> findByUserWithDosageSchedules(@Param("user") User user);
-
-   @Query("SELECT t FROM TakingPill t WHERE t.user.id = :userId")
-   List<TakingPill> findAllByUserId(@Param("userId") Long userId);
-
+  
+   @Modifying
+   @Query("DELETE FROM TakingPill tp WHERE tp.endYear < :year OR " +
+           "(tp.endYear = :year AND tp.endMonth < :month) OR " +
+           "(tp.endYear = :year AND tp.endMonth = :month AND tp.endDay < :day)")
+   void deleteExpiredPills(@Param("year") int year, @Param("month") int month, @Param("day") int day);
 }

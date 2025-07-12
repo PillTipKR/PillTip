@@ -3,12 +3,9 @@ package com.oauth2.Drug.DUR.Controller;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.oauth2.Drug.DUR.Dto.DurAnalysisResponse;
 import com.oauth2.Drug.DUR.Service.DurService;
-import com.oauth2.Drug.Import.DURImport.Controller.DurImportController;
 import com.oauth2.User.Auth.Dto.ApiResponse;
 import com.oauth2.User.Auth.Entity.User;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -19,7 +16,6 @@ import org.springframework.web.bind.annotation.*;
 public class DurController {
 
     private final DurService durService;
-    private final Logger logger = LoggerFactory.getLogger(DurImportController.class);
 
     @GetMapping("/dur")
     public ResponseEntity<ApiResponse<DurAnalysisResponse>> analysisDur(
