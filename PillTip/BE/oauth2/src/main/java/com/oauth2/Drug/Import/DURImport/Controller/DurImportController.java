@@ -54,4 +54,15 @@ public class DurImportController {
             return ResponseEntity.internalServerError().body("에러: " + e.getMessage());
         }
     }
+
+    @PostMapping("/interactionIng")
+    public ResponseEntity<String> saveIngInteraction() {
+        try {
+            drugInteractionService.loadIng();
+            return ResponseEntity.ok("주의 정보 저장 완료");
+        } catch (Exception e) {
+            logger.error("Error occurred in import interaction: {}", e.getMessage());
+            return ResponseEntity.internalServerError().body("에러: " + e.getMessage());
+        }
+    }
 }

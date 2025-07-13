@@ -154,6 +154,36 @@ public class PromptImporter {
         return null;
     }
 
+    private String cleanAllFormatting(String input) {
+        if (input == null) return "";
+
+        String result = input;
+
+        // 1. 역슬래시 제거
+        result = result.replaceAll("\\\\", "");
+
+        // 2. HTML 태그 제거
+        result = result.replaceAll("<[^>]*>", "");
+
+        // 3. HTML 특수문자 제거 (기본 escape 문자)
+        result = result.replaceAll("&[a-zA-Z]+;", "");
+
+        // 4. 마크다운 특수문자 제거
+        String[] markdownSymbols = {
+                "\\*\\*",       // **,
+                "~~",                  // 취소선
+                "`+",                  // `, ```, 등
+                "#+",                  // #, ##, ###
+                ">", "-", "\\+",       // 인용, 리스트
+                "\\|", "!", "_",       // 기타 마크다운
+        };
+
+        for (String symbol : markdownSymbols) {
+            result = result.replaceAll(symbol, "");
+        }
+
+        return result;
+    }
 
 
     public void importPromptCaution(String filePath) {
@@ -171,6 +201,7 @@ public class PromptImporter {
 
                 String drugName = block.substring(0, titleEndIdx).trim();
                 String cautionText = block.substring(titleEndIdx + "주의사항 ===".length()).trim();
+                cautionText = cleanAllFormatting(cautionText);
                 // 2. 주의사항이 무의미한 경우 스킵
                 if (cautionText.contains("유효한 주의사항 정보가 없습니다.")) {
                     //System.out.println("스킵됨 (주의사항 없음): " + drugName);

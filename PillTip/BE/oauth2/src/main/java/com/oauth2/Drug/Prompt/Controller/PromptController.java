@@ -20,7 +20,7 @@ public class PromptController {
     private final DrugPromptService drugPromptService;
     private final DurService durService;
 
-    @GetMapping("/detailPage/gpt")
+    @PostMapping("/detailPage/gpt")
     public ResponseEntity<ApiResponse<String>> askGPT(
             @AuthenticationPrincipal User user,
             @RequestBody DrugDetail detail) {
