@@ -18,7 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
-import com.oauth2.Util.Encryption.EncryptionUtil;
+import com.oauth2.User.Auth.Dto.AuthMessageConstants;
 
 @Service //스프링 서비스 빈으로 등록
 @RequiredArgsConstructor //final 필드에 생성자 자동 생성
@@ -30,7 +30,6 @@ public class SignupService {
     private final TokenService tokenService;
     private final OAuth2Service oauth2Service;
     private final FCMTokenRepository fcmTokenRepository;
-    private final EncryptionUtil encryptionUtil;
 
     //회원가입 요청 처리
     public User signup(SignupRequest request) {
@@ -87,20 +86,20 @@ public class SignupService {
     private void validateSignupRequest(SignupRequest request) {
         // loginType 검사
         if (request.getLoginType() == null) {
-            throw new RuntimeException("LoginType is required (IDPW or SOCIAL)");
+            throw new RuntimeException(AuthMessageConstants.LOGIN_TYPE_REQUIRED_DETAIL);
         }
         
         // IDPW 로그인, 빈 값 검사, 중복 검사
         if (request.getLoginType() == LoginType.IDPW) {
             if (request.getLoginId() == null || request.getPassword() == null) {
-                throw new RuntimeException("User ID and password are required for ID/PW login");
+                throw new RuntimeException(AuthMessageConstants.USER_ID_PASSWORD_REQUIRED);
             }
             userService.checkDuplicate(request.getLoginId(), "loginid");
         }
         // 소셜 로그인, 빈 값 검사, 중복 검사
         else if (request.getLoginType() == LoginType.SOCIAL) {
             if (request.getToken() == null) {
-                throw new RuntimeException("Token is required for social login");
+                throw new RuntimeException(AuthMessageConstants.TOKEN_REQUIRED_FOR_SOCIAL);
             }
             
             // OAuth2 서버에서 사용자 정보 가져오기
@@ -109,21 +108,11 @@ public class SignupService {
                     request.getToken()
             );
             
-            // socialId 중복 체크 (암호화된 값과 비교)
+            // socialId 중복 체크 (EncryptionConverter가 자동으로 복호화)
             List<User> allUsers = userRepository.findAll();
             for (User user : allUsers) {
-                if (user.getSocialId() != null) {
-                    try {
-                        String decryptedSocialId = encryptionUtil.decrypt(user.getSocialId());
-                        if (decryptedSocialId.equals(oauth2UserInfo.getSocialId())) {
-                            throw new RuntimeException("Social account already exists");
-                        }
-                    } catch (Exception e) {
-                        // 복호화 실패 시 원본 값과도 비교
-                        if (user.getSocialId().equals(oauth2UserInfo.getSocialId())) {
-                            throw new RuntimeException("Social account already exists");
-                        }
-                    }
+                if (user.getSocialId() != null && user.getSocialId().equals(oauth2UserInfo.getSocialId())) {
+                    throw new RuntimeException(AuthMessageConstants.SOCIAL_ACCOUNT_ALREADY_EXISTS_DETAIL);
                 }
             }
         }
@@ -225,7 +214,7 @@ public class SignupService {
     // 전화번호 유효성 검사
     private String validatePhoneNumber(String phone) {
         if (phone == null || !phone.matches("^01(?:0|1|[6-9])-(?:\\d{3}|\\d{4})-\\d{4}$")) {
-            throw new IllegalArgumentException("Invalid phone number format");
+            throw new IllegalArgumentException(AuthMessageConstants.INVALID_PHONE_NUMBER_FORMAT);
         }
         return phone;
     }

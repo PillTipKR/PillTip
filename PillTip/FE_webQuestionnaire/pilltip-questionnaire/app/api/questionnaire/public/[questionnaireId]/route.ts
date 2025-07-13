@@ -12,15 +12,11 @@ export async function GET(
 ) {
   const { questionnaireId } = await context.params;
 
-  console.log("[DEBUG] request.nextUrl:", request.nextUrl.toString());
   const jwtTokenFromQuery =
     request.nextUrl.searchParams.get("token") ||
     request.nextUrl.searchParams.get("jwtToken");
   const jwtTokenFromCookie = (await cookies()).get("jwtToken")?.value;
   const jwtToken = jwtTokenFromQuery || jwtTokenFromCookie;
-
-  console.log(`[DEBUG] questionnaireId:`, questionnaireId);
-  console.log(`[DEBUG] jwtToken:`, jwtToken);
 
   try {
     const headers: Record<string, string> = {
@@ -39,8 +35,6 @@ export async function GET(
       headers: headers,
     });
 
-    console.log(`[DEBUG] BE response status:`, response.status);
-
     if (!response.ok) {
       return NextResponse.json(
         {
@@ -51,7 +45,6 @@ export async function GET(
     }
 
     const result = await response.json();
-    console.log(`[DEBUG] BE response JSON:`, result);
 
     if (result.status === "success" && result.data) {
       const questionnaire = {

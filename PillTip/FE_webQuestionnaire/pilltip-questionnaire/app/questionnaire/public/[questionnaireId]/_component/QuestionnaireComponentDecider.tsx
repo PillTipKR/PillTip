@@ -56,9 +56,6 @@ export default function QuestionnaireComponentDecider({
           // JWT 토큰 만료 또는 인증 실패
           setError("JWT 토큰이 만료되었습니다. 다시 문진표를 받아 주세요.");
           return;
-        } else if (response.status === 404) {
-          // 404 에러가 발생해도 더미 데이터가 반환되므로 에러를 던지지 않음
-          console.log(`문진표 ${questionnaireId} 조회 실패, 더미 데이터 사용`);
         } else {
           // 기타 에러
           const errorData = await response.json().catch(() => ({}));
@@ -71,7 +68,6 @@ export default function QuestionnaireComponentDecider({
       }
 
       const responseData = await response.json();
-      console.log("[DEBUG] API Response:", responseData);
 
       // 401 에러가 아닌 경우에만 데이터 설정
       if (response.ok || response.status === 404) {
@@ -83,7 +79,7 @@ export default function QuestionnaireComponentDecider({
           data: responseData.data || {},
           status: responseData.status || "success",
         };
-        console.log("[DEBUG] Processed questionnaire data:", questionnaireData);
+
         setQuestionnaire(questionnaireData);
       }
     } catch (err) {

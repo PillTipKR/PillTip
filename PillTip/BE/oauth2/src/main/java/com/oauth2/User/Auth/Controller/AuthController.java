@@ -24,6 +24,7 @@ import com.oauth2.User.Auth.Dto.TermsResponse;
 import com.oauth2.User.Alarm.Repository.FCMTokenRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.oauth2.User.Auth.Dto.AuthMessageConstants;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -43,10 +44,11 @@ public class AuthController {
         try {
             LoginResponse loginResponse = loginService.login(request);
             return ResponseEntity.status(200)
-                .body(ApiResponse.success("Login successful", loginResponse));
+                .body(ApiResponse.success(AuthMessageConstants.LOGIN_SUCCESS, loginResponse));
         } catch (Exception e) {
+            logger.error("Login failed: {}", e.getMessage(), e);
             return ResponseEntity.status(400)
-                .body(ApiResponse.error("Login failed: " + e.getMessage(), null));
+                .body(ApiResponse.error(AuthMessageConstants.LOGIN_FAILED, null));
         }
     }
 
@@ -55,7 +57,7 @@ public class AuthController {
     public ResponseEntity<ApiResponse<LoginResponse>> socialLogin(@RequestBody SocialLoginRequest request) {
         LoginResponse loginResponse = loginService.socialLogin(request);
         return ResponseEntity.status(200)
-            .body(ApiResponse.success("Social login successful", loginResponse));
+            .body(ApiResponse.success(AuthMessageConstants.SOCIAL_LOGIN_SUCCESS, loginResponse));
     }
 
     // 회원가입
@@ -69,24 +71,25 @@ public class AuthController {
                     .refreshToken(userToken.getRefreshToken())
                     .build();
             return ResponseEntity.status(201)
-                .body(ApiResponse.success("Signup successful", signupResponse));
+                .body(ApiResponse.success(AuthMessageConstants.SIGNUP_SUCCESS, signupResponse));
         } catch (RuntimeException e) {
             String errorMessage = e.getMessage();
-            if (errorMessage.contains("LoginType")) {
+            if (errorMessage.contains(AuthMessageConstants.ERROR_KEYWORD_LOGIN_TYPE)) {
                 return ResponseEntity.status(400)
-                    .body(ApiResponse.error("로그인 타입이 필요합니다 (IDPW 또는 SOCIAL)", null));
-            } else if (errorMessage.contains("전화번호")) {
+                    .body(ApiResponse.error(AuthMessageConstants.LOGIN_TYPE_REQUIRED, null));
+            } else if (errorMessage.contains(AuthMessageConstants.ERROR_KEYWORD_PHONE_NUMBER)) {
                 return ResponseEntity.status(400)
-                    .body(ApiResponse.error("이미 사용 중인 전화번호입니다.", null));
-            } else if (errorMessage.contains("Nickname") || errorMessage.contains("UK2ty1xmrrgtn89xt7kyxx6ta7h")) {
+                    .body(ApiResponse.error(AuthMessageConstants.DUPLICATE_PHONE_FORMAT, null));
+            } else if (errorMessage.contains(AuthMessageConstants.ERROR_KEYWORD_NICKNAME)) {
                 return ResponseEntity.status(400)
-                    .body(ApiResponse.error("이미 사용 중인 닉네임입니다.", null));
-            } else if (errorMessage.contains("User ID")) {
+                    .body(ApiResponse.error(AuthMessageConstants.DUPLICATE_NICKNAME_FORMAT, null));
+            } else if (errorMessage.contains(AuthMessageConstants.ERROR_KEYWORD_USER_ID)) {
                 return ResponseEntity.status(400)
-                    .body(ApiResponse.error("이미 존재하는 사용자 ID입니다.", null));
+                    .body(ApiResponse.error(AuthMessageConstants.DUPLICATE_LOGIN_ID, null));
             } else {
+                logger.error("Signup failed: {}", errorMessage);
                 return ResponseEntity.status(400)
-                    .body(ApiResponse.error("회원가입 실패: " + errorMessage, null));
+                    .body(ApiResponse.error(AuthMessageConstants.SIGNUP_FAILED, null));
             }
         }
     }
@@ -95,7 +98,9 @@ public class AuthController {
     @PostMapping("/check-duplicate")
     public ResponseEntity<ApiResponse<Boolean>> checkDuplicate(@RequestBody DuplicateCheckRequest request) {
         boolean isDuplicate = userService.isDuplicate(request.value(), request.type());
-        String message = isDuplicate ? "이미 사용 중인 " + request.type() + "입니다." : "사용 가능한 " + request.type() + "입니다.";
+        String message = isDuplicate ? 
+            String.format(AuthMessageConstants.DUPLICATE_CHECK_FAILED, request.type()) : 
+            String.format(AuthMessageConstants.DUPLICATE_CHECK_SUCCESS, request.type());
         return ResponseEntity.status(200)
             .body(ApiResponse.success(message, !isDuplicate));
     }
@@ -106,33 +111,23 @@ public class AuthController {
     public ResponseEntity<ApiResponse<String>> Logout(@AuthenticationPrincipal User user) {
         if (user == null) {
             return ResponseEntity.status(401)
-                    .body(ApiResponse.error("User not authenticated", null));
+                    .body(ApiResponse.error(AuthMessageConstants.USER_NOT_AUTHENTICATED, null));
         }
 
         try {
-            logger.info("=== LOGOUT START ===");
-            logger.info("Received logout request for user: {}", user.getId());
-            
             User currentUser = userService.getCurrentUser(user.getId());
             
             if (currentUser.getFCMToken() != null) {
-                logger.info("Current FCM token logged_in status: {}", currentUser.getFCMToken().isLoggedIn());
                 currentUser.getFCMToken().setLoggedIn(false);
-                
-                // FCM 토큰을 데이터베이스에 저장
                 fcmTokenRepository.save(currentUser.getFCMToken());
-                logger.info("FCM token logged_in status updated to: {}", currentUser.getFCMToken().isLoggedIn());
-            } else {
-                logger.warn("FCM token is null for user: {}", user.getId());
             }
             
-            logger.info("=== LOGOUT END ===");
             return ResponseEntity.status(200)
-                    .body(ApiResponse.success("로그아웃 되었습니다."));
+                    .body(ApiResponse.success(AuthMessageConstants.LOGOUT_SUCCESS));
         } catch (Exception e) {
             logger.error("Error during logout for user: {} - Error: {}", user.getId(), e.getMessage(), e);
             return ResponseEntity.status(400)
-                    .body(ApiResponse.error("로그아웃 중 오류가 발생했습니다: " + e.getMessage(), null));
+                    .body(ApiResponse.error(AuthMessageConstants.LOGOUT_FAILED, null));
         }
     }
 
@@ -143,10 +138,11 @@ public class AuthController {
         try {
             LoginResponse loginResponse = loginService.refreshToken(refreshToken);
             return ResponseEntity.status(200)
-                .body(ApiResponse.success("Token refreshed successfully", loginResponse));
+                .body(ApiResponse.success(AuthMessageConstants.TOKEN_REFRESH_SUCCESS, loginResponse));
         } catch (RuntimeException e) {
+            logger.error("Token refresh failed: {}", e.getMessage(), e);
             return ResponseEntity.status(400)
-                .body(ApiResponse.error("Token refresh failed: " + e.getMessage(), null));
+                .body(ApiResponse.error(AuthMessageConstants.TOKEN_REFRESH_FAILED, null));
         }
     }
 
@@ -155,7 +151,7 @@ public class AuthController {
     public ResponseEntity<ApiResponse<TermsResponse>> agreeToTerms(@AuthenticationPrincipal User user) {
         if (user == null) {
             return ResponseEntity.status(400)
-                .body(ApiResponse.error("User not authenticated", null));
+                .body(ApiResponse.error(AuthMessageConstants.USER_NOT_AUTHENTICATED, null));
         }
         
         try {
@@ -165,10 +161,11 @@ public class AuthController {
                 .nickname(updatedUser.getNickname())
                 .build();
             return ResponseEntity.status(200)
-                .body(ApiResponse.success("Terms agreed successfully", termsResponse));
+                .body(ApiResponse.success(AuthMessageConstants.TERMS_AGREEMENT_SUCCESS, termsResponse));
         } catch (Exception e) {
+            logger.error("Terms agreement failed: {}", e.getMessage(), e);
             return ResponseEntity.status(400)
-                .body(ApiResponse.error("Failed to agree to terms: " + e.getMessage(), null));
+                .body(ApiResponse.error(AuthMessageConstants.TERMS_AGREEMENT_FAILED, null));
         }
     }
 }

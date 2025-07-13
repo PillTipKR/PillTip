@@ -5,6 +5,7 @@ package com.oauth2.User.Auth.Service;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.oauth2.User.Auth.Dto.OAuth2UserInfo;
+import com.oauth2.User.Auth.Dto.AuthMessageConstants;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
@@ -36,7 +37,7 @@ public class OAuth2Service {
             case "kakao":
                 return getKakaoUserInfo(accessToken);
             default:
-                throw new IllegalArgumentException("Unsupported OAuth2 provider: " + provider);
+                throw new IllegalArgumentException(AuthMessageConstants.UNSUPPORTED_OAUTH2_PROVIDER + ": " + provider);
         }
     }
 
@@ -59,7 +60,7 @@ public class OAuth2Service {
             // socialId는 필수값
             String socialId = userInfo.get("id").asText();
             if (socialId == null || socialId.isEmpty()) {
-                throw new RuntimeException("Google user ID is required");
+                throw new RuntimeException(AuthMessageConstants.GOOGLE_USER_ID_REQUIRED);
             }
 
             return OAuth2UserInfo.builder()
@@ -69,7 +70,7 @@ public class OAuth2Service {
                 .profileImage(getNodeAsText(userInfo, "picture")) // 선택적
                 .build();
         } catch (Exception e) {
-            throw new RuntimeException("Failed to parse Google user info", e);
+            throw new RuntimeException(AuthMessageConstants.GOOGLE_USER_INFO_PARSE_FAILED, e);
         }
     }
 
@@ -91,7 +92,7 @@ public class OAuth2Service {
             // socialId는 필수값
             String socialId = userInfo.get("id").asText();
             if (socialId == null || socialId.isEmpty()) {
-                throw new RuntimeException("Kakao user ID is required");
+                throw new RuntimeException(AuthMessageConstants.KAKAO_USER_ID_REQUIRED);
             }
 
             JsonNode kakaoAccount = userInfo.get("kakao_account");
@@ -104,18 +105,7 @@ public class OAuth2Service {
                 .profileImage(profile != null ? getNodeAsText(profile, "profile_image_url") : null) // 선택적
                 .build();
         } catch (Exception e) {
-            // 개발/테스트 환경에서 카카오 API 호출 실패 시 더미 데이터 반환
-            if (e.getMessage().contains("ip mismatched") || e.getMessage().contains("401")) {
-                // 토큰을 기반으로 일관된 소셜 ID 생성
-                String consistentSocialId = "test_kakao_user_" + accessToken.hashCode();
-                return OAuth2UserInfo.builder()
-                    .socialId(consistentSocialId)
-                    .email("test@kakao.com")
-                    .name("테스트카카오유저")
-                    .profileImage("https://via.placeholder.com/150")
-                    .build();
-            }
-            throw new RuntimeException("Failed to parse Kakao user info", e);
+            throw new RuntimeException(AuthMessageConstants.KAKAO_USER_INFO_PARSE_FAILED, e);
         }
     }
 

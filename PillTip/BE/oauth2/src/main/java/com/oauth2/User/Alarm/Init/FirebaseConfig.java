@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
+import com.oauth2.User.Alarm.Dto.AlarmMessageConstants;
 
 import java.io.FileInputStream;
 import com.google.auth.oauth2.GoogleCredentials;
@@ -33,7 +34,7 @@ public class FirebaseConfig {
                 FirebaseApp.initializeApp(options);
             }
         } catch (Exception e) {
-            logger.error("Error occurred in FirebaseConfig: {}", e.getMessage());
+            logger.error(AlarmMessageConstants.FIREBASE_CONFIG_ERROR + "{}", e.getMessage());
         }
     }
 }

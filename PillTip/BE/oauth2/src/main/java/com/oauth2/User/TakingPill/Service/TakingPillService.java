@@ -12,7 +12,6 @@ import com.oauth2.User.TakingPill.Entity.*;
 import com.oauth2.User.TakingPill.Repositoty.DosageLogRepository;
 import com.oauth2.User.TakingPill.Repositoty.TakingPillCounterRepository;
 import com.oauth2.User.TakingPill.Repositoty.TakingPillRepository;
-import com.oauth2.Util.Encryption.EncryptionUtil;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,7 +38,6 @@ public class TakingPillService {
     private final TakingPillCounterRepository takingPillCounterRepository;
     private final DrugRepository drugRepository;
     private final ObjectMapper objectMapper;
-    private final EncryptionUtil encryptionUtil;
 
     /**
      * 복용 중인 약을 추가합니다.
@@ -357,48 +355,24 @@ public class TakingPillService {
     }
 
     /**
-     * 암호화된 약물명을 복호화합니다.
+     * 약물명을 가져옵니다 (EncryptionConverter가 자동으로 복호화).
      */
     private String getDecryptedMedicationName(TakingPill takingPill) {
-        try {
-            String encryptedName = takingPill.getMedicationName();
-            if (encryptedName != null && !encryptedName.isEmpty()) {
-                return encryptionUtil.decrypt(encryptedName);
-            }
-        } catch (Exception e) {
-            logger.warn("Failed to decrypt medication name for takingPill {}: {}", takingPill.getId(), e.getMessage());
-        }
-        return takingPill.getMedicationName(); // 복호화 실패 시 원본 반환
+        return takingPill.getMedicationName();
     }
 
     /**
-     * 암호화된 알림명을 복호화합니다.
+     * 알림명을 가져옵니다 (EncryptionConverter가 자동으로 복호화).
      */
     private String getDecryptedAlarmName(TakingPill takingPill) {
-        try {
-            String encryptedName = takingPill.getAlarmName();
-            if (encryptedName != null && !encryptedName.isEmpty()) {
-                return encryptionUtil.decrypt(encryptedName);
-            }
-        } catch (Exception e) {
-            logger.warn("Failed to decrypt alarm name for takingPill {}: {}", takingPill.getId(), e.getMessage());
-        }
-        return takingPill.getAlarmName(); // 복호화 실패 시 원본 반환
+        return takingPill.getAlarmName();
     }
 
     /**
-     * 암호화된 요일 정보를 복호화합니다.
+     * 요일 정보를 가져옵니다 (EncryptionConverter가 자동으로 복호화).
      */
     private String getDecryptedDaysOfWeek(TakingPill takingPill) {
-        try {
-            String encryptedDays = takingPill.getDaysOfWeek();
-            if (encryptedDays != null && !encryptedDays.isEmpty()) {
-                return encryptionUtil.decrypt(encryptedDays);
-            }
-        } catch (Exception e) {
-            logger.warn("Failed to decrypt days of week for takingPill {}: {}", takingPill.getId(), e.getMessage());
-        }
-        return takingPill.getDaysOfWeek(); // 복호화 실패 시 원본 반환
+        return takingPill.getDaysOfWeek();
     }
 
     /**

@@ -8,6 +8,7 @@ import com.oauth2.User.Auth.Entity.User;
 import com.oauth2.User.Alarm.Repository.FCMTokenRepository;
 import com.oauth2.User.Auth.Repository.UserRepository;
 import com.oauth2.Util.Exception.CustomException.MissingFCMTokenException;
+import com.oauth2.User.Alarm.Dto.AlarmMessageConstants;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,7 +32,7 @@ public class AlarmService {
                 .setToken(fcmToken.getFCMToken())
                 .putData("logId", String.valueOf(id))
                 .putData("title", alertTitle)
-                .putData("body", pillName + " 복약할 시간이에요!")
+                .putData("body", pillName + AlarmMessageConstants.MEDICATION_TIME_MESSAGE)
                 .build();
         try {
             FirebaseMessaging.getInstance().send(message);
@@ -51,13 +52,13 @@ public class AlarmService {
             throw new MissingFCMTokenException();
 
         if (LocalDateTime.now().isBefore(scheduledTime))
-            throw new IllegalStateException("복약 시간이 아직 지나지 않았어요.");
+            throw new IllegalStateException(AlarmMessageConstants.DOSAGE_TIME_NOT_PASSED);
 
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm");
         String timeString = scheduledTime.format(formatter);
 
-        String title = senderNickname + "님이 걱정 중이에요. 약 드셨어요?";
-        String body = timeString + "에 복용 예정이였던 " + pillName + " 복용 시간이 지났어요!.";
+        String title = senderNickname + AlarmMessageConstants.FRIEND_WORRY_TITLE_TEMPLATE;
+        String body = timeString + AlarmMessageConstants.FRIEND_WORRY_BODY_TEMPLATE + pillName + AlarmMessageConstants.FRIEND_WORRY_BODY_END;
 
         Message message = Message.builder()
                 .setToken(friendFcmToken.getFCMToken())
@@ -71,7 +72,7 @@ public class AlarmService {
         try {
             FirebaseMessaging.getInstance().send(message);
         } catch (FirebaseMessagingException e) {
-            logger.error("복약 알림 전송 실패 - sendFriendMedicationReminder", e);
+            logger.error(AlarmMessageConstants.FRIEND_ALARM_SEND_FAILED, e);
         }
     }
 

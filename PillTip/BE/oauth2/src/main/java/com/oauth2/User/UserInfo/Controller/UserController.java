@@ -4,9 +4,9 @@ import com.oauth2.User.Auth.Dto.*;
 import com.oauth2.User.Auth.Entity.User;
 import com.oauth2.User.UserInfo.Service.UserService;
 import com.oauth2.User.UserInfo.Dto.PersonalInfoRequest;
+import com.oauth2.User.UserInfo.Dto.UserInfoMessageConstants;
 // import com.oauth2.User.UserInfo.Dto.ProfilePhotoRequest;
 import com.oauth2.User.UserInfo.Dto.UserResponse;
-import com.oauth2.Util.Encryption.EncryptionUtil;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,7 +24,6 @@ import java.io.IOException;
 public class UserController {
     private static final Logger logger = LoggerFactory.getLogger(UserController.class);
     private final UserService userService;
-    private final EncryptionUtil encryptionUtil;
 
 
     // 현재 로그인한 사용자 정보 조회
@@ -32,16 +31,17 @@ public class UserController {
     public ResponseEntity<ApiResponse<UserResponse>> getCurrentUser(@AuthenticationPrincipal User user) {
         if (user == null) {
             return ResponseEntity.status(400)
-                    .body(ApiResponse.error("User not authenticated", null));
+                    .body(ApiResponse.error(UserInfoMessageConstants.USER_NOT_AUTHENTICATED, null));
         }
 
         try {
             User currentUser = userService.getCurrentUser(user.getId());
             return ResponseEntity.status(200)
-                    .body(ApiResponse.success(new UserResponse(currentUser, encryptionUtil)));
+                    .body(ApiResponse.success(new UserResponse(currentUser)));
         } catch (Exception e) {
+            logger.error("Get current user failed: {}", e.getMessage(), e);
             return ResponseEntity.status(400)
-                    .body(ApiResponse.error("Failed to get current user: " + e.getMessage(), null));
+                    .body(ApiResponse.error(UserInfoMessageConstants.GET_CURRENT_USER_FAILED, null));
         }
     }
 
@@ -52,16 +52,17 @@ public class UserController {
             @RequestBody PersonalInfoRequest request) {
         if (user == null) {
             return ResponseEntity.status(400)
-                    .body(ApiResponse.error("User not authenticated", null));
+                    .body(ApiResponse.error(UserInfoMessageConstants.USER_NOT_AUTHENTICATED, null));
         }
 
         try {
             User updatedUser = userService.updatePersonalInfo(user, request.getRealName(), request.getAddress());
             return ResponseEntity.status(200)
-                    .body(ApiResponse.success("Personal info updated successfully", new UserResponse(updatedUser, encryptionUtil)));
+                    .body(ApiResponse.success(UserInfoMessageConstants.PERSONAL_INFO_UPDATE_SUCCESS, new UserResponse(updatedUser)));
         } catch (Exception e) {
+            logger.error("Personal info update failed: {}", e.getMessage(), e);
             return ResponseEntity.status(400)
-                    .body(ApiResponse.error("Failed to update personal info: " + e.getMessage(), null));
+                    .body(ApiResponse.error(UserInfoMessageConstants.PERSONAL_INFO_UPDATE_FAILED, null));
         }
     }
 
@@ -76,35 +77,20 @@ public class UserController {
         }
 
         try {
-            // 디버깅을 위한 로그 추가
-            logger.info("=== UPDATE NICKNAME START ===");
-            logger.info("Received nickname update request for user: {}", user.getId());
-            logger.info("Original nickname parameter: '{}'", nickname);
-            logger.info("Nickname length: {}", nickname.length());
-
-            // 닉네임 정리 (공백 제거, 특수 문자 제거)
             String cleanedNickname = nickname.trim();
-            logger.info("Cleaned nickname: '{}'", cleanedNickname);
-            logger.info("Cleaned nickname length: {}", cleanedNickname.length());
-
-            // 빈 문자열 체크
+            
             if (cleanedNickname.isEmpty()) {
-                logger.warn("Nickname is empty after cleaning");
                 return ResponseEntity.status(400)
-                        .body(ApiResponse.error("Nickname cannot be empty", null));
+                        .body(ApiResponse.error(UserInfoMessageConstants.NICKNAME_EMPTY, null));
             }
 
             User updatedUser = userService.updateNickname(user, cleanedNickname);
-            logger.info("Successfully updated nickname for user: {} - New nickname: '{}'",
-                    user.getId(), updatedUser.getNickname());
-            logger.info("=== UPDATE NICKNAME END ===");
-
             return ResponseEntity.status(200)
-                    .body(ApiResponse.success("Nickname updated successfully", new UserResponse(updatedUser, encryptionUtil)));
+                    .body(ApiResponse.success(UserInfoMessageConstants.NICKNAME_UPDATE_SUCCESS, new UserResponse(updatedUser)));
         } catch (Exception e) {
-            logger.error("Error updating nickname for user: {} - Error: {}", user.getId(), e.getMessage(), e);
+            logger.error("Nickname update failed: {}", e.getMessage(), e);
             return ResponseEntity.status(400)
-                    .body(ApiResponse.error("Failed to update nickname: " + e.getMessage(), null));
+                    .body(ApiResponse.error(UserInfoMessageConstants.NICKNAME_UPDATE_FAILED, null));
         }
     }
 
@@ -118,15 +104,12 @@ public class UserController {
         }
 
         try {
-            logger.info("=== UPDATE PROFILE PHOTO START ===");
-            logger.info("Received profile photo update request for user: {}", user.getId());
-
             String uploadDir = System.getProperty("user.dir") + "/upload/profile/";
             File dir = new File(uploadDir);
             if (!dir.exists()) {
                 boolean created = dir.mkdirs();
                 if (!created) {
-                    throw new RuntimeException("프로필 사진 저장 폴더 생성 실패: " + uploadDir);
+                    throw new RuntimeException(UserInfoMessageConstants.PROFILE_PHOTO_DIR_CREATE_FAILED);
                 }
             }
 
@@ -137,7 +120,6 @@ public class UserController {
                     File oldFile = new File(uploadDir, oldFileName);
                     if (oldFile.exists()) {
                         oldFile.delete();
-                        logger.info("Deleted old profile photo: {}", oldFile.getPath());
                     }
                 } catch (Exception e) {
                     logger.warn("Could not delete old profile photo: {}", e.getMessage());
@@ -149,19 +131,14 @@ public class UserController {
             file.transferTo(dest);
 
             String fileUrl = "/profile/" + fileName;
-
             User updatedUser = userService.updateProfilePhoto(user, fileUrl);
 
-            logger.info("Successfully updated profile photo for user: {} - New photo URL: '{}'",
-                    user.getId(), updatedUser.getProfilePhoto());
-            logger.info("=== UPDATE PROFILE PHOTO END ===");
-
             return ResponseEntity.status(200)
-                    .body(ApiResponse.success("Profile photo updated successfully", new UserResponse(updatedUser, encryptionUtil)));
+                    .body(ApiResponse.success(UserInfoMessageConstants.PROFILE_PHOTO_UPDATE_SUCCESS, new UserResponse(updatedUser)));
         } catch (IOException e) {
-            logger.error("Error updating profile photo for user: {} - Error: {}", user.getId(), e.getMessage(), e);
+            logger.error("Profile photo update failed: {}", e.getMessage(), e);
             return ResponseEntity.status(400)
-                    .body(ApiResponse.error("Failed to update profile photo: " + e.getMessage(), null));
+                    .body(ApiResponse.error(UserInfoMessageConstants.PROFILE_PHOTO_UPDATE_FAILED, null));
         }
     }
 
@@ -170,16 +147,17 @@ public class UserController {
     public ResponseEntity<ApiResponse<Void>> deleteAccount(@AuthenticationPrincipal User user) {
         if (user == null) {
             return ResponseEntity.status(400)
-                    .body(ApiResponse.error("User not authenticated", null));
+                    .body(ApiResponse.error(UserInfoMessageConstants.USER_NOT_AUTHENTICATED, null));
         }
 
         try {
             userService.deleteAccount(user.getId());
             return ResponseEntity.status(200)
-                    .body(ApiResponse.success("Account deleted successfully", null));
+                    .body(ApiResponse.success(UserInfoMessageConstants.ACCOUNT_DELETE_SUCCESS, null));
         } catch (Exception e) {
+            logger.error("Account delete failed: {}", e.getMessage(), e);
             return ResponseEntity.status(400)
-                    .body(ApiResponse.error("Failed to delete account: " + e.getMessage(), null));
+                    .body(ApiResponse.error(UserInfoMessageConstants.ACCOUNT_DELETE_FAILED, null));
         }
     }
 }

@@ -12,6 +12,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.Collections;
+import com.oauth2.User.Auth.Dto.AuthMessageConstants;
 
 @Service
 @RequiredArgsConstructor
@@ -26,11 +27,11 @@ public class CustomUserDetailsService implements UserDetailsService {
     public UserDetails loadUserByUsername(String userId) throws UsernameNotFoundException {
         // 사용자 ID를 기반으로 사용자 정보를 조회
         User user = userRepository.findById(Long.parseLong(userId))
-                .orElseThrow(() -> new UsernameNotFoundException("User not found with id: " + userId));
+                .orElseThrow(() -> new UsernameNotFoundException(AuthMessageConstants.USER_INFO_NOT_FOUND_RETRY_LOGIN + " with id: " + userId));
 
         // 사용자 정보가 없으면 예외 발생
         if (user == null) {
-            throw new UsernameNotFoundException("User not found with id: " + userId);
+            throw new UsernameNotFoundException(AuthMessageConstants.USER_INFO_NOT_FOUND_RETRY_LOGIN + " with id: " + userId);
         }
 
         // 사용자 정보를 기반으로 UserDetails 객체 생성

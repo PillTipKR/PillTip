@@ -3,6 +3,7 @@ package com.oauth2.User.Friend.Controller;
 import com.oauth2.User.Auth.Dto.ApiResponse;
 import com.oauth2.User.Auth.Entity.User;
 import com.oauth2.User.Friend.Dto.FriendListDto;
+import com.oauth2.User.Friend.Dto.FriendMessageConstants;
 import com.oauth2.User.Friend.Service.FriendService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -43,15 +44,19 @@ public class FriendController {
     @PostMapping("/accept")
     public ResponseEntity<ApiResponse<String>> acceptInvite(@RequestBody Map<String, String> requestBody,
                                           @AuthenticationPrincipal User user) {
-        String inviteToken = requestBody.get("inviteToken");
-        if (inviteToken == null) {
-            return ResponseEntity.badRequest().body(ApiResponse.error("inviteToken is required",null));
+        try {
+            String inviteToken = requestBody.get("inviteToken");
+            if (inviteToken == null) {
+                return ResponseEntity.badRequest().body(ApiResponse.error(FriendMessageConstants.INVITE_TOKEN_REQUIRED, null));
+            }
+
+            Long receiverId = user.getId();
+            friendService.acceptInvite(inviteToken, receiverId);
+
+            return ResponseEntity.ok().body(ApiResponse.success(FriendMessageConstants.FRIEND_ADD_SUCCESS));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(ApiResponse.error(FriendMessageConstants.FRIEND_ADD_FAILED, null));
         }
-
-        Long receiverId = user.getId();
-        friendService.acceptInvite(inviteToken, receiverId);
-
-        return ResponseEntity.ok().body(ApiResponse.success("친구 추가가 완료되었습니다."));
     }
 
     @GetMapping("/list")

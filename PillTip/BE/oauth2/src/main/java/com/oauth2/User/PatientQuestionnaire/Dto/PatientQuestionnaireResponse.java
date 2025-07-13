@@ -70,30 +70,49 @@ public class PatientQuestionnaireResponse {
                     .surgeryHistoryInfo(parseEncryptedJsonToList(questionnaire.getSurgeryHistoryInfo(), objectMapper, encryptionUtil))
                     //.expirationDate(expirationDate)
                     .build();
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException("Failed to parse questionnaire data", e);
+        } catch (Exception e) {
+            // 파싱 실패 시에도 빈 리스트로 기본값 설정
+            return PatientQuestionnaireResponse.builder()
+                    .realName(decryptedRealName)
+                    .address(decryptedAddress)
+                    .phoneNumber(decryptedPhoneNumber)
+                    .issueDate(questionnaire.getIssueDate())
+                    .lastModifiedDate(questionnaire.getLastModifiedDate())
+                    .medicationInfo(List.of())
+                    .allergyInfo(List.of())
+                    .chronicDiseaseInfo(List.of())
+                    .surgeryHistoryInfo(List.of())
+                    .build();
         }
     }
     
     private static List<Map<String, Object>> parseJsonToList(String json, ObjectMapper objectMapper) throws JsonProcessingException {
-        if (json == null || json.trim().isEmpty()) {
+        if (json == null || json.trim().isEmpty() || "null".equals(json.trim())) {
             return List.of();
         }
         return objectMapper.readValue(json, new TypeReference<List<Map<String, Object>>>() {});
     }
 
     private static List<Map<String, Object>> parseEncryptedJsonToList(String encryptedJson, ObjectMapper objectMapper, EncryptionUtil encryptionUtil) throws JsonProcessingException {
-        if (encryptedJson == null || encryptedJson.trim().isEmpty()) {
+        if (encryptedJson == null || encryptedJson.trim().isEmpty() || "null".equals(encryptedJson.trim())) {
             return List.of();
         }
         
         try {
             // 암호화된 JSON을 복호화
             String decryptedJson = encryptionUtil.decrypt(encryptedJson);
+            if (decryptedJson == null || decryptedJson.trim().isEmpty() || "null".equals(decryptedJson.trim())) {
+                return List.of();
+            }
             return objectMapper.readValue(decryptedJson, new TypeReference<List<Map<String, Object>>>() {});
         } catch (Exception e) {
             // 복호화 실패 시 원본 JSON으로 파싱 시도
-            return parseJsonToList(encryptedJson, objectMapper);
+            try {
+                return parseJsonToList(encryptedJson, objectMapper);
+            } catch (Exception parseException) {
+                // 파싱도 실패하면 빈 리스트 반환
+                return List.of();
+            }
         }
     }
 } 

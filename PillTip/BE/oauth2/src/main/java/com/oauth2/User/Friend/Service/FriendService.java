@@ -4,6 +4,7 @@ import com.oauth2.User.Auth.Entity.User;
 import com.oauth2.User.Auth.Repository.UserRepository;
 import com.oauth2.User.Auth.Service.TokenService;
 import com.oauth2.User.Friend.Dto.FriendListDto;
+import com.oauth2.User.Friend.Dto.FriendMessageConstants;
 import com.oauth2.User.Friend.Entity.Friend;
 import com.oauth2.User.Friend.Repository.FriendRepository;
 import com.oauth2.Util.Exception.CustomException.NotExistUserException;
@@ -39,7 +40,7 @@ public class FriendService {
         Long inviterId = tokenService.getInviterIdFromFriendToken(token);
         // 친구 관계 저장 로직
         if (inviterId.equals(receiverId)) {
-            throw new IllegalArgumentException("자기 자신을 친구로 추가할 수 없습니다.");
+            throw new IllegalArgumentException(FriendMessageConstants.CANNOT_ADD_SELF_AS_FRIEND);
         }
 
         User inviter = userRepository.findById(inviterId)

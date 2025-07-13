@@ -4,6 +4,7 @@ package com.oauth2.User.Auth.Security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.oauth2.User.Auth.Dto.ApiResponse;
+import com.oauth2.User.Auth.Dto.AuthMessageConstants;
 import com.oauth2.User.Auth.Entity.User;
 import com.oauth2.User.Auth.Entity.UserToken;
 import com.oauth2.User.Auth.Repository.UserRepository;
@@ -38,7 +39,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         
         // JWT 토큰 검증이 필요 없는 경로들
         String requestURI = request.getRequestURI();
-        System.out.println("Request URI: " + requestURI); // 디버깅 로그
+
         
         if (requestURI.equals("/api/auth/signup") || 
             requestURI.equals("/api/auth/login") || 
@@ -46,7 +47,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             requestURI.equals("/api/auth/refresh") ||
             requestURI.startsWith("/oauth2/") ||
             requestURI.startsWith("/api/questionnaire/public/")) {
-            System.out.println("Skipping JWT validation for: " + requestURI); // 디버깅 로그
+
             filterChain.doFilter(request, response);
             return;
         }
@@ -54,44 +55,38 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         try {
             // 요청 헤더에서 JWT 토큰 추출
             String jwt = getJwtFromRequest(request);
-            System.out.println("JWT Token: " + (jwt != null ? jwt.substring(0, Math.min(jwt.length(), 20)) + "..." : "null")); // 디버깅 로그
+    
 
             // JWT 토큰이 유효한 경우 사용자 ID를 추출
             if (jwt != null) {
                 try {
-                    System.out.println("=== JWT TOKEN VALIDATION START ===");
+        
                     
                     // 토큰에서 사용자 ID 추출
                     Long userId = tokenService.getUserIdFromToken(jwt);
-                    System.out.println("User ID from token: " + userId); // 디버깅 로그
+
                     
                     // DB에서 토큰 정보 조회
                     UserToken userToken = userTokenRepository.findById(userId)
-                            .orElseThrow(() -> new BadCredentialsException("유효하지 않은 토큰입니다."));
-                    System.out.println("UserToken found in DB for user: " + userId);
+                            .orElseThrow(() -> new BadCredentialsException(AuthMessageConstants.INVALID_TOKEN));
+
 
                     // 토큰 일치 여부 및 만료 시간 검증
-                    System.out.println("Stored access token: " + userToken.getAccessToken().substring(0, Math.min(userToken.getAccessToken().length(), 20)) + "...");
-                    System.out.println("Request access token: " + jwt.substring(0, Math.min(jwt.length(), 20)) + "...");
-                    System.out.println("Tokens match: " + userToken.getAccessToken().equals(jwt));
+                    
                     
                     if (!userToken.getAccessToken().equals(jwt)) {
-                        System.out.println("Token mismatch detected");
-                        throw new BadCredentialsException("유효하지 않은 토큰입니다.");
+                        throw new BadCredentialsException(AuthMessageConstants.INVALID_TOKEN);
                     }
 
-                    System.out.println("Access token expiry: " + userToken.getAccessTokenExpiry());
-                    System.out.println("Current time: " + LocalDateTime.now());
-                    System.out.println("Token expired: " + userToken.getAccessTokenExpiry().isBefore(LocalDateTime.now()));
+                    
                     
                     if (userToken.getAccessTokenExpiry().isBefore(LocalDateTime.now())) {
-                        System.out.println("Token expired detected");
-                        throw new BadCredentialsException("토큰이 만료되었습니다.");
+                        throw new BadCredentialsException(AuthMessageConstants.TOKEN_EXPIRED_DETAIL);
                     }
 
                     // 사용자 정보 조회
                     User user = userRepository.findById(userId)
-                            .orElseThrow(() -> new BadCredentialsException("사용자를 찾을 수 없습니다."));
+                            .orElseThrow(() -> new BadCredentialsException(AuthMessageConstants.USER_INFO_NOT_FOUND_RETRY_LOGIN));
                     
                     // 사용자 정보를 기반으로 인증 토큰 생성
                     UsernamePasswordAuthenticationToken authentication = 
@@ -100,9 +95,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                     // 인증 토큰을 컨텍스트에 설정
                     SecurityContextHolder.getContext().setAuthentication(authentication);
-                    System.out.println("Authentication successful for user: " + user.getNickname()); // 디버깅 로그
+
                 } catch (RuntimeException e) {
-                    System.out.println("Authentication failed: " + e.getMessage()); // 디버깅 로그
+
                     SecurityContextHolder.clearContext();
                     throw new BadCredentialsException(e.getMessage());
                 }
@@ -122,23 +117,22 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             
             // 더 구체적인 에러 메시지 제공
             if (errorMessage.contains("유효하지 않은 토큰")) {
-                errorMessage = "토큰이 유효하지 않습니다. 다시 로그인해주세요.";
+                errorMessage = AuthMessageConstants.TOKEN_INVALID_RETRY_LOGIN;
             } else if (errorMessage.contains("토큰이 만료")) {
-                errorMessage = "토큰이 만료되었습니다. 토큰을 갱신하거나 다시 로그인해주세요.";
+                errorMessage = AuthMessageConstants.TOKEN_EXPIRED_RETRY_LOGIN;
             } else if (errorMessage.contains("사용자를 찾을 수 없습니다")) {
-                errorMessage = "사용자 정보를 찾을 수 없습니다. 다시 로그인해주세요.";
+                errorMessage = AuthMessageConstants.USER_INFO_NOT_FOUND_RETRY_LOGIN;
             }
             
             response.getWriter().write(objectMapper.writeValueAsString(
                 ApiResponse.error(errorMessage, errorType)
             ));
         } catch (Exception e) {
-            System.out.println("Unexpected error: " + e.getMessage()); // 디버깅 로그
             SecurityContextHolder.clearContext();
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.setContentType("application/json;charset=UTF-8");
             response.getWriter().write(objectMapper.writeValueAsString(
-                ApiResponse.error("인증에 실패했습니다. 토큰을 확인하고 다시 시도해주세요.", "invalid")
+                ApiResponse.error(AuthMessageConstants.AUTHENTICATION_FAILED, "invalid")
             ));
         }
     }

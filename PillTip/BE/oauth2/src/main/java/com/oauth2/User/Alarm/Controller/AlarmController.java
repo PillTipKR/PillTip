@@ -4,6 +4,8 @@ import com.oauth2.User.Alarm.Service.AlarmService;
 import com.oauth2.User.Auth.Dto.ApiResponse;
 import com.oauth2.User.Auth.Entity.User;
 import com.oauth2.User.Auth.Repository.UserRepository;
+import com.oauth2.User.Auth.Dto.AuthMessageConstants;
+import com.oauth2.User.Alarm.Dto.AlarmMessageConstants;
 import com.oauth2.User.Friend.Service.FriendService;
 import com.oauth2.User.TakingPill.Entity.DosageLog;
 import com.oauth2.User.TakingPill.Service.DosageLogService;
@@ -34,18 +36,24 @@ public class AlarmController {
 
     @PostMapping("/{logId}/pending")
     public ResponseEntity<ApiResponse<String>> markPending(@PathVariable Long logId) {
-        // 복약 완료 처리 로직
-        dosageLogService.markPending(logId);
-        return ResponseEntity.ok().body(ApiResponse.success("5분 뒤 재전송"));
+        try {
+            dosageLogService.markPending(logId);
+            return ResponseEntity.ok().body(ApiResponse.success(AlarmMessageConstants.ALARM_RESEND_SUCCESS));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(ApiResponse.error(AlarmMessageConstants.ALARM_RESEND_FAILED, null));
+        }
     }
 
 
     @PostMapping("/{logId}/taken")
     public ResponseEntity<ApiResponse<String>> markAsTaken(
             @PathVariable Long logId) {
-        // 복약 완료 처리 로직
-        dosageLogService.alarmTaken(logId);
-        return ResponseEntity.ok().body(ApiResponse.success("복용 이력 수정!"));
+        try {
+            dosageLogService.alarmTaken(logId);
+            return ResponseEntity.ok().body(ApiResponse.success(AlarmMessageConstants.DOSAGE_HISTORY_UPDATE_SUCCESS));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(ApiResponse.error(AlarmMessageConstants.DOSAGE_HISTORY_UPDATE_FAILED, null));
+        }
     }
 
 
@@ -54,23 +62,26 @@ public class AlarmController {
     public ResponseEntity<ApiResponse<String>> reminder(
             @AuthenticationPrincipal User user,
             @PathVariable Long friendId, @PathVariable Long logId) {
+        try {
+            User friend = userRepository.findById(friendId)
+                    .orElseThrow(NotExistUserException::new);
 
-        User friend = userRepository.findById(friendId)
-                .orElseThrow(NotExistUserException::new);
+            friendService.assertIsFriend(user.getId(), friendId);
 
-        friendService.assertIsFriend(user.getId(), friendId);
+            DosageLog dosageLog = dosageLogService.getDosageLog(logId);
+            if(dosageLog == null) throw new NotExistDosageLogException();
+            if(dosageLog.getIsTaken()) throw new IllegalStateException(AuthMessageConstants.ALREADY_TAKEN);
+            alarmService.sendFriendMedicationReminder(
+                    friend.getFCMToken(),
+                    dosageLog.getId(),
+                    user.getNickname(),
+                    dosageLog.getMedicationName(),
+                    dosageLog.getScheduledTime()
+            );
 
-        DosageLog dosageLog = dosageLogService.getDosageLog(logId);
-        if(dosageLog == null) throw new NotExistDosageLogException();
-        if(dosageLog.getIsTaken()) throw new IllegalStateException("이미 친구가 복용한 약이에요!");
-        alarmService.sendFriendMedicationReminder(
-                friend.getFCMToken(),
-                dosageLog.getId(),
-                user.getNickname(),
-                dosageLog.getMedicationName(),
-                dosageLog.getScheduledTime()
-        );
-
-        return ResponseEntity.ok(ApiResponse.success("친구에게 복약 알림 전송 완료!"));
+            return ResponseEntity.ok(ApiResponse.success(AlarmMessageConstants.FRIEND_ALARM_SEND_SUCCESS));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(ApiResponse.error(AlarmMessageConstants.FRIEND_ALARM_SEND_FAILED, null));
+        }
     }
 }
