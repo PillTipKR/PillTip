@@ -3,10 +3,14 @@
 
 package com.oauth2.User.Auth.Config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.oauth2.User.Auth.Dto.ApiResponse;
+import com.oauth2.User.Auth.Dto.AuthMessageConstants;
 import com.oauth2.User.Auth.Security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.MediaType;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -16,6 +20,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.authentication.HttpStatusEntryPoint;
+import org.springframework.http.HttpStatus;
 
 @Configuration // 스프링 설정 클래스임을 명시
 @EnableWebSecurity // 웹 보안 설정 활성화
@@ -24,6 +30,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
     // 커스텀 OAuth2 사용자 서비스 및 JWT 인증 필터를 주입받음
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final ObjectMapper objectMapper;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -50,6 +57,21 @@ public class SecurityConfig {
                         ).permitAll()
                 // 나머지 경로는 인증 필요
                 .anyRequest().authenticated()
+            )
+            // 커스텀 인증 실패 핸들러 설정
+            .exceptionHandling(exceptionHandling -> exceptionHandling
+                .authenticationEntryPoint((request, response, authException) -> {
+                    response.setStatus(HttpStatus.UNAUTHORIZED.value());
+                    response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+                    response.setCharacterEncoding("UTF-8");
+                    
+                    String errorMessage = AuthMessageConstants.TOKEN_NOT_PROVIDED;
+                    String errorType = "no_token";
+                    
+                    response.getWriter().write(objectMapper.writeValueAsString(
+                        ApiResponse.error(errorMessage, errorType)
+                    ));
+                })
             )
             // JWT 인증 필터를 사용자 정보 엔드포인트 이전에 추가
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
