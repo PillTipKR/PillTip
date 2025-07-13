@@ -43,4 +43,14 @@ public class QuestionnaireMessageConstants {
     public static final String QUESTIONNAIRE_UNAVAILABLE_MESSAGE = "문진표 작성을 위해 다음 항목을 완료해주세요: ";
     public static final String MISSING_PERMISSIONS = "동의사항 미완료";
     public static final String MISSING_PERSONAL_INFO = "실명/주소 미입력";
+    
+    // QR URL 관련 추가 메시지
+    public static final String QR_URL_RETRIEVE_SUCCESS = "QR URL을 조회했습니다.";
+    public static final String QR_URL_RETRIEVE_FAILED = "QR URL 조회에 실패했습니다.";
+    public static final String QR_URL_DELETE_SUCCESS = "QR URL이 삭제되었습니다.";
+    public static final String QR_URL_DELETE_FAILED = "QR URL 삭제에 실패했습니다.";
+    public static final String QR_URL_NOT_FOUND = "QR URL이 존재하지 않습니다.";
+    public static final String QR_URL_EXPIRED = "QR URL이 만료되었습니다.";
+    public static final String QR_ACCESS_SUCCESS = "QR을 통한 문진표 접근 성공";
+    public static final String QR_ACCESS_FAILED = "QR을 통한 문진표 접근에 실패했습니다.";
 } 

@@ -55,6 +55,7 @@ export interface ApiResponse {
 // 컴포넌트 Props 타입
 export interface QuestionnaireDisplayProps {
   questionnaire: Questionnaire;
+  timeUntilExpiration?: number | null;
 }
 
 export interface QuestionnaireComponentDeciderProps {

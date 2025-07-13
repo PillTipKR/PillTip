@@ -249,6 +249,21 @@ public class TokenService {
         }
     }
 
+    // QR URL용 JWT 토큰 검증 (userId 일치)
+    public boolean validateQRJwtToken(String token, Long userId) {
+        try {
+            Claims claims = Jwts.parserBuilder()
+                .setSigningKey(secretKey.getBytes())
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+            Long tokenUserId = Long.parseLong(claims.getSubject());
+            return userId.equals(tokenUserId);
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
     // 친구 추가용 jwt 생성
     public String createFriendInviteToken(Long inviterId, int expiresInSeconds) {
         Key key = new SecretKeySpec(secretKey.getBytes(StandardCharsets.UTF_8), SignatureAlgorithm.HS256.getJcaName());

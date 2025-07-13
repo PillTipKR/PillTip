@@ -19,10 +19,42 @@ export default function QuestionnaireComponentDecider({
   );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [timeUntilExpiration, setTimeUntilExpiration] = useState<number | null>(
+    null
+  );
 
   useEffect(() => {
     fetchQuestionnaire();
   }, [questionnaireId]);
+
+  // 토큰 만료 시간 체크 및 자동 새로고침
+  useEffect(() => {
+    if (!questionnaire?.data?.expirationDate) return;
+
+    const checkExpiration = () => {
+      const currentTime = Date.now();
+      const expirationTime = questionnaire.data.expirationDate;
+      const timeLeft = expirationTime - currentTime;
+
+      // 남은 시간 업데이트
+      setTimeUntilExpiration(timeLeft > 0 ? timeLeft : 0);
+
+      if (currentTime >= expirationTime) {
+        console.log(
+          "[DEBUG] JWT 토큰이 만료되었습니다. 페이지를 새로고침합니다."
+        );
+        window.location.reload();
+      }
+    };
+
+    // 즉시 체크
+    checkExpiration();
+
+    // 1초마다 체크
+    const interval = setInterval(checkExpiration, 1000);
+
+    return () => clearInterval(interval);
+  }, [questionnaire?.data?.expirationDate]);
 
   const fetchQuestionnaire = async () => {
     try {
@@ -32,7 +64,9 @@ export default function QuestionnaireComponentDecider({
       // URL에서 JWT 토큰 추출 (쿼리 파라미터 또는 localStorage)
       const urlParams = new URLSearchParams(window.location.search);
       const jwtToken =
-        urlParams.get("jwtToken") || localStorage.getItem("jwtToken");
+        urlParams.get("token") ||
+        urlParams.get("jwtToken") ||
+        localStorage.getItem("jwtToken");
 
       // BE API 호출 - JWT 토큰을 Authorization 헤더에 포함
       const headers: Record<string, string> = {
@@ -125,5 +159,10 @@ export default function QuestionnaireComponentDecider({
     "[DEBUG] QuestionnaireComponentDecider questionnaire:",
     processedQuestionnaire
   );
-  return <QuestionnaireDisplay questionnaire={processedQuestionnaire} />;
+  return (
+    <QuestionnaireDisplay
+      questionnaire={processedQuestionnaire}
+      timeUntilExpiration={timeUntilExpiration}
+    />
+  );
 }
