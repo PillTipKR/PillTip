@@ -38,13 +38,24 @@ public class AuthController {
     private final FCMTokenRepository fcmTokenRepository;
     private final LoginService loginService;
 
-    // ID/PW 로그인
+    // ID/PW 로그인 또는 소셜 로그인 (자동 감지)
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<LoginResponse>> login(@RequestBody LoginRequest request) {
+        logger.info("로그인 API 호출 - LoginId: {}, Password: {}", 
+                   request.loginId(), request.password() != null ? "***" : "null");
+        
         try {
-            LoginResponse loginResponse = loginService.login(request);
-            return ResponseEntity.status(200)
-                .body(ApiResponse.success(AuthMessageConstants.LOGIN_SUCCESS, loginResponse));
+            // loginId가 null이고 password가 null이면 소셜 로그인으로 간주
+            if (request.loginId() == null && request.password() == null) {
+                logger.error("소셜 로그인 요청이 /api/auth/login으로 전송되었습니다. /api/auth/social-login을 사용해주세요.");
+                return ResponseEntity.status(400)
+                    .body(ApiResponse.error("소셜 로그인은 /api/auth/social-login API를 사용해주세요.", null));
+            } else {
+                // 일반 ID/PW 로그인
+                LoginResponse loginResponse = loginService.login(request);
+                return ResponseEntity.status(200)
+                    .body(ApiResponse.success(AuthMessageConstants.LOGIN_SUCCESS, loginResponse));
+            }
         } catch (Exception e) {
             logger.error("Login failed: {}", e.getMessage(), e);
             return ResponseEntity.status(400)
@@ -55,9 +66,19 @@ public class AuthController {
     // 소셜 로그인
     @PostMapping("/social-login")
     public ResponseEntity<ApiResponse<LoginResponse>> socialLogin(@RequestBody SocialLoginRequest request) {
-        LoginResponse loginResponse = loginService.socialLogin(request);
-        return ResponseEntity.status(200)
-            .body(ApiResponse.success(AuthMessageConstants.SOCIAL_LOGIN_SUCCESS, loginResponse));
+        logger.info("소셜 로그인 API 호출 - Provider: {}, Token: {}", 
+                   request.getProvider(), request.getToken() != null ? request.getToken().substring(0, Math.min(10, request.getToken().length())) + "..." : "null");
+        
+        try {
+            LoginResponse loginResponse = loginService.socialLogin(request);
+            logger.info("소셜 로그인 성공 - Provider: {}", request.getProvider());
+            return ResponseEntity.status(200)
+                .body(ApiResponse.success(AuthMessageConstants.SOCIAL_LOGIN_SUCCESS, loginResponse));
+        } catch (Exception e) {
+            logger.error("소셜 로그인 실패 - Provider: {}, Error: {}", request.getProvider(), e.getMessage(), e);
+            return ResponseEntity.status(400)
+                .body(ApiResponse.error(AuthMessageConstants.LOGIN_FAILED, null));
+        }
     }
 
     // 회원가입
