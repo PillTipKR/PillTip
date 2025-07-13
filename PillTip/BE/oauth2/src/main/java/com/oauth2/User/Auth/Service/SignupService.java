@@ -162,12 +162,14 @@ public class SignupService {
             logger.info("socialId 중복 검사 완료");
         }
         
-        // 전화번호 중복 검사 (전화번호가 null이 아니고 비어있지 않을 때만)
-        if (request.getPhone() != null && !request.getPhone().trim().isEmpty()) {
-            logger.info("전화번호 중복 검사 시작");
-            userService.checkDuplicate(request.getPhone(), "phonenumber");
-            logger.info("전화번호 중복 검사 완료");
+        // 전화번호 중복 검사
+        if (request.getPhone() == null || request.getPhone().trim().isEmpty()) {
+            logger.error("전화번호가 필수입니다");
+            throw new RuntimeException("전화번호는 필수 입력 항목입니다.");
         }
+        logger.info("전화번호 중복 검사 시작");
+        userService.checkDuplicate(request.getPhone(), "phonenumber");
+        logger.info("전화번호 중복 검사 완료");
         
         logger.info("회원가입 요청 유효성 검사 완료");
     }
@@ -195,7 +197,7 @@ public class SignupService {
                 .birthDate(LocalDate.parse(request.getBirthDate()))
                 .height(new BigDecimal(request.getHeight()))
                 .weight(new BigDecimal(request.getWeight()))
-                .phone(request.getPhone() != null && !request.getPhone().trim().isEmpty() ? validatePhoneNumber(request.getPhone()) : null)
+                .phone(validatePhoneNumber(request.getPhone())) // 전화번호는 이미 필수 검증됨
                 .build();
     }
 

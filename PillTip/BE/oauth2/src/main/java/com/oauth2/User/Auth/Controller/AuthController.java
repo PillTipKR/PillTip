@@ -22,8 +22,6 @@ import com.oauth2.User.Auth.Dto.SignupResponse;
 import com.oauth2.User.Auth.Dto.DuplicateCheckRequest;
 import com.oauth2.User.Auth.Dto.TermsResponse;
 import com.oauth2.User.Alarm.Repository.FCMTokenRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import com.oauth2.User.Auth.Dto.AuthMessageConstants;
 
 @RestController
@@ -31,7 +29,6 @@ import com.oauth2.User.Auth.Dto.AuthMessageConstants;
 @RequiredArgsConstructor
 public class AuthController {
 
-    private static final Logger logger = LoggerFactory.getLogger(AuthController.class);
     private final UserService userService;
     private final SignupService signupService;
     private final TokenService tokenService;
@@ -41,23 +38,27 @@ public class AuthController {
     // ID/PW 로그인 또는 소셜 로그인 (자동 감지)
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<LoginResponse>> login(@RequestBody LoginRequest request) {
-        logger.info("로그인 API 호출 - LoginId: {}, Password: {}", 
-                   request.loginId(), request.password() != null ? "***" : "null");
+        System.out.println("=== 로그인 API 호출 ===");
+        System.out.println("LoginId: " + request.loginId());
+        System.out.println("Password: " + (request.password() != null ? "***" : "null"));
         
         try {
             // loginId가 null이고 password가 null이면 소셜 로그인으로 간주
             if (request.loginId() == null && request.password() == null) {
-                logger.error("소셜 로그인 요청이 /api/auth/login으로 전송되었습니다. /api/auth/social-login을 사용해주세요.");
+                System.out.println("ERROR: 소셜 로그인 요청이 /api/auth/login으로 전송되었습니다. /api/auth/social-login을 사용해주세요.");
                 return ResponseEntity.status(400)
                     .body(ApiResponse.error("소셜 로그인은 /api/auth/social-login API를 사용해주세요.", null));
             } else {
                 // 일반 ID/PW 로그인
+                System.out.println("일반 ID/PW 로그인 처리 중...");
                 LoginResponse loginResponse = loginService.login(request);
+                System.out.println("로그인 성공!");
                 return ResponseEntity.status(200)
                     .body(ApiResponse.success(AuthMessageConstants.LOGIN_SUCCESS, loginResponse));
             }
         } catch (Exception e) {
-            logger.error("Login failed: {}", e.getMessage(), e);
+            System.out.println("로그인 실패: " + e.getMessage());
+            e.printStackTrace();
             return ResponseEntity.status(400)
                 .body(ApiResponse.error(AuthMessageConstants.LOGIN_FAILED, null));
         }
@@ -66,16 +67,21 @@ public class AuthController {
     // 소셜 로그인
     @PostMapping("/social-login")
     public ResponseEntity<ApiResponse<LoginResponse>> socialLogin(@RequestBody SocialLoginRequest request) {
-        logger.info("소셜 로그인 API 호출 - Provider: {}, Token: {}", 
-                   request.getProvider(), request.getToken() != null ? request.getToken().substring(0, Math.min(10, request.getToken().length())) + "..." : "null");
+        System.out.println("=== 소셜 로그인 API 호출됨! ===");
+        System.out.println("Provider: " + request.getProvider());
+        System.out.println("Token: " + (request.getToken() != null ? request.getToken().substring(0, Math.min(10, request.getToken().length())) + "..." : "null"));
+        System.out.println("전체 요청: " + request.toString());
+        System.out.println("요청 타임스탬프: " + System.currentTimeMillis());
         
         try {
+            System.out.println("소셜 로그인 처리 중...");
             LoginResponse loginResponse = loginService.socialLogin(request);
-            logger.info("소셜 로그인 성공 - Provider: {}", request.getProvider());
+            System.out.println("소셜 로그인 성공 - Provider: " + request.getProvider());
             return ResponseEntity.status(200)
                 .body(ApiResponse.success(AuthMessageConstants.SOCIAL_LOGIN_SUCCESS, loginResponse));
         } catch (Exception e) {
-            logger.error("소셜 로그인 실패 - Provider: {}, Error: {}", request.getProvider(), e.getMessage(), e);
+            System.out.println("소셜 로그인 실패 - Provider: " + request.getProvider() + ", Error: " + e.getMessage());
+            e.printStackTrace();
             return ResponseEntity.status(400)
                 .body(ApiResponse.error(AuthMessageConstants.LOGIN_FAILED, null));
         }
@@ -84,53 +90,55 @@ public class AuthController {
     // 회원가입
     @PostMapping("/signup")
     public ResponseEntity<ApiResponse<SignupResponse>> signup(@RequestBody SignupRequest request) {
-        logger.info("회원가입 API 호출 - LoginType: {}, Provider: {}, Nickname: {}", 
-                   request.getLoginType(), request.getProvider(), request.getNickname());
+        System.out.println("=== 회원가입 API 호출 ===");
+        System.out.println("LoginType: " + request.getLoginType());
+        System.out.println("Provider: " + request.getProvider());
+        System.out.println("Nickname: " + request.getNickname());
         
         try {
-            logger.info("SignupService.signup() 호출 시작");
+            System.out.println("SignupService.signup() 호출 시작");
             User user = signupService.signup(request);
-            logger.info("SignupService.signup() 완료 - UserId: {}", user.getId());
+            System.out.println("SignupService.signup() 완료 - UserId: " + user.getId());
             
-            logger.info("토큰 생성 시작");
+            System.out.println("토큰 생성 시작");
             UserToken userToken = tokenService.generateTokens(user.getId());
-            logger.info("토큰 생성 완료");
+            System.out.println("토큰 생성 완료");
             
             SignupResponse signupResponse = SignupResponse.builder()
                     .accessToken(userToken.getAccessToken())
                     .refreshToken(userToken.getRefreshToken())
                     .build();
             
-            logger.info("회원가입 성공 - UserId: {}, LoginType: {}", user.getId(), user.getLoginType());
+            System.out.println("회원가입 성공 - UserId: " + user.getId() + ", LoginType: " + user.getLoginType());
             return ResponseEntity.status(201)
                 .body(ApiResponse.success(AuthMessageConstants.SIGNUP_SUCCESS, signupResponse));
         } catch (RuntimeException e) {
             String errorMessage = e.getMessage();
-            logger.error("회원가입 실패 - Error: {}", errorMessage, e);
+            System.out.println("회원가입 실패 - Error: " + errorMessage);
             
             if (errorMessage.contains(AuthMessageConstants.ERROR_KEYWORD_LOGIN_TYPE)) {
-                logger.error("로그인 타입 관련 에러");
+                System.out.println("로그인 타입 관련 에러");
                 return ResponseEntity.status(400)
                     .body(ApiResponse.error(AuthMessageConstants.LOGIN_TYPE_REQUIRED, null));
             } else if (errorMessage.contains(AuthMessageConstants.ERROR_KEYWORD_PHONE_NUMBER)) {
-                logger.error("전화번호 관련 에러");
+                System.out.println("전화번호 관련 에러");
                 return ResponseEntity.status(400)
                     .body(ApiResponse.error(AuthMessageConstants.DUPLICATE_PHONE_FORMAT, null));
             } else if (errorMessage.contains(AuthMessageConstants.ERROR_KEYWORD_NICKNAME)) {
-                logger.error("닉네임 관련 에러");
+                System.out.println("닉네임 관련 에러");
                 return ResponseEntity.status(400)
                     .body(ApiResponse.error(AuthMessageConstants.DUPLICATE_NICKNAME_FORMAT, null));
             } else if (errorMessage.contains(AuthMessageConstants.ERROR_KEYWORD_USER_ID)) {
-                logger.error("사용자 ID 관련 에러");
+                System.out.println("사용자 ID 관련 에러");
                 return ResponseEntity.status(400)
                     .body(ApiResponse.error(AuthMessageConstants.DUPLICATE_LOGIN_ID, null));
             } else {
-                logger.error("기타 회원가입 에러: {}", errorMessage);
+                System.out.println("기타 회원가입 에러: " + errorMessage);
                 return ResponseEntity.status(400)
                     .body(ApiResponse.error(AuthMessageConstants.SIGNUP_FAILED, null));
             }
         } catch (Exception e) {
-            logger.error("예상치 못한 회원가입 에러: {}", e.getMessage(), e);
+            System.out.println("예상치 못한 회원가입 에러: " + e.getMessage());
             return ResponseEntity.status(500)
                 .body(ApiResponse.error(AuthMessageConstants.SIGNUP_FAILED, null));
         }
@@ -167,7 +175,7 @@ public class AuthController {
             return ResponseEntity.status(200)
                     .body(ApiResponse.success(AuthMessageConstants.LOGOUT_SUCCESS));
         } catch (Exception e) {
-            logger.error("Error during logout for user: {} - Error: {}", user.getId(), e.getMessage(), e);
+            System.out.println("Error during logout for user: " + user.getId() + " - Error: " + e.getMessage());
             return ResponseEntity.status(400)
                     .body(ApiResponse.error(AuthMessageConstants.LOGOUT_FAILED, null));
         }
@@ -182,7 +190,7 @@ public class AuthController {
             return ResponseEntity.status(200)
                 .body(ApiResponse.success(AuthMessageConstants.TOKEN_REFRESH_SUCCESS, loginResponse));
         } catch (RuntimeException e) {
-            logger.error("Token refresh failed: {}", e.getMessage(), e);
+            System.out.println("Token refresh failed: " + e.getMessage());
             return ResponseEntity.status(400)
                 .body(ApiResponse.error(AuthMessageConstants.TOKEN_REFRESH_FAILED, null));
         }
@@ -205,7 +213,7 @@ public class AuthController {
             return ResponseEntity.status(200)
                 .body(ApiResponse.success(AuthMessageConstants.TERMS_AGREEMENT_SUCCESS, termsResponse));
         } catch (Exception e) {
-            logger.error("Terms agreement failed: {}", e.getMessage(), e);
+            System.out.println("Terms agreement failed: " + e.getMessage());
             return ResponseEntity.status(400)
                 .body(ApiResponse.error(AuthMessageConstants.TERMS_AGREEMENT_FAILED, null));
         }
