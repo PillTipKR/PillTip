@@ -20,6 +20,7 @@ import java.nio.charset.StandardCharsets;
 
 import java.time.LocalDateTime;
 import java.util.Date;
+import com.oauth2.User.Auth.Dto.AuthMessageConstants;
 
 /**
  * JWT 토큰 관리를 위한 서비스 클래스
@@ -66,7 +67,7 @@ public class TokenService {
             // 기존 토큰이 없으면 새로 생성
             UserToken newToken = UserToken.builder()
                     .userId(userId)
-                    .user(userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found")))
+                    .user(userRepository.findById(userId).orElseThrow(() -> new RuntimeException(AuthMessageConstants.USER_INFO_NOT_FOUND_RETRY_LOGIN)))
                     .accessToken(accessToken)
                     .refreshToken(refreshToken)
                     .accessTokenExpiry(accessTokenExpiry)
@@ -107,7 +108,7 @@ public class TokenService {
     public TokenRefreshResult refreshTokens(String refreshToken) {
         // 리프레시 토큰 유효성 검증
         if (!validateToken(refreshToken)) {
-            throw new BadCredentialsException("유효하지 않은 리프레시 토큰입니다.");
+            throw new BadCredentialsException(AuthMessageConstants.INVALID_REFRESH_TOKEN_DETAIL);
         }
 
         // 리프레시 토큰에서 사용자 ID 추출
@@ -116,11 +117,11 @@ public class TokenService {
         
         // 사용자 ID로 토큰 조회
         UserToken userToken = userTokenRepository.findById(userId)
-                .orElseThrow(() -> new BadCredentialsException("토큰을 찾을 수 없습니다."));
+                .orElseThrow(() -> new BadCredentialsException(AuthMessageConstants.TOKEN_NOT_FOUND));
 
         // 리프레시 토큰 일치 여부 검증
         if (!userToken.getRefreshToken().equals(refreshToken)) {
-            throw new BadCredentialsException("유효하지 않은 리프레시 토큰입니다.");
+            throw new BadCredentialsException(AuthMessageConstants.INVALID_REFRESH_TOKEN_DETAIL);
         }
 
         // 보안을 위해 매번 새로운 토큰 발급 (리프레시 토큰 만료 여부와 관계없이)
@@ -172,9 +173,9 @@ public class TokenService {
                 .parseClaimsJws(token);
             return true;
         } catch (ExpiredJwtException e) {
-            throw new BadCredentialsException("토큰이 만료되었습니다.");
+            throw new BadCredentialsException(AuthMessageConstants.TOKEN_EXPIRED_DETAIL);
         } catch (Exception e) {
-            throw new BadCredentialsException("유효하지 않은 토큰입니다.");
+            throw new BadCredentialsException(AuthMessageConstants.INVALID_TOKEN);
         }
     }
 
@@ -192,9 +193,9 @@ public class TokenService {
                 .parseClaimsJws(token)
                 .getBody();
             } catch (ExpiredJwtException e) {
-                throw new BadCredentialsException("토큰이 만료되었습니다.");
+                throw new BadCredentialsException(AuthMessageConstants.TOKEN_EXPIRED_DETAIL);
             } catch (Exception e) {
-                throw new BadCredentialsException("유효하지 않은 토큰입니다.");
+                throw new BadCredentialsException(AuthMessageConstants.INVALID_TOKEN);
             }
     }
 
@@ -225,32 +226,25 @@ public class TokenService {
                 .setExpiration(new Date(now + expiresInSeconds * 1000L))
                 .signWith(key, SignatureAlgorithm.HS256)    
                 .compact();
-        System.out.println("[JWT 생성] userId: " + userId + ", questionnaireId: " + questionnaireId + ", hospitalCode: " + hospitalCode + ", expiresInSeconds: " + expiresInSeconds);
-        System.out.println("[JWT 생성] secretKey: " + secretKey);
-        System.out.println("[JWT 생성] token: " + token);
+
         return token;
     }
 
     // 커스텀 JWT 토큰 검증 (questionnaireId 일치)
     public boolean validateCustomJwtToken(String token, Long questionnaireId) {
         try {
-            System.out.println("[JWT 검증] 전달받은 token: " + token);
-            System.out.println("[JWT 검증] 전달받은 questionnaireId 파라미터: " + questionnaireId);
-            System.out.println("[JWT 검증] secretKey: " + secretKey);
+            
             Claims claims = Jwts.parserBuilder()
                 .setSigningKey(secretKey.getBytes())
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
             Long tokenQid = claims.get("questionnaireId", Long.class);
-            System.out.println("[JWT 검증] token 내 claim의 questionnaireId: " + tokenQid);
             if (!questionnaireId.equals(tokenQid)) {
-                System.out.println("[JWT 검증] 파라미터와 claim의 questionnaireId 불일치");
                 return false;
             }
             return true;
         } catch (Exception e) {
-            System.out.println("[JWT 검증] Custom JWT validation error: " + e.getMessage());
             return false;
         }
     }
@@ -272,6 +266,4 @@ public class TokenService {
         Claims claims = getClaimsFromToken(token);
         return claims.get("inviterId", Long.class);
     }
-
-
 }

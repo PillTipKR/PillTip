@@ -11,6 +11,7 @@ import com.oauth2.User.UserInfo.Dto.UserProfileUpdateResponse;
 import com.oauth2.User.UserInfo.Service.UserSensitiveInfoService;
 import com.oauth2.User.UserInfo.Service.UserService;
 import com.oauth2.User.Auth.Dto.ApiResponse;
+import com.oauth2.User.UserInfo.Dto.UserInfoMessageConstants;
 import com.oauth2.User.PatientQuestionnaire.Service.PatientQuestionnaireService;
 import com.oauth2.User.PatientQuestionnaire.Dto.PatientQuestionnaireRequest;
 import lombok.RequiredArgsConstructor;
@@ -86,11 +87,11 @@ public class UserSensitiveInfoController {
                     .build();
             logger.info("Successfully updated user profile for user: {}", user.getId());
             return ResponseEntity.status(200)
-                .body(ApiResponse.success("사용자 프로필 업데이트 성공", response));
+                .body(ApiResponse.success(UserInfoMessageConstants.PROFILE_UPDATE_SUCCESS, response));
         } catch (Exception e) {
             logger.error("Error updating user profile for user: {} - Error: {}", user.getId(), e.getMessage(), e);
             return ResponseEntity.status(400)
-                .body(ApiResponse.error("사용자 프로필 업데이트 실패: " + e.getMessage(), null));
+                .body(ApiResponse.error(UserInfoMessageConstants.PROFILE_UPDATE_FAILED + ": " + e.getMessage(), null));
         }
     }
 
@@ -119,16 +120,16 @@ public class UserSensitiveInfoController {
             UserSensitiveInfoDto sensitiveInfo = userSensitiveInfoService.getSensitiveInfo(user);
             if (sensitiveInfo == null) {
                 return ResponseEntity.status(404)
-                    .body(ApiResponse.error("민감정보가 존재하지 않습니다.", null));
+                    .body(ApiResponse.error(UserInfoMessageConstants.SENSITIVE_INFO_NOT_FOUND, null));
             }
             
             logger.info("Successfully retrieved sensitive info for user: {}", user.getId());
             return ResponseEntity.status(200)
-                .body(ApiResponse.success("민감정보 조회 성공", sensitiveInfo));
+                .body(ApiResponse.success(UserInfoMessageConstants.SENSITIVE_INFO_RETRIEVE_SUCCESS, sensitiveInfo));
         } catch (Exception e) {
             logger.error("Error retrieving sensitive info for user: {} - Error: {}", user.getId(), e.getMessage(), e);
             return ResponseEntity.status(400)
-                .body(ApiResponse.error("민감정보 조회 실패: " + e.getMessage(), null));
+                .body(ApiResponse.error(UserInfoMessageConstants.SENSITIVE_INFO_RETRIEVE_FAILED + ": " + e.getMessage(), null));
         }
     }
 
@@ -151,11 +152,11 @@ public class UserSensitiveInfoController {
             
             logger.info("Successfully updated sensitive info for user: {}", user.getId());
             return ResponseEntity.status(200)
-                .body(ApiResponse.success("민감정보 업데이트 성공", sensitiveInfo));
+                .body(ApiResponse.success(UserInfoMessageConstants.SENSITIVE_INFO_UPDATE_SUCCESS, sensitiveInfo));
         } catch (Exception e) {
             logger.error("Error updating sensitive info for user: {} - Error: {}", user.getId(), e.getMessage(), e);
             return ResponseEntity.status(400)
-                .body(ApiResponse.error("민감정보 업데이트 실패: " + e.getMessage(), null));
+                .body(ApiResponse.error(UserInfoMessageConstants.SENSITIVE_INFO_UPDATE_FAILED + ": " + e.getMessage(), null));
         }
     }
 
@@ -174,19 +175,19 @@ public class UserSensitiveInfoController {
             
             logger.info("Successfully updated sensitive info category for user: {} - Category: {}", user.getId(), category);
             return ResponseEntity.status(200)
-                .body(ApiResponse.success("민감정보 카테고리 업데이트 성공", sensitiveInfo));
+                .body(ApiResponse.success(UserInfoMessageConstants.SENSITIVE_INFO_CATEGORY_UPDATE_SUCCESS, sensitiveInfo));
         } catch (IllegalArgumentException e) {
             logger.error("Invalid category for user: {} - Category: {}", user.getId(), category);
             return ResponseEntity.status(400)
-                .body(ApiResponse.error("잘못된 카테고리입니다: " + e.getMessage(), null));
+                .body(ApiResponse.error(UserInfoMessageConstants.INVALID_CATEGORY + ": " + e.getMessage(), null));
         } catch (JsonProcessingException e) {
             logger.error("Error serializing sensitive info category for user: {} - Error: {}", user.getId(), e.getMessage(), e);
             return ResponseEntity.status(400)
-                .body(ApiResponse.error("민감정보 카테고리 직렬화 실패: " + e.getMessage(), null));
+                .body(ApiResponse.error(UserInfoMessageConstants.SENSITIVE_INFO_SERIALIZE_FAILED + ": " + e.getMessage(), null));
         } catch (Exception e) {
             logger.error("Error updating sensitive info category for user: {} - Error: {}", user.getId(), e.getMessage(), e);
             return ResponseEntity.status(400)
-                .body(ApiResponse.error("민감정보 카테고리 업데이트 실패: " + e.getMessage(), null));
+                .body(ApiResponse.error(UserInfoMessageConstants.SENSITIVE_INFO_CATEGORY_UPDATE_FAILED + ": " + e.getMessage(), null));
         }
     }
 
@@ -204,20 +205,20 @@ public class UserSensitiveInfoController {
             
             if (sensitiveInfo == null) {
                 return ResponseEntity.status(404)
-                    .body(ApiResponse.error("민감정보가 존재하지 않습니다.", null));
+                    .body(ApiResponse.error(UserInfoMessageConstants.SENSITIVE_INFO_NOT_FOUND, null));
             }
             
             logger.info("Successfully deleted sensitive info categories for user: {}", user.getId());
             return ResponseEntity.status(200)
-                .body(ApiResponse.success("민감정보 카테고리 삭제 성공", sensitiveInfo));
+                .body(ApiResponse.success(UserInfoMessageConstants.SENSITIVE_INFO_DELETE_SUCCESS, sensitiveInfo));
         } catch (JsonProcessingException e) {
             logger.error("Error serializing sensitive info for user: {} - Error: {}", user.getId(), e.getMessage(), e);
             return ResponseEntity.status(400)
-                .body(ApiResponse.error("민감정보 직렬화 실패: " + e.getMessage(), null));
+                .body(ApiResponse.error(UserInfoMessageConstants.SENSITIVE_INFO_SERIALIZE_FAILED + ": " + e.getMessage(), null));
         } catch (Exception e) {
             logger.error("Error deleting sensitive info categories for user: {} - Error: {}", user.getId(), e.getMessage(), e);
             return ResponseEntity.status(400)
-                .body(ApiResponse.error("민감정보 카테고리 삭제 실패: " + e.getMessage(), null));
+                .body(ApiResponse.error(UserInfoMessageConstants.SENSITIVE_INFO_DELETE_FAILED + ": " + e.getMessage(), null));
         }
     }
 
@@ -234,11 +235,11 @@ public class UserSensitiveInfoController {
             
             logger.info("Successfully deleted all sensitive info for user: {}", user.getId());
             return ResponseEntity.status(200)
-                .body(ApiResponse.success("민감정보 전체 삭제 성공", "민감정보가 성공적으로 삭제되었습니다."));
+                .body(ApiResponse.success(UserInfoMessageConstants.SENSITIVE_INFO_ALL_DELETE_SUCCESS, "민감정보가 성공적으로 삭제되었습니다."));
         } catch (Exception e) {
             logger.error("Error deleting all sensitive info for user: {} - Error: {}", user.getId(), e.getMessage(), e);
             return ResponseEntity.status(400)
-                .body(ApiResponse.error("민감정보 전체 삭제 실패: " + e.getMessage(), null));
+                .body(ApiResponse.error(UserInfoMessageConstants.SENSITIVE_INFO_ALL_DELETE_FAILED + ": " + e.getMessage(), null));
         }
     }
 } 

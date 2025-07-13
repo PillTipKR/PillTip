@@ -5,7 +5,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.oauth2.User.TakingPill.Entity.DosageSchedule;
 import com.oauth2.User.TakingPill.Entity.TakingPill;
-import com.oauth2.Util.Encryption.EncryptionUtil;
 import lombok.Getter;
 import lombok.Setter;
 import org.slf4j.Logger;
@@ -67,19 +66,19 @@ public class TakingPillResponse {
     }
 
     /**
-     * 복호화된 필드를 사용하여 TakingPillResponse를 생성하는 정적 팩토리 메서드
+     * TakingPillResponse를 생성하는 정적 팩토리 메서드 (EncryptionConverter가 자동으로 복호화)
      */
-    public static TakingPillResponse fromDecrypted(TakingPill takingPill, EncryptionUtil encryptionUtil) {
+    public static TakingPillResponse fromDecrypted(TakingPill takingPill) {
         TakingPillResponse response = new TakingPillResponse();
         response.id = takingPill.getId();
         response.medicationId = takingPill.getMedicationId();
-        response.medicationName = getDecryptedMedicationName(takingPill, encryptionUtil);
+        response.medicationName = takingPill.getMedicationName(); // EncryptionConverter가 자동으로 복호화
         response.startDate = createSafeLocalDate(takingPill.getStartYear(), takingPill.getStartMonth(), takingPill.getStartDay());
         response.endDate = createSafeLocalDate(takingPill.getEndYear(), takingPill.getEndMonth(), takingPill.getEndDay());
-        response.alertName = getDecryptedAlarmName(takingPill, encryptionUtil);
+        response.alertName = takingPill.getAlarmName(); // EncryptionConverter가 자동으로 복호화
         
-        // JSON 문자열을 리스트로 변환 (복호화된 데이터 사용)
-        response.daysOfWeek = parseDaysOfWeek(getDecryptedDaysOfWeek(takingPill, encryptionUtil));
+        // JSON 문자열을 리스트로 변환 (EncryptionConverter가 자동으로 복호화)
+        response.daysOfWeek = parseDaysOfWeek(takingPill.getDaysOfWeek());
         
         // dosageSchedules가 null일 경우 빈 리스트로 초기화
         if (takingPill.getDosageSchedules() != null) {
@@ -97,50 +96,7 @@ public class TakingPillResponse {
         // 기본 생성자
     }
 
-    /**
-     * 암호화된 약물명을 복호화합니다.
-     */
-    private static String getDecryptedMedicationName(TakingPill takingPill, EncryptionUtil encryptionUtil) {
-        try {
-            String encryptedName = takingPill.getMedicationName();
-            if (encryptedName != null && !encryptedName.isEmpty()) {
-                return encryptionUtil.decrypt(encryptedName);
-            }
-        } catch (Exception e) {
-            logger.warn("Failed to decrypt medication name for takingPill {}: {}", takingPill.getId(), e.getMessage());
-        }
-        return takingPill.getMedicationName(); // 복호화 실패 시 원본 반환
-    }
 
-    /**
-     * 암호화된 알림명을 복호화합니다.
-     */
-    private static String getDecryptedAlarmName(TakingPill takingPill, EncryptionUtil encryptionUtil) {
-        try {
-            String encryptedName = takingPill.getAlarmName();
-            if (encryptedName != null && !encryptedName.isEmpty()) {
-                return encryptionUtil.decrypt(encryptedName);
-            }
-        } catch (Exception e) {
-            logger.warn("Failed to decrypt alarm name for takingPill {}: {}", takingPill.getId(), e.getMessage());
-        }
-        return takingPill.getAlarmName(); // 복호화 실패 시 원본 반환
-    }
-
-    /**
-     * 암호화된 요일 정보를 복호화합니다.
-     */
-    private static String getDecryptedDaysOfWeek(TakingPill takingPill, EncryptionUtil encryptionUtil) {
-        try {
-            String encryptedDays = takingPill.getDaysOfWeek();
-            if (encryptedDays != null && !encryptedDays.isEmpty()) {
-                return encryptionUtil.decrypt(encryptedDays);
-            }
-        } catch (Exception e) {
-            logger.warn("Failed to decrypt days of week for takingPill {}: {}", takingPill.getId(), e.getMessage());
-        }
-        return takingPill.getDaysOfWeek(); // 복호화 실패 시 원본 반환
-    }
 
     private static List<String> parseDaysOfWeek(String daysOfWeekJson) {
         if (daysOfWeekJson == null || daysOfWeekJson.isEmpty()) {

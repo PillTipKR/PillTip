@@ -18,7 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import com.oauth2.Util.Encryption.EncryptionUtil;
+import com.oauth2.User.Auth.Dto.AuthMessageConstants;
 
 @Service
 @RequiredArgsConstructor
@@ -29,53 +29,35 @@ public class LoginService {
     private final TokenService tokenService;
     private final OAuth2Service oauth2Service;
     private final FCMTokenRepository fcmTokenRepository;
-    private final EncryptionUtil encryptionUtil;
     private final Logger logger = LoggerFactory.getLogger(LoginService.class);
 
     // ID/PW 로그인
     public LoginResponse login(LoginRequest request) {
-        logger.info("Login attempt for loginId: {}", request.loginId());
-        
-        // 모든 사용자를 조회하여 loginId를 복호화하여 비교
+        // 모든 사용자를 조회하여 loginId를 비교 (EncryptionConverter가 자동으로 복호화)
         List<User> allUsers = userRepository.findAll();
-        logger.info("Total users in database: {}", allUsers.size());
         
         User user = null;
         
         for (User u : allUsers) {
-            logger.info("Checking user ID: {}, LoginType: {}, Encrypted LoginId: {}", 
-                u.getId(), u.getLoginType(), u.getLoginId());
-            
-            if (u.getLoginId() != null) {
-                try {
-                    String decryptedLoginId = u.getLoginId();
-                    logger.info("Decrypted loginId for user {}: {}", u.getId(), decryptedLoginId);
-                    logger.info("Comparing decryptedLoginId [{}] with request loginId [{}]", decryptedLoginId, request.loginId());
-                    
-                    if (decryptedLoginId.equals(request.loginId())) {
-                        user = u;
-                        logger.info("Found matching user: {}", u.getId());
-                        break;
-                    } else {
-                        logger.info("loginId does not match for user {}: {} != {}", u.getId(), decryptedLoginId, request.loginId());
-                    }
-                } catch (Exception e) {
-                    logger.warn("Failed to decrypt loginId for user {}: {}", u.getId(), e.getMessage());
-                }
+            if (u.getLoginId() != null && u.getLoginId().equals(request.loginId())) {
+                user = u;
+                break;
             }
         }
         
         if (user == null) {
-            logger.error("No user found with loginId: {}", request.loginId());
-            throw new RuntimeException("User not found");
+            logger.error("로그인 실패: loginId {}로 사용자를 찾을 수 없습니다", request.loginId());
+            throw new RuntimeException(AuthMessageConstants.USER_INFO_NOT_FOUND_RETRY_LOGIN);
         }
 
         if (user.getLoginType() != LoginType.IDPW) {
-            throw new RuntimeException("This account is not an ID/PW account");
+            logger.error("로그인 실패: 사용자 {}의 로그인 타입이 잘못되었습니다: {}", user.getId(), user.getLoginType());
+            throw new RuntimeException(AuthMessageConstants.INVALID_REQUEST);
         }
 
         if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
-            throw new RuntimeException("Invalid password");
+            logger.error("로그인 실패: 사용자 {}의 비밀번호가 일치하지 않습니다", user.getId());
+            throw new RuntimeException(AuthMessageConstants.INVALID_REQUEST);
         }
 
         UserToken userToken = tokenService.generateTokens(user.getId());
@@ -88,72 +70,36 @@ public class LoginService {
 
     // 소셜 로그인
     public LoginResponse socialLogin(SocialLoginRequest request) {
-        logger.info("=== Social Login Debug ===");
-        logger.info("Provider: {}", request.getProvider());
-        logger.info("Token: {}", request.getToken().substring(0, Math.min(request.getToken().length(), 20)) + "...");
-
         try {
             // OAuth2 서버에서 사용자 정보 가져오기
-            logger.info("Calling OAuth2 service to get user info...");
             OAuth2UserInfo oauth2UserInfo = oauth2Service.getUserInfo(
                     request.getProvider(),
                     request.getToken()
             );
-            logger.info("OAuth2 User Info - Social ID: {}", oauth2UserInfo.getSocialId());
-            logger.info("OAuth2 User Info - Email: {}", oauth2UserInfo.getEmail());
-            logger.info("OAuth2 User Info - Name: {}", oauth2UserInfo.getName());
 
             // 모든 사용자를 조회하여 socialId를 비교
             List<User> allUsers = userRepository.findAll();
-            logger.info("Total users in database: {}", allUsers.size());
             
             User user = null;
             
             for (User u : allUsers) {
-                logger.info("Checking user ID: {}, LoginType: {}, SocialId: {}", 
-                    u.getId(), u.getLoginType(), u.getSocialId());
-                
-                if (u.getSocialId() != null) {
-                    try {
-                        // EncryptionConverter가 자동으로 복호화해주지만, 
-                        // 혹시 모르니 명시적으로 복호화 시도
-                        String decryptedSocialId = encryptionUtil.isEncrypted(u.getSocialId()) 
-                            ? encryptionUtil.decrypt(u.getSocialId()) 
-                            : u.getSocialId();
-                        
-                        logger.info("Decrypted socialId for user {}: {}", u.getId(), decryptedSocialId);
-                        
-                        if (decryptedSocialId.equals(oauth2UserInfo.getSocialId())) {
-                            user = u;
-                            logger.info("Found matching user: {}", u.getId());
-                            break;
-                        }
-                    } catch (Exception e) {
-                        logger.warn("Failed to decrypt socialId for user {}: {}", u.getId(), e.getMessage());
-                        // 복호화 실패 시 원본 값으로 비교
-                        if (u.getSocialId().equals(oauth2UserInfo.getSocialId())) {
-                            user = u;
-                            logger.info("Found matching user with original socialId: {}", u.getId());
-                            break;
-                        }
-                    }
+                if (u.getSocialId() != null && u.getSocialId().equals(oauth2UserInfo.getSocialId())) {
+                    user = u;
+                    break;
                 }
             }
             
             if (user == null) {
-                logger.error("No user found with socialId: {}", oauth2UserInfo.getSocialId());
-                throw new RuntimeException("User not found");
+                logger.error("소셜 로그인 실패: socialId {}로 사용자를 찾을 수 없습니다", oauth2UserInfo.getSocialId());
+                throw new RuntimeException(AuthMessageConstants.USER_INFO_NOT_FOUND_RETRY_LOGIN);
             }
 
             if (user.getLoginType() != LoginType.SOCIAL) {
-                logger.error("User login type is not SOCIAL: {}", user.getLoginType());
-                throw new RuntimeException("This account is not a social account");
+                logger.error("소셜 로그인 실패: 사용자 {}의 로그인 타입이 잘못되었습니다: {}", user.getId(), user.getLoginType());
+                throw new RuntimeException(AuthMessageConstants.INVALID_REQUEST);
             }
 
-            logger.info("Generating tokens for user...");
             UserToken userToken = tokenService.generateTokens(user.getId());
-            logger.info("Tokens generated successfully");
-
             updateFCMToken(user);
 
             return new LoginResponse(
@@ -161,20 +107,17 @@ public class LoginService {
                     userToken.getRefreshToken()
             );
         } catch (Exception e) {
-            logger.error("Error occurred in social login: {}", e.getMessage());
+            logger.error("소셜 로그인 실패: {}", e.getMessage());
             throw e;
         }
     }
 
     // 토큰 갱신
     public LoginResponse refreshToken(String refreshToken) {
-        // 토큰 갱신 결과 확인
         TokenService.TokenRefreshResult result = tokenService.refreshTokens(refreshToken);
-        // 갱신된 토큰 정보 확인
         UserToken userToken = result.getUserToken();
-        // 사용자 정보 조회
         User user = userRepository.findById(userToken.getUserId())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new RuntimeException(AuthMessageConstants.USER_INFO_NOT_FOUND_RETRY_LOGIN));
         updateFCMToken(user);
         return new LoginResponse(
                 userToken.getAccessToken(),

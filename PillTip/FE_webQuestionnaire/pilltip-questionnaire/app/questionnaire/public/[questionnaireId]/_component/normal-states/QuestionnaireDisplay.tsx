@@ -23,11 +23,6 @@ export default function QuestionnaireDisplay({
   const [isDownloading, setIsDownloading] = useState(false);
   const [remainingSeconds, setRemainingSeconds] = useState<number | null>(null);
 
-  console.log(
-    "[DEBUG] QuestionnaireDisplay received questionnaire:",
-    questionnaire
-  );
-
   function safeParse(data: any) {
     if (Array.isArray(data)) return data;
     if (typeof data === "string") {
@@ -75,13 +70,6 @@ export default function QuestionnaireDisplay({
     })
   );
 
-  console.log("[DEBUG] Processed data:", {
-    medicationInfo,
-    allergyInfo,
-    chronicDiseaseInfo,
-    surgeryHistoryInfo,
-  });
-
   useEffect(() => {
     let timer: NodeJS.Timeout | null = null;
     if (questionnaire && questionnaire.expirationDate) {
@@ -97,7 +85,6 @@ export default function QuestionnaireDisplay({
       timer = setInterval(updateRemaining, 1000);
       if (expirationTime - new Date().getTime() > 0) {
         const reloadTimer = setTimeout(() => {
-          console.log("문진표가 만료되어 새로고침합니다.");
           window.location.reload();
         }, expirationTime - new Date().getTime());
         // 컴포넌트 언마운트 시 타이머 정리
@@ -107,7 +94,6 @@ export default function QuestionnaireDisplay({
         };
       } else {
         // 이미 만료된 경우 바로 새로고침
-        console.log("문진표가 이미 만료되어 새로고침합니다.");
         window.location.reload();
       }
     }
@@ -115,8 +101,6 @@ export default function QuestionnaireDisplay({
       if (timer) clearInterval(timer);
     };
   }, [questionnaire]);
-
-  console.log("[DEBUG] Rendering QuestionnaireDisplay");
 
   return (
     <div className={styles.container}>

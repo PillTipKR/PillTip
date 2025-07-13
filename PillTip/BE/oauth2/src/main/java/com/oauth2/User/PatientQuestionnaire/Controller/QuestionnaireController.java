@@ -5,6 +5,7 @@ package com.oauth2.User.PatientQuestionnaire.Controller;
 import com.oauth2.User.PatientQuestionnaire.Dto.PatientQuestionnaireSummaryResponse;
 import com.oauth2.User.PatientQuestionnaire.Service.PatientQuestionnaireService;
 import com.oauth2.User.Auth.Dto.ApiResponse;
+import com.oauth2.User.PatientQuestionnaire.Dto.QuestionnaireMessageConstants;
 import com.oauth2.User.UserInfo.Dto.UserPermissionsRequest;
 import com.oauth2.User.UserInfo.Dto.UserPermissionsResponse;
 import com.oauth2.User.Auth.Entity.User;
@@ -21,7 +22,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.oauth2.User.Auth.Service.TokenService;
 import com.oauth2.User.Hospital.HospitalService;
 import com.oauth2.Util.Encryption.EncryptionUtil;
@@ -42,17 +42,14 @@ public class QuestionnaireController {
     @GetMapping("/permissions")
     public ResponseEntity<ApiResponse<UserPermissionsResponse>> getUserPermissions(
             @AuthenticationPrincipal User user) {
-        logger.info("Received getUserPermissions request for user: {}", user.getId());
-        
         try {
             UserPermissionsResponse permissions = userPermissionsService.getUserPermissions(user);
-            logger.info("Successfully retrieved permissions for user: {}", user.getId());
             return ResponseEntity.status(200)
-                .body(ApiResponse.success("Permissions retrieved successfully", permissions));
+                .body(ApiResponse.success(QuestionnaireMessageConstants.PERMISSIONS_RETRIEVE_SUCCESS, permissions));
         } catch (Exception e) {
-            logger.error("Error retrieving permissions for user: {} - Error: {}", user.getId(), e.getMessage(), e);
+            logger.error("Permissions retrieve failed: {}", e.getMessage(), e);
             return ResponseEntity.status(400)
-                .body(ApiResponse.error("Failed to retrieve permissions: " + e.getMessage(), null));
+                .body(ApiResponse.error(QuestionnaireMessageConstants.PERMISSIONS_RETRIEVE_FAILED, null));
         }
     }
   
@@ -61,18 +58,14 @@ public class QuestionnaireController {
     public ResponseEntity<ApiResponse<UserPermissionsResponse>> updateMedicalPermissions(
             @AuthenticationPrincipal User user,
             @RequestBody UserPermissionsRequest request) {
-        logger.info("Received updateMedicalPermissions request for user: {}", user.getId());
-        logger.debug("UserPermissionsRequest details: {}", request);
-        
         try {
             UserPermissionsResponse permissions = userPermissionsService.updateMedicalPermissions(user, request);
-            logger.info("Successfully updated medical permissions for user: {}", user.getId());
             return ResponseEntity.status(200)
-                .body(ApiResponse.success("Medical permissions updated successfully", permissions));
+                .body(ApiResponse.success(QuestionnaireMessageConstants.MEDICAL_PERMISSIONS_UPDATE_SUCCESS, permissions));
         } catch (Exception e) {
-            logger.error("Error updating medical permissions for user: {} - Error: {}", user.getId(), e.getMessage(), e);
+            logger.error("Medical permissions update failed: {}", e.getMessage(), e);
             return ResponseEntity.status(400)
-                .body(ApiResponse.error("Failed to update medical permissions: " + e.getMessage(), null));
+                .body(ApiResponse.error(QuestionnaireMessageConstants.PERMISSION_UPDATE_FAILED, null));
         }
     }
     //동의사항 수정 (여러개 수정)
@@ -81,30 +74,24 @@ public class QuestionnaireController {
             @AuthenticationPrincipal User user,
             @PathVariable String permissionType,
             @RequestParam boolean granted) {
-        logger.info("Received updatePermission request for user: {} - Type: {}, Granted: {}", 
-                   user.getId(), permissionType, granted);
-        
         try {
             UserPermissionsResponse permissions = userPermissionsService.updatePermission(user, permissionType, granted);
-            logger.info("Successfully updated permission for user: {} - Type: {}", user.getId(), permissionType);
             return ResponseEntity.status(200)
-                .body(ApiResponse.success("Permission updated successfully", permissions));
+                .body(ApiResponse.success(QuestionnaireMessageConstants.PERMISSION_UPDATE_SUCCESS, permissions));
         } catch (IllegalArgumentException e) {
-            logger.error("Invalid permission type for user: {} - Type: {}", user.getId(), permissionType);
+            logger.error("Invalid permission type: {}", e.getMessage(), e);
             return ResponseEntity.status(400)
-                .body(ApiResponse.error("Invalid permission type: " + e.getMessage(), null));
+                .body(ApiResponse.error(QuestionnaireMessageConstants.INVALID_PERMISSION_TYPE, null));
         } catch (Exception e) {
-            logger.error("Error updating permission for user: {} - Error: {}", user.getId(), e.getMessage(), e);
+            logger.error("Permission update failed: {}", e.getMessage(), e);
             return ResponseEntity.status(400)
-                .body(ApiResponse.error("Failed to update permission: " + e.getMessage(), null));
+                .body(ApiResponse.error(QuestionnaireMessageConstants.PERMISSION_UPDATE_FAILED, null));
         }
     }
     //문진표 기능 사용 가능 여부 확인
     @GetMapping("/available")
     public ResponseEntity<ApiResponse<QuestionnaireAvailabilityResponse>> isQuestionnaireAvailable(
             @AuthenticationPrincipal User user) {
-        logger.info("Received isQuestionnaireAvailable request for user: {}", user.getId());
-        
         try {
             // 1. 동의사항 확인
             UserPermissionsResponse permissions = userPermissionsService.getUserPermissions(user);
@@ -120,25 +107,18 @@ public class QuestionnaireController {
             // 4. 누락된 항목 수집
             java.util.List<String> missingItems = new java.util.ArrayList<>();
             if (!permissionsValid) {
-                missingItems.add("동의사항 미완료");
+                missingItems.add(QuestionnaireMessageConstants.MISSING_PERMISSIONS);
             }
             if (!personalInfoValid) {
-                missingItems.add("실명/주소 미입력");
+                missingItems.add(QuestionnaireMessageConstants.MISSING_PERSONAL_INFO);
             }
             
             // 5. 메시지 생성
             String message;
             if (isAvailable) {
-                message = "문진표 작성이 가능합니다.";
+                message = QuestionnaireMessageConstants.QUESTIONNAIRE_AVAILABLE_MESSAGE;
             } else {
-                message = "문진표 작성을 위해 다음 항목을 완료해주세요: " + String.join(", ", missingItems);
-            }
-            
-            logger.info("Questionnaire availability check for user: {} - Permissions valid: {}, Personal info valid: {}, Available: {}", 
-                user.getId(), permissionsValid, personalInfoValid, isAvailable);
-            
-            if (!isAvailable) {
-                logger.info("Questionnaire not available for user: {} - Missing: {}", user.getId(), String.join(", ", missingItems));
+                message = QuestionnaireMessageConstants.QUESTIONNAIRE_UNAVAILABLE_MESSAGE + String.join(", ", missingItems);
             }
             
             QuestionnaireAvailabilityResponse response = QuestionnaireAvailabilityResponse.builder()
@@ -150,11 +130,11 @@ public class QuestionnaireController {
                 .build();
             
             return ResponseEntity.status(200)
-                .body(ApiResponse.success("Questionnaire availability checked successfully", response));
+                .body(ApiResponse.success(QuestionnaireMessageConstants.QUESTIONNAIRE_AVAILABILITY_CHECK_SUCCESS, response));
         } catch (Exception e) {
-            logger.error("Error checking questionnaire availability for user: {} - Error: {}", user.getId(), e.getMessage(), e);
+            logger.error("Questionnaire availability check failed: {}", e.getMessage(), e);
             return ResponseEntity.status(400)
-                .body(ApiResponse.error("Failed to check questionnaire availability: " + e.getMessage(), null));
+                .body(ApiResponse.error(QuestionnaireMessageConstants.QUESTIONNAIRE_RETRIEVE_FAILED, null));
         }
     }
 
@@ -165,32 +145,27 @@ public class QuestionnaireController {
             @AuthenticationPrincipal User user) {
         java.util.List<PatientQuestionnaireSummaryResponse> list = patientQuestionnaireService.getUserQuestionnaireSummaries(user);
         return ResponseEntity.status(200)
-            .body(ApiResponse.success("문진표 리스트 조회 성공", list));
+            .body(ApiResponse.success(QuestionnaireMessageConstants.QUESTIONNAIRE_LIST_RETRIEVE_SUCCESS, list));
     }
     
     // 현재 접속한 유저의 문진표 조회
     @GetMapping("")
     public ResponseEntity<ApiResponse<PatientQuestionnaireResponse>> getCurrentUserQuestionnaire(
             @AuthenticationPrincipal User user) {
-        
-        logger.info("Received getCurrentUserQuestionnaire request for user: {}", user.getId());
-        
         try {
             PatientQuestionnaire questionnaire = patientQuestionnaireService.getCurrentUserQuestionnaire(user);
             Long expirationDate = System.currentTimeMillis() + 180 * 1000L;
             String phoneNumber = user.getUserProfile() != null ? user.getUserProfile().getPhone() : null;
             PatientQuestionnaireResponse response = PatientQuestionnaireResponse.from(questionnaire, phoneNumber, user.getRealName(), user.getAddress(), encryptionUtil, expirationDate);
-            logger.info("Successfully retrieved current user questionnaire for user: {}", user.getId());
             return ResponseEntity.status(200)
-                .body(ApiResponse.success("현재 유저 문진표 조회 성공", response));
+                .body(ApiResponse.success(QuestionnaireMessageConstants.CURRENT_USER_QUESTIONNAIRE_RETRIEVE_SUCCESS, response));
         } catch (IllegalArgumentException e) {
-            logger.warn("No questionnaire found for user: {} - Error: {}", user.getId(), e.getMessage());
             return ResponseEntity.status(404)
-                .body(ApiResponse.error("작성된 문진표가 없습니다.", null));
+                .body(ApiResponse.error(QuestionnaireMessageConstants.QUESTIONNAIRE_NOT_FOUND, null));
         } catch (Exception e) {
-            logger.error("Error retrieving current user questionnaire for user: {} - Error: {}", user.getId(), e.getMessage(), e);
+            logger.error("Current user questionnaire retrieve failed: {}", e.getMessage(), e);
             return ResponseEntity.status(400)
-                .body(ApiResponse.error("문진표 조회 중 오류가 발생했습니다: " + e.getMessage(), null));
+                .body(ApiResponse.error(QuestionnaireMessageConstants.QUESTIONNAIRE_RETRIEVE_FAILED, null));
         }
     }
     
@@ -298,22 +273,17 @@ public class QuestionnaireController {
     @DeleteMapping("")
     public ResponseEntity<ApiResponse<String>> deleteCurrentUserQuestionnaire(
             @AuthenticationPrincipal User user) {
-        
-        logger.info("Received deleteCurrentUserQuestionnaire request for user: {}", user.getId());
-        
         try {
             patientQuestionnaireService.deleteCurrentUserQuestionnaire(user);
-            logger.info("Successfully deleted current user questionnaire for user: {}", user.getId());
             return ResponseEntity.status(200)
-                .body(ApiResponse.success("문진표 삭제 성공", "문진표가 성공적으로 삭제되었습니다."));
+                .body(ApiResponse.success(QuestionnaireMessageConstants.QUESTIONNAIRE_DELETE_SUCCESS, "문진표가 성공적으로 삭제되었습니다."));
         } catch (IllegalArgumentException e) {
-            logger.warn("No questionnaire found for deletion - User: {} - Error: {}", user.getId(), e.getMessage());
             return ResponseEntity.status(404)
-                .body(ApiResponse.error("작성된 문진표가 없습니다.", null));
+                .body(ApiResponse.error(QuestionnaireMessageConstants.QUESTIONNAIRE_NOT_FOUND, null));
         } catch (Exception e) {
-            logger.error("Error deleting current user questionnaire for user: {} - Error: {}", user.getId(), e.getMessage(), e);
+            logger.error("Questionnaire delete failed: {}", e.getMessage(), e);
             return ResponseEntity.status(400)
-                .body(ApiResponse.error("문진표 삭제 중 오류가 발생했습니다: " + e.getMessage(), null));
+                .body(ApiResponse.error(QuestionnaireMessageConstants.QUESTIONNAIRE_DELETE_FAILED, null));
         }
     }
     
@@ -322,31 +292,25 @@ public class QuestionnaireController {
     public ResponseEntity<ApiResponse<PatientQuestionnaireResponse>> updateCurrentUserQuestionnaire(
             @AuthenticationPrincipal User user,
             @RequestBody PatientQuestionnaireRequest request) {
-        
-        logger.info("Received updateCurrentUserQuestionnaire request for user: {}", user.getId());
-        
         try {
             PatientQuestionnaire questionnaire = patientQuestionnaireService.updateCurrentUserQuestionnaire(user, request);
             Long expirationDate = System.currentTimeMillis() + 180 * 1000L;
             PatientQuestionnaireResponse response = PatientQuestionnaireResponse.from(questionnaire, request.getPhoneNumber(), request.getRealName(), request.getAddress(), encryptionUtil, expirationDate);
-            logger.info("Successfully updated current user questionnaire for user: {}", user.getId());
             return ResponseEntity.status(200)
-                .body(ApiResponse.success("문진표 수정 성공", response));
+                .body(ApiResponse.success(QuestionnaireMessageConstants.QUESTIONNAIRE_UPDATE_SUCCESS, response));
         } catch (IllegalArgumentException e) {
             // 약물 검증 실패인지 확인
             if (e.getMessage().contains("복용 중인 약 목록에 없습니다")) {
-                logger.warn("Invalid medication for update - User: {} - Error: {}", user.getId(), e.getMessage());
                 return ResponseEntity.status(400)
                     .body(ApiResponse.error(e.getMessage(), null));
             } else {
-                logger.warn("No questionnaire found for update - User: {} - Error: {}", user.getId(), e.getMessage());
                 return ResponseEntity.status(404)
-                    .body(ApiResponse.error("작성된 문진표가 없습니다.", null));
+                    .body(ApiResponse.error(QuestionnaireMessageConstants.QUESTIONNAIRE_NOT_FOUND, null));
             }
         } catch (Exception e) {
-            logger.error("Error updating current user questionnaire for user: {} - Error: {}", user.getId(), e.getMessage(), e);
+            logger.error("Questionnaire update failed: {}", e.getMessage(), e);
             return ResponseEntity.status(400)
-                .body(ApiResponse.error("문진표 수정 중 오류가 발생했습니다: " + e.getMessage(), null));
+                .body(ApiResponse.error(QuestionnaireMessageConstants.QUESTIONNAIRE_UPDATE_FAILED, null));
         }
     }
     // QR 코드를 통한 문진표 URL 생성 API (현재 유저의 문진표)
@@ -354,13 +318,9 @@ public class QuestionnaireController {
     public ResponseEntity<QRQuestionnaireResponse> generateQRUrl(
             @AuthenticationPrincipal User user,
             @PathVariable String hospitalCode) {
-        
-        logger.info("User ID: {}, Hospital Code: {}", user.getId(), hospitalCode);
-        
         try {
             // 1. 병원 코드 유효성 검사
             if (!hospitalService.existsByHospitalCode(hospitalCode)) {
-                logger.warn("Invalid hospital code: {}", hospitalCode);
                 return ResponseEntity.notFound().build();
             }
             
@@ -390,17 +350,12 @@ public class QuestionnaireController {
                 .expiresInMinutes(180) // 3분
                 .build();
             
-            logger.info("QR URL generated successfully for user: {} - Hospital Code: {}", 
-                user.getId(), hospitalCode);
-            
             return ResponseEntity.ok(response);
             
         } catch (IllegalArgumentException e) {
-            logger.warn("No questionnaire found for QR generation - User: {} - Error: {}", user.getId(), e.getMessage());
             return ResponseEntity.notFound().build();
         } catch (Exception e) {
-            logger.error("Error generating QR URL for user: {} - Hospital Code: {}", 
-                user.getId(), hospitalCode, e);
+            logger.error("QR URL generation failed: {}", e.getMessage(), e);
             return ResponseEntity.internalServerError().build();
         }
     }
@@ -410,18 +365,14 @@ public class QuestionnaireController {
     public ResponseEntity<ApiResponse<PatientPublicQuestionnaireResponse>> getQuestionnaireByCustomToken(
             @PathVariable Long id,
             @RequestParam("jwtToken") String jwtToken) {
-        logger.info("[커스텀 토큰 전용] getQuestionnaireByCustomToken called. id: {}, jwtToken: {}", id, jwtToken != null ? jwtToken.substring(0, Math.min(jwtToken.length(), 20)) + "..." : null);
         boolean valid = tokenService.validateCustomJwtToken(jwtToken, id);
-        logger.info("[커스텀 토큰 전용] tokenService.validateCustomJwtToken result: {}", valid);
         if (!valid) {
-            logger.warn("[커스텀 토큰 전용] Invalid custom token for questionnaireId: {}", id);
             return ResponseEntity.status(401)
-                .body(ApiResponse.error("유효하지 않은 커스텀 토큰입니다.", null));
+                .body(ApiResponse.error(QuestionnaireMessageConstants.INVALID_CUSTOM_TOKEN, null));
         }
         PatientQuestionnaire questionnaire = patientQuestionnaireService.getQuestionnaireByIdPublic(id);
         Long expirationDate = System.currentTimeMillis() + 180 * 1000L;
         PatientPublicQuestionnaireResponse response = PatientPublicQuestionnaireResponse.from(questionnaire, questionnaire.getUser().getUserProfile().getPhone(), questionnaire.getUser().getRealName(), questionnaire.getUser().getAddress(), encryptionUtil, expirationDate);
-        logger.info("[커스텀 토큰 전용] Successfully retrieved questionnaire by custom token - Questionnaire ID: {}", id);
-        return ResponseEntity.ok(ApiResponse.success("문진표 조회 성공 (커스텀 토큰)", response));
+        return ResponseEntity.ok(ApiResponse.success(QuestionnaireMessageConstants.PUBLIC_QUESTIONNAIRE_RETRIEVE_SUCCESS, response));
     }
 } 

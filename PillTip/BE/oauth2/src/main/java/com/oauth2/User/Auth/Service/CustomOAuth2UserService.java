@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Map;
+import com.oauth2.User.Auth.Dto.AuthMessageConstants;
 
 @Service
 @RequiredArgsConstructor
@@ -51,7 +52,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
             case "kakao":
                 return String.valueOf(attributes.get("id"));
             default:
-                throw new OAuth2AuthenticationException("Unsupported OAuth2 provider: " + registrationId);
+                throw new OAuth2AuthenticationException(AuthMessageConstants.UNSUPPORTED_OAUTH2_PROVIDER + ": " + registrationId);
         }
     }
 

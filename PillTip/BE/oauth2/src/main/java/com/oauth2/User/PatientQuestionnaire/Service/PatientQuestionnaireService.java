@@ -5,8 +5,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.oauth2.User.PatientQuestionnaire.Dto.PatientQuestionnaireRequest;
 import com.oauth2.User.PatientQuestionnaire.Dto.PatientQuestionnaireSummaryResponse;
 import com.oauth2.User.PatientQuestionnaire.Entity.PatientQuestionnaire;
-import com.oauth2.User.Auth.Entity.User;
 import com.oauth2.User.PatientQuestionnaire.Repository.PatientQuestionnaireRepository;
+import com.oauth2.User.Auth.Entity.User;
+import com.oauth2.User.PatientQuestionnaire.Dto.QuestionnaireMessageConstants;
 import com.oauth2.User.UserInfo.Service.UserService;
 import com.oauth2.User.TakingPill.Service.TakingPillService;
 import lombok.RequiredArgsConstructor;
@@ -81,7 +82,7 @@ public class PatientQuestionnaireService {
     }
 
     private List<Map<String, ?>> toKeyedList(List<PatientQuestionnaireRequest.InfoItem> list, String keyName) {
-        if (list == null) return null;
+        if (list == null || list.isEmpty()) return List.of();
         return list.stream()
                 .map(item -> {
                     String value = null;
@@ -208,7 +209,7 @@ public class PatientQuestionnaireService {
         
         return questionnaireRepository.findByUser(managedUser).stream()
                 .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("작성된 문진표가 없습니다."));
+                .orElseThrow(() -> new IllegalArgumentException(QuestionnaireMessageConstants.QUESTIONNAIRE_NOT_FOUND));
     }
 
     // 현재 접속한 유저의 문진표 삭제
@@ -219,7 +220,7 @@ public class PatientQuestionnaireService {
         
         // 사용자의 문진표가 존재하는지 확인
         if (questionnaireRepository.findByUser(managedUser).isEmpty()) {
-            throw new IllegalArgumentException("작성된 문진표가 없습니다.");
+            throw new IllegalArgumentException(QuestionnaireMessageConstants.QUESTIONNAIRE_NOT_FOUND);
         }
         
         // 사용자의 문진표 삭제
