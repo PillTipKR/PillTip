@@ -37,10 +37,10 @@ public class PatientQuestionnaireResponse {
     private List<Map<String, Object>> allergyInfo;
     private List<Map<String, Object>> chronicDiseaseInfo;
     private List<Map<String, Object>> surgeryHistoryInfo;
+    private Long expirationDate; // 3분 후 만료 시간(ms)
 
-    public static PatientQuestionnaireResponse from(PatientQuestionnaire questionnaire, String decryptedPhoneNumber, String decryptedRealName, String decryptedAddress, EncryptionUtil encryptionUtil) {
+    public static PatientQuestionnaireResponse from(PatientQuestionnaire questionnaire, String decryptedPhoneNumber, String decryptedRealName, String decryptedAddress, EncryptionUtil encryptionUtil, Long expirationDate) {
         ObjectMapper objectMapper = new ObjectMapper();
-        
         try {
             return PatientQuestionnaireResponse.builder()
                     .questionnaireId(questionnaire.getQuestionnaireId())
@@ -69,6 +69,7 @@ public class PatientQuestionnaireResponse {
                     .allergyInfo(parseEncryptedJsonToList(questionnaire.getAllergyInfo(), objectMapper, encryptionUtil))
                     .chronicDiseaseInfo(parseEncryptedJsonToList(questionnaire.getChronicDiseaseInfo(), objectMapper, encryptionUtil))
                     .surgeryHistoryInfo(parseEncryptedJsonToList(questionnaire.getSurgeryHistoryInfo(), objectMapper, encryptionUtil))
+                    .expirationDate(expirationDate)
                     .build();
         } catch (JsonProcessingException e) {
             throw new RuntimeException("Failed to parse questionnaire data", e);

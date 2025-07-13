@@ -176,7 +176,8 @@ public class QuestionnaireController {
         
         try {
             PatientQuestionnaire questionnaire = patientQuestionnaireService.getCurrentUserQuestionnaire(user);
-            PatientQuestionnaireResponse response = PatientQuestionnaireResponse.from(questionnaire, null, user.getRealName(), user.getAddress(), encryptionUtil);
+            Long expirationDate = System.currentTimeMillis() + 180 * 1000L;
+            PatientQuestionnaireResponse response = PatientQuestionnaireResponse.from(questionnaire, null, user.getRealName(), user.getAddress(), encryptionUtil, expirationDate);
             logger.info("Successfully retrieved current user questionnaire for user: {}", user.getId());
             return ResponseEntity.status(200)
                 .body(ApiResponse.success("현재 유저 문진표 조회 성공", response));
@@ -220,7 +221,8 @@ public class QuestionnaireController {
         logger.info("Received createQuestionnaire request for user: {}", user.getId());
         try {
             PatientQuestionnaire questionnaire = patientQuestionnaireService.createQuestionnaire(user, request);
-            PatientQuestionnaireResponse response = PatientQuestionnaireResponse.from(questionnaire, request.getPhoneNumber(), user.getRealName(), user.getAddress(), encryptionUtil);
+            Long expirationDate = System.currentTimeMillis() + 180 * 1000L;
+            PatientQuestionnaireResponse response = PatientQuestionnaireResponse.from(questionnaire, request.getPhoneNumber(), user.getRealName(), user.getAddress(), encryptionUtil, expirationDate);
             logger.info("Successfully created questionnaire for user: {}", user.getId());
             return ResponseEntity.status(201)
                 .body(ApiResponse.success("Questionnaire created successfully", response));
@@ -255,7 +257,8 @@ public class QuestionnaireController {
                 if (valid) {
                     // 토큰이 유효하면 소유자 검증 없이 조회
                     PatientQuestionnaire questionnaire = patientQuestionnaireService.getQuestionnaireByIdPublic(id);
-                    PatientQuestionnaireResponse response = PatientQuestionnaireResponse.from(questionnaire, null, null, null, encryptionUtil);
+                    Long expirationDate = System.currentTimeMillis() + 180 * 1000L;
+                    PatientQuestionnaireResponse response = PatientQuestionnaireResponse.from(questionnaire, null, null, null, encryptionUtil, expirationDate);
                     logger.info("Successfully retrieved questionnaire by custom token for ID: {}", id);
                     return ResponseEntity.status(200)
                         .body(ApiResponse.success("문진표 조회 성공", response));
@@ -268,7 +271,8 @@ public class QuestionnaireController {
             
             // 일반적인 소유자 검증을 통한 조회
             PatientQuestionnaire questionnaire = patientQuestionnaireService.getQuestionnaireById(user, id);
-            PatientQuestionnaireResponse response = PatientQuestionnaireResponse.from(questionnaire, null, user.getRealName(), user.getAddress(), encryptionUtil);
+            Long expirationDate = System.currentTimeMillis() + 180 * 1000L;
+            PatientQuestionnaireResponse response = PatientQuestionnaireResponse.from(questionnaire, null, user.getRealName(), user.getAddress(), encryptionUtil, expirationDate);
             logger.info("Successfully retrieved questionnaire for user: {} - ID: {}", user.getId(), id);
             return ResponseEntity.status(200)
                 .body(ApiResponse.success("문진표 조회 성공", response));
@@ -321,8 +325,8 @@ public class QuestionnaireController {
         
         try {
             PatientQuestionnaire questionnaire = patientQuestionnaireService.updateCurrentUserQuestionnaire(user, request);
-            // 업데이트된 User 정보를 사용하여 응답 생성
-            PatientQuestionnaireResponse response = PatientQuestionnaireResponse.from(questionnaire, request.getPhoneNumber(), request.getRealName(), request.getAddress(), encryptionUtil);
+            Long expirationDate = System.currentTimeMillis() + 180 * 1000L;
+            PatientQuestionnaireResponse response = PatientQuestionnaireResponse.from(questionnaire, request.getPhoneNumber(), request.getRealName(), request.getAddress(), encryptionUtil, expirationDate);
             logger.info("Successfully updated current user questionnaire for user: {}", user.getId());
             return ResponseEntity.status(200)
                 .body(ApiResponse.success("문진표 수정 성공", response));
@@ -370,7 +374,7 @@ public class QuestionnaireController {
             );
             
             // 4. QR URL 생성
-            String qrUrl = String.format("http://localhost:3000/api/questionnaire/public/%s?token=%s",
+            String qrUrl = String.format("http://localhost:3000/questionnaire/public/%s?jwtToken=%s",
                 questionnaire.getQuestionnaireId(),
                 jwtToken);
             
@@ -412,8 +416,8 @@ public class QuestionnaireController {
                 .body(ApiResponse.error("유효하지 않은 커스텀 토큰입니다.", null));
         }
         PatientQuestionnaire questionnaire = patientQuestionnaireService.getQuestionnaireByIdPublic(id);
-        logger.info("[커스텀 토큰 전용] questionnaire: {}", questionnaire);
-        PatientQuestionnaireResponse response = PatientQuestionnaireResponse.from(questionnaire, questionnaire.getUser().getUserProfile().getPhone(), questionnaire.getUser().getRealName(), questionnaire.getUser().getAddress(), encryptionUtil);
+        Long expirationDate = System.currentTimeMillis() + 180 * 1000L;
+        PatientQuestionnaireResponse response = PatientQuestionnaireResponse.from(questionnaire, questionnaire.getUser().getUserProfile().getPhone(), questionnaire.getUser().getRealName(), questionnaire.getUser().getAddress(), encryptionUtil, expirationDate);
         logger.info("[커스텀 토큰 전용] Successfully retrieved questionnaire by custom token - Questionnaire ID: {}", id);
         return ResponseEntity.ok(ApiResponse.success("문진표 조회 성공 (커스텀 토큰)", response));
     }
