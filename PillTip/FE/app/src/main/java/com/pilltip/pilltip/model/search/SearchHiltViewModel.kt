@@ -431,8 +431,70 @@ class SearchHiltViewModel @Inject constructor(
             try {
                 val result = questionnaireRepo.getQuestionnaire()
                 _questionnaireState.value = result
+                _editableQuestionnaire.value = result.copy()
             } catch (e: Exception) {
                 Log.e("Questionnaire", "문진표 불러오기 실패", e)
+            }
+        }
+    }
+
+    /* 문진표 수정 */
+    private val _editableQuestionnaire = mutableStateOf<QuestionnaireData?>(null)
+    val editableQuestionnaire: State<QuestionnaireData?> = _editableQuestionnaire
+
+    fun toggleMedication(index: Int) {
+        _editableQuestionnaire.value = _editableQuestionnaire.value?.copy(
+            medicationInfo = _editableQuestionnaire.value?.medicationInfo?.mapIndexed { i, item ->
+                if (i == index) item.copy(submitted = !item.submitted) else item
+            } ?: emptyList()
+        )
+    }
+
+    fun toggleAllergy(index: Int) {
+        _editableQuestionnaire.value = _editableQuestionnaire.value?.copy(
+            allergyInfo = _editableQuestionnaire.value?.allergyInfo?.mapIndexed { i, item ->
+                if (i == index) item.copy(submitted = !item.submitted) else item
+            } ?: emptyList()
+        )
+    }
+
+    fun toggleChronicDisease(index: Int) {
+        _editableQuestionnaire.value = _editableQuestionnaire.value?.copy(
+            chronicDiseaseInfo = _editableQuestionnaire.value?.chronicDiseaseInfo?.mapIndexed { i, item ->
+                if (i == index) item.copy(submitted = !item.submitted) else item
+            } ?: emptyList()
+        )
+    }
+
+    fun toggleSurgeryHistory(index: Int) {
+        _editableQuestionnaire.value = _editableQuestionnaire.value?.copy(
+            surgeryHistoryInfo = _editableQuestionnaire.value?.surgeryHistoryInfo?.mapIndexed { i, item ->
+                if (i == index) item.copy(submitted = !item.submitted) else item
+            } ?: emptyList()
+        )
+    }
+
+    fun submitEditedQuestionnaire() {
+        val edited = _editableQuestionnaire.value ?: return
+
+        val request = QuestionnaireSubmitRequest(
+            realName = edited.realName,
+            address = edited.address,
+            phoneNumber = edited.phoneNumber,
+            allergyInfo = edited.allergyInfo,
+            medicationInfo = edited.medicationInfo,
+            chronicDiseaseInfo = edited.chronicDiseaseInfo,
+            surgeryHistoryInfo = edited.surgeryHistoryInfo
+        )
+
+        viewModelScope.launch {
+            try {
+                val response = questionnaireRepo.updateQuestionnaire(request)
+                _questionnaireState.value = response
+                _editableQuestionnaire.value = response.copy()
+                Log.d("문진표 수정", "성공")
+            } catch (e: Exception) {
+                Log.e("문진표 수정 실패", e.toString())
             }
         }
     }
@@ -441,7 +503,9 @@ class SearchHiltViewModel @Inject constructor(
 @HiltViewModel
 class SensitiveViewModel @Inject constructor(
     private val permissionRepository: PermissionRepository,
-    private val sensitiveInfoRepository: SensitiveInfoRepository
+    private val sensitiveInfoRepository: SensitiveInfoRepository,
+    private val qrRepository: QrRepository
+
 ) : ViewModel() {
 
     var realName by mutableStateOf("")
@@ -534,9 +598,9 @@ class SensitiveViewModel @Inject constructor(
             realName = realName,
             address = address,
             phoneNumber = phoneNumber,
-            allergyInfo = allergyInfo,
-            chronicDiseaseInfo = chronicDiseaseInfo,
-            surgeryHistoryInfo = surgeryHistoryInfo,
+            allergyInfo = allergyInfo.map { it.allergyName },
+            chronicDiseaseInfo = chronicDiseaseInfo.map { it.chronicDiseaseName },
+            surgeryHistoryInfo = surgeryHistoryInfo.map { it.surgeryHistoryName }
         )
     }
 
@@ -554,6 +618,20 @@ class SensitiveViewModel @Inject constructor(
                 Log.d("SensitiveSubmit", "업데이트 성공")
             } catch (e: Exception) {
                 Log.e("SensitiveSubmit", "업데이트 실패: ${e.message}")
+            }
+        }
+    }
+
+    var errorMessage by mutableStateOf<String?>(null)
+        private set
+
+    fun qrSubmit(path: String, onSuccess: (QrData) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val result = qrRepository.submitQrRequest(path)
+                onSuccess(result)
+            } catch (e: Exception) {
+                errorMessage = e.message
             }
         }
     }
@@ -848,5 +926,14 @@ object RepositoryModule {
         return QuestionnaireRepositoryImpl(api)
     }
 
+    /* 문진표 QR */
+    @Provides
+    fun provideQrApi(@Named("SearchRetrofit") retrofit: Retrofit): QrApi {
+        return retrofit.create(QrApi::class.java)
+    }
 
+    @Provides
+    fun provideQrRepository(api: QrApi): QrRepository {
+        return QrRepositoryImpl(api)
+    }
 }

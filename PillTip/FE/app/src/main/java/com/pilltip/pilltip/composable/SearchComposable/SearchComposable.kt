@@ -638,7 +638,7 @@ fun <T> ExpandableInfoBox(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 10.dp, vertical = 12.dp)
+                        .padding(horizontal = 0.dp, vertical = 12.dp)
                         .wrapContentHeight()
                 ) {
                     items.forEach {
@@ -668,7 +668,7 @@ fun <T> ExpandableInfoBox(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 10.dp, vertical = 12.dp)
+                        .padding(horizontal = 0.dp, vertical = 12.dp)
                         .height(animatedHeightDp)
                 ) {
                     items.forEach {
@@ -832,8 +832,8 @@ fun ExportAndCopy(
             style = TextStyle(
                 fontSize = 16.sp,
                 fontFamily = pretendard,
-                fontWeight = FontWeight(600),
-                color = gray800,
+                fontWeight = FontWeight(700),
+                color = primaryColor,
             )
         )
         Spacer(modifier = Modifier.weight(1f))

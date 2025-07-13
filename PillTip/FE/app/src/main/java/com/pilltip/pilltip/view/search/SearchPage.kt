@@ -8,8 +8,13 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -66,7 +71,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
@@ -900,26 +909,84 @@ fun DrugInfoTab(
         HeightSpacer(12.dp)
         if (permission == true) {
             if(gptAdvice!=null){
-                ExportAndCopy(
-                    headerText = "Pilltip AI 맞춤 안내",
-                    onCopyClicked = {
-                        clipboardManager.setText(AnnotatedString(gptAdvice!!))
-                        Toast.makeText(context, "복사되었습니다", Toast.LENGTH_SHORT).show()
-                    },
-                    onExportClicked = {
-                        shareText(context, "맞춤형 복약 설명", gptAdvice!!)
-                    }
-                )
                 ExpandableInfoBox(
                     item = gptAdvice!!,
                     collapsedHeight = 186.dp
                 ) { gpt ->
-                    Text(removeMarkdown(gpt))
+                    Text(
+                        text = removeMarkdown(gpt),
+                        style = TextStyle(
+                            fontSize = 14.sp,
+                            fontFamily = pretendard,
+                            lineHeight = 23.4.sp,
+                            fontWeight = FontWeight(500),
+                            color = gray800,
+                        )
+                    )
                 }
             } else {
-                CircularProgressIndicator()
-            }
+                val transition = rememberInfiniteTransition()
+                val translateAnimation by transition.animateFloat(
+                    initialValue = 360f,
+                    targetValue = 0f,
+                    animationSpec = infiniteRepeatable(
+                        animation = tween(
+                            durationMillis = 1200,
+                            easing = FastOutSlowInEasing
+                        ),
+                        repeatMode = RepeatMode.Restart
+                    )
+                )
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ){
+                    HeightSpacer(20.dp)
+                    Canvas(modifier = Modifier.size(size = 30.dp)) {
+                        val startAngle = 5f
+                        val sweepAngle = 350f
 
+                        rotate(translateAnimation) {
+                            drawArc(
+                                brush = Brush.sweepGradient(
+                                    colors = listOf(
+                                        primaryColor,
+                                        primaryColor.copy(0f)
+                                    ),
+                                    center = Offset(size.width / 2f, size.height / 2f)
+                                ),
+                                startAngle = startAngle,
+                                sweepAngle = sweepAngle,
+                                useCenter = false,
+                                topLeft = Offset(6 / 2f, 6 / 2f),
+                                style = Stroke(width = 6.dp.toPx(), cap = StrokeCap.Round),
+                            )
+                        }
+                    }
+                    HeightSpacer(20.dp)
+                    Text(
+                        text = "${nickname}님을 위한 맞춤 정보를 AI가 분석 중이에요",
+                        style = TextStyle(
+                            fontSize = 14.sp,
+                            fontFamily = pretendard,
+                            fontWeight = FontWeight(700),
+                            color = gray800,
+                            textAlign = TextAlign.Center,
+                        )
+                    )
+                    HeightSpacer(8.dp)
+                    Text(
+                        text = "잠시만 기다려주세요",
+                        style = TextStyle(
+                            fontSize = 12.sp,
+                            lineHeight = 19.6.sp,
+                            fontFamily = pretendard,
+                            fontWeight = FontWeight(600),
+                            color = gray400,
+                        )
+                    )
+                }
+            }
         } else {
             DashedBorderBox(
                 onRegisterClick = {
@@ -927,24 +994,7 @@ fun DrugInfoTab(
                 }
             )
         }
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 10.dp),
-            horizontalArrangement = Arrangement.End
-        ) {
-            Text(
-                text = "도움이 되었나요?",
-                style = TextStyle(
-                    fontSize = 10.sp,
-                    fontFamily = pretendard,
-                    fontWeight = FontWeight(500),
-                    color = gray400,
-                    textDecoration = TextDecoration.Underline,
-                )
-            )
-        }
-        HeightSpacer(42.dp)
+        HeightSpacer(32.dp)
         ExportAndCopy(
             headerText = "효능/효과",
             onCopyClicked = {
@@ -961,9 +1011,18 @@ fun DrugInfoTab(
             item = detail.effect,
             collapsedHeight = 186.dp
         ) { effect ->
-            Text(removeMarkdown(effect.effect))
+            Text(
+                text = removeMarkdown(effect.effect),
+                style = TextStyle(
+                    fontSize = 14.sp,
+                    fontFamily = pretendard,
+                    lineHeight = 23.4.sp,
+                    fontWeight = FontWeight(500),
+                    color = gray800,
+                )
+            )
         }
-        HeightSpacer(42.dp)
+        HeightSpacer(32.dp)
         ExportAndCopy(
             headerText = "상세성분",
             onCopyClicked = {
@@ -983,9 +1042,18 @@ fun DrugInfoTab(
         ExpandableInfoBox(
             items = detail.ingredients
         ) { ingredient ->
-            Text("${if (ingredient.isMain) "[주성분]" else "⸰ "} ${ingredient.name} (${ingredient.dose})")
+            Text(
+                text = "${if (ingredient.isMain) "[주성분]" else "⸰ "} ${ingredient.name} (${ingredient.dose})",
+                style = TextStyle(
+                    fontSize = 14.sp,
+                    fontFamily = pretendard,
+                    lineHeight = 23.4.sp,
+                    fontWeight = FontWeight(500),
+                    color = gray800,
+                )
+            )
         }
-        HeightSpacer(42.dp)
+        HeightSpacer(32.dp)
         ExportAndCopy(
             headerText = "용량/용법",
             onCopyClicked = {
@@ -1002,9 +1070,18 @@ fun DrugInfoTab(
             item = detail.usage,
             collapsedHeight = 186.dp
         ) { effect ->
-            Text(removeMarkdown(effect.effect))
+            Text(
+                text = removeMarkdown(effect.effect),
+                style = TextStyle(
+                    fontSize = 14.sp,
+                    lineHeight = 23.4.sp,
+                    fontFamily = pretendard,
+                    fontWeight = FontWeight(500),
+                    color = gray800,
+                )
+            )
         }
-        HeightSpacer(42.dp)
+        HeightSpacer(32.dp)
         ExportAndCopy(
             headerText = "주의사항",
             onCopyClicked = {
@@ -1021,7 +1098,16 @@ fun DrugInfoTab(
             item = detail.caution,
             collapsedHeight = 186.dp
         ) { effect ->
-            Text(removeMarkdown(effect.effect))
+            Text(
+                text = removeMarkdown(effect.effect),
+                style = TextStyle(
+                    fontSize = 14.sp,
+                    fontFamily = pretendard,
+                    lineHeight = 23.4.sp,
+                    fontWeight = FontWeight(500),
+                    color = gray800,
+                )
+            )
         }
         HeightSpacer(100.dp)
     }

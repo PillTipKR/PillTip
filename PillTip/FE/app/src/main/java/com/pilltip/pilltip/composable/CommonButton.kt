@@ -133,12 +133,13 @@ fun ButtonWithLogo(
 @Composable
 fun BackButton(
     title: String = "",
+    isVisible: Boolean = true,
     horizontalPadding: Dp = 18.dp,
     verticalPadding: Dp = 18.dp,
     backgroundColor: Color = Color.White,
     @DrawableRes iconDrawable: Int = 0,
     onClick: () -> Unit ={},
-    navigationTo: () -> Unit
+    navigationTo: () -> Unit ={}
 ) {
     Row(
         modifier = Modifier
@@ -148,13 +149,17 @@ fun BackButton(
             .height(57.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Image(
-            imageVector = ImageVector.vectorResource(id = R.drawable.btn_black_arrow),
-            contentDescription = "backButtonIcon",
-            modifier = Modifier.noRippleClickable {
-                navigationTo()
-            }
-        )
+        if(isVisible == true) {
+            Image(
+                imageVector = ImageVector.vectorResource(id = R.drawable.btn_black_arrow),
+                contentDescription = "backButtonIcon",
+                modifier = Modifier.noRippleClickable {
+                    navigationTo()
+                }
+            )
+        } else {
+            Box(modifier = Modifier.width(20.dp))
+        }
         Spacer(modifier = Modifier.weight(1f))
         if (title.isNotEmpty()) {
             Text(

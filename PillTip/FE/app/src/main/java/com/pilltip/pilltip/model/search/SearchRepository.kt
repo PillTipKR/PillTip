@@ -10,6 +10,7 @@ import retrofit2.http.POST
 import retrofit2.http.PUT
 import retrofit2.http.Path
 import retrofit2.http.Query
+import retrofit2.http.Url
 
 /**
  * 약품명 자동완성 API
@@ -101,16 +102,24 @@ class GptAdviceRepositoryImpl(
 }
 
 /**
- * 문진표 조회
+ * 문진표 조회 및 수정
  */
-
 interface QuestionnaireApi {
     @GET("/api/questionnaire")
     suspend fun getQuestionnaire(): QuestionnaireResponse
+
+    @PUT("/api/questionnaire")
+    suspend fun updateQuestionnaire(
+        @Body request: QuestionnaireSubmitRequest
+    ): QuestionnaireResponse
 }
 
 interface QuestionnaireRepository {
     suspend fun getQuestionnaire(): QuestionnaireData
+    suspend fun updateQuestionnaire(
+        request: QuestionnaireSubmitRequest
+    ): QuestionnaireData
+
 }
 
 class QuestionnaireRepositoryImpl(
@@ -118,6 +127,12 @@ class QuestionnaireRepositoryImpl(
 ) : QuestionnaireRepository {
     override suspend fun getQuestionnaire(): QuestionnaireData {
         return api.getQuestionnaire().data
+    }
+
+    override suspend fun updateQuestionnaire(
+        request: QuestionnaireSubmitRequest
+    ): QuestionnaireData {
+        return api.updateQuestionnaire(request).data
     }
 }
 
@@ -248,6 +263,7 @@ interface SensitiveInfoApi {
     suspend fun updateSensitiveInfo(
         @Body request: SensitiveSubmitRequest
     ): SensitiveResponse
+
     @GET("/api/sensitive-info")
     suspend fun getSensitiveInfo(): SensitiveInfoResponse
 }
@@ -263,10 +279,36 @@ class SensitiveInfoRepositoryImpl(
     override suspend fun updateSensitiveProfile(request: SensitiveSubmitRequest): SensitiveResponseData {
         return api.updateSensitiveInfo(request).data
     }
+
     override suspend fun fetchSensitiveInfo(): SensitiveInfoData {
         return api.getSensitiveInfo().data
     }
 }
+
+/**
+ * 문진표 QR
+ */
+interface QrApi {
+    @POST
+    suspend fun postQrPath(@Url path: String): QrResponseWrapper
+}
+
+interface QrRepository {
+    suspend fun submitQrRequest(path: String): QrData
+}
+
+class QrRepositoryImpl(
+    private val api: QrApi
+) : QrRepository {
+    override suspend fun submitQrRequest(path: String): QrData {
+        val response = api.postQrPath(path)
+        if (response.status != "success" || response.data == null) {
+            throw Exception(response.message)
+        }
+        return response.data
+    }
+}
+
 
 /**
  * DUR 기능
@@ -351,7 +393,10 @@ class PermissionRepositoryImpl(
         return api.getPermissions()
     }
 
-    override suspend fun updateSinglePermission(permissionType: String, granted: Boolean): PermissionResponse {
+    override suspend fun updateSinglePermission(
+        permissionType: String,
+        granted: Boolean
+    ): PermissionResponse {
         return api.updateSinglePermission(permissionType, granted)
     }
 }

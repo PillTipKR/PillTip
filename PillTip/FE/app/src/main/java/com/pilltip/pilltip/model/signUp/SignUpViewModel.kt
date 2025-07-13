@@ -237,6 +237,17 @@ class SignUpViewModel @Inject constructor(
             onResult(success, isAvailable)
         }
     }
+
+    fun checkPhoneNumberDuplicate(
+        phoneNumber: String,
+        onResult: (isSuccess: Boolean, isAvailable: Boolean?) -> Unit
+    ) {
+        viewModelScope.launch {
+            val (success, isAvailable) = authRepository.checkDuplicate(phoneNumber, "phonenumber")
+            onResult(success, isAvailable)
+        }
+    }
+
 }
 
 @HiltViewModel

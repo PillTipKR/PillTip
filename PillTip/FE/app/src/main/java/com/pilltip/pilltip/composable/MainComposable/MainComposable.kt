@@ -171,8 +171,6 @@ fun SmallTabCard(
             painter = painterResource(id = ImageField),
             contentDescription = "logo",
             modifier = Modifier
-                .width(60.dp)
-                .height(57.dp)
         )
         Column(
             modifier = Modifier
@@ -331,7 +329,7 @@ fun DosageCard(title: String, percent: Int, horizontalPadding: Dp = 22.dp, onCli
             Text(
                 text = "$percent%",
                 style = TextStyle(
-                    fontSize = 28.sp,
+                    fontSize = 22.sp,
                     lineHeight = 42.sp,
                     fontFamily = pretendard,
                     fontWeight = FontWeight(700),
@@ -355,7 +353,8 @@ fun DosageCard(title: String, percent: Int, horizontalPadding: Dp = 22.dp, onCli
 @Composable
 fun FeatureButton(
     imageResource: Int,
-    description: String
+    description: String,
+    onClick: () -> Unit
 ) {
     var screenWidthDp = LocalConfiguration.current.screenWidthDp
     val boxSizeDp = (screenWidthDp * (54f / 375f)).dp
@@ -374,8 +373,12 @@ fun FeatureButton(
                     clip = false,
                     shape = RoundedCornerShape(size = boxCornerRadius)
                 )
-                .background(color = Color(0xFFFFFFFF), shape = RoundedCornerShape(size = boxCornerRadius))
-                .padding(start = 7.dp, top = 6.88867.dp, end = 7.dp, bottom = 7.11133.dp),
+                .background(
+                    color = Color(0xFFFFFFFF),
+                    shape = RoundedCornerShape(size = boxCornerRadius)
+                )
+                .padding(start = 7.dp, top = 6.88867.dp, end = 7.dp, bottom = 7.11133.dp)
+                .noRippleClickable { onClick() },
             contentAlignment = Alignment.Center
         ) {
             Image(

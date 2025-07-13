@@ -1,9 +1,11 @@
 package com.pilltip.pilltip.nav
 
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
@@ -13,6 +15,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.pilltip.pilltip.composable.MainComposable.BottomTab
+import com.pilltip.pilltip.composable.QuestionnaireComposable.QrScannerEntry
 import com.pilltip.pilltip.model.search.LogViewModel
 import com.pilltip.pilltip.model.search.ReviewViewModel
 import com.pilltip.pilltip.model.search.SearchHiltViewModel
@@ -62,6 +65,7 @@ fun NavGraph(
 ) {
     val navController = rememberNavController()
     val myPageNavController = rememberNavController()
+    val context = LocalContext.current
     NavHost(
         navController = navController,
         startDestination = startPage
@@ -176,10 +180,25 @@ fun NavGraph(
         composable("QuestionnairePage") {
             QuestionnairePage(navController)
         }
+        composable("QRScanPage") {
+            QrScannerEntry(onQrScanned = { qrValue ->
+                if (qrValue.startsWith("/api/")) {
+                    sensitiveViewModel.qrSubmit(qrValue) { qrData ->
+                        Toast.makeText(context, "${qrData.hospitalName}으로 문진표 전송 완료!", Toast.LENGTH_SHORT).show()
+                        navController.navigate("PillMainPage")
+                    }
+                    Toast.makeText(context, "QR 인식 완료!", Toast.LENGTH_SHORT).show()
+                    navController.popBackStack()
+                } else {
+                    Toast.makeText(context, "유효하지 않은 QR 코드예요", Toast.LENGTH_SHORT).show()
+                    navController.popBackStack()
+                }
+            })
+        }
         composable("EssentialPage") {
             EssentialPage(navController, sensitiveViewModel)
         }
-        composable("NameAddressPage"){
+        composable("NameAddressPage") {
             NameAddressPage(navController, sensitiveViewModel)
         }
         composable("AreYouPage/{query}") { backStackEntry ->
@@ -227,8 +246,8 @@ fun NavGraph(
             val (title, description, placeholder) = when (mode) {
                 "allergy" -> Triple(
                     "알러지명을 입력해주세요",
-                    "예: 특정 약에 알러지가 있다면 알려주세요",
-                    "예: 페니실린, 복숭아"
+                    "예: 약품, 식푿 등 알러지가 있다면 알려주세요",
+                    "예: 페니실린"
                 )
 
                 "etc" -> Triple(

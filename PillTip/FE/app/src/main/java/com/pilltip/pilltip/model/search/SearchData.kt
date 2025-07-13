@@ -198,9 +198,9 @@ data class SensitiveSubmitRequest(
     val realName: String,
     val address: String,
     val phoneNumber: String,
-    val allergyInfo: List<AllergyInfo>,
-    val chronicDiseaseInfo: List<ChronicDiseaseInfo>,
-    val surgeryHistoryInfo: List<SurgeryHistoryInfo>,
+    val allergyInfo: List<String>,
+    val chronicDiseaseInfo: List<String>,
+    val surgeryHistoryInfo: List<String>
 )
 
 data class MedicationInfo(
@@ -253,23 +253,62 @@ data class QuestionnaireResponse(
 )
 
 data class QuestionnaireData(
-    val questionnaireId: Long,
-    val questionnaireName: String,
+    val questionnaireId: Long?,
+    val questionnaireName: String?,
     val realName: String,
     val address: String,
-    val phoneNumber: String?,
-    val gender: String,
-    val birthDate: String,
-    val height: String,
-    val weight: String,
-    val pregnant: String,
+    val phoneNumber: String,
+    val gender: String?,
+    val birthDate: String?,
+    val height: String?,
+    val weight: String?,
+    val pregnant: String?,
     val issueDate: String,
     val lastModifiedDate: String,
-    val notes: String,
+    val notes: String?,
     val medicationInfo: List<MedicationInfo>,
     val allergyInfo: List<AllergyInfo>,
     val chronicDiseaseInfo: List<ChronicDiseaseInfo>,
     val surgeryHistoryInfo: List<SurgeryHistoryInfo>
+)
+
+/**
+ * 문진표 수정
+ */
+data class QuestionnaireSubmitRequest(
+    val realName: String,
+    val address: String,
+    val phoneNumber: String,
+    val medicationInfo: List<MedicationInfo>,
+    val allergyInfo: List<AllergyInfo>,
+    val chronicDiseaseInfo: List<ChronicDiseaseInfo>,
+    val surgeryHistoryInfo: List<SurgeryHistoryInfo>
+)
+
+data class QuestionnaireSubmitResponse(
+    val status: String,
+    val message: String,
+    val data: QuestionnaireData
+)
+
+/**
+ * 문진표 QR
+ */
+data class QrResponseWrapper(
+    val status: String,
+    val message: String,
+    val data: QrData? = null
+)
+
+data class QrData(
+    val questionnaireUrl: String,
+    val patientName: String,
+    val patientPhone: String,
+    val hospitalCode: String,
+    val hospitalName: String,
+    val questionnaireId: Long,
+    val accessToken: String,
+    val expiresIn: Int
 )
 
 
