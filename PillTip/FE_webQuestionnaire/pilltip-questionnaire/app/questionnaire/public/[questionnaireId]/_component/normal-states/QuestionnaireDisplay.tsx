@@ -21,6 +21,12 @@ export default function QuestionnaireDisplay({
   questionnaire,
 }: QuestionnaireDisplayProps) {
   const [isDownloading, setIsDownloading] = useState(false);
+  const [remainingSeconds, setRemainingSeconds] = useState<number | null>(null);
+
+  console.log(
+    "[DEBUG] QuestionnaireDisplay received questionnaire:",
+    questionnaire
+  );
 
   function safeParse(data: any) {
     if (Array.isArray(data)) return data;
@@ -69,27 +75,48 @@ export default function QuestionnaireDisplay({
     })
   );
 
+  console.log("[DEBUG] Processed data:", {
+    medicationInfo,
+    allergyInfo,
+    chronicDiseaseInfo,
+    surgeryHistoryInfo,
+  });
+
   useEffect(() => {
+    let timer: NodeJS.Timeout | null = null;
     if (questionnaire && questionnaire.expirationDate) {
       const expirationTime = new Date(questionnaire.expirationDate).getTime();
-      const currentTime = new Date().getTime();
-      const remainingTime = expirationTime - currentTime;
-
-      if (remainingTime > 0) {
-        const timer = setTimeout(() => {
+      const updateRemaining = () => {
+        const currentTime = new Date().getTime();
+        const remainingTime = expirationTime - currentTime;
+        setRemainingSeconds(
+          remainingTime > 0 ? Math.ceil(remainingTime / 1000) : 0
+        );
+      };
+      updateRemaining();
+      timer = setInterval(updateRemaining, 1000);
+      if (expirationTime - new Date().getTime() > 0) {
+        const reloadTimer = setTimeout(() => {
           console.log("문진표가 만료되어 새로고침합니다.");
           window.location.reload();
-        }, remainingTime);
-
+        }, expirationTime - new Date().getTime());
         // 컴포넌트 언마운트 시 타이머 정리
-        return () => clearTimeout(timer);
+        return () => {
+          clearInterval(timer!);
+          clearTimeout(reloadTimer);
+        };
       } else {
         // 이미 만료된 경우 바로 새로고침
         console.log("문진표가 이미 만료되어 새로고침합니다.");
         window.location.reload();
       }
     }
+    return () => {
+      if (timer) clearInterval(timer);
+    };
   }, [questionnaire]);
+
+  console.log("[DEBUG] Rendering QuestionnaireDisplay");
 
   return (
     <div className={styles.container}>
@@ -135,6 +162,12 @@ export default function QuestionnaireDisplay({
           <div className={styles.infoItem}>
             <Notes notes={questionnaire.data.notes ?? ""} />
             <span> 작성일 : {questionnaire.data.lastModifiedDate}</span>
+            {/* 작성일 아래에 남은 시간 표시 */}
+            {remainingSeconds !== null && (
+              <span style={{ color: "#2579ef", fontWeight: 600, marginTop: 4 }}>
+                새로고침까지 남은 시간: {remainingSeconds}초
+              </span>
+            )}
           </div>
         </div>
       </div>

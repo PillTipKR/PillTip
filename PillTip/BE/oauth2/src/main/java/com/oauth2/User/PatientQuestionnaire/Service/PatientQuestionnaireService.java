@@ -45,6 +45,7 @@ public class PatientQuestionnaireService {
         List<Map<String, Object>> takingPillMedications = takingPillService.getTakingPillsByUser(updatedUser).stream()
                 .map(takingPill -> {
                     Map<String, Object> medication = new HashMap<>();
+                    medication.put("medicationId", takingPill.getMedicationId());
                     medication.put("medicationName", takingPill.getMedicationName());
                     medication.put("submitted", true);
                     return medication;

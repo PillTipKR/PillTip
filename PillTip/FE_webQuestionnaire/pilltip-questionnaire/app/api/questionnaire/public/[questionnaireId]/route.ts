@@ -8,12 +8,14 @@ const BE_BASE_URL = process.env.BE_API_URL || "http://localhost:20022";
 
 export async function GET(
   request: NextRequest,
-  context: { params: { questionnaireId: string } }
+  context: { params: Promise<{ questionnaireId: string }> }
 ) {
-  const { questionnaireId } = context.params;
+  const { questionnaireId } = await context.params;
 
   console.log("[DEBUG] request.nextUrl:", request.nextUrl.toString());
-  const jwtTokenFromQuery = request.nextUrl.searchParams.get("jwtToken");
+  const jwtTokenFromQuery =
+    request.nextUrl.searchParams.get("token") ||
+    request.nextUrl.searchParams.get("jwtToken");
   const jwtTokenFromCookie = (await cookies()).get("jwtToken")?.value;
   const jwtToken = jwtTokenFromQuery || jwtTokenFromCookie;
 

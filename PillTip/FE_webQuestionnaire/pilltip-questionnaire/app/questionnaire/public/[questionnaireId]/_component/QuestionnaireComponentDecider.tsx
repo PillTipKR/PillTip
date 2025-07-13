@@ -70,11 +70,21 @@ export default function QuestionnaireComponentDecider({
         }
       }
 
-      const data = await response.json();
+      const responseData = await response.json();
+      console.log("[DEBUG] API Response:", responseData);
 
       // 401 에러가 아닌 경우에만 데이터 설정
       if (response.ok || response.status === 404) {
-        setQuestionnaire(data);
+        // API 응답 구조에 맞게 데이터 설정
+        const questionnaireData = {
+          id: responseData.data?.questionnaireId?.toString() || questionnaireId,
+          title: responseData.data?.questionnaireName || "문진표",
+          description: "문진표 정보",
+          data: responseData.data || {},
+          status: responseData.status || "success",
+        };
+        console.log("[DEBUG] Processed questionnaire data:", questionnaireData);
+        setQuestionnaire(questionnaireData);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "오류가 발생했습니다.");
