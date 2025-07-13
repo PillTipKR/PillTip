@@ -4,6 +4,7 @@ import com.oauth2.User.Auth.Entity.User;
 import com.oauth2.User.TakingPill.Entity.DosageLog;
 import com.oauth2.User.TakingPill.Entity.TakingPill;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -49,6 +50,10 @@ public interface DosageLogRepository extends JpaRepository<DosageLog, Long> {
 
     void deleteAllByUserAndMedicationNameAndScheduledTimeBetween(User user, String medicationName, LocalDateTime from, LocalDateTime to);
 
+    // 사용자별 복용 로그 삭제
+    @Modifying
+    @Query("DELETE FROM DosageLog dl WHERE dl.user = :user")
+    void deleteAllByUser(@Param("user") User user);
 
     Long user(User user);
 }

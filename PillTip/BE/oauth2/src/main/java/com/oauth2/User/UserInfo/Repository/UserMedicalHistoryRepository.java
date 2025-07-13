@@ -5,6 +5,9 @@ package com.oauth2.User.UserInfo.Repository;
 import com.oauth2.User.Auth.Entity.User;
 import com.oauth2.User.UserInfo.Entity.UserSensitiveInfo;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
@@ -35,7 +38,9 @@ public interface UserMedicalHistoryRepository extends JpaRepository<UserSensitiv
     /**
      * 사용자별 의료 이력 삭제
      */
-    void deleteByUser(User user);
+    @Modifying
+    @Query("DELETE FROM UserSensitiveInfo u WHERE u.user = :user")
+    void deleteByUser(@Param("user") User user);
     
     /**
      * 사용자 ID로 의료 이력 삭제

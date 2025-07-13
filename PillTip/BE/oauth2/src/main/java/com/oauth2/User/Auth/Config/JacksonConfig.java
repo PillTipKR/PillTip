@@ -1,6 +1,3 @@
-// author : mireutale
-// description : jackson을 사용해서 java 객체 <-> json 변환, 직렬화, 역직렬화
-
 package com.oauth2.User.Auth.Config;
 
 import com.fasterxml.jackson.databind.SerializationFeature;

@@ -63,34 +63,55 @@ public class AuthController {
     // 회원가입
     @PostMapping("/signup")
     public ResponseEntity<ApiResponse<SignupResponse>> signup(@RequestBody SignupRequest request) {
+        logger.info("회원가입 API 호출 - LoginType: {}, Provider: {}, Nickname: {}", 
+                   request.getLoginType(), request.getProvider(), request.getNickname());
+        
         try {
+            logger.info("SignupService.signup() 호출 시작");
             User user = signupService.signup(request);
+            logger.info("SignupService.signup() 완료 - UserId: {}", user.getId());
+            
+            logger.info("토큰 생성 시작");
             UserToken userToken = tokenService.generateTokens(user.getId());
+            logger.info("토큰 생성 완료");
+            
             SignupResponse signupResponse = SignupResponse.builder()
                     .accessToken(userToken.getAccessToken())
                     .refreshToken(userToken.getRefreshToken())
                     .build();
+            
+            logger.info("회원가입 성공 - UserId: {}, LoginType: {}", user.getId(), user.getLoginType());
             return ResponseEntity.status(201)
                 .body(ApiResponse.success(AuthMessageConstants.SIGNUP_SUCCESS, signupResponse));
         } catch (RuntimeException e) {
             String errorMessage = e.getMessage();
+            logger.error("회원가입 실패 - Error: {}", errorMessage, e);
+            
             if (errorMessage.contains(AuthMessageConstants.ERROR_KEYWORD_LOGIN_TYPE)) {
+                logger.error("로그인 타입 관련 에러");
                 return ResponseEntity.status(400)
                     .body(ApiResponse.error(AuthMessageConstants.LOGIN_TYPE_REQUIRED, null));
             } else if (errorMessage.contains(AuthMessageConstants.ERROR_KEYWORD_PHONE_NUMBER)) {
+                logger.error("전화번호 관련 에러");
                 return ResponseEntity.status(400)
                     .body(ApiResponse.error(AuthMessageConstants.DUPLICATE_PHONE_FORMAT, null));
             } else if (errorMessage.contains(AuthMessageConstants.ERROR_KEYWORD_NICKNAME)) {
+                logger.error("닉네임 관련 에러");
                 return ResponseEntity.status(400)
                     .body(ApiResponse.error(AuthMessageConstants.DUPLICATE_NICKNAME_FORMAT, null));
             } else if (errorMessage.contains(AuthMessageConstants.ERROR_KEYWORD_USER_ID)) {
+                logger.error("사용자 ID 관련 에러");
                 return ResponseEntity.status(400)
                     .body(ApiResponse.error(AuthMessageConstants.DUPLICATE_LOGIN_ID, null));
             } else {
-                logger.error("Signup failed: {}", errorMessage);
+                logger.error("기타 회원가입 에러: {}", errorMessage);
                 return ResponseEntity.status(400)
                     .body(ApiResponse.error(AuthMessageConstants.SIGNUP_FAILED, null));
             }
+        } catch (Exception e) {
+            logger.error("예상치 못한 회원가입 에러: {}", e.getMessage(), e);
+            return ResponseEntity.status(500)
+                .body(ApiResponse.error(AuthMessageConstants.SIGNUP_FAILED, null));
         }
     }
 

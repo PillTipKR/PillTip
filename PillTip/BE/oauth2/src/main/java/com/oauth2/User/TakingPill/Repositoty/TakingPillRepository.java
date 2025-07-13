@@ -25,4 +25,9 @@ public interface TakingPillRepository extends JpaRepository<TakingPill, Long> {
            "(tp.endYear = :year AND tp.endMonth < :month) OR " +
            "(tp.endYear = :year AND tp.endMonth = :month AND tp.endDay < :day)")
    void deleteExpiredPills(@Param("year") int year, @Param("month") int month, @Param("day") int day);
+   
+   // 사용자별 복용 중인 약 삭제
+   @Modifying
+   @Query("DELETE FROM TakingPill tp WHERE tp.user = :user")
+   void deleteAllByUser(@Param("user") User user);
 }

@@ -5,6 +5,9 @@ package com.oauth2.User.UserInfo.Repository;
 import com.oauth2.User.UserInfo.Entity.UserPermissions;
 import com.oauth2.User.Auth.Entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
@@ -16,4 +19,9 @@ public interface UserPermissionsRepository extends JpaRepository<UserPermissions
     
     // SELECT * FROM user_permissions WHERE user_id = ?
     Optional<UserPermissions> findByUserId(Long userId);
+    
+    // 사용자별 권한 삭제
+    @Modifying
+    @Query("DELETE FROM UserPermissions up WHERE up.user = :user")
+    void deleteByUser(@Param("user") User user);
 } 
