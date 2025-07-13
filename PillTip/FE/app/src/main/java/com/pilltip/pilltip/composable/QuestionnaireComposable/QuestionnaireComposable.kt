@@ -1,5 +1,18 @@
 package com.pilltip.pilltip.composable.QuestionnaireComposable
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.widget.Toast
+import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.OptIn
+import androidx.camera.core.CameraSelector
+import androidx.camera.core.ExperimentalGetImage
+import androidx.camera.core.ImageAnalysis
+import androidx.camera.core.Preview
+import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.camera.view.PreviewView
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
@@ -11,9 +24,13 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -23,17 +40,22 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -41,6 +63,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.content.ContextCompat
+import androidx.lifecycle.LifecycleOwner
+import com.google.accompanist.systemuicontroller.rememberSystemUiController
+import com.google.mlkit.vision.barcode.BarcodeScanning
+import com.google.mlkit.vision.common.InputImage
 import com.pilltip.pilltip.R
 import com.pilltip.pilltip.composable.HeightSpacer
 import com.pilltip.pilltip.composable.IosButton
@@ -162,7 +190,8 @@ fun <T> QuestionnaireToggleSection(
     title: String,
     items: List<T>,
     getName: (T) -> String,
-    getSubmitted: (T) -> Boolean
+    getSubmitted: (T) -> Boolean,
+    onToggle: (Int) -> Unit
 ) {
     var expanded by remember { mutableStateOf(true) }
     val rotationDegree by animateFloatAsState(
@@ -200,7 +229,7 @@ fun <T> QuestionnaireToggleSection(
 
         if (expanded) {
             HeightSpacer(8.dp)
-            items.forEach { item ->
+            items.forEachIndexed { index, item ->
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -217,7 +246,7 @@ fun <T> QuestionnaireToggleSection(
                     )
                     IosButton(
                         checked = getSubmitted(item),
-                        onCheckedChange = {},
+                        onCheckedChange = { onToggle(index) }
                     )
                 }
                 HeightSpacer(12.dp)
@@ -225,3 +254,217 @@ fun <T> QuestionnaireToggleSection(
         }
     }
 }
+
+@Composable
+fun CameraPermissionWrapper(
+    onGranted: @Composable () -> Unit
+) {
+    val context = LocalContext.current
+    val cameraPermission = Manifest.permission.CAMERA
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+        onResult = { isGranted ->
+            if (!isGranted) {
+                Toast.makeText(context, "카메라 권한이 필요해요", Toast.LENGTH_SHORT).show()
+            }
+        }
+    )
+
+    LaunchedEffect(Unit) {
+        when (PackageManager.PERMISSION_GRANTED) {
+            ContextCompat.checkSelfPermission(context, cameraPermission) -> {
+                // 이미 권한이 있음 → 바로 실행
+            }
+            else -> {
+                permissionLauncher.launch(cameraPermission)
+            }
+        }
+    }
+
+    if (ContextCompat.checkSelfPermission(context, cameraPermission) == PackageManager.PERMISSION_GRANTED) {
+        onGranted()
+    }
+}
+
+@Composable
+fun QrScannerEntry(onQrScanned: (String) -> Unit) {
+    CameraPermissionWrapper {
+        QrScannerPage(onQrScanned = onQrScanned)
+    }
+}
+
+@OptIn(ExperimentalGetImage::class)
+@Composable
+fun QrScannerPage(onQrScanned: (String) -> Unit) {
+    val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+    var scanned by remember { mutableStateOf(false) }
+
+    Box(modifier = Modifier.fillMaxSize().statusBarsPadding()) {
+        AndroidView(
+            modifier = Modifier.fillMaxSize(),
+            factory = { ctx ->
+                val previewView = PreviewView(ctx)
+
+                val cameraProviderFuture = ProcessCameraProvider.getInstance(ctx)
+                cameraProviderFuture.addListener({
+                    val cameraProvider = cameraProviderFuture.get()
+
+                    val preview = Preview.Builder().build().also {
+                        it.setSurfaceProvider(previewView.surfaceProvider)
+                    }
+
+                    val barcodeScanner = BarcodeScanning.getClient()
+                    val imageAnalyzer = ImageAnalysis.Builder()
+                        .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                        .build()
+
+                    imageAnalyzer.setAnalyzer(ContextCompat.getMainExecutor(ctx)) { imageProxy ->
+                        if (!scanned) {
+                            val mediaImage = imageProxy.image
+                            val rotation = imageProxy.imageInfo.rotationDegrees
+                            if (mediaImage != null) {
+                                val inputImage = InputImage.fromMediaImage(mediaImage, rotation)
+                                barcodeScanner.process(inputImage)
+                                    .addOnSuccessListener { barcodes ->
+                                        for (barcode in barcodes) {
+                                            barcode.rawValue?.let { value ->
+                                                scanned = true
+                                                onQrScanned(value)
+                                            }
+                                        }
+                                    }
+                                    .addOnCompleteListener {
+                                        imageProxy.close()
+                                    }
+                            } else {
+                                imageProxy.close()
+                            }
+                        } else {
+                            imageProxy.close()
+                        }
+                    }
+
+                    val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+
+                    cameraProvider.unbindAll()
+                    cameraProvider.bindToLifecycle(
+                        lifecycleOwner, cameraSelector, preview, imageAnalyzer
+                    )
+
+                }, ContextCompat.getMainExecutor(ctx))
+
+                previewView
+            }
+        )
+
+        Box(
+            modifier = Modifier.align(Alignment.Center)
+
+        ) {
+            QrCornerGuideBox()
+        }
+//        Column(
+//            modifier = Modifier.align(Alignment.TopCenter).padding(top = 22.dp),
+//            verticalArrangement = Arrangement.Center,
+//            horizontalAlignment = Alignment.CenterHorizontally
+//        ){
+//            Row(
+//                verticalAlignment = Alignment.CenterVertically
+//            ){
+//                Image(
+//                    imageVector = ImageVector.vectorResource(R.drawable.ic_main_qrcode),
+//                    contentDescription = "QR"
+//                )
+//                Image(
+//                    imageVector = ImageVector.vectorResource(R.drawable.logo_pilltip_typo),
+//                    contentDescription = "필팁 로고",
+//                    modifier = Modifier.height(25.dp)
+//                )
+//            }
+//            Text(
+//                text = "스마트 문진표 전송",
+//                style = TextStyle(
+//                    fontSize = 14.sp,
+//                    fontFamily = pretendard,
+//                    fontWeight = FontWeight(500),
+//                    color = Color.White,
+//                )
+//            )
+//        }
+
+    }
+}
+
+@Composable
+fun QrCornerGuideBox(
+    size: Dp = 240.dp,
+    lineLength: Dp = 24.dp,
+    lineWidth: Dp = 6.dp,
+    color: Color = Color.White,
+    alpha: Float = 0.6f
+) {
+    Box(
+        modifier = Modifier
+            .size(size)
+    ) {
+        // 상단 왼쪽
+        Box(
+            modifier = Modifier
+                .offset(0.dp, 0.dp)
+                .size(lineLength, lineWidth)
+                .background(color.copy(alpha))
+        )
+        Box(
+            modifier = Modifier
+                .offset(0.dp, 0.dp)
+                .size(lineWidth, lineLength)
+                .background(color.copy(alpha))
+        )
+
+        // 상단 오른쪽
+        Box(
+            modifier = Modifier
+                .offset(x = size - lineLength, y = 0.dp)
+                .size(lineLength, lineWidth)
+                .background(color.copy(alpha))
+        )
+        Box(
+            modifier = Modifier
+                .offset(x = size - lineWidth, y = 0.dp)
+                .size(lineWidth, lineLength)
+                .background(color.copy(alpha))
+        )
+
+        // 하단 왼쪽
+        Box(
+            modifier = Modifier
+                .offset(x = 0.dp, y = size - lineWidth)
+                .size(lineLength, lineWidth)
+                .background(color.copy(alpha))
+        )
+        Box(
+            modifier = Modifier
+                .offset(x = 0.dp, y = size - lineLength)
+                .size(lineWidth, lineLength)
+                .background(color.copy(alpha))
+        )
+
+        // 하단 오른쪽
+        Box(
+            modifier = Modifier
+                .offset(x = size - lineLength, y = size - lineWidth)
+                .size(lineLength, lineWidth)
+                .background(color.copy(alpha))
+        )
+        Box(
+            modifier = Modifier
+                .offset(x = size - lineWidth, y = size - lineLength)
+                .size(lineWidth, lineLength)
+                .background(color.copy(alpha))
+        )
+    }
+}
+
+

@@ -6,6 +6,7 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -38,6 +39,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -59,6 +61,7 @@ import androidx.navigation.NavController
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.google.firebase.messaging.FirebaseMessaging
 import com.pilltip.pilltip.R
+import com.pilltip.pilltip.composable.BackButton
 import com.pilltip.pilltip.composable.HeightSpacer
 import com.pilltip.pilltip.composable.IosButton
 import com.pilltip.pilltip.composable.MainComposable.BottomBar
@@ -71,10 +74,12 @@ import com.pilltip.pilltip.composable.MainComposable.LogoField
 import com.pilltip.pilltip.composable.MainComposable.MainSearchField
 import com.pilltip.pilltip.composable.MainComposable.SmallTabCard
 import com.pilltip.pilltip.composable.MainComposable.formatDate
+import com.pilltip.pilltip.composable.NextButton
 import com.pilltip.pilltip.composable.QuestionnaireComposable.DottedDivider
 import com.pilltip.pilltip.composable.QuestionnaireComposable.InfoRow
 import com.pilltip.pilltip.composable.QuestionnaireComposable.QuestionnaireToggleSection
 import com.pilltip.pilltip.composable.WidthSpacer
+import com.pilltip.pilltip.composable.buttonModifier
 import com.pilltip.pilltip.composable.noRippleClickable
 import com.pilltip.pilltip.model.HandleBackPressToExitApp
 import com.pilltip.pilltip.model.UserInfoManager
@@ -242,13 +247,11 @@ fun HomePage(
 
             }
             Image(
-                imageVector = ImageVector.vectorResource(id = R.drawable.img_doc),
+                painter = painterResource(id = R.drawable.ic_main_doc_with_pill),
                 contentDescription = "logo",
                 modifier = Modifier
-                    .padding(1.dp)
-                    .width(124.dp)
-                    .height(134.dp)
-                    .offset(x = 10.dp, y = 4.dp)
+                    .scale(1.02f)
+                    .offset(x = 5.dp, y = 4.dp)
             )
         }
         WidthSpacer(12.dp)
@@ -260,7 +263,7 @@ fun HomePage(
             SmallTabCard(
                 HeaderText = "잊지말고 드세요",
                 SubHeaderText = "복약 관리",
-                ImageField = R.drawable.img_pill
+                ImageField = R.drawable.img_main_manage
             )
             HeightSpacer(12.dp)
             SmallTabCard(
@@ -280,19 +283,26 @@ fun HomePage(
     ) {
         FeatureButton(
             imageResource = R.drawable.ic_main_friend,
-            description = "친구 추가"
+            description = "친구 추가",
+            onClick = {}
         )
         FeatureButton(
             imageResource = R.drawable.ic_main_cute_baby,
-            description = "자녀 관리"
+            description = "자녀 관리",
+            onClick = {}
         )
         FeatureButton(
             imageResource = R.drawable.ic_main_qrcode,
-            description = "문진표 QR"
+            description = "문진표 QR",
+            onClick = {
+                navController.navigate("QRScanPage")
+            }
         )
         FeatureButton(
             imageResource = R.drawable.ic_main_review,
-            description = "최신 리뷰"
+            description = "최신 리뷰",
+            onClick = {
+            }
         )
     }
 //    AnnouncementCard("당신만의 스마트한 복약 관리, 필팁")
@@ -375,12 +385,13 @@ fun MyQuestionnairePage(
         )
         systemUiController.isNavigationBarVisible = true
     }
-    val context = LocalContext.current
-    var scrollState = rememberScrollState()
     val questionnaire = searchHiltViewModel.questionnaireState.value
     val localHeight = LocalConfiguration.current.screenHeightDp
     val permission = UserInfoManager.getUserData(LocalContext.current)?.permissions
+    val gender = UserInfoManager.getUserData(LocalContext.current)?.gender
+    val birthDate = UserInfoManager.getUserData(LocalContext.current)?.birthDate
     val age = UserInfoManager.getUserData(LocalContext.current)?.age
+    var pregnant = UserInfoManager.getUserData(LocalContext.current)?.pregnant
     LaunchedEffect(permission) {
         if (permission == true) {
             searchHiltViewModel.loadQuestionnaire()
@@ -391,6 +402,7 @@ fun MyQuestionnairePage(
             .fillMaxWidth()
             .height(localHeight.dp)
             .background(color = gray050)
+            .verticalScroll(rememberScrollState())
             .statusBarsPadding()
     ) {
         Text(
@@ -404,9 +416,8 @@ fun MyQuestionnairePage(
             textAlign = TextAlign.Center,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(56.dp)
+                .padding(bottom = 18.dp)
         )
-        HeightSpacer(12.dp)
         when {
             permission != true -> {
                 Column(
@@ -474,137 +485,133 @@ fun MyQuestionnairePage(
                     CircularProgressIndicator()
                 }
             }
-
             else -> {
+                val editable = searchHiltViewModel.editableQuestionnaire.value ?: return
+
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(Color.Transparent),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .shadow(
-                                elevation = 3.dp,
-                                shape = RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp),
-                                clip = false
+                        .padding(horizontal = 22.dp)
+                        .shadow(
+                            elevation = 3.dp,
+                            shape = RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp),
+                            clip = false
+                        )
+                        .background(
+                            gray050,
+                            shape = RoundedCornerShape(
+                                topStart = 12.dp,
+                                topEnd = 12.dp,
+                                bottomStart = 0.dp,
+                                bottomEnd = 0.dp
                             )
-                            .background(
-                                Color.White,
-                                shape = RoundedCornerShape(
-                                    topStart = 12.dp,
-                                    topEnd = 12.dp,
-                                    bottomStart = 0.dp,
-                                    bottomEnd = 0.dp
-                                )
-                            )
-                            .padding(start = 20.dp, top = 30.dp, end = 20.dp, bottom = 30.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        InfoRow("이름", questionnaire.realName)
-                        HeightSpacer(12.dp)
-                        InfoRow("생년월일", "${questionnaire.birthDate} (만 ${age}세)")
-                        HeightSpacer(12.dp)
-                        InfoRow("성별", questionnaire.gender.toKoreanGender())
-                        HeightSpacer(12.dp)
-                        InfoRow("전화번호", questionnaire.phoneNumber.toString())
-                        HeightSpacer(12.dp)
-                        InfoRow("주소", questionnaire.address)
-                        HeightSpacer(24.dp)
-                        DottedDivider()
-                        HeightSpacer(24.dp)
-                        QuestionnaireToggleSection(
-                            title = "복약 정보",
-                            items = questionnaire.medicationInfo,
-                            getName = { it.medicationName },
-                            getSubmitted = { it.submitted }
                         )
+                        .padding(start = 20.dp, top = 30.dp, end = 20.dp, bottom = 30.dp),
+                ) {
+                    HeightSpacer(12.dp)
+                    InfoRow("이름", questionnaire.realName)
+                    HeightSpacer(12.dp)
+                    InfoRow("생년월일", "$birthDate (만 ${age}세)")
+                    HeightSpacer(12.dp)
+                    InfoRow("성별", gender?.toKoreanGender() ?: "알 수 없음")
+                    HeightSpacer(12.dp)
+                    InfoRow("전화번호", questionnaire.phoneNumber.toString())
+                    HeightSpacer(12.dp)
+                    InfoRow("주소", questionnaire.address)
+                    if (gender == "FEMALE") {
                         HeightSpacer(12.dp)
-                        DottedDivider()
-                        HeightSpacer(24.dp)
-                        QuestionnaireToggleSection(
-                            title = "알러지 정보",
-                            items = questionnaire.allergyInfo,
-                            getName = { it.allergyName },
-                            getSubmitted = { it.submitted }
-                        )
-                        HeightSpacer(12.dp)
-                        DottedDivider()
-                        HeightSpacer(24.dp)
-                        QuestionnaireToggleSection(
-                            title = "기저질환",
-                            items = questionnaire.chronicDiseaseInfo,
-                            getName = { it.chronicDiseaseName },
-                            getSubmitted = { it.submitted }
-                        )
-                        HeightSpacer(12.dp)
-                        DottedDivider()
-                        HeightSpacer(24.dp)
-                        QuestionnaireToggleSection(
-                            title = "수술 이력",
-                            items = questionnaire.surgeryHistoryInfo,
-                            getName = { it.surgeryHistoryName },
-                            getSubmitted = { it.submitted }
-                        )
+                        InfoRow("임신여부", if (pregnant == true) "O" else "X")
                     }
-                    Canvas(
-                        modifier = Modifier
+                    HeightSpacer(24.dp)
+                    DottedDivider()
+                    HeightSpacer(24.dp)
+                    QuestionnaireToggleSection(
+                        title = "복약 정보",
+                        items = editable.medicationInfo,
+                        getName = { it.medicationName },
+                        getSubmitted = { it.submitted },
+                        onToggle = { index -> searchHiltViewModel.toggleMedication(index) }
+                    )
+                    HeightSpacer(12.dp)
+                    DottedDivider()
+                    HeightSpacer(24.dp)
+                    QuestionnaireToggleSection(
+                        title = "알러지 정보",
+                        items = editable.allergyInfo,
+                        getName = { it.allergyName },
+                        getSubmitted = { it.submitted },
+                        onToggle = { index -> searchHiltViewModel.toggleAllergy(index) }
+                    )
+                    HeightSpacer(12.dp)
+                    DottedDivider()
+                    HeightSpacer(24.dp)
+                    QuestionnaireToggleSection(
+                        title = "기저질환",
+                        items = editable.chronicDiseaseInfo,
+                        getName = { it.chronicDiseaseName },
+                        getSubmitted = { it.submitted },
+                        onToggle = { index -> searchHiltViewModel.toggleChronicDisease(index) }
+                    )
+                    HeightSpacer(12.dp)
+                    DottedDivider()
+                    HeightSpacer(24.dp)
+                    QuestionnaireToggleSection(
+                        title = "수술 이력",
+                        items = editable.surgeryHistoryInfo,
+                        getName = { it.surgeryHistoryName },
+                        getSubmitted = { it.submitted },
+                        onToggle = { index -> searchHiltViewModel.toggleSurgeryHistory(index) }
+                    )
+                }
+                Canvas(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(10.dp)
+                ) {
+                    val triangleHeight = size.height
+                    val triangleWidth = triangleHeight / 0.866f
+
+                    val triangleCount = (size.width / triangleWidth).toInt()
+                    val adjustedTriangleWidth = size.width / triangleCount
+
+                    val path = Path().apply {
+                        moveTo(0f, 0f)
+                        var x = 0f
+                        for (i in 0 until triangleCount) {
+                            lineTo(x + adjustedTriangleWidth / 2f, triangleHeight)
+                            lineTo(x + adjustedTriangleWidth, 0f)
+                            x += adjustedTriangleWidth
+                        }
+                        lineTo(size.width, 0f)
+                        close()
+                    }
+
+                    val paint = android.graphics.Paint().apply {
+                        style = android.graphics.Paint.Style.FILL
+                        color = android.graphics.Color.WHITE
+                        isAntiAlias = true
+                        setShadowLayer(3f, 0f, 4f, android.graphics.Color.argb(10, 0, 0, 0))
+                    }
+
+                    this.drawContext.canvas.nativeCanvas.apply {
+                        save()
+                        drawPath(path.asAndroidPath(), paint)
+                        restore()
+                    }
+                }
+
+                    NextButton(
+                        mModifier = Modifier
                             .fillMaxWidth()
-                            .height(10.dp)
+                            .padding(vertical = 16.dp, horizontal = 22.dp)
+                            .height(58.dp),
+                        text = "제출하기"
                     ) {
-                        val triangleHeight = size.height
-                        val triangleWidth = triangleHeight / 0.866f
-
-                        val triangleCount = (size.width / triangleWidth).toInt()
-                        val adjustedTriangleWidth = size.width / triangleCount
-
-                        val path = Path().apply {
-                            moveTo(0f, 0f)
-                            var x = 0f
-                            for (i in 0 until triangleCount) {
-                                lineTo(x + adjustedTriangleWidth / 2f, triangleHeight)
-                                lineTo(x + adjustedTriangleWidth, 0f)
-                                x += adjustedTriangleWidth
-                            }
-                            lineTo(size.width, 0f)
-                            close()
-                        }
-
-                        val paint = android.graphics.Paint().apply {
-                            style = android.graphics.Paint.Style.FILL
-                            color = android.graphics.Color.WHITE
-                            isAntiAlias = true
-                            setShadowLayer(3f, 0f, 4f, android.graphics.Color.argb(10, 0, 0, 0))
-                        }
-
-                        this.drawContext.canvas.nativeCanvas.apply {
-                            save()
-                            drawPath(path.asAndroidPath(), paint)
-                            restore()
-                        }
+                        searchHiltViewModel.submitEditedQuestionnaire()
+                        navController.navigate("QRScanPage")
                     }
-                }
-            }
-        }
-        if (permission == true) {
-            if (true) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator()
-                }
-            } else {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text("공사 중")
-                }
-            }
-        } else {
 
+            }
         }
     }
 }
