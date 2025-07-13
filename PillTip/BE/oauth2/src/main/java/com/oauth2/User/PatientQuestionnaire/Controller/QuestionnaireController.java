@@ -24,6 +24,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import com.oauth2.User.Auth.Service.TokenService;
 import com.oauth2.User.Hospital.HospitalService;
+import com.oauth2.User.TakingPill.Service.TakingPillService;
 import com.oauth2.Util.Encryption.EncryptionUtil;
 
 @RestController
@@ -36,6 +37,7 @@ public class QuestionnaireController {
     private final PatientQuestionnaireService patientQuestionnaireService;
     private final TokenService tokenService;
     private final HospitalService hospitalService;
+    private final TakingPillService takingPillService;
     private final EncryptionUtil encryptionUtil;
     
     //동의사항 조회
@@ -156,7 +158,10 @@ public class QuestionnaireController {
             PatientQuestionnaire questionnaire = patientQuestionnaireService.getCurrentUserQuestionnaire(user);
             Long expirationDate = System.currentTimeMillis() + 180 * 1000L;
             String phoneNumber = user.getUserProfile() != null ? user.getUserProfile().getPhone() : null;
-            PatientQuestionnaireResponse response = PatientQuestionnaireResponse.from(questionnaire, phoneNumber, user.getRealName(), user.getAddress(), encryptionUtil, expirationDate);
+            // 실시간 taking-pill 정보를 포함한 문진표 응답 생성
+            PatientQuestionnaireResponse response = PatientQuestionnaireResponse.fromWithRealTimeMedication(
+                questionnaire, phoneNumber, user.getRealName(), user.getAddress(), 
+                encryptionUtil, takingPillService, expirationDate);
             return ResponseEntity.status(200)
                 .body(ApiResponse.success(QuestionnaireMessageConstants.CURRENT_USER_QUESTIONNAIRE_RETRIEVE_SUCCESS, response));
         } catch (IllegalArgumentException e) {
@@ -295,18 +300,15 @@ public class QuestionnaireController {
         try {
             PatientQuestionnaire questionnaire = patientQuestionnaireService.updateCurrentUserQuestionnaire(user, request);
             Long expirationDate = System.currentTimeMillis() + 180 * 1000L;
-            PatientQuestionnaireResponse response = PatientQuestionnaireResponse.from(questionnaire, request.getPhoneNumber(), request.getRealName(), request.getAddress(), encryptionUtil, expirationDate);
+            // 실시간 taking-pill 정보를 포함한 문진표 응답 생성
+            PatientQuestionnaireResponse response = PatientQuestionnaireResponse.fromWithRealTimeMedication(
+                questionnaire, request.getPhoneNumber(), request.getRealName(), request.getAddress(), 
+                encryptionUtil, takingPillService, expirationDate);
             return ResponseEntity.status(200)
                 .body(ApiResponse.success(QuestionnaireMessageConstants.QUESTIONNAIRE_UPDATE_SUCCESS, response));
         } catch (IllegalArgumentException e) {
-            // 약물 검증 실패인지 확인
-            if (e.getMessage().contains("복용 중인 약 목록에 없습니다")) {
-                return ResponseEntity.status(400)
-                    .body(ApiResponse.error(e.getMessage(), null));
-            } else {
-                return ResponseEntity.status(404)
-                    .body(ApiResponse.error(QuestionnaireMessageConstants.QUESTIONNAIRE_NOT_FOUND, null));
-            }
+            return ResponseEntity.status(404)
+                .body(ApiResponse.error(QuestionnaireMessageConstants.QUESTIONNAIRE_NOT_FOUND, null));
         } catch (Exception e) {
             logger.error("Questionnaire update failed: {}", e.getMessage(), e);
             return ResponseEntity.status(400)
@@ -372,7 +374,11 @@ public class QuestionnaireController {
         }
         PatientQuestionnaire questionnaire = patientQuestionnaireService.getQuestionnaireByIdPublic(id);
         Long expirationDate = System.currentTimeMillis() + 180 * 1000L;
-        PatientPublicQuestionnaireResponse response = PatientPublicQuestionnaireResponse.from(questionnaire, questionnaire.getUser().getUserProfile().getPhone(), questionnaire.getUser().getRealName(), questionnaire.getUser().getAddress(), encryptionUtil, expirationDate);
+        // 실시간 taking-pill 정보를 포함한 공개 문진표 응답 생성
+        PatientPublicQuestionnaireResponse response = PatientPublicQuestionnaireResponse.fromWithRealTimeMedication(
+            questionnaire, questionnaire.getUser().getUserProfile().getPhone(), 
+            questionnaire.getUser().getRealName(), questionnaire.getUser().getAddress(), 
+            encryptionUtil, takingPillService, expirationDate);
         return ResponseEntity.ok(ApiResponse.success(QuestionnaireMessageConstants.PUBLIC_QUESTIONNAIRE_RETRIEVE_SUCCESS, response));
     }
 } 

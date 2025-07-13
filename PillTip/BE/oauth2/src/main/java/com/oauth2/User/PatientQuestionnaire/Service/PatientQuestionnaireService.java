@@ -243,29 +243,18 @@ public class PatientQuestionnaireService {
         // 업데이트된 User 정보를 다시 조회하여 최신 상태 확인
         User finalUser = userService.getCurrentUser(updatedUser.getId());
         
-        // Taking-pill에서 모든 약 이름 가져오기 (검증용)
-        List<String> takingPillMedicationNames = takingPillService.getTakingPillsByUser(finalUser).stream()
-                .map(takingPill -> takingPill.getMedicationName())
+        // Taking-pill에서 모든 약 정보 가져오기 (자동으로 가져옴)
+        List<Map<String, Object>> takingPillMedications = takingPillService.getTakingPillsByUser(finalUser).stream()
+                .map(takingPill -> {
+                    Map<String, Object> medication = new HashMap<>();
+                    medication.put("medicationId", takingPill.getMedicationId());
+                    medication.put("medicationName", takingPill.getMedicationName());
+                    medication.put("submitted", true);
+                    return medication;
+                })
                 .collect(Collectors.toList());
         
-        // Request body의 medicationInfo와 taking-pill 데이터 검증 (수정 시에만)
-        if (request.getMedicationInfo() != null) {
-            List<String> requestMedicationNames = request.getMedicationInfo().stream()
-                    .map(item -> item.getMedicationName())
-                    .filter(name -> name != null && !name.trim().isEmpty())
-                    .collect(Collectors.toList());
-            
-            // taking-pill에 없는 약이 있는지 확인
-            List<String> invalidMedications = requestMedicationNames.stream()
-                    .filter(name -> !takingPillMedicationNames.contains(name))
-                    .collect(Collectors.toList());
-            
-            if (!invalidMedications.isEmpty()) {
-                throw new IllegalArgumentException("다음 약물은 복용 중인 약 목록에 없습니다: " + String.join(", ", invalidMedications));
-            }
-        }
-        
-        // 문진표 조회 (약물 검증 후)
+        // 문진표 조회
         PatientQuestionnaire q = getCurrentUserQuestionnaire(finalUser);
         
         q.setQuestionnaireName(request.getRealName() + "님의 문진표");
@@ -273,7 +262,7 @@ public class PatientQuestionnaireService {
         q.setAllergyInfo(objectMapper.writeValueAsString(toKeyedList(request.getAllergyInfo(), "allergyName")));
         q.setChronicDiseaseInfo(objectMapper.writeValueAsString(toKeyedList(request.getChronicDiseaseInfo(), "chronicDiseaseName")));
         q.setSurgeryHistoryInfo(objectMapper.writeValueAsString(toKeyedList(request.getSurgeryHistoryInfo(), "surgeryHistoryName")));
-        q.setMedicationInfo(objectMapper.writeValueAsString(toKeyedList(request.getMedicationInfo(), "medicationName")));
+        q.setMedicationInfo(objectMapper.writeValueAsString(takingPillMedications));
         q.setLastModifiedDate(LocalDate.now());
         
         return q;
