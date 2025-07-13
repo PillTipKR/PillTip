@@ -33,6 +33,8 @@ public class LoginService {
 
     // ID/PW 로그인
     public LoginResponse login(LoginRequest request) {
+        logger.info("ID/PW 로그인 시도 - LoginId: {}", request.loginId());
+        
         // 모든 사용자를 조회하여 loginId를 비교 (EncryptionConverter가 자동으로 복호화)
         List<User> allUsers = userRepository.findAll();
         
@@ -70,12 +72,17 @@ public class LoginService {
 
     // 소셜 로그인
     public LoginResponse socialLogin(SocialLoginRequest request) {
+        logger.info("소셜 로그인 시도 - Provider: {}, Token: {}", 
+                   request.getProvider(), request.getToken() != null ? request.getToken().substring(0, Math.min(10, request.getToken().length())) + "..." : "null");
+        
         try {
             // OAuth2 서버에서 사용자 정보 가져오기
             OAuth2UserInfo oauth2UserInfo = oauth2Service.getUserInfo(
                     request.getProvider(),
                     request.getToken()
             );
+
+            logger.info("OAuth2 사용자 정보 조회 완료 - SocialId: {}", oauth2UserInfo.getSocialId());
 
             // 모든 사용자를 조회하여 socialId를 비교
             List<User> allUsers = userRepository.findAll();

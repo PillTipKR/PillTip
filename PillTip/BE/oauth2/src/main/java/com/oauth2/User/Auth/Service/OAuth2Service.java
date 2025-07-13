@@ -112,7 +112,7 @@ public class OAuth2Service {
             );
 
             logger.info("카카오 API 응답 상태: {}", response.getStatusCode());
-            logger.debug("카카오 API 응답 본문: {}", response.getBody());
+            logger.info("카카오 API 응답 본문: {}", response.getBody());
 
             if (response.getStatusCode().is4xxClientError()) {
                 logger.error("카카오 API 클라이언트 에러 - 상태: {}, 응답: {}", response.getStatusCode(), response.getBody());
@@ -125,6 +125,7 @@ public class OAuth2Service {
             }
 
             JsonNode userInfo = objectMapper.readTree(response.getBody());
+            logger.info("카카오 응답 파싱 완료: {}", userInfo.toString());
             
             // socialId는 필수값
             JsonNode idNode = userInfo.get("id");
@@ -144,11 +145,15 @@ public class OAuth2Service {
             JsonNode kakaoAccount = userInfo.get("kakao_account");
             if (kakaoAccount == null) {
                 logger.warn("카카오 응답에 kakao_account 필드가 없습니다. 기본 정보만 사용합니다.");
+            } else {
+                logger.info("카카오 계정 정보: {}", kakaoAccount.toString());
             }
             
             JsonNode profile = kakaoAccount != null ? kakaoAccount.get("profile") : null;
             if (profile == null) {
                 logger.warn("카카오 응답에 profile 필드가 없습니다. 기본 정보만 사용합니다.");
+            } else {
+                logger.info("카카오 프로필 정보: {}", profile.toString());
             }
 
             String email = getNodeAsText(kakaoAccount, "email");

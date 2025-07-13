@@ -96,7 +96,7 @@ public class AuthMessageConstants {
     public static final String TERMS_AGREEMENT_SUCCESS = "이용약관에 동의했습니다.";
     public static final String DUPLICATE_CHECK_SUCCESS = "사용 가능한 %s입니다.";
     public static final String DUPLICATE_CHECK_FAILED = "이미 사용 중인 %s입니다.";
-    public static final String DUPLICATE_PHONE_FORMAT = "전화번호 형식이 올바르지 않습니다.";
+    public static final String DUPLICATE_PHONE_FORMAT = "전화번호가 중복인 것 같습니다. 다른 전화번호를 입력해주세요.";
     public static final String DUPLICATE_NICKNAME_FORMAT = "이미 사용 중인 닉네임입니다.";
     public static final String DUPLICATE_LOGIN_ID = "이미 사용 중인 아이디입니다.";
     public static final String INVALID_CHECK_TYPE = "유효하지 않은 체크 타입입니다.";

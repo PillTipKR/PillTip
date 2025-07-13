@@ -55,15 +55,11 @@ public class SignupService {
                 
                 logger.info("OAuth2 사용자 정보 조회 성공 - SocialId: {}", oauth2UserInfo.getSocialId());
 
-                // OAuth2 사용자 정보로 User 객체 생성
-                user = User.builder()
-                        .loginType(LoginType.SOCIAL)
-                        .socialId(oauth2UserInfo.getSocialId())
-                        .userEmail(oauth2UserInfo.getEmail())  // null 가능
-                        .nickname(request.getNickname())  // 요청에서 받은 닉네임 사용
-                        .profilePhoto(oauth2UserInfo.getProfileImage())  // null 가능
-                        .terms(false)
-                        .build();
+                // 기본 User 객체 생성 후 소셜 정보 설정
+                user = createUser(request);
+                user.setSocialId(oauth2UserInfo.getSocialId());
+                user.setUserEmail(oauth2UserInfo.getEmail());  // null 가능
+                user.setProfilePhoto(oauth2UserInfo.getProfileImage());  // null 가능
                 
                 logger.info("소셜 사용자 객체 생성 완료 - SocialId: {}, Email: {}, Nickname: {}", 
                            oauth2UserInfo.getSocialId(), oauth2UserInfo.getEmail(), request.getNickname());
@@ -166,8 +162,8 @@ public class SignupService {
             logger.info("socialId 중복 검사 완료");
         }
         
-        // 전화번호 중복 검사
-        if (request.getPhone() != null) {
+        // 전화번호 중복 검사 (전화번호가 null이 아니고 비어있지 않을 때만)
+        if (request.getPhone() != null && !request.getPhone().trim().isEmpty()) {
             logger.info("전화번호 중복 검사 시작");
             userService.checkDuplicate(request.getPhone(), "phonenumber");
             logger.info("전화번호 중복 검사 완료");
@@ -181,7 +177,7 @@ public class SignupService {
         return User.builder()
                 .loginType(request.getLoginType())
                 .loginId(request.getLoginType() == LoginType.IDPW ? request.getLoginId() : null)
-                .socialId(request.getLoginType() == LoginType.SOCIAL ? request.getToken() : null)
+                .socialId(null) // 소셜 로그인의 경우 signup 메서드에서 별도로 설정
                 .passwordHash(request.getLoginType() == LoginType.IDPW ?
                         passwordEncoder.encode(request.getPassword()) : null)
                 .nickname(request.getNickname())
@@ -199,7 +195,7 @@ public class SignupService {
                 .birthDate(LocalDate.parse(request.getBirthDate()))
                 .height(new BigDecimal(request.getHeight()))
                 .weight(new BigDecimal(request.getWeight()))
-                .phone(validatePhoneNumber(request.getPhone()))
+                .phone(request.getPhone() != null && !request.getPhone().trim().isEmpty() ? validatePhoneNumber(request.getPhone()) : null)
                 .build();
     }
 
@@ -266,7 +262,10 @@ public class SignupService {
 
     // 전화번호 유효성 검사
     private String validatePhoneNumber(String phone) {
-        if (phone == null || !phone.matches("^01(?:0|1|[6-9])-(?:\\d{3}|\\d{4})-\\d{4}$")) {
+        if (phone == null || phone.trim().isEmpty()) {
+            return null; // 전화번호가 없으면 null 반환
+        }
+        if (!phone.matches("^01(?:0|1|[6-9])-(?:\\d{3}|\\d{4})-\\d{4}$")) {
             throw new IllegalArgumentException(AuthMessageConstants.INVALID_PHONE_NUMBER_FORMAT);
         }
         return phone;
