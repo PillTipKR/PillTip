@@ -38,22 +38,60 @@ public class PromptDrugUpdater {
     private void updateEffect(Drug drug, String content) {
         if (content == null || content.isBlank()) return;
         DrugEffect effect = findOrCreateEffect(drug, DrugEffect.Type.EFFECT);
-        effect.setContent(insertLineBreaks(content).trim());
+        effect.setContent(clean(content).trim());
         drugEffectService.save(effect);
     }
 
     private void updateUsage(Drug drug, String content) {
         if (content == null || content.isBlank()) return;
         DrugEffect usage = findOrCreateEffect(drug, DrugEffect.Type.USAGE);
-        usage.setContent(insertLineBreaks(content).replaceAll("복용 정보", "용법/용량").trim());
+        usage.setContent(clean(content).replaceAll("복용 정보", "용법/용량").trim());
         drugEffectService.save(usage);
+    }
+
+    private String clean(String content) {
+        String clean = cleanAllFormatting(content);
+        return insertLineBreaks(clean);
     }
 
     private String insertLineBreaks(String text) {
         // "에요." 또는 "에요.**" 다음에 줄바꿈 추가
-        return text.replaceAll("(요\\*\\*\\.|요\\.|요\\.\\*\\*)", "$1\n").strip();
+        return text.replaceAll("(요\\.\\s+)", "$1\n").strip();
     }
 
+    private String cleanAllFormatting(String input) {
+        if (input == null) return "";
+
+        String result = input;
+
+        // 1. 역슬래시 제거
+        result = result.replaceAll("\\\\", "");
+
+        // 2. HTML 태그 제거
+        result = result.replaceAll("<[^>]*>", "");
+
+        // 3. HTML 특수문자 제거 (기본 escape 문자)
+        result = result.replaceAll("&[a-zA-Z]+;", "");
+
+        // 4. 마크다운 특수문자 제거
+        String[] markdownSymbols = {
+                "\\*\\*",       // **,
+                "~~",                  // 취소선
+                "`+",                  // `, ```, 등
+                "#+",                  // #, ##, ###
+                ">", "-", "\\+",       // 인용, 리스트
+                "\\|", "!", "_",       // 기타 마크다운
+        };
+
+        for (String symbol : markdownSymbols) {
+            result = result.replaceAll(symbol, "");
+        }
+
+        // 5. 공백 정리 (여러 공백 → 하나로, 앞뒤 trim)
+        result = result.trim().replaceAll("\\s+", " ");
+
+        return result;
+    }
 
     private void updateIngredients(Drug drug, String block) {
         // 줄별 정보 추출

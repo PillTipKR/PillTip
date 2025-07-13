@@ -170,6 +170,7 @@ public class DrugPromptService {
                 .append("  각 title 안의 reason, note를 자연스럽게 해요체 문단으로 풀어 주세요.\n\n")
 
                 .append("2. 병용 DUR 설명:\n")
+                .append("- 절대 병용금기를 직접 판단해서 설명하지마세요. durtags만을 활용하여 설명하세요.\n")
                 .append("- 두 약의 조합에 대해서만 설명하고, 다른 약들과의 관계는 언급하지 마세요.\n")
                 .append("- durtags가 없으면 '두 약 사이에 특별한 상호작용은 없어요'처럼 간단하게 작성해 주세요.\n")
                 .append("- durtags가 있을 경우, 부드러운 말투로 안내해 주세요. 예: '{약물 A}와 {약물 B}는 함께 복용하면 안 되는 조합이에요.'\n")
