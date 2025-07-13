@@ -6,18 +6,21 @@ export default function AllergyInfoBlock({
 }: {
   allergyInfo: AllergyInfo[];
 }) {
-  if (!allergyInfo.some((allergy) => allergy.submitted)) return null;
   return (
     <div className={styles.infoCard}>
       <span className={styles.infoTitle}>알레르기 정보</span>
       <div className={styles.infoList}>
-        {allergyInfo
-          .filter((allergy) => allergy.submitted)
-          .map((allergy, idx) => (
+        {allergyInfo.length > 0 ? (
+          allergyInfo.map((allergy, idx) => (
             <div key={idx} className={styles.infoItem}>
               <span className={styles.infoValue}>{allergy.allergy_name}</span>
             </div>
-          ))}
+          ))
+        ) : (
+          <div className={styles.infoItem}>
+            <span className={styles.infoValue}>없음</span>
+          </div>
+        )}
       </div>
     </div>
   );

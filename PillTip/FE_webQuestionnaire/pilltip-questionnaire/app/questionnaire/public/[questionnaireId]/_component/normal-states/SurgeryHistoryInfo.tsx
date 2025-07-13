@@ -6,20 +6,23 @@ export default function SurgeryHistoryInfoBlock({
 }: {
   surgeryHistoryInfo: SurgeryHistoryInfo[];
 }) {
-  if (!surgeryHistoryInfo.some((surgery) => surgery.submitted)) return null;
   return (
     <div className={`${styles.infoCard} ${styles.surgeryHistoryInfo}`}>
       <p className={styles.infoTitle}>수술 이력</p>
       <div className={styles.infoList}>
-        {surgeryHistoryInfo
-          .filter((surgery) => surgery.submitted)
-          .map((surgery, idx) => (
+        {surgeryHistoryInfo.length > 0 ? (
+          surgeryHistoryInfo.map((surgery, idx) => (
             <div key={idx} className={styles.infoItem}>
               <span className={styles.infoValue}>
                 {surgery.surgeryHistory_name}
               </span>
             </div>
-          ))}
+          ))
+        ) : (
+          <div className={styles.infoItem}>
+            <span className={styles.infoValue}>없음</span>
+          </div>
+        )}
       </div>
     </div>
   );

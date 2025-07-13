@@ -12,9 +12,17 @@ export async function GET(
 ) {
   const { questionnaireId } = await context.params;
 
-  const jwtTokenFromQuery =
-    request.nextUrl.searchParams.get("token") ||
-    request.nextUrl.searchParams.get("jwtToken");
+  // 디버깅용 로그 추가
+  console.log("[DEBUG] request.nextUrl:", request.nextUrl.toString());
+  console.log("[DEBUG] questionnaireId:", questionnaireId);
+
+  const tokenParam = request.nextUrl.searchParams.get("token");
+  const jwtTokenParam = request.nextUrl.searchParams.get("jwtToken");
+
+  console.log("[DEBUG] token param:", tokenParam);
+  console.log("[DEBUG] jwtToken param:", jwtTokenParam);
+
+  const jwtTokenFromQuery = tokenParam || jwtTokenParam;
   const jwtTokenFromCookie = (await cookies()).get("jwtToken")?.value;
   const jwtToken = jwtTokenFromQuery || jwtTokenFromCookie;
 
@@ -29,7 +37,12 @@ export async function GET(
         : `Bearer ${jwtToken}`;
     }
 
-    const beUrl = `${BE_BASE_URL}/api/questionnaire/public/${questionnaireId}?jwtToken=${jwtToken}`;
+    // ✅ token 파라미터로 요청 (BE가 token/jwtToken 모두 지원하므로 이게 더 안전)
+    const beUrl = `${BE_BASE_URL}/api/questionnaire/public/${questionnaireId}?token=${jwtToken}`;
+
+    // 디버깅용 로그
+    console.log("beUrl", beUrl);
+    console.log("jwtToken", jwtToken);
     const response = await fetch(beUrl, {
       method: "GET",
       headers: headers,

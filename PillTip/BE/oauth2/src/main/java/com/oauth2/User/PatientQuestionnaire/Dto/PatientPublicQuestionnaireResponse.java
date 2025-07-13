@@ -4,7 +4,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.oauth2.User.PatientQuestionnaire.Entity.PatientQuestionnaire;
-import com.oauth2.User.TakingPill.Entity.TakingPill;
 import com.oauth2.User.TakingPill.Service.TakingPillService;
 import com.oauth2.Util.Encryption.EncryptionUtil;
 import lombok.AllArgsConstructor;

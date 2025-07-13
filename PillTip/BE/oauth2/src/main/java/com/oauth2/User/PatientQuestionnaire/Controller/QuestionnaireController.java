@@ -4,26 +4,26 @@ package com.oauth2.User.PatientQuestionnaire.Controller;
 
 import com.oauth2.User.PatientQuestionnaire.Dto.PatientQuestionnaireSummaryResponse;
 import com.oauth2.User.PatientQuestionnaire.Service.PatientQuestionnaireService;
+import com.oauth2.User.PatientQuestionnaire.Service.QuestionnaireQRUrlService;
 import com.oauth2.User.Auth.Dto.ApiResponse;
 import com.oauth2.User.PatientQuestionnaire.Dto.QuestionnaireMessageConstants;
 import com.oauth2.User.UserInfo.Dto.UserPermissionsRequest;
 import com.oauth2.User.UserInfo.Dto.UserPermissionsResponse;
 import com.oauth2.User.Auth.Entity.User;
 import com.oauth2.User.UserInfo.Service.UserPermissionsService;
-import com.oauth2.User.PatientQuestionnaire.Dto.PatientQuestionnaireRequest;
 import com.oauth2.User.PatientQuestionnaire.Dto.PatientQuestionnaireResponse;
 import com.oauth2.User.PatientQuestionnaire.Entity.PatientQuestionnaire;
 import com.oauth2.User.PatientQuestionnaire.Dto.QuestionnaireAvailabilityResponse;
-import com.oauth2.User.PatientQuestionnaire.Dto.QRQuestionnaireResponse;
 import com.oauth2.User.PatientQuestionnaire.Dto.PatientPublicQuestionnaireResponse;
+import com.oauth2.User.PatientQuestionnaire.Dto.QuestionnaireQRUrlResponse;
+import com.oauth2.User.PatientQuestionnaire.Dto.PatientQuestionnaireRequest;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-import com.oauth2.User.Auth.Service.TokenService;
-import com.oauth2.User.Hospital.HospitalService;
+import com.oauth2.User.Auth.Service.TokenService;   
 import com.oauth2.User.TakingPill.Service.TakingPillService;
 import com.oauth2.Util.Encryption.EncryptionUtil;
 
@@ -36,8 +36,8 @@ public class QuestionnaireController {
     private final UserPermissionsService userPermissionsService;
     private final PatientQuestionnaireService patientQuestionnaireService;
     private final TokenService tokenService;
-    private final HospitalService hospitalService;
     private final TakingPillService takingPillService;
+    private final QuestionnaireQRUrlService questionnaireQRUrlService;
     private final EncryptionUtil encryptionUtil;
     
     //동의사항 조회
@@ -315,70 +315,66 @@ public class QuestionnaireController {
                 .body(ApiResponse.error(QuestionnaireMessageConstants.QUESTIONNAIRE_UPDATE_FAILED, null));
         }
     }
-    // QR 코드를 통한 문진표 URL 생성 API (현재 유저의 문진표)
+    // QR 코드를 통한 문진표 URL 생성 API (DB에 저장)
     @PostMapping("/qr-url/{hospitalCode}")
-    public ResponseEntity<QRQuestionnaireResponse> generateQRUrl(
+    public ResponseEntity<ApiResponse<QuestionnaireQRUrlResponse>> generateQRUrl(
             @AuthenticationPrincipal User user,
             @PathVariable String hospitalCode) {
         try {
-            // 1. 병원 코드 유효성 검사
-            if (!hospitalService.existsByHospitalCode(hospitalCode)) {
-                return ResponseEntity.notFound().build();
-            }
+            // 1. 현재 유저의 문진표 존재 여부 확인
+            patientQuestionnaireService.getCurrentUserQuestionnaire(user);
             
-            // 2. 현재 유저의 문진표 존재 여부 확인
-            PatientQuestionnaire questionnaire = patientQuestionnaireService.getCurrentUserQuestionnaire(user);
+            // 2. QR URL 생성 및 DB 저장
+            QuestionnaireQRUrlResponse response = questionnaireQRUrlService.generateOrUpdateQRUrl(user, hospitalCode);
             
-            // 3. JWT 토큰 생성 (3분)
-            String jwtToken = tokenService.createCustomJwtToken(
-                user.getId(),
-                questionnaire.getQuestionnaireId(),
-                hospitalCode,
-                180
-            );
-            
-            // 4. QR URL 생성
-            String qrUrl = String.format("http://localhost:3000/questionnaire/public/%s?jwtToken=%s",
-                questionnaire.getQuestionnaireId(),
-                jwtToken);
-            
-            QRQuestionnaireResponse response = QRQuestionnaireResponse.builder()
-                .questionnaireId(questionnaire.getQuestionnaireId())
-                .qrUrl(qrUrl)
-                .patientName(user.getRealName() != null ? user.getRealName() : user.getNickname())
-                .hospitalCode(hospitalCode)
-                .hospitalName(hospitalService.findByHospitalCode(hospitalCode).getName())
-                .accessToken(jwtToken)
-                .expiresInMinutes(180) // 3분
-                .build();
-            
-            return ResponseEntity.ok(response);
+            return ResponseEntity.ok(ApiResponse.success(QuestionnaireMessageConstants.QR_URL_GENERATE_SUCCESS, response));
             
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.status(400)
+                .body(ApiResponse.error(e.getMessage(), null));
         } catch (Exception e) {
             logger.error("QR URL generation failed: {}", e.getMessage(), e);
-            return ResponseEntity.internalServerError().build();
+            return ResponseEntity.status(500)
+                .body(ApiResponse.error(QuestionnaireMessageConstants.QR_URL_GENERATE_FAILED, null));
         }
     }
 
-    // 커스텀 토큰(문진표 열람용) 전용 공개 API
+    // 커스텀 토큰(문진표 열람용) 전용 공개 API (웹용)
     @GetMapping("/public/{id:\\d+}")
     public ResponseEntity<ApiResponse<PatientPublicQuestionnaireResponse>> getQuestionnaireByCustomToken(
             @PathVariable Long id,
-            @RequestParam("jwtToken") String jwtToken) {
-        boolean valid = tokenService.validateCustomJwtToken(jwtToken, id);
+            @RequestParam(value = "jwtToken", required = false) String jwtToken,
+            @RequestParam(value = "token", required = false) String token) {
+        
+        // jwtToken 또는 token 중 하나라도 제공되었는지 확인
+        String actualToken = jwtToken != null ? jwtToken : token;
+        if (actualToken == null || actualToken.trim().isEmpty()) {
+            return ResponseEntity.status(400)
+                .body(ApiResponse.error("토큰이 필요합니다. QR 코드를 다시 스캔해주세요.", null));
+        }
+        
+        boolean valid = tokenService.validateCustomJwtToken(actualToken, id);
         if (!valid) {
             return ResponseEntity.status(401)
                 .body(ApiResponse.error(QuestionnaireMessageConstants.INVALID_CUSTOM_TOKEN, null));
         }
-        PatientQuestionnaire questionnaire = patientQuestionnaireService.getQuestionnaireByIdPublic(id);
-        Long expirationDate = System.currentTimeMillis() + 180 * 1000L;
-        // 실시간 taking-pill 정보를 포함한 공개 문진표 응답 생성
-        PatientPublicQuestionnaireResponse response = PatientPublicQuestionnaireResponse.fromWithRealTimeMedication(
-            questionnaire, questionnaire.getUser().getUserProfile().getPhone(), 
-            questionnaire.getUser().getRealName(), questionnaire.getUser().getAddress(), 
-            encryptionUtil, takingPillService, expirationDate);
-        return ResponseEntity.ok(ApiResponse.success(QuestionnaireMessageConstants.PUBLIC_QUESTIONNAIRE_RETRIEVE_SUCCESS, response));
+        
+        try {
+            PatientQuestionnaire questionnaire = patientQuestionnaireService.getQuestionnaireByIdPublic(id);
+            Long expirationDate = System.currentTimeMillis() + 180 * 1000L;
+            // 실시간 taking-pill 정보를 포함한 공개 문진표 응답 생성
+            PatientPublicQuestionnaireResponse response = PatientPublicQuestionnaireResponse.fromWithRealTimeMedication(
+                questionnaire, questionnaire.getUser().getUserProfile().getPhone(), 
+                questionnaire.getUser().getRealName(), questionnaire.getUser().getAddress(), 
+                encryptionUtil, takingPillService, expirationDate);
+            return ResponseEntity.ok(ApiResponse.success(QuestionnaireMessageConstants.PUBLIC_QUESTIONNAIRE_RETRIEVE_SUCCESS, response));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(404)
+                .body(ApiResponse.error("문진표를 찾을 수 없습니다.", null));
+        } catch (Exception e) {
+            logger.error("Public questionnaire access failed: {}", e.getMessage(), e);
+            return ResponseEntity.status(500)
+                .body(ApiResponse.error("문진표 접근에 실패했습니다.", null));
+        }
     }
 } 

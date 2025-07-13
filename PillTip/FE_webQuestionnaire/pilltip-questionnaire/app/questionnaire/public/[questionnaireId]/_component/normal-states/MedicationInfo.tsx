@@ -6,18 +6,21 @@ export default function MedicationInfoBlock({
 }: {
   medicationInfo: MedicationInfo[];
 }) {
-  if (!medicationInfo.some((med) => med.submitted)) return null;
   return (
     <div className={styles.infoCard}>
       <p className={styles.infoTitle}>복약 정보</p>
       <div className={styles.infoList}>
-        {medicationInfo
-          .filter((med) => med.submitted)
-          .map((med, idx) => (
+        {medicationInfo.length > 0 ? (
+          medicationInfo.map((med, idx) => (
             <div key={idx} className={styles.infoItem}>
               <span className={styles.infoValue}>{med.medication_name}</span>
             </div>
-          ))}
+          ))
+        ) : (
+          <div className={styles.infoItem}>
+            <span className={styles.infoValue}>없음</span>
+          </div>
+        )}
       </div>
     </div>
   );

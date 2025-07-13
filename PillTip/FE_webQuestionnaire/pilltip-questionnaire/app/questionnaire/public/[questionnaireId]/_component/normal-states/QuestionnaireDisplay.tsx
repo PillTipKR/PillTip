@@ -19,6 +19,7 @@ import {
 
 export default function QuestionnaireDisplay({
   questionnaire,
+  timeUntilExpiration,
 }: QuestionnaireDisplayProps) {
   const [isDownloading, setIsDownloading] = useState(false);
   const [remainingSeconds, setRemainingSeconds] = useState<number | null>(null);
@@ -114,7 +115,6 @@ export default function QuestionnaireDisplay({
               {questionnaire.data.questionnaireId}
             </div>
           </div>
-
           <button
             onClick={() => {
               setIsDownloading(true);
@@ -146,6 +146,14 @@ export default function QuestionnaireDisplay({
           <div className={styles.infoItem}>
             <Notes notes={questionnaire.data.notes ?? ""} />
             <span> 작성일 : {questionnaire.data.lastModifiedDate}</span>
+            {/* 토큰 만료 시간 표시 */}
+            {timeUntilExpiration !== null &&
+              timeUntilExpiration !== undefined &&
+              timeUntilExpiration > 0 && (
+                <span className={styles.expirationText}>
+                  토큰 만료까지: {Math.ceil(timeUntilExpiration / 1000)}초
+                </span>
+              )}
           </div>
         </div>
       </div>

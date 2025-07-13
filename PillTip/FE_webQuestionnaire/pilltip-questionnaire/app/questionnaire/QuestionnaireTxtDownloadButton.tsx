@@ -48,7 +48,7 @@ function generateQuestionnaireTxt(questionnaire: any): string {
       content += `${medicationName ? `${medicationName}` : ""}\n`;
     });
   } else {
-    content += "복용 중인 약물 없음\n";
+    content += "없음\n";
   }
   content += "\n";
 
@@ -63,7 +63,7 @@ function generateQuestionnaireTxt(questionnaire: any): string {
       content += `${allergy.allergyName || allergy.allergy_name || "미입력"}\n`;
     });
   } else {
-    content += "알레르기 정보 없음\n";
+    content += "없음\n";
   }
   content += "\n";
 
@@ -80,7 +80,7 @@ function generateQuestionnaireTxt(questionnaire: any): string {
       }\n`;
     });
   } else {
-    content += "만성질환 정보 없음\n";
+    content += "없음\n";
   }
   content += "\n";
 
@@ -97,7 +97,7 @@ function generateQuestionnaireTxt(questionnaire: any): string {
       }\n`;
     });
   } else {
-    content += "수술 이력 없음\n";
+    content += "없음\n";
   }
   content += "\n";
 
