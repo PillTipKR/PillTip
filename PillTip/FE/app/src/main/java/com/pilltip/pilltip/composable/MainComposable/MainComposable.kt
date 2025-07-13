@@ -329,7 +329,7 @@ fun DosageCard(title: String, percent: Int, horizontalPadding: Dp = 22.dp, onCli
             Text(
                 text = "$percent%",
                 style = TextStyle(
-                    fontSize = 28.sp,
+                    fontSize = 22.sp,
                     lineHeight = 42.sp,
                     fontFamily = pretendard,
                     fontWeight = FontWeight(700),

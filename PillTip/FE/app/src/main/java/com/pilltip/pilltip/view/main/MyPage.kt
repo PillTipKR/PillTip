@@ -299,8 +299,10 @@ fun MyPage(
                 fontFamily = pretendard,
                 fontWeight = FontWeight(500),
                 color = gray500,
+                textAlign = TextAlign.Center
             ),
-            modifier = Modifier.noRippleClickable {
+            modifier = Modifier.fillMaxWidth()
+                .noRippleClickable {
                 if (!isSheetVisible) {
                     isSheetVisible = true
                 }

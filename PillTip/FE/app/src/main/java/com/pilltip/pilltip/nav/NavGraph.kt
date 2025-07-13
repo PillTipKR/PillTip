@@ -246,8 +246,8 @@ fun NavGraph(
             val (title, description, placeholder) = when (mode) {
                 "allergy" -> Triple(
                     "알러지명을 입력해주세요",
-                    "예: 특정 약에 알러지가 있다면 알려주세요",
-                    "예: 페니실린, 복숭아"
+                    "예: 약품, 식푿 등 알러지가 있다면 알려주세요",
+                    "예: 페니실린"
                 )
 
                 "etc" -> Triple(

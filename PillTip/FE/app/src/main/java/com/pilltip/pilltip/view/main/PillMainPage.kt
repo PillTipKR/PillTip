@@ -1,6 +1,7 @@
 package com.pilltip.pilltip.view.main
 
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
@@ -25,8 +26,11 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
@@ -87,12 +91,16 @@ import com.pilltip.pilltip.model.search.SearchHiltViewModel
 import com.pilltip.pilltip.model.search.SensitiveViewModel
 import com.pilltip.pilltip.ui.theme.backgroundColor
 import com.pilltip.pilltip.ui.theme.gray050
+import com.pilltip.pilltip.ui.theme.gray100
 import com.pilltip.pilltip.ui.theme.gray400
+import com.pilltip.pilltip.ui.theme.gray500
 import com.pilltip.pilltip.ui.theme.gray600
+import com.pilltip.pilltip.ui.theme.gray700
 import com.pilltip.pilltip.ui.theme.gray800
 import com.pilltip.pilltip.ui.theme.pretendard
 import com.pilltip.pilltip.ui.theme.primaryColor
 import com.pilltip.pilltip.view.questionnaire.Logic.toKoreanGender
+import kotlinx.coroutines.launch
 import java.time.LocalDate
 
 @Composable
@@ -173,13 +181,15 @@ fun PillMainPage(
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun HomePage(
     navController: NavController,
     searchHiltViewModel: SearchHiltViewModel
 ) {
     val systemUiController = rememberSystemUiController()
+    val permission = UserInfoManager.getUserData(LocalContext.current)?.permissions
+    val context = LocalContext.current
     SideEffect {
         systemUiController.setStatusBarColor(
             color = Color(0xFFD0E6FD),
@@ -295,7 +305,10 @@ fun HomePage(
             imageResource = R.drawable.ic_main_qrcode,
             description = "문진표 QR",
             onClick = {
-                navController.navigate("QRScanPage")
+                if(permission == true) navController.navigate("QRScanPage")
+                else {
+                    Toast.makeText(context, "민감정보", Toast.LENGTH_SHORT).show()
+                }
             }
         )
         FeatureButton(
@@ -305,36 +318,10 @@ fun HomePage(
             }
         )
     }
-//    AnnouncementCard("당신만의 스마트한 복약 관리, 필팁")
     HeightSpacer(40.dp)
-    Text(
-        text = "내 복약 관리",
-        style = TextStyle(
-            fontSize = 12.sp,
-            fontFamily = pretendard,
-            fontWeight = FontWeight(600),
-            color = primaryColor,
-        ),
-        modifier = Modifier.padding(start = 22.dp)
-    )
-    HeightSpacer(4.dp)
-    Text(
-        text = "오늘의 내 복약률",
-        style = TextStyle(
-            fontSize = 16.sp,
-            lineHeight = 22.4.sp,
-            fontFamily = pretendard,
-            fontWeight = FontWeight(700),
-            color = Color(0xFF010913),
-        ),
-        modifier = Modifier.padding(start = 22.dp)
-    )
-
-    HeightSpacer(20.dp)
     val selectedDate by remember { mutableStateOf(LocalDate.now()) }
     val logData by searchHiltViewModel.dailyDosageLog.collectAsState()
     val dateText = formatDate(selectedDate)
-    val coroutineScope = rememberCoroutineScope()
 
     LaunchedEffect(selectedDate) {
         searchHiltViewModel.fetchDailyDosageLog(selectedDate)
@@ -367,6 +354,115 @@ fun HomePage(
                     percent = item.percent,
                     onClick = { navController.navigate("NotificationPage") }
                 )
+            }
+        }
+    }
+    val scope = rememberCoroutineScope()
+    val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    var isSheetVisible by remember { mutableStateOf(false) }
+    if (isSheetVisible) {
+        LaunchedEffect(Unit) {
+            bottomSheetState.show()
+        }
+        ModalBottomSheet(
+            onDismissRequest = {
+                scope.launch {
+                    bottomSheetState.hide()
+                }.invokeOnCompletion {
+                    isSheetVisible = false
+                }
+            },
+            sheetState = bottomSheetState,
+            containerColor = Color.White,
+            dragHandle = {
+                Box(
+                    Modifier
+                        .padding(top = 8.dp, bottom = 11.dp)
+                        .width(48.dp)
+                        .height(5.dp)
+                        .background(Color(0xFFE2E4EC), RoundedCornerShape(12.dp))
+                )
+            }
+        ) {
+
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 22.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                HeightSpacer(12.dp)
+                Image(
+                    imageVector = ImageVector.vectorResource(R.drawable.ic_details_blue_common_pills),
+                    contentDescription = "민감정보 동의",
+                    modifier = Modifier
+                        .padding(1.4.dp)
+                        .width(28.dp)
+                        .height(28.dp)
+                )
+                HeightSpacer(15.dp)
+                Text(
+                    text = "민감정보 필요",
+                    style = TextStyle(
+                        fontSize = 18.sp,
+                        lineHeight = 25.2.sp,
+                        fontFamily = pretendard,
+                        fontWeight = FontWeight(700),
+                        color = Color(0xFF1A1A1A)
+                    )
+                )
+                HeightSpacer(8.dp)
+                Text(
+                    text = "해당 기능은 민감정보가 필요해요!\n필팁의 강력한 기능들을 경험해보세요",
+                    style = TextStyle(
+                        fontSize = 14.sp,
+                        lineHeight = 19.6.sp,
+                        fontFamily = pretendard,
+                        fontWeight = FontWeight(400),
+                        color = gray500,
+                        textAlign = TextAlign.Center
+                    )
+                )
+                HeightSpacer(12.dp)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    NextButton(
+                        mModifier = Modifier
+                            .weight(1f)
+                            .padding(vertical = 16.dp)
+                            .height(58.dp),
+                        text = "입력하기",
+                        buttonColor = gray100,
+                        textColor = gray700,
+                        onClick = {
+                            scope.launch {
+                                bottomSheetState.hide()
+                                navController.navigate("EssentialPage")
+                            }.invokeOnCompletion {
+                                isSheetVisible = false
+                            }
+                        }
+                    )
+                    WidthSpacer(12.dp)
+                    NextButton(
+                        mModifier = Modifier
+                            .weight(1f)
+                            .padding(vertical = 16.dp)
+                            .height(58.dp),
+                        text = "뒤로가기",
+                        buttonColor = primaryColor,
+                        onClick = {
+                            scope.launch {
+                                bottomSheetState.hide()
+                            }.invokeOnCompletion {
+                                isSheetVisible = false
+                            }
+                        }
+                    )
+                }
             }
         }
     }
