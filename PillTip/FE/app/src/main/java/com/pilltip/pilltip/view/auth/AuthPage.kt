@@ -169,19 +169,8 @@ fun SelectPage(
 ) {
     HandleBackPressToExitApp(navController)
     val systemUiController = rememberSystemUiController()
-    val user by kakaoViewModel.user
     val context = LocalContext.current
-    val token = kakaoViewModel.getAccessToken()
     var termsOfService by remember { mutableStateOf(false) }
-
-    LaunchedEffect(user) {
-        if (user != null && token != null) {
-            signUpViewModel.updateLoginType(LoginType.SOCIAL)
-            signUpViewModel.updateToken(token)
-            signUpViewModel.updateProvider("kakao")
-            termsOfService = true
-        }
-    }
 
     SideEffect {
         systemUiController.setStatusBarColor(
@@ -225,7 +214,17 @@ fun SelectPage(
             backgroundColor = Color(0xFFFEE500),
             fontColor = Color.Black,
             onClick = {
-                kakaoViewModel.kakaoLogin(context)
+                kakaoViewModel.kakaoLogin(context) { success ->
+                    if (success) {
+                        val token = kakaoViewModel.getAccessToken()
+                        kakaoViewModel.user.value?.let { user ->
+                            signUpViewModel.updateLoginType(LoginType.SOCIAL)
+                            signUpViewModel.updateToken(token ?: "")
+                            signUpViewModel.updateProvider("kakao")
+                            termsOfService = true
+                        }
+                    }
+                }
             }
         )
 //        HeightSpacer(16.dp)
@@ -900,7 +899,7 @@ fun IdPage(
                         } else if (!isSuccess) {
                             Toast.makeText(context, "중복 확인 중 오류가 발생했어요.", Toast.LENGTH_SHORT).show()
                         }
-                        if (isDuplicate == false) isChecked = true
+                        if (isSuccess && isDuplicate == false) isChecked = true
                     }
                 } else if (isChecked && !isDuplicate!! && isAllConditionsValid) {
                     // 중복 확인 완료 + 사용 가능 + 유효성 검증 완료
@@ -1201,7 +1200,8 @@ fun PhoneAuthPage(
         val sec = timeRemaining % 60
         String.format("%02d:%02d", min, sec)
     }
-
+    var isDuplicate by remember { mutableStateOf<Boolean?>(null) }
+    var isChecked by remember { mutableStateOf(false) }
     var isFocused by remember { mutableStateOf(false) }
     val focusManager = LocalFocusManager.current
     val context = LocalContext.current
@@ -1209,7 +1209,21 @@ fun PhoneAuthPage(
     val localWitdh = LocalConfiguration.current.screenWidthDp
 
     val isAutoVerified by phoneViewModel.isAutoVerified.collectAsState()
+    val isPhoneValid = phoneNumber.length >= 11
+    val isReadyToVerify = isChecked && verificationId == null && isPhoneValid
+    val isCodeEntered = verificationId != null && code.length == 6
 
+    val buttonText = when {
+        !isChecked -> "중복 확인"
+        isReadyToVerify -> "인증 요청"
+        isCodeEntered -> "인증하기"
+        else -> "다음"
+    }
+
+    LaunchedEffect(phoneNumber) {
+        isChecked = false
+        isDuplicate = null
+    }
 
     LaunchedEffect(isAutoVerified) {
         if (isAutoVerified) {
@@ -1290,31 +1304,40 @@ fun PhoneAuthPage(
                 (verificationId == null && phoneNumber.length >= 11) ||
                 (verificationId != null && code.length == 6)
             ) Color(0xFF397CDB) else Color(0xFFCADCF5),
-            text = if (
-                (verificationId != null && code.length == 6)
-            ) "인증하기" else "다음",
+            text = buttonText,
             onClick = {
-                if (
-                    (verificationId == null && phoneNumber.length >= 11) ||
-                    (verificationId != null && code.length == 6)
-                ) {
-                    activity?.let {
-                        if (verificationId == null) {
-                            phoneViewModel.requestVerification(
-                                activity = it,
-                                onSent = {},
-                                onFailed = {}
-                            )
-                        } else {
-                            phoneViewModel.verifyCodeInput(
-                                onSuccess = {
-                                    viewModel.updatePhone(phoneNumber)
-                                    navController.navigate("ProfilePage")
-                                },
-                                onFailure = {}
-                            )
+                if (!isChecked) {
+                    viewModel.checkPhoneNumberDuplicate(phoneViewModel.formattedPhone.toString()) { isSuccess, isAvailable ->
+                        isDuplicate = isAvailable?.not()
+                        if (isSuccess && isDuplicate == true) {
+                            Toast.makeText(context, "이미 사용 중인 번호예요.", Toast.LENGTH_SHORT).show()
+                        } else if (!isSuccess) {
+                            Toast.makeText(context, "중복 확인 중 오류가 발생했어요.", Toast.LENGTH_SHORT).show()
+                        } else if (isDuplicate == false) {
+                            isChecked = true
+                            Toast.makeText(context, "사용 가능한 번호예요.", Toast.LENGTH_SHORT).show()
                         }
                     }
+                } else if (isChecked && verificationId == null) {
+                    activity?.let {
+                        phoneViewModel.requestVerification(
+                            activity = it,
+                            onSent = {},
+                            onFailed = {
+                                Toast.makeText(context, "인증 요청 실패", Toast.LENGTH_SHORT).show()
+                            }
+                        )
+                    }
+                } else if (isCodeEntered) {
+                    phoneViewModel.verifyCodeInput(
+                        onSuccess = {
+                            viewModel.updatePhone(phoneNumber)
+                            navController.navigate("ProfilePage")
+                        },
+                        onFailure = {
+                            Toast.makeText(context, "인증 실패", Toast.LENGTH_SHORT).show()
+                        }
+                    )
                 }
             }
         )

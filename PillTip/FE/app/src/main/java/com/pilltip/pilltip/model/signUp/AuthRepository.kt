@@ -113,6 +113,7 @@ class AuthRepository @Inject constructor(
     suspend fun checkDuplicate(value: String, type: String): Pair<Boolean, Boolean?> {
         return try {
             val response = authApi.checkDuplicate(DuplicateCheckRequest(value, type))
+            Log.d("중복 검사 결과: ", response.toString())
             if (response.isSuccessful) {
                 Pair(true, response.body()?.data)
             } else {
