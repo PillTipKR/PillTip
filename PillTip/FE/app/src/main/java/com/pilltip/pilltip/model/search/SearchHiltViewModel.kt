@@ -36,6 +36,7 @@ class SearchHiltViewModel @Inject constructor(
     private val repository: AutoCompleteRepository,
     private val drugSearchRepo: DrugSearchRepository,
     private val drugDetailRepo: DrugDetailRepository,
+    private val gptAdviceRepo: GptAdviceRepository,
     private val dosageRegisterRepo: DosageRegisterRepository,
     private val dosageSummaryRepo: DosageSummaryRepository,
     private val dosageDetailRepo: DosageDetailRepository,
@@ -47,7 +48,8 @@ class SearchHiltViewModel @Inject constructor(
     private val dosageLogRepo: DosageLogRepository,
     private val deleteRepo: DeleteRepository,
     private val personalInfoRepo: PersonalInfoRepository,
-    private val reviewStatsRepo: ReviewStatsRepository
+    private val reviewStatsRepo: ReviewStatsRepository,
+    private val questionnaireRepo: QuestionnaireRepository
 ) : ViewModel() {
 
     /* 약품명 자동 완성 API*/
@@ -130,6 +132,26 @@ class SearchHiltViewModel @Inject constructor(
             }
         }
     }
+
+    /* pilltip AI */
+    private val _gptAdvice = MutableStateFlow<String?>(null)
+    val gptAdvice: StateFlow<String?> = _gptAdvice.asStateFlow()
+
+    fun fetchGptAdvice(detail: DetailDrugData) {
+        viewModelScope.launch {
+            try {
+                _isLoading.value = true
+                val advice = gptAdviceRepo.getGptAdvice(detail)
+                _gptAdvice.value = advice
+                Log.d("GptAdvice", "GPT 복약 설명: $advice")
+            } catch (e: Exception) {
+                Log.e("GptAdvice", "GPT 설명 요청 실패: ${e.message}")
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
 
     /* 복약 등록 API */
     private val _registerResult = MutableStateFlow<RegisterDosageResponse?>(null)
@@ -399,40 +421,53 @@ class SearchHiltViewModel @Inject constructor(
             }
         }
     }
+
+    /* 문진표 조회 */
+    private val _questionnaireState = mutableStateOf<QuestionnaireData?>(null)
+    val questionnaireState: State<QuestionnaireData?> = _questionnaireState
+
+    fun loadQuestionnaire() {
+        viewModelScope.launch {
+            try {
+                val result = questionnaireRepo.getQuestionnaire()
+                _questionnaireState.value = result
+            } catch (e: Exception) {
+                Log.e("Questionnaire", "문진표 불러오기 실패", e)
+            }
+        }
+    }
 }
 
 @HiltViewModel
-class QuestionnaireViewModel @Inject constructor(
-    private val repository: QuestionnaireRepository,
-    private val permissionRepository: PermissionRepository
+class SensitiveViewModel @Inject constructor(
+    private val permissionRepository: PermissionRepository,
+    private val sensitiveInfoRepository: SensitiveInfoRepository
 ) : ViewModel() {
 
     var realName by mutableStateOf("")
     var address by mutableStateOf("")
     var phoneNumber by mutableStateOf("")
-    var questionnaireName by mutableStateOf("")
-    var notes by mutableStateOf("")
 
-    var medicationInfo by mutableStateOf<List<MedicationEntry>>(emptyList())
-    var allergyInfo by mutableStateOf<List<AllergyEntry>>(emptyList())
-    var chronicDiseaseInfo by mutableStateOf<List<ChronicDiseaseEntry>>(emptyList())
-    var surgeryHistoryInfo by mutableStateOf<List<SurgeryHistoryEntry>>(emptyList())
+    var allergyInfo by mutableStateOf<List<AllergyInfo>>(emptyList())
+    var chronicDiseaseInfo by mutableStateOf<List<ChronicDiseaseInfo>>(emptyList())
+    var surgeryHistoryInfo by mutableStateOf<List<SurgeryHistoryInfo>>(emptyList())
 
-    var submittedQuestionnaire by mutableStateOf<QuestionnaireData?>(null)
+    var sensitivePermission by mutableStateOf(false)
+    var medicalPermission by mutableStateOf(false)
 
     var permissionState by mutableStateOf<PermissionData?>(null)
     var isPermissionLoading by mutableStateOf(false)
 
-    fun updateSensitivePermissions(
-        sensitiveInfo: Boolean,
-        medicalInfo: Boolean
-    ) {
+    private val _permissionUpdateResult = MutableStateFlow<PermissionData?>(null)
+    val permissionUpdateResult: StateFlow<PermissionData?> = _permissionUpdateResult.asStateFlow()
+
+    fun updateSensitivePermissions() {
         viewModelScope.launch {
             isPermissionLoading = true
             try {
                 val request = PermissionRequest(
-                    sensitiveInfoPermission = sensitiveInfo,
-                    medicalInfoPermission = medicalInfo
+                    sensitiveInfoPermission = sensitivePermission,
+                    medicalInfoPermission = sensitivePermission
                 )
                 val response = permissionRepository.updatePermissions(request)
                 permissionState = response.data
@@ -444,9 +479,6 @@ class QuestionnaireViewModel @Inject constructor(
             }
         }
     }
-
-    private val _permissionUpdateResult = MutableStateFlow<PermissionData?>(null)
-    val permissionUpdateResult: StateFlow<PermissionData?> = _permissionUpdateResult.asStateFlow()
 
     fun updateSinglePermission(permissionType: String, granted: Boolean) {
         viewModelScope.launch {
@@ -479,119 +511,49 @@ class QuestionnaireViewModel @Inject constructor(
     fun resetAll() {
         realName = ""
         address = ""
-        questionnaireName = ""
-        notes = ""
-        medicationInfo = emptyList()
+        phoneNumber = ""
         allergyInfo = emptyList()
         chronicDiseaseInfo = emptyList()
         surgeryHistoryInfo = emptyList()
     }
 
-    fun toRequest(): QuestionnaireSubmitRequest {
-        return QuestionnaireSubmitRequest(
+    fun resetAllergyInfo() {
+        allergyInfo = emptyList()
+    }
+
+    fun resetChronicDiseaseInfo() {
+        chronicDiseaseInfo = emptyList()
+    }
+
+    fun resetSurgeryHistoryInfo() {
+        surgeryHistoryInfo = emptyList()
+    }
+
+    fun toRequest(): SensitiveSubmitRequest {
+        return SensitiveSubmitRequest(
             realName = realName,
             address = address,
             phoneNumber = phoneNumber,
-            questionnaireName = questionnaireName,
-            medicationInfo = medicationInfo,
             allergyInfo = allergyInfo,
             chronicDiseaseInfo = chronicDiseaseInfo,
             surgeryHistoryInfo = surgeryHistoryInfo,
-            notes = notes
         )
     }
 
-    fun submit() {
+    fun submitSensitiveProfile() {
         viewModelScope.launch {
             try {
-                val response = repository.submit(toRequest())
-                submittedQuestionnaire = response
-                Log.d("문진표", "제출 성공: ID=${response.questionnaireId}")
+                val response = sensitiveInfoRepository.updateSensitiveProfile(toRequest())
+                realName = response.realName
+                address = response.address
+                phoneNumber = response.phoneNumber
+                allergyInfo = response.sensitiveInfo.allergyInfo.map { AllergyInfo(it, true) }
+                chronicDiseaseInfo = response.sensitiveInfo.chronicDiseaseInfo.map { ChronicDiseaseInfo(it, true) }
+                surgeryHistoryInfo = response.sensitiveInfo.surgeryHistoryInfo.map { SurgeryHistoryInfo(it, true) }
+
+                Log.d("SensitiveSubmit", "업데이트 성공")
             } catch (e: Exception) {
-                Log.e("문진표", "제출 실패: ${e.message}")
-            }
-        }
-    }
-
-    var questionnaireList by mutableStateOf<List<QuestionnaireSummary>>(emptyList())
-        private set
-
-    var isListLoading by mutableStateOf(false)
-
-    fun fetchQuestionnaireList() {
-        viewModelScope.launch {
-            isListLoading = true
-            try {
-                questionnaireList = repository.getList()
-                Log.d("문진표", "리스트 불러오기 성공: ${questionnaireList.size}개")
-            } catch (e: Exception) {
-                Log.e("문진표", "리스트 불러오기 실패: ${e.message}")
-            } finally {
-                isListLoading = false
-            }
-        }
-    }
-
-    var questionnaireDetail by mutableStateOf<QuestionnaireDetail?>(null)
-        private set
-
-    var isLoading by mutableStateOf(false)
-        private set
-
-    fun fetchQuestionnaireDetail(id: Long) {
-        viewModelScope.launch {
-            isLoading = true
-            try {
-                val result = repository.getDetail(id)
-                questionnaireDetail = result
-                Log.d("문진표", "상세 조회 성공: $result")
-            } catch (e: Exception) {
-                Log.e("문진표", "상세 조회 실패: ${e.message}")
-            } finally {
-                isLoading = false
-            }
-        }
-    }
-
-    fun loadQuestionnaireDetail(
-        data: QuestionnaireDetail,
-        realName: String,
-        address: String,
-        phoneNumber: String
-    ) {
-        questionnaireName = data.questionnaireName
-        this.realName = realName
-        this.address = address
-        this.phoneNumber = phoneNumber
-
-        medicationInfo = data.medicationInfo.toMutableStateList()
-        allergyInfo = data.allergyInfo.toMutableStateList()
-        chronicDiseaseInfo = data.chronicDiseaseInfo.toMutableStateList()
-        surgeryHistoryInfo = data.surgeryHistoryInfo.toMutableStateList()
-    }
-
-    fun modify() {
-        viewModelScope.launch {
-            try {
-                val id = questionnaireDetail?.questionnaireId ?: return@launch
-                val request = toRequest()
-                repository.update(id, request)
-                Log.d("문진표", "수정 성공: ID=$id")
-            } catch (e: Exception) {
-                Log.e("문진표", "수정 실패: ${e.message}")
-            }
-        }
-    }
-
-    fun delete(id: Long, onSuccess: () -> Unit, onError: (String) -> Unit) {
-        viewModelScope.launch {
-            try {
-                repository.delete(id)
-                Log.d("문진표", "삭제 성공: $id")
-                onSuccess()
-            } catch (e: Exception) {
-                Log.e("문진표", "삭제 실패: ${e.message}")
-                onError(e.message ?: "알 수 없는 오류")
+                Log.e("SensitiveSubmit", "업데이트 실패: ${e.message}")
             }
         }
     }
@@ -671,8 +633,6 @@ class ReviewViewModel @Inject constructor(
     }
 }
 
-
-
 @Module
 @InstallIn(SingletonComponent::class)
 object RepositoryModule {
@@ -731,6 +691,16 @@ object RepositoryModule {
     }
 
     @Provides
+    fun provideGptAdviceApi(@Named("SearchRetrofit") retrofit: Retrofit): GptAdviceApi {
+        return retrofit.create(GptAdviceApi::class.java)
+    }
+
+    @Provides
+    fun provideGptAdviceRepository(api: GptAdviceApi): GptAdviceRepository {
+        return GptAdviceRepositoryImpl(api)
+    }
+
+    @Provides
     fun provideDosageRegisterApi(@Named("SearchRetrofit") retrofit: Retrofit): DosageRegisterApi {
         return retrofit.create(DosageRegisterApi::class.java)
     }
@@ -777,14 +747,6 @@ object RepositoryModule {
     fun provideDosageModifyRepository(api: DosageModifyApi): DosageModifyRepository {
         return DosageModifyRepositoryImpl(api)
     }
-
-    @Provides
-    fun provideQuestionnaireApi(@Named("SearchRetrofit") retrofit: Retrofit): QuestionnaireApi =
-        retrofit.create(QuestionnaireApi::class.java)
-
-    @Provides
-    fun provideQuestionnaireRepository(api: QuestionnaireApi): QuestionnaireRepository =
-        QuestionnaireRepositoryImpl(api)
 
     @Provides
     fun provideFcmApi(@Named("SearchRetrofit") retrofit: Retrofit): FcmApi {
@@ -875,5 +837,16 @@ object RepositoryModule {
     fun provideReviewRepository(api: ReviewApi): ReviewRepository {
         return ReviewRepositoryImpl(api)
     }
+
+    @Provides
+    fun provideQuestionnaireApi(@Named("SearchRetrofit") retrofit: Retrofit): QuestionnaireApi {
+        return retrofit.create(QuestionnaireApi::class.java)
+    }
+
+    @Provides
+    fun provideQuestionnaireRepository(api: QuestionnaireApi): QuestionnaireRepository {
+        return QuestionnaireRepositoryImpl(api)
+    }
+
 
 }

@@ -78,6 +78,50 @@ class DrugDetailRepositoryImpl(
 }
 
 /**
+ * Pilltip AI API
+ */
+
+interface GptAdviceApi {
+    @POST("/api/detailPage/gpt")
+    suspend fun getGptAdvice(
+        @Body detail: DetailDrugData
+    ): GptAdviceResponse
+}
+
+interface GptAdviceRepository {
+    suspend fun getGptAdvice(detail: DetailDrugData): String
+}
+
+class GptAdviceRepositoryImpl(
+    private val api: GptAdviceApi
+) : GptAdviceRepository {
+    override suspend fun getGptAdvice(detail: DetailDrugData): String {
+        return api.getGptAdvice(detail).data
+    }
+}
+
+/**
+ * 문진표 조회
+ */
+
+interface QuestionnaireApi {
+    @GET("/api/questionnaire")
+    suspend fun getQuestionnaire(): QuestionnaireResponse
+}
+
+interface QuestionnaireRepository {
+    suspend fun getQuestionnaire(): QuestionnaireData
+}
+
+class QuestionnaireRepositoryImpl(
+    private val api: QuestionnaireApi
+) : QuestionnaireRepository {
+    override suspend fun getQuestionnaire(): QuestionnaireData {
+        return api.getQuestionnaire().data
+    }
+}
+
+/**
  * 복약 등록 API
  *
  */
@@ -196,64 +240,31 @@ class DosageModifyRepositoryImpl(
 }
 
 /**
- * 문진표 API
+ * 민감정보 API
  */
 
-interface QuestionnaireApi {
-    @POST("/api/questionnaire")
-    suspend fun submitQuestionnaire(
-        @Body request: QuestionnaireSubmitRequest
-    ): QuestionnaireResponse
-
-    @GET("/api/questionnaire/list")
-    suspend fun getQuestionnaireList(): QuestionnaireListResponse
-
-    @GET("/api/questionnaire/{id}")
-    suspend fun getQuestionnaireDetail(
-        @Path("id") id: Long
-    ): QuestionnaireDetailResponse
-
-    @PUT("/api/questionnaire/{id}")
-    suspend fun updateQuestionnaire(
-        @Path("id") id: Long,
-        @Body request: QuestionnaireSubmitRequest
-    ): QuestionnaireResponse
-
-    @DELETE("/api/questionnaire/{questionnaire_id}")
-    suspend fun deleteQuestionnaire(
-        @Path("questionnaire_id") id: Long
-    ): QuestionnaireListResponse
+interface SensitiveInfoApi {
+    @PUT("/api/sensitive-info/profile")
+    suspend fun updateSensitiveInfo(
+        @Body request: SensitiveSubmitRequest
+    ): SensitiveResponse
+    @GET("/api/sensitive-info")
+    suspend fun getSensitiveInfo(): SensitiveInfoResponse
 }
 
-interface QuestionnaireRepository {
-    suspend fun submit(request: QuestionnaireSubmitRequest): QuestionnaireData
-    suspend fun getList(): List<QuestionnaireSummary>
-    suspend fun getDetail(id: Long): QuestionnaireDetail
-    suspend fun update(id: Long, request: QuestionnaireSubmitRequest): QuestionnaireData
-    suspend fun delete(id: Long)
+interface SensitiveInfoRepository {
+    suspend fun updateSensitiveProfile(request: SensitiveSubmitRequest): SensitiveResponseData
+    suspend fun fetchSensitiveInfo(): SensitiveInfoData
 }
 
-class QuestionnaireRepositoryImpl(
-    private val api: QuestionnaireApi
-) : QuestionnaireRepository {
-    override suspend fun submit(request: QuestionnaireSubmitRequest): QuestionnaireData {
-        return api.submitQuestionnaire(request).data
+class SensitiveInfoRepositoryImpl(
+    private val api: SensitiveInfoApi
+) : SensitiveInfoRepository {
+    override suspend fun updateSensitiveProfile(request: SensitiveSubmitRequest): SensitiveResponseData {
+        return api.updateSensitiveInfo(request).data
     }
-
-    override suspend fun getList(): List<QuestionnaireSummary> {
-        return api.getQuestionnaireList().data
-    }
-
-    override suspend fun getDetail(id: Long): QuestionnaireDetail {
-        return api.getQuestionnaireDetail(id).data
-    }
-
-    override suspend fun update(id: Long, request: QuestionnaireSubmitRequest): QuestionnaireData {
-        return api.updateQuestionnaire(id, request).data
-    }
-
-    override suspend fun delete(id: Long) {
-        api.deleteQuestionnaire(id)
+    override suspend fun fetchSensitiveInfo(): SensitiveInfoData {
+        return api.getSensitiveInfo().data
     }
 }
 
@@ -342,31 +353,6 @@ class PermissionRepositoryImpl(
 
     override suspend fun updateSinglePermission(permissionType: String, granted: Boolean): PermissionResponse {
         return api.updateSinglePermission(permissionType, granted)
-    }
-}
-
-/**
- * 민감정보 동의 여부 조회
- */
-
-/**
- * 건강정보
- */
-
-interface SensitiveInfoApi {
-    @GET("/api/sensitive-info")
-    suspend fun getSensitiveInfo(): SensitiveInfoResponse
-}
-
-interface SensitiveInfoRepository {
-    suspend fun fetchSensitiveInfo(): SensitiveInfoData
-}
-
-class SensitiveInfoRepositoryImpl(
-    private val api: SensitiveInfoApi
-) : SensitiveInfoRepository {
-    override suspend fun fetchSensitiveInfo(): SensitiveInfoData {
-        return api.getSensitiveInfo().data
     }
 }
 

@@ -503,7 +503,9 @@ fun DetailPage(
     SideEffect {
         systemUiController.isNavigationBarVisible = true
     }
-
+    BackHandler {
+        navController.popBackStack()
+    }
     when (val detail = detailState) {
         null -> {
             Box(modifier = Modifier.fillMaxSize()) {
@@ -761,7 +763,7 @@ fun DetailPage(
                                 .wrapContentHeight()
                         ) { page ->
                             when (page) {
-                                0 -> DrugInfoTab(navController, detail)
+                                0 -> DrugInfoTab(navController, detail, searchViewModel)
                                 1 -> StorageInfoTab(navController, detail)
                                 2 -> ReviewTab(
                                     navController,
@@ -855,11 +857,20 @@ fun DetailPage(
 @Composable
 fun DrugInfoTab(
     navController: NavController,
-    detail: DetailDrugData
+    detail: DetailDrugData,
+    viewModel: SearchHiltViewModel
 ) {
     val context = LocalContext.current
     val nickname = UserInfoManager.getUserData(context)?.nickname
     val clipboardManager = LocalClipboardManager.current
+    val permission = UserInfoManager.getUserData(LocalContext.current)?.permissions
+    val gptAdvice by viewModel.gptAdvice.collectAsState()
+
+    if (permission == true && gptAdvice == null) {
+        LaunchedEffect(detail.id) {
+            viewModel.fetchGptAdvice(detail)
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -887,11 +898,35 @@ fun DrugInfoTab(
             )
         )
         HeightSpacer(12.dp)
-        DashedBorderBox(
-            onRegisterClick = {
-                navController.navigate("QuestionnairePage")
+        if (permission == true) {
+            if(gptAdvice!=null){
+                ExportAndCopy(
+                    headerText = "Pilltip AI 맞춤 안내",
+                    onCopyClicked = {
+                        clipboardManager.setText(AnnotatedString(gptAdvice!!))
+                        Toast.makeText(context, "복사되었습니다", Toast.LENGTH_SHORT).show()
+                    },
+                    onExportClicked = {
+                        shareText(context, "맞춤형 복약 설명", gptAdvice!!)
+                    }
+                )
+                ExpandableInfoBox(
+                    item = gptAdvice!!,
+                    collapsedHeight = 186.dp
+                ) { gpt ->
+                    Text(removeMarkdown(gpt))
+                }
+            } else {
+                CircularProgressIndicator()
             }
-        )
+
+        } else {
+            DashedBorderBox(
+                onRegisterClick = {
+                    navController.navigate("EssentialPage")
+                }
+            )
+        }
         Row(
             modifier = Modifier
                 .fillMaxWidth()

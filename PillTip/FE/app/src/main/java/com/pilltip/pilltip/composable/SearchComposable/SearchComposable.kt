@@ -757,7 +757,6 @@ fun DashedBorderBox(
                         floatArrayOf(dashLength, gapLength), 0f
                     )
                 }
-
                 drawIntoCanvas {
                     it.nativeCanvas.drawRoundRect(
                         0f, 0f, size.width, size.height,

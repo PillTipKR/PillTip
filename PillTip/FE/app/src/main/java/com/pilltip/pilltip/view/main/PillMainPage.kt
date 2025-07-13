@@ -1,19 +1,15 @@
 package com.pilltip.pilltip.view.main
 
 import android.util.Log
-import android.widget.Toast
-import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -22,24 +18,18 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -47,13 +37,14 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.asAndroidPath
 import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
@@ -69,42 +60,41 @@ import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.google.firebase.messaging.FirebaseMessaging
 import com.pilltip.pilltip.R
 import com.pilltip.pilltip.composable.HeightSpacer
-import com.pilltip.pilltip.composable.MainComposable.AnnouncementCard
+import com.pilltip.pilltip.composable.IosButton
 import com.pilltip.pilltip.composable.MainComposable.BottomBar
 import com.pilltip.pilltip.composable.MainComposable.BottomTab
+import com.pilltip.pilltip.composable.MainComposable.DURText
 import com.pilltip.pilltip.composable.MainComposable.DosageCard
 import com.pilltip.pilltip.composable.MainComposable.DosagePage
 import com.pilltip.pilltip.composable.MainComposable.FeatureButton
 import com.pilltip.pilltip.composable.MainComposable.LogoField
 import com.pilltip.pilltip.composable.MainComposable.MainSearchField
-import com.pilltip.pilltip.composable.MainComposable.ProfileTagButton
 import com.pilltip.pilltip.composable.MainComposable.SmallTabCard
 import com.pilltip.pilltip.composable.MainComposable.formatDate
-import com.pilltip.pilltip.composable.QuestionnaireComposable.QuestionnaireCard
+import com.pilltip.pilltip.composable.QuestionnaireComposable.DottedDivider
+import com.pilltip.pilltip.composable.QuestionnaireComposable.InfoRow
+import com.pilltip.pilltip.composable.QuestionnaireComposable.QuestionnaireToggleSection
 import com.pilltip.pilltip.composable.WidthSpacer
 import com.pilltip.pilltip.composable.noRippleClickable
 import com.pilltip.pilltip.model.HandleBackPressToExitApp
 import com.pilltip.pilltip.model.UserInfoManager
-import com.pilltip.pilltip.model.search.QuestionnaireViewModel
 import com.pilltip.pilltip.model.search.SearchHiltViewModel
+import com.pilltip.pilltip.model.search.SensitiveViewModel
 import com.pilltip.pilltip.ui.theme.backgroundColor
 import com.pilltip.pilltip.ui.theme.gray050
-import com.pilltip.pilltip.ui.theme.gray200
+import com.pilltip.pilltip.ui.theme.gray400
 import com.pilltip.pilltip.ui.theme.gray600
 import com.pilltip.pilltip.ui.theme.gray800
 import com.pilltip.pilltip.ui.theme.pretendard
 import com.pilltip.pilltip.ui.theme.primaryColor
-import com.pilltip.pilltip.ui.theme.primaryColor050
-import com.pilltip.pilltip.ui.theme.primaryColor100
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+import com.pilltip.pilltip.view.questionnaire.Logic.toKoreanGender
 import java.time.LocalDate
 
 @Composable
 fun PillMainPage(
     navController: NavController,
     searchHiltViewModel: SearchHiltViewModel,
-    questionnaireViewModel: QuestionnaireViewModel,
+    sensitiveViewModel: SensitiveViewModel,
     initialTab: BottomTab = BottomTab.Home
 ) {
     var selectedTab by remember { mutableStateOf(BottomTab.Home) }
@@ -166,12 +156,12 @@ fun PillMainPage(
             when (selectedTab) {
                 BottomTab.Home -> HomePage(navController, searchHiltViewModel)
                 BottomTab.Interaction -> navController.navigate("DURPage")
-                BottomTab.Chart -> MyQuestionnairePage(navController, questionnaireViewModel)
+                BottomTab.Chart -> MyQuestionnairePage(navController, searchHiltViewModel)
                 BottomTab.Calendar -> CalenderPage(navController, searchHiltViewModel)
                 BottomTab.MyPage -> MyPage(
                     navController,
                     searchHiltViewModel,
-                    questionnaireViewModel
+                    sensitiveViewModel
                 )
             }
         }
@@ -375,9 +365,8 @@ fun HomePage(
 @Composable
 fun MyQuestionnairePage(
     navController: NavController,
-    viewModel: QuestionnaireViewModel
+    searchHiltViewModel: SearchHiltViewModel
 ) {
-
     val systemUiController = rememberSystemUiController()
     SideEffect {
         systemUiController.setStatusBarColor(
@@ -388,18 +377,15 @@ fun MyQuestionnairePage(
     }
     val context = LocalContext.current
     var scrollState = rememberScrollState()
-    var firstSelected by remember { mutableStateOf(false) }
-    var expanded by remember { mutableStateOf(false) }
-    var sortOption by remember { mutableStateOf("최신순") }
-    val list by remember { derivedStateOf { viewModel.questionnaireList } }
-    val loading by remember { derivedStateOf { viewModel.isListLoading } }
+    val questionnaire = searchHiltViewModel.questionnaireState.value
     val localHeight = LocalConfiguration.current.screenHeightDp
     val permission = UserInfoManager.getUserData(LocalContext.current)?.permissions
-
-    LaunchedEffect(Unit) {
-        viewModel.fetchQuestionnaireList()
+    val age = UserInfoManager.getUserData(LocalContext.current)?.age
+    LaunchedEffect(permission) {
+        if (permission == true) {
+            searchHiltViewModel.loadQuestionnaire()
+        }
     }
-
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -420,169 +406,205 @@ fun MyQuestionnairePage(
                 .fillMaxWidth()
                 .height(56.dp)
         )
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
-            modifier = Modifier
-                .horizontalScroll(scrollState)
-                .padding(start = 22.dp)
-        ) {
-            Box {
-                ProfileTagButton(
-                    text = sortOption,
-                    image = R.drawable.btn_blue_dropdown,
-                    selected = false,
-                    onClick = { expanded = true }
-                )
-
-                DropdownMenu(
-                    expanded = expanded,
-                    onDismissRequest = { expanded = false },
-                    modifier = Modifier.background(Color.White)
-                ) {
-                    DropdownMenuItem(text = { Text("최신순") }, onClick = {
-                        sortOption = "최신순"
-                        expanded = false
-                    })
-                    DropdownMenuItem(text = { Text("오래된 순") }, onClick = {
-                        sortOption = "오래된 순"
-                        expanded = false
-                    })
-                    DropdownMenuItem(text = { Text("가나다순") }, onClick = {
-                        sortOption = "가나다순"
-                        expanded = false
-                    })
-                }
-            }
-        }
-//        HeightSpacer(10.dp)
-//        Row(
-//            modifier = Modifier
-//                .border(
-//                    width = 0.5.dp,
-//                    color = primaryColor100,
-//                    shape = RoundedCornerShape(size = 12.dp)
-//                )
-//                .padding(0.25.dp)
-//                .fillMaxWidth()
-//                .height(50.dp)
-//                .background(color = primaryColor050, shape = RoundedCornerShape(size = 12.dp))
-//                .padding(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 16.dp)
-//        ) {
-//            Image(
-//                imageVector = ImageVector.vectorResource(R.drawable.ic_announce_speakerphone),
-//                contentDescription = "문진표 공지"
-//            )
-//            WidthSpacer(8.dp)
-//            Text(
-//                text = "스마트 문진표에 대해 알려드려요",
-//                style = TextStyle(
-//                    fontSize = 14.sp,
-//                    fontFamily = pretendard,
-//                    fontWeight = FontWeight(600),
-//                    color = primaryColor,
-//                )
-//            )
-//        }
         HeightSpacer(12.dp)
-        if (loading) {
-            CircularProgressIndicator()
-        } else {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp),
-                contentPadding = PaddingValues(vertical = 12.dp)
-            ) {
-                if (list.isEmpty()) {
-                    item {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .fillMaxHeight(),
-                            verticalArrangement = Arrangement.Center,
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            HeightSpacer(200.dp)
-                            Image(
-                                painter = painterResource(R.drawable.ic_questionnaire_none),
-                                contentDescription = "문진표 없음"
+        when {
+            permission != true -> {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .fillMaxHeight(),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Image(
+                        painter = painterResource(R.drawable.ic_questionnaire_none),
+                        contentDescription = "문진표 없음"
+                    )
+                    HeightSpacer(10.dp)
+                    Text(
+                        text = "문진표가 없어요\n문진표를 추가해보세요",
+                        style = TextStyle(
+                            fontSize = 16.sp,
+                            lineHeight = 22.4.sp,
+                            fontFamily = pretendard,
+                            fontWeight = FontWeight(500),
+                            color = gray600,
+                            textAlign = TextAlign.Center,
+                        )
+                    )
+                    HeightSpacer(20.dp)
+                    Box(
+                        modifier = Modifier
+                            .border(
+                                width = 1.dp,
+                                color = primaryColor,
+                                shape = RoundedCornerShape(size = 12.dp)
                             )
-                            HeightSpacer(10.dp)
-                            Text(
-                                text = "문진표가 없어요\n문진표를 추가해보세요",
-                                style = TextStyle(
-                                    fontSize = 16.sp,
-                                    lineHeight = 22.4.sp,
-                                    fontFamily = pretendard,
-                                    fontWeight = FontWeight(500),
-                                    color = gray600,
-                                    textAlign = TextAlign.Center,
-                                )
+                            .height(45.dp)
+                            .background(
+                                color = primaryColor,
+                                shape = RoundedCornerShape(size = 12.dp)
                             )
-                            HeightSpacer(20.dp)
-                            Box(
-                                modifier = Modifier
-                                    .border(
-                                        width = 1.dp,
-                                        color = primaryColor,
-                                        shape = RoundedCornerShape(size = 12.dp)
-                                    )
-                                    .height(45.dp)
-                                    .background(
-                                        color = primaryColor,
-                                        shape = RoundedCornerShape(size = 12.dp)
-                                    )
-                                    .padding(
-                                        start = 22.dp,
-                                        top = 14.dp,
-                                        end = 22.dp,
-                                        bottom = 14.dp
-                                    )
-                                    .noRippleClickable {
-                                        if (permission == true) navController.navigate("AreYouPage/약")
-                                        else navController.navigate("QuestionnairePage")
-                                    },
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    text = "문진표 추가하기",
-                                    style = TextStyle(
-                                        fontSize = 14.sp,
-                                        fontFamily = pretendard,
-                                        fontWeight = FontWeight(600),
-                                        color = Color.White,
-                                    )
-                                )
-                            }
-                        }
-                    }
-                } else {
-                    items(list) { item ->
-                        QuestionnaireCard(
-                            questionnaire = item,
-                            onClick = { navController.navigate("questionnaire_check/${item.questionnaireId}") },
-                            onEdit = {
-
+                            .padding(
+                                start = 22.dp,
+                                top = 14.dp,
+                                end = 22.dp,
+                                bottom = 14.dp
+                            )
+                            .noRippleClickable {
+                                navController.navigate("EssentialPage")
                             },
-                            onDelete = {
-                                viewModel.delete(
-                                    id = item.questionnaireId,
-                                    onSuccess = {
-                                        Toast.makeText(context, "삭제 완료", Toast.LENGTH_SHORT).show()
-                                        viewModel.fetchQuestionnaireList()
-                                    },
-                                    onError = {
-                                        Toast.makeText(context, "삭제 실패: $it", Toast.LENGTH_SHORT)
-                                            .show()
-                                    }
-                                )
-                            }
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "문진표 추가하기",
+                            style = TextStyle(
+                                fontSize = 14.sp,
+                                fontFamily = pretendard,
+                                fontWeight = FontWeight(600),
+                                color = Color.White,
+                            )
                         )
                     }
                 }
             }
+
+            questionnaire == null -> {
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
+            }
+
+            else -> {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Color.Transparent),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .shadow(
+                                elevation = 3.dp,
+                                shape = RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp),
+                                clip = false
+                            )
+                            .background(
+                                Color.White,
+                                shape = RoundedCornerShape(
+                                    topStart = 12.dp,
+                                    topEnd = 12.dp,
+                                    bottomStart = 0.dp,
+                                    bottomEnd = 0.dp
+                                )
+                            )
+                            .padding(start = 20.dp, top = 30.dp, end = 20.dp, bottom = 30.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        InfoRow("이름", questionnaire.realName)
+                        HeightSpacer(12.dp)
+                        InfoRow("생년월일", "${questionnaire.birthDate} (만 ${age}세)")
+                        HeightSpacer(12.dp)
+                        InfoRow("성별", questionnaire.gender.toKoreanGender())
+                        HeightSpacer(12.dp)
+                        InfoRow("전화번호", questionnaire.phoneNumber.toString())
+                        HeightSpacer(12.dp)
+                        InfoRow("주소", questionnaire.address)
+                        HeightSpacer(24.dp)
+                        DottedDivider()
+                        HeightSpacer(24.dp)
+                        QuestionnaireToggleSection(
+                            title = "복약 정보",
+                            items = questionnaire.medicationInfo,
+                            getName = { it.medicationName },
+                            getSubmitted = { it.submitted }
+                        )
+                        HeightSpacer(12.dp)
+                        DottedDivider()
+                        HeightSpacer(24.dp)
+                        QuestionnaireToggleSection(
+                            title = "알러지 정보",
+                            items = questionnaire.allergyInfo,
+                            getName = { it.allergyName },
+                            getSubmitted = { it.submitted }
+                        )
+                        HeightSpacer(12.dp)
+                        DottedDivider()
+                        HeightSpacer(24.dp)
+                        QuestionnaireToggleSection(
+                            title = "기저질환",
+                            items = questionnaire.chronicDiseaseInfo,
+                            getName = { it.chronicDiseaseName },
+                            getSubmitted = { it.submitted }
+                        )
+                        HeightSpacer(12.dp)
+                        DottedDivider()
+                        HeightSpacer(24.dp)
+                        QuestionnaireToggleSection(
+                            title = "수술 이력",
+                            items = questionnaire.surgeryHistoryInfo,
+                            getName = { it.surgeryHistoryName },
+                            getSubmitted = { it.submitted }
+                        )
+                    }
+                    Canvas(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(10.dp)
+                    ) {
+                        val triangleHeight = size.height
+                        val triangleWidth = triangleHeight / 0.866f
+
+                        val triangleCount = (size.width / triangleWidth).toInt()
+                        val adjustedTriangleWidth = size.width / triangleCount
+
+                        val path = Path().apply {
+                            moveTo(0f, 0f)
+                            var x = 0f
+                            for (i in 0 until triangleCount) {
+                                lineTo(x + adjustedTriangleWidth / 2f, triangleHeight)
+                                lineTo(x + adjustedTriangleWidth, 0f)
+                                x += adjustedTriangleWidth
+                            }
+                            lineTo(size.width, 0f)
+                            close()
+                        }
+
+                        val paint = android.graphics.Paint().apply {
+                            style = android.graphics.Paint.Style.FILL
+                            color = android.graphics.Color.WHITE
+                            isAntiAlias = true
+                            setShadowLayer(3f, 0f, 4f, android.graphics.Color.argb(10, 0, 0, 0))
+                        }
+
+                        this.drawContext.canvas.nativeCanvas.apply {
+                            save()
+                            drawPath(path.asAndroidPath(), paint)
+                            restore()
+                        }
+                    }
+                }
+            }
+        }
+        if (permission == true) {
+            if (true) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
+                }
+            } else {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("공사 중")
+                }
+            }
+        } else {
+
         }
     }
 }

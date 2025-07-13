@@ -1,6 +1,6 @@
 package com.pilltip.pilltip.model.search
 
-import com.google.gson.annotations.SerializedName
+import retrofit2.http.GET
 
 /**
  * 약품 자동검색 API
@@ -74,7 +74,8 @@ data class DetailDrugData(
     val usage: EffectDetail,
     val caution: EffectDetail,
     val durTags: List<DurTag>,
-    val count: Int
+    val count: Int,
+    val isTaking: Boolean
 )
 
 data class StorageDetail(
@@ -181,42 +182,70 @@ data class TakingPillDetailResponse(
 )
 
 /**
- * 문진표 생성
+ * Pilltip AI 호출
+ */
+data class GptAdviceResponse(
+    val status: String,
+    val message: String?,
+    val data: String
+)
+
+/**
+ * 민감정보 입력
  */
 
-data class QuestionnaireSubmitRequest(
+data class SensitiveSubmitRequest(
     val realName: String,
     val address: String,
     val phoneNumber: String,
-    val questionnaireName: String,
-    val medicationInfo: List<MedicationEntry>,
-    val allergyInfo: List<AllergyEntry>,
-    val chronicDiseaseInfo: List<ChronicDiseaseEntry>,
-    val surgeryHistoryInfo: List<SurgeryHistoryEntry>,
-    val notes: String? = null
+    val allergyInfo: List<AllergyInfo>,
+    val chronicDiseaseInfo: List<ChronicDiseaseInfo>,
+    val surgeryHistoryInfo: List<SurgeryHistoryInfo>,
 )
 
-data class MedicationEntry(
-    val medicationId: Long,
+data class MedicationInfo(
     val medicationName: String,
-    val submitted: Boolean
+    val submitted: Boolean,
+    val medicationId: Long,
 )
 
-data class AllergyEntry(
+data class AllergyInfo(
     val allergyName: String,
     val submitted: Boolean
 )
 
-data class ChronicDiseaseEntry(
+data class ChronicDiseaseInfo(
     val chronicDiseaseName: String,
     val submitted: Boolean
 )
 
-data class SurgeryHistoryEntry(
+data class SurgeryHistoryInfo(
     val surgeryHistoryName: String,
     val submitted: Boolean
 )
 
+data class SensitiveResponse(
+    val status: String,
+    val message: String,
+    val data: SensitiveResponseData
+)
+
+data class SensitiveInfo(
+    val allergyInfo: List<String>,
+    val chronicDiseaseInfo: List<String>,
+    val surgeryHistoryInfo: List<String>
+)
+
+data class SensitiveResponseData(
+    val realName: String,
+    val address: String,
+    val phoneNumber: String,
+    val sensitiveInfo: SensitiveInfo
+)
+
+/**
+ * 문진표 조회
+ */
 data class QuestionnaireResponse(
     val status: String,
     val message: String,
@@ -228,54 +257,21 @@ data class QuestionnaireData(
     val questionnaireName: String,
     val realName: String,
     val address: String,
+    val phoneNumber: String?,
+    val gender: String,
+    val birthDate: String,
+    val height: String,
+    val weight: String,
+    val pregnant: String,
     val issueDate: String,
     val lastModifiedDate: String,
     val notes: String,
-    val medicationInfo: List<MedicationEntry>,
-    val allergyInfo: List<AllergyEntry>,
-    val chronicDiseaseInfo: List<ChronicDiseaseEntry>,
-    val surgeryHistoryInfo: List<SurgeryHistoryEntry>
+    val medicationInfo: List<MedicationInfo>,
+    val allergyInfo: List<AllergyInfo>,
+    val chronicDiseaseInfo: List<ChronicDiseaseInfo>,
+    val surgeryHistoryInfo: List<SurgeryHistoryInfo>
 )
 
-/**
- * 문진표 리스트 조회
- */
-data class QuestionnaireListResponse(
-    val status: String,
-    val message: String,
-    val data: List<QuestionnaireSummary>
-)
-
-data class QuestionnaireSummary(
-    val questionnaireId: Long,
-    val questionnaireName: String,
-    val issueDate: String,
-    val lastModifiedDate: String
-)
-
-/**
- * 문진표 상세 정보
- */
-
-data class QuestionnaireDetailResponse(
-    val status: String,
-    val message: String,
-    val data: QuestionnaireDetail
-)
-
-data class QuestionnaireDetail(
-    val questionnaireId: Long,
-    val questionnaireName: String,
-    val realName: String?,
-    val address: String?,
-    val issueDate: String,
-    val lastModifiedDate: String,
-    val notes: String?,
-    val medicationInfo: List<MedicationEntry>,
-    val allergyInfo: List<AllergyEntry>,
-    val chronicDiseaseInfo: List<ChronicDiseaseEntry>,
-    val surgeryHistoryInfo: List<SurgeryHistoryEntry>
-)
 
 /**
  * DUR 기능
