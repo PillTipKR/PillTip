@@ -109,4 +109,20 @@ class AuthRepository @Inject constructor(
             else -> phone // 예외 처리: 그냥 반환
         }
     }
+
+    suspend fun checkDuplicate(value: String, type: String): Pair<Boolean, Boolean?> {
+        return try {
+            val response = authApi.checkDuplicate(DuplicateCheckRequest(value, type))
+            if (response.isSuccessful) {
+                Pair(true, response.body()?.data)
+            } else {
+                val errorBody = response.errorBody()?.string()
+                Log.e("CheckDuplicate", "응답 실패 - 코드: ${response.code()}, 바디: $errorBody")
+                Pair(false, null)
+            }
+        } catch (e: Exception) {
+            Log.e("CheckDuplicate", "네트워크 오류 발생", e)
+            Pair(false, null)
+        }
+    }
 }

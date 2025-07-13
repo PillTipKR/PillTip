@@ -14,9 +14,9 @@ import androidx.navigation.navArgument
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.pilltip.pilltip.composable.MainComposable.BottomTab
 import com.pilltip.pilltip.model.search.LogViewModel
-import com.pilltip.pilltip.model.search.QuestionnaireViewModel
 import com.pilltip.pilltip.model.search.ReviewViewModel
 import com.pilltip.pilltip.model.search.SearchHiltViewModel
+import com.pilltip.pilltip.model.search.SensitiveViewModel
 import com.pilltip.pilltip.model.signUp.SignUpViewModel
 import com.pilltip.pilltip.view.auth.FindMyInfoPage
 import com.pilltip.pilltip.view.auth.IdPage
@@ -30,10 +30,8 @@ import com.pilltip.pilltip.view.auth.SelectPage
 import com.pilltip.pilltip.view.auth.SplashPage
 import com.pilltip.pilltip.view.main.DURLoadingPage
 import com.pilltip.pilltip.view.main.DURPage
-import com.pilltip.pilltip.view.main.DURResultPage
 import com.pilltip.pilltip.view.main.DURSearchPage
 import com.pilltip.pilltip.view.main.EssentialInfoPage
-import com.pilltip.pilltip.view.main.MyDataPage
 import com.pilltip.pilltip.view.main.MyDrugInfoPage
 import com.pilltip.pilltip.view.main.MyDrugManagementPage
 import com.pilltip.pilltip.view.main.MyHealthDetailPage
@@ -42,10 +40,11 @@ import com.pilltip.pilltip.view.main.NotificationPage
 import com.pilltip.pilltip.view.main.PillMainPage
 import com.pilltip.pilltip.view.questionnaire.AreYouPage
 import com.pilltip.pilltip.view.questionnaire.EssentialPage
-import com.pilltip.pilltip.view.questionnaire.QuestionnaireCheckPage
+import com.pilltip.pilltip.view.questionnaire.NameAddressPage
 import com.pilltip.pilltip.view.questionnaire.QuestionnairePage
-import com.pilltip.pilltip.view.questionnaire.QuestionnaireSearchPage
+import com.pilltip.pilltip.view.questionnaire.SensitiveFinalPage
 import com.pilltip.pilltip.view.questionnaire.WritePage
+import com.pilltip.pilltip.view.search.AudioSearchPage
 import com.pilltip.pilltip.view.search.DetailPage
 import com.pilltip.pilltip.view.search.DosageAlarmPage
 import com.pilltip.pilltip.view.search.DosagePage
@@ -58,7 +57,7 @@ fun NavGraph(
     signUpViewModel: SignUpViewModel,
     searchHiltViewModel: SearchHiltViewModel,
     logViewModel: LogViewModel = viewModel(),
-    questionnaireViewModel: QuestionnaireViewModel,
+    sensitiveViewModel: SensitiveViewModel,
     reviewViewModel: ReviewViewModel
 ) {
     val navController = rememberNavController()
@@ -110,7 +109,7 @@ fun NavGraph(
                 )
                 systemUiController.isNavigationBarVisible = true
             }
-            PillMainPage(navController, searchHiltViewModel, questionnaireViewModel)
+            PillMainPage(navController, searchHiltViewModel, sensitiveViewModel)
         }
 
         composable("PillMainPage/{tab}") { backStackEntry ->
@@ -119,8 +118,8 @@ fun NavGraph(
 
             PillMainPage(
                 navController = navController,
-                searchHiltViewModel = hiltViewModel(),
-                questionnaireViewModel = hiltViewModel(),
+                searchHiltViewModel = searchHiltViewModel,
+                sensitiveViewModel = sensitiveViewModel,
                 initialTab = selected
             )
         }
@@ -132,6 +131,9 @@ fun NavGraph(
         /* Search */
         composable("SearchPage") {
             SearchPage(navController, logViewModel, searchHiltViewModel)
+        }
+        composable("AudioSearchPage") {
+            AudioSearchPage(navController, searchHiltViewModel, logViewModel)
         }
         composable("SearchResultsPage/{query}") { backStackEntry ->
             val query = backStackEntry.arguments?.getString("query") ?: ""
@@ -175,61 +177,50 @@ fun NavGraph(
             QuestionnairePage(navController)
         }
         composable("EssentialPage") {
-            EssentialPage(navController, questionnaireViewModel)
+            EssentialPage(navController, sensitiveViewModel)
+        }
+        composable("NameAddressPage"){
+            NameAddressPage(navController, sensitiveViewModel)
         }
         composable("AreYouPage/{query}") { backStackEntry ->
             val query = backStackEntry.arguments?.getString("query") ?: ""
 
             val (mode, title) = when (query) {
-                "약" -> "drug" to "복용 중인 약이\n있으신가요?"
                 "알러지" -> "allergy" to "알러지가\n있으신가요?"
                 "기저질환" -> "etc" to "혹시 기저질환이\n있으신가요?"
                 else -> "surgery" to "최근 받은 수술이\n있으신가요?"
             }
 
             val (onYesClicked, onNoClicked) = when (query) {
-                "약" -> ({
-                    navController.navigate("QuestionnaireSearchPage")
-                }) to {
-                    navController.navigate("AreYouPage/알러지")
-                }
-
                 "알러지" -> ({
                     navController.navigate("WritePage/$mode")
                 }) to {
                     navController.navigate("AreYouPage/기저질환")
+                    sensitiveViewModel.resetAllergyInfo()
                 }
 
                 "기저질환" -> ({
                     navController.navigate("WritePage/$mode")
                 }) to {
                     navController.navigate("AreYouPage/수술")
+                    sensitiveViewModel.resetChronicDiseaseInfo()
                 }
 
                 else -> ({
                     navController.navigate("WritePage/$mode")
                 }) to {
-                    navController.navigate("FinalPage")
+                    navController.navigate("SensitiveFinalPage")
+                    sensitiveViewModel.resetSurgeryHistoryInfo()
                 }
             }
 
             AreYouPage(
                 navController = navController,
-                query = query,
                 title = title,
                 onYesClicked = onYesClicked,
                 onNoClicked = onNoClicked
             )
         }
-        composable("QuestionnaireSearchPage") {
-            QuestionnaireSearchPage(
-                navController,
-                logViewModel,
-                searchHiltViewModel,
-                questionnaireViewModel
-            )
-        }
-
         composable("WritePage/{mode}") { backStackEntry ->
             val mode = backStackEntry.arguments?.getString("mode") ?: ""
 
@@ -243,15 +234,14 @@ fun NavGraph(
                 "etc" -> Triple(
                     "기저질환을 입력해주세요",
                     "당뇨, 고혈압 등 의료진께 알려야 할 질환을 적어주세요",
-                    "고혈압,당뇨,"
+                    "고혈압"
                 )
 
                 else -> Triple(
                     "최근 받은 수술명을 입력해주세요",
                     "과거 수술 이력도 포함해 입력해주시면 좋아요",
-                    "예: 충수절제술, 백내장 수술"
+                    "예: 백내장 수술(00.00.00)"
                 )
-
             }
 
             WritePage(
@@ -260,22 +250,11 @@ fun NavGraph(
                 description = description,
                 placeholder = placeholder,
                 mode = mode,
-                questionnaireViewModel
+                sensitiveViewModel
             )
         }
-
-        composable("QuestionnaireCheckPage") {
-            QuestionnaireCheckPage(navController, questionnaireViewModel)
-        }
-
-        composable("questionnaire_check/{id}") { backStackEntry ->
-            val id = backStackEntry.arguments?.getString("id")?.toLongOrNull()
-            QuestionnaireCheckPage(
-                navController = navController,
-                viewModel = hiltViewModel(),
-                fromDetail = true,
-                questionnaireId = id
-            )
+        composable("SensitiveFinalPage") {
+            SensitiveFinalPage(navController, searchHiltViewModel, sensitiveViewModel)
         }
 
         /* mypage */
@@ -307,9 +286,6 @@ fun NavGraph(
                 navController = navController,
                 searchHiltViewModel = searchHiltViewModel
             )
-        }
-        composable("MyDataPage") {
-            MyDataPage(navController, searchHiltViewModel)
         }
         composable("MyDrugManagementPage/{id}") { backStackEntry ->
             val id = backStackEntry.arguments?.getString("id") ?: ""

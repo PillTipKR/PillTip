@@ -196,6 +196,47 @@ fun DURPage(
                 )
             }
         }
+        Spacer(modifier = Modifier.weight(1f))
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.fillMaxWidth().padding(bottom = 100.dp)
+        ){
+            Row(verticalAlignment = Alignment.CenterVertically){
+                Image(
+                    imageVector = ImageVector.vectorResource(R.drawable.ic_details_red_expert_pills),
+                    contentDescription = "경고 문구"
+                )
+                Text(
+                    text = "주의사항",
+                    style = TextStyle(
+                        fontSize = 12.sp,
+                        fontFamily = pretendard,
+                        fontWeight = FontWeight(600),
+                        color = Color(0xFFEF524F),
+                    )
+                )
+            }
+            HeightSpacer(10.dp)
+            Text(
+                text = "본 서비스는 식품의약품안전처 의약품안전사용서비스(DUR)를 기반으로 작동합니다.",
+                style = TextStyle(
+                    fontSize = 10.sp,
+                    fontFamily = pretendard,
+                    fontWeight = FontWeight(600),
+                    color = gray400,
+                )
+            )
+            HeightSpacer(10.dp)
+            Text(
+                text = " 해당 약품에 대해 정부 제공 데이터가 없을 시, 부정확 할 수 있으니 반드시 의사와 상의하세요",
+                style = TextStyle(
+                    fontSize = 10.sp,
+                    fontFamily = pretendard,
+                    fontWeight = FontWeight(600),
+                    color = gray400,
+                )
+            )
+        }
     }
 }
 
@@ -248,7 +289,8 @@ fun DURSearchPage(
                 onNavigateToResult = { query ->
                     searchViewModel.fetchDrugSearch(query)
                     Log.d("Query: ", query)
-                }
+                },
+                from = "dur"
             )
             HeightSpacer(28.dp)
             if (inputText.isEmpty()) {
@@ -449,7 +491,6 @@ fun DURLoadingPage(
         if (loading) {
             Column(
                 modifier = WhiteScreenModifier,
-                verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 val transition = rememberInfiniteTransition()
@@ -464,6 +505,7 @@ fun DURLoadingPage(
                         repeatMode = RepeatMode.Restart
                     )
                 )
+                Spacer(modifier = Modifier.weight(1f))
                 Canvas(modifier = Modifier.size(size = 60.dp)) {
                     val startAngle = 5f
                     val sweepAngle = 350f
@@ -508,6 +550,47 @@ fun DURLoadingPage(
                         color = gray400,
                     )
                 )
+                Spacer(modifier = Modifier.weight(1f))
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 100.dp)
+                ){
+                    Row(verticalAlignment = Alignment.CenterVertically){
+                        Image(
+                            imageVector = ImageVector.vectorResource(R.drawable.ic_details_red_expert_pills),
+                            contentDescription = "경고 문구"
+                        )
+                        Text(
+                            text = "주의사항",
+                            style = TextStyle(
+                                fontSize = 12.sp,
+                                fontFamily = pretendard,
+                                fontWeight = FontWeight(600),
+                                color = Color(0xFFEF524F),
+                            )
+                        )
+                    }
+                    HeightSpacer(10.dp)
+                    Text(
+                        text = "본 서비스는 식품의약품안전처 의약품안전사용서비스(DUR)를 기반으로 작동합니다.",
+                        style = TextStyle(
+                            fontSize = 10.sp,
+                            fontFamily = pretendard,
+                            fontWeight = FontWeight(600),
+                            color = gray400,
+                        )
+                    )
+                    HeightSpacer(10.dp)
+                    Text(
+                        text = " 해당 약품에 대해 정부 제공 데이터가 없을 시, 부정확 할 수 있으니 반드시 의사와 상의하세요",
+                        style = TextStyle(
+                            fontSize = 10.sp,
+                            fontFamily = pretendard,
+                            fontWeight = FontWeight(600),
+                            color = gray400,
+                        )
+                    )
+                }
             }
         } else {
             DURResultPage(
@@ -528,6 +611,14 @@ fun DURResultPage(
     val baseColor = if (durData.durTrueInter) Color(0xFFFFE0E0) else Color(0xFFD0E6FD)
     val endColor = Color.White
     val steps = 12
+    val systemUiController = rememberSystemUiController()
+    SideEffect {
+        systemUiController.setStatusBarColor(
+            color = Color.Transparent,
+            darkIcons = true
+        )
+        systemUiController.isNavigationBarVisible = true
+    }
 
     val gradientColors = remember {
         List(steps) { i ->
@@ -589,13 +680,13 @@ fun DURResultPage(
                     fontSize = 12.sp,
                     fontFamily = pretendard,
                     fontWeight = FontWeight(600),
-                    color = primaryColor,
+                    color = if (durData.durTrueInter) Color(0xFFEB2C28) else primaryColor,
                 )
             )
         }
         HeightSpacer(12.dp)
         Text(
-            text = if (durData.durTrueInter) "의사와 상담이 필요해요!" else "복약하셔도 무방해요!",
+            text = if (durData.durTrueInter) "의사와 상담이 필요해요!" else "복약 시 주의할 점이 없어요!",
             style = TextStyle(
                 fontSize = 26.sp,
                 lineHeight = 33.8.sp,
@@ -639,7 +730,7 @@ fun DURResultPage(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 DURText(
-                    title = "${durData.drugA} 성분 검사지",
+                    title = durData.drugA,
                     isOk = durData.durTrueA,
                     description = durData.durA
                 )
@@ -647,7 +738,7 @@ fun DURResultPage(
                 DottedDivider()
                 HeightSpacer(30.dp)
                 DURText(
-                    title = "${durData.drugB} 성분 검사지",
+                    title = durData.drugB,
                     isOk = durData.durTrueB,
                     description = durData.durB
                 )
@@ -671,7 +762,7 @@ fun DURResultPage(
                 )
                 HeightSpacer(4.dp)
                 Text(
-                    text = "PillTip의 AI 인프라를 기반으로 제공됩니다",
+                    text = "Pilltip의 AI 인프라를 기반으로 제공됩니다",
                     style = TextStyle(
                         fontSize = 10.sp,
                         fontFamily = pretendard,

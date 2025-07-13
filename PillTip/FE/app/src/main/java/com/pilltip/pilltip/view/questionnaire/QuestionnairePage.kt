@@ -1,63 +1,41 @@
 package com.pilltip.pilltip.view.questionnaire
 
-import android.util.Log
+import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.navigationBars
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Switch
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
-import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
@@ -65,50 +43,34 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import androidx.navigation.NavController
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
-import com.kakao.sdk.user.model.User
 import com.pilltip.pilltip.R
 import com.pilltip.pilltip.composable.AuthComposable.RoundTextField
 import com.pilltip.pilltip.composable.BackButton
 import com.pilltip.pilltip.composable.HeightSpacer
-import com.pilltip.pilltip.composable.IosButton
 import com.pilltip.pilltip.composable.NextButton
-import com.pilltip.pilltip.composable.QuestionnaireComposable.DottedDivider
-import com.pilltip.pilltip.composable.QuestionnaireComposable.EditableProfileField
-import com.pilltip.pilltip.composable.QuestionnaireComposable.FixedProfiledField
 import com.pilltip.pilltip.composable.QuestionnaireComposable.InformationBox
-import com.pilltip.pilltip.composable.SearchComposable.AutoCompleteList
-import com.pilltip.pilltip.composable.SearchComposable.PillSearchField
 import com.pilltip.pilltip.composable.WhiteScreenModifier
 import com.pilltip.pilltip.composable.WidthSpacer
 import com.pilltip.pilltip.composable.buttonModifier
 import com.pilltip.pilltip.composable.noRippleClickable
 import com.pilltip.pilltip.model.UserInfoManager
-import com.pilltip.pilltip.model.search.AllergyEntry
-import com.pilltip.pilltip.model.search.ChronicDiseaseEntry
-import com.pilltip.pilltip.model.search.LogViewModel
-import com.pilltip.pilltip.model.search.MedicationEntry
-import com.pilltip.pilltip.model.search.QuestionnaireDetail
-import com.pilltip.pilltip.model.search.QuestionnaireViewModel
+import com.pilltip.pilltip.model.search.AllergyInfo
+import com.pilltip.pilltip.model.search.ChronicDiseaseInfo
 import com.pilltip.pilltip.model.search.SearchHiltViewModel
-import com.pilltip.pilltip.model.search.SurgeryHistoryEntry
-import com.pilltip.pilltip.ui.theme.gray200
+import com.pilltip.pilltip.model.search.SensitiveViewModel
+import com.pilltip.pilltip.model.search.SurgeryHistoryInfo
+import com.pilltip.pilltip.ui.theme.gray100
 import com.pilltip.pilltip.ui.theme.gray400
 import com.pilltip.pilltip.ui.theme.gray500
-import com.pilltip.pilltip.ui.theme.gray600
 import com.pilltip.pilltip.ui.theme.gray700
 import com.pilltip.pilltip.ui.theme.gray800
 import com.pilltip.pilltip.ui.theme.pretendard
@@ -116,11 +78,7 @@ import com.pilltip.pilltip.ui.theme.primaryColor
 import com.pilltip.pilltip.ui.theme.primaryColor050
 import com.pilltip.pilltip.view.auth.logic.EssentialTerms
 import com.pilltip.pilltip.view.auth.logic.OptionalTerms
-import com.pilltip.pilltip.view.questionnaire.Logic.toKoreanGender
-import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.launch
 
 @Composable
 fun QuestionnairePage(
@@ -143,18 +101,41 @@ fun QuestionnairePage(
                 horizontalPadding = 22.dp,
                 verticalPadding = 0.dp
             ) {
-                navController.navigate("DetailPage") {
-                    popUpTo("DetailPage") {
-                        inclusive = false
+                val backStackEntryExists = navController.backQueue.any {
+                    it.destination.route == "DetailPage"
+                }
 
+                if (backStackEntryExists) {
+                    navController.navigate("DetailPage") {
+                        popUpTo("DetailPage") {
+                            inclusive = false
+                        }
+                    }
+                } else {
+                    navController.navigate("PillMainPage") {
+                        popUpTo("PillMainPage") {
+                            inclusive = false
+                        }
                     }
                 }
             }
 
             BackHandler {
-                navController.navigate("DetailPage") {
-                    popUpTo("DetailPage") {
-                        inclusive = false
+                val backStackEntryExists = navController.backQueue.any {
+                    it.destination.route == "DetailPage"
+                }
+
+                if (backStackEntryExists) {
+                    navController.navigate("DetailPage") {
+                        popUpTo("DetailPage") {
+                            inclusive = false
+                        }
+                    }
+                } else {
+                    navController.navigate("PillMainPage") {
+                        popUpTo("PillMainPage") {
+                            inclusive = false
+                        }
                     }
                 }
             }
@@ -237,12 +218,20 @@ fun QuestionnairePage(
 @Composable
 fun EssentialPage(
     navController: NavController,
-    questionnaireViewModel: QuestionnaireViewModel
+    sensitiveViewModel: SensitiveViewModel
 ) {
     var isEssentialChecked by remember { mutableStateOf(false) }
     var isOptionalChecked by remember { mutableStateOf(false) }
     var isEssentialExpanded by remember { mutableStateOf(false) }
     var isOptionalExpanded by remember { mutableStateOf(false) }
+    val systemUiController = rememberSystemUiController()
+    SideEffect {
+        systemUiController.setStatusBarColor(
+            color = Color.White,
+            darkIcons = true
+        )
+        systemUiController.isNavigationBarVisible = true
+    }
 
     val essentialRotation by animateFloatAsState(
         targetValue = if (isEssentialExpanded) 90f else 0f,
@@ -255,6 +244,7 @@ fun EssentialPage(
         animationSpec = tween(durationMillis = 600),
         label = "optional_arrow_rotation"
     )
+
     Column(
         modifier = WhiteScreenModifier
             .statusBarsPadding()
@@ -264,33 +254,23 @@ fun EssentialPage(
             horizontalPadding = 0.dp,
             verticalPadding = 0.dp
         ) {
-            navController.navigate("DetailPage") {
-                popUpTo("DetailPage") {
-                    inclusive = false
-
-                }
-            }
+            navController.popBackStack()
         }
-
         BackHandler {
-            navController.navigate("DetailPage") {
-                popUpTo("DetailPage") {
-                    inclusive = false
-                }
-            }
+            navController.popBackStack()
         }
         HeightSpacer(62.dp)
         Image(
             imageVector = ImageVector.vectorResource(R.drawable.ic_details_blue_common_pills),
-            contentDescription = "문진표 방패 이미지",
+            contentDescription = "방패 이미지",
             modifier = Modifier
                 .size(32.dp)
                 .padding(1.dp)
         )
         HeightSpacer(12.dp)
         Text(
-            text = "추가 동의가 필요해요.",
-            fontSize = 26.sp,
+            text = "정보 보호를 위해 동의가 필요해요",
+            fontSize = 24.sp,
             lineHeight = 33.8.sp,
             fontFamily = pretendard,
             fontWeight = FontWeight(700),
@@ -298,7 +278,7 @@ fun EssentialPage(
         )
         HeightSpacer(12.dp)
         Text(
-            text = "모든 정보는 암호화되어 안전하게 보관돼요",
+            text = "모든 정보는 강력히 암호화되어 안전하게 보관돼요",
             fontSize = 14.sp,
             lineHeight = 19.6.sp,
             fontFamily = pretendard,
@@ -341,6 +321,7 @@ fun EssentialPage(
                 modifier = Modifier
                     .noRippleClickable {
                         isEssentialExpanded = !isEssentialExpanded
+                        isOptionalExpanded = false
                     }
                     .graphicsLayer(rotationZ = essentialRotation)
             )
@@ -381,6 +362,7 @@ fun EssentialPage(
                 modifier = Modifier
                     .noRippleClickable {
                         isOptionalExpanded = !isOptionalExpanded
+                        isEssentialExpanded = false
                     }
                     .graphicsLayer(rotationZ = optionalRotation)
             )
@@ -401,53 +383,241 @@ fun EssentialPage(
             text = "동의하기",
             onClick = {
                 if (isEssentialChecked && isOptionalChecked) {
-                    questionnaireViewModel.updateSensitivePermissions(
-                        sensitiveInfo = true,
-                        medicalInfo = true
-                    )
-                    navController.navigate("AreYouPage/약")
+                    sensitiveViewModel.sensitivePermission = true
+                    sensitiveViewModel.medicalPermission = true
+                    navController.navigate("NameAddressPage")
                 }
             }
         )
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun NameAddressPage(
+    navController: NavController,
+    sensitiveViewModel: SensitiveViewModel,
+) {
+    val context = LocalContext.current
+    var name by remember { mutableStateOf(sensitiveViewModel.realName) }
+    var address by remember { mutableStateOf(sensitiveViewModel.address) }
+    var isValid = name.isNotEmpty() && address.isNotEmpty()
+    val systemUiController = rememberSystemUiController()
+    val scope = rememberCoroutineScope()
+    val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    var isSheetVisible by remember { mutableStateOf(false) }
+    val detailExists = navController.backQueue.any {
+        it.destination.route == "DetailPage"
+    }
+    SideEffect {
+        systemUiController.setStatusBarColor(
+            color = Color.White,
+            darkIcons = true
+        )
+        systemUiController.isNavigationBarVisible = true
+    }
+    Column(
+        modifier = WhiteScreenModifier
+            .padding(horizontal = 22.dp)
+            .statusBarsPadding()
+    ) {
+        BackHandler {
+            isSheetVisible = true
+        }
+        BackButton(
+            title = "필수 정보 입력",
+            horizontalPadding = 0.dp,
+            verticalPadding = 0.dp
+        ) {
+            isSheetVisible = true
+        }
+        HeightSpacer(36.dp)
+        Text(
+            text = "실명",
+            style = TextStyle(
+                fontSize = 16.sp,
+                fontFamily = pretendard,
+                fontWeight = FontWeight(600),
+                color = gray800,
+            )
+        )
+        HeightSpacer(12.dp)
+        RoundTextField(
+            text = name,
+            textChange = { name = it },
+            placeholder = "실명을 입력해주세요",
+            isLogin = false
+        )
+        HeightSpacer(26.dp)
+        Text(
+            text = "주소",
+            style = TextStyle(
+                fontSize = 16.sp,
+                fontFamily = pretendard,
+                fontWeight = FontWeight(600),
+                color = gray800,
+            )
+        )
+        HeightSpacer(12.dp)
+        RoundTextField(
+            text = address,
+            textChange = { address = it },
+            placeholder = "주소를 입력해주세요",
+            isLogin = false
+        )
+
+        Spacer(modifier = Modifier.weight(1f))
+        NextButton(
+            mModifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 16.dp)
+                .padding(bottom = 46.dp)
+                .height(58.dp),
+            buttonColor = if (isValid) primaryColor else Color(0xFFCADCF5),
+            text = "다음"
+        ) {
+            if (isValid) {
+                sensitiveViewModel.realName = name
+                sensitiveViewModel.address = address
+                navController.navigate("AreYouPage/알러지")
+            }
+        }
+    }
+    if (isSheetVisible) {
+        LaunchedEffect(Unit) {
+            bottomSheetState.show()
+        }
+        ModalBottomSheet(
+            onDismissRequest = {
+                scope.launch {
+                    bottomSheetState.hide()
+                }.invokeOnCompletion {
+                    isSheetVisible = false
+                }
+            },
+            sheetState = bottomSheetState,
+            containerColor = Color.White,
+            dragHandle = {
+                Box(
+                    Modifier
+                        .padding(top = 8.dp, bottom = 11.dp)
+                        .width(48.dp)
+                        .height(5.dp)
+                        .background(Color(0xFFE2E4EC), RoundedCornerShape(12.dp))
+                )
+            }
+        ) {
+
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 22.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                HeightSpacer(12.dp)
+                Image(
+                    imageVector = ImageVector.vectorResource(R.drawable.ic_details_blue_common_pills),
+                    contentDescription = "경고",
+                    modifier = Modifier
+                        .padding(1.4.dp)
+                        .width(28.dp)
+                        .height(28.dp)
+                )
+                HeightSpacer(15.dp)
+                Text(
+                    text = "정말 중단하시겠어요?",
+                    style = TextStyle(
+                        fontSize = 18.sp,
+                        lineHeight = 25.2.sp,
+                        fontFamily = pretendard,
+                        fontWeight = FontWeight(700),
+                        color = Color(0xFF1A1A1A)
+                    )
+                )
+                HeightSpacer(8.dp)
+                Text(
+                    text = "진행 중인 데이터가 파기되고,\nAI 맞춤 안내를 받을 수 없어요",
+                    style = TextStyle(
+                        fontSize = 14.sp,
+                        lineHeight = 19.6.sp,
+                        fontFamily = pretendard,
+                        fontWeight = FontWeight(400),
+                        color = gray500,
+                        textAlign = TextAlign.Center
+                    )
+                )
+                HeightSpacer(12.dp)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    NextButton(
+                        mModifier = Modifier
+                            .weight(1f)
+                            .padding(vertical = 16.dp)
+                            .height(58.dp),
+                        text = "중단하기",
+                        buttonColor = gray100,
+                        textColor = gray700,
+                        onClick = {
+                            scope.launch {
+                                bottomSheetState.hide()
+                                sensitiveViewModel.resetAll()
+                                if(detailExists) navController.popBackStack("DetailPage", inclusive = false)
+                                else navController.popBackStack("PillMainPage", inclusive = false)
+                            }.invokeOnCompletion {
+                                isSheetVisible = false
+                            }
+                        }
+                    )
+                    WidthSpacer(12.dp)
+                    NextButton(
+                        mModifier = Modifier
+                            .weight(1f)
+                            .padding(vertical = 16.dp)
+                            .height(58.dp),
+                        text = "계속 하기",
+                        buttonColor = primaryColor,
+                        onClick = {
+                            scope.launch {
+                                bottomSheetState.hide()
+                            }.invokeOnCompletion {
+                                isSheetVisible = false
+                            }
+                        }
+                    )
+                }
+            }
+        }
+    }
+}
+
 @Composable
 fun AreYouPage(
     navController: NavController,
-    query: String,
     title: String,
     onYesClicked: () -> Unit,
     onNoClicked: () -> Unit
 ) {
+    val systemUiController = rememberSystemUiController()
+    SideEffect {
+        systemUiController.setStatusBarColor(
+            color = Color.White,
+            darkIcons = true
+        )
+        systemUiController.isNavigationBarVisible = true
+    }
     Column(
         modifier = WhiteScreenModifier
             .statusBarsPadding()
             .padding(horizontal = 22.dp)
     ) {
         BackButton(horizontalPadding = 0.dp, verticalPadding = 0.dp) {
-            val target = when (query) {
-                "알러지" -> "AreYouPage/약"
-                "기저질환" -> "AreYouPage/알러지"
-                "수술" -> "AreYouPage/기저질환"
-                else -> "QuestionnairePage"
-            }
-
-            navController.navigate(target) {
-                popUpTo("AreYouPage/$query") { inclusive = true }
-            }
+            navController.popBackStack()
         }
         BackHandler {
-            val target = when (query) {
-                "알러지" -> "AreYouPage/약"
-                "기저질환" -> "AreYouPage/알러지"
-                "수술" -> "AreYouPage/기저질환"
-                else -> "QuestionnairePage"
-            }
-
-            navController.navigate(target) {
-                popUpTo("AreYouPage/$query") { inclusive = true }
-            }
+            navController.popBackStack()
         }
         HeightSpacer(62.dp)
         Text(
@@ -532,265 +702,6 @@ data class SelectedDrug(
     val name: String
 )
 
-@OptIn(ExperimentalLayoutApi::class, FlowPreview::class, ExperimentalMaterial3Api::class)
-@Composable
-fun QuestionnaireSearchPage(
-    navController: NavController,
-    logViewModel: LogViewModel,
-    searchViewModel: SearchHiltViewModel,
-    questionnaireViewModel: QuestionnaireViewModel
-) {
-    var inputText by remember { mutableStateOf("") }
-    val autoCompleted by searchViewModel.autoCompleted.collectAsState()
-    val isLoading by searchViewModel.isAutoCompleteLoading.collectAsState()
-
-    LaunchedEffect(Unit) {
-        questionnaireViewModel.resetAll()
-    }
-    val selectedDrugs = remember { mutableStateListOf<SelectedDrug>() }
-
-    LaunchedEffect(Unit) {
-        snapshotFlow { inputText }
-            .debounce(700)
-            .distinctUntilChanged()
-            .filter { it.isNotEmpty() }
-            .collect { debouncedText ->
-                if (debouncedText.isNotBlank()) {
-                    searchViewModel.fetchAutoComplete(debouncedText, reset = true)
-                }
-            }
-    }
-
-    val systemUiController = rememberSystemUiController()
-    SideEffect {
-        systemUiController.isNavigationBarVisible = true
-    }
-    val showBottomSheet = selectedDrugs.isNotEmpty()
-    val keyboardController = LocalSoftwareKeyboardController.current
-
-    Box(modifier = Modifier.fillMaxSize()) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color(0xFFFDFDFD))
-                .padding(horizontal = 22.dp, vertical = 18.dp)
-                .statusBarsPadding()
-                .navigationBarsPadding()
-        ) {
-            PillSearchField(
-                initialQuery = "",
-                navController = navController,
-                nowTyping = { inputText = it },
-                searching = { inputText = it },
-                onNavigateToResult = { query ->
-                    logViewModel.addSearchQuery(inputText)
-                    searchViewModel.fetchDrugSearch(query)
-                    Log.d("Query: ", query)
-                }
-            )
-            HeightSpacer(28.dp)
-            if (inputText.isEmpty()) {
-                Text(
-                    text = "약품을 검색해보세요!",
-                    style = TextStyle(
-                        fontSize = 14.sp,
-                        fontFamily = pretendard,
-                        fontWeight = FontWeight(600),
-                        color = gray700,
-                    )
-                )
-            } else {
-                Box(modifier = Modifier.fillMaxSize()) {
-                    AutoCompleteList(
-                        query = inputText,
-                        searched = autoCompleted,
-                        onClick = { },
-                        onLoadMore = { searchViewModel.fetchAutoComplete(inputText) },
-                        onAddClick = { selected ->
-                            if (selectedDrugs.none { it.id == selected.id }) {
-                                keyboardController?.hide()
-                                selectedDrugs.add(
-                                    SelectedDrug(
-                                        id = selected.id,
-                                        name = selected.value
-                                    )
-                                )
-                            }
-                        }
-                    )
-
-                    if (isLoading) {
-                        HeightSpacer(40.dp)
-                        CircularProgressIndicator(
-                            modifier = Modifier
-                                .align(Alignment.TopCenter)
-                                .size(32.dp),
-                            color = primaryColor,
-                            strokeWidth = 3.dp
-                        )
-                    }
-
-                    if (!isLoading && autoCompleted.isEmpty()) {
-                        HeightSpacer(40.dp)
-                        Text(
-                            text = "검색 결과가 없어요",
-                            modifier = Modifier
-                                .align(Alignment.TopCenter)
-                                .padding(top = 20.dp),
-                            style = TextStyle(
-                                fontSize = 14.sp,
-                                fontFamily = pretendard,
-                                fontWeight = FontWeight.Medium,
-                                color = gray500
-                            )
-                        )
-                    }
-                }
-            }
-        }
-
-        AnimatedVisibility(
-            visible = showBottomSheet,
-            enter = slideInVertically(initialOffsetY = { it }),
-            exit = slideOutVertically(targetOffsetY = { it }),
-            modifier = Modifier.align(Alignment.BottomCenter)
-        ) {
-            Surface(
-                tonalElevation = 6.dp,
-                shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
-                color = Color.White,
-                shadowElevation = 10.dp,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(max = 400.dp)
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 22.dp, vertical = 16.dp)
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .align(Alignment.CenterHorizontally)
-                            .width(36.dp)
-                            .height(4.dp)
-                            .background(Color(0xFFD9D9D9), RoundedCornerShape(2.dp))
-                    )
-                    HeightSpacer(8.dp)
-                    Text(
-                        text = "선택 의약품",
-                        fontSize = 14.sp,
-                        fontFamily = pretendard,
-                        fontWeight = FontWeight(600),
-                        color = gray800
-                    )
-                    HeightSpacer(14.dp)
-                    Box(
-                        modifier = Modifier
-                            .heightIn(max = 150.dp)
-                            .verticalScroll(rememberScrollState())
-                    ) {
-                        FlowRow(
-                            horizontalArrangement = Arrangement.spacedBy(2.dp),
-                            verticalArrangement = Arrangement.spacedBy(4.dp)
-                        ) {
-                            selectedDrugs.forEach { drug ->
-                                Row(
-                                    modifier = Modifier
-                                        .border(
-                                            width = 1.dp,
-                                            color = gray200,
-                                            shape = RoundedCornerShape(size = 100.dp)
-                                        )
-                                        .height(30.dp)
-                                        .background(
-                                            color = Color.White,
-                                            shape = RoundedCornerShape(size = 100.dp)
-                                        )
-                                        .padding(
-                                            start = 12.dp,
-                                            top = 8.dp,
-                                            end = 12.dp,
-                                            bottom = 8.dp
-                                        ),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text(
-                                        text = drug.name,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis,
-                                        style = TextStyle(
-                                            fontSize = 12.sp,
-                                            fontFamily = pretendard,
-                                            fontWeight = FontWeight(500),
-                                            color = gray700,
-                                            textAlign = TextAlign.Center,
-                                        ),
-                                        modifier = Modifier.widthIn(max = 130.dp)
-                                    )
-                                    WidthSpacer(4.dp)
-                                    Image(
-                                        imageVector = ImageVector.vectorResource(R.drawable.btn_tag_erase),
-                                        contentDescription = "삭제",
-                                        modifier = Modifier.noRippleClickable {
-                                            selectedDrugs.remove(
-                                                drug
-                                            )
-                                        }
-                                    )
-                                }
-                            }
-                        }
-                    }
-                    NextButton(
-                        mModifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 16.dp)
-                            .height(58.dp),
-                        text = "등록하기",
-                        buttonColor = if (selectedDrugs.isEmpty()) Color(0xFF348ADF) else primaryColor
-                    ) {
-                        val medicationList = selectedDrugs.map {
-                            MedicationEntry(
-                                medicationId = it.id,
-                                medicationName = it.name,
-                                submitted = true
-                            )
-                        }
-                        questionnaireViewModel.medicationInfo = medicationList
-                        navController.navigate("AreYouPage/알러지")
-                    }
-
-                    HeightSpacer(8.dp)
-                    Text(
-                        text = "나중에 하기",
-                        fontSize = 12.sp,
-                        fontFamily = pretendard,
-                        fontWeight = FontWeight(600),
-                        color = gray400,
-                        textAlign = TextAlign.Center,
-                        textDecoration = TextDecoration.Underline,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .noRippleClickable {
-                                selectedDrugs.clear()
-                            }
-                    )
-                    Spacer(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(
-                                WindowInsets.navigationBars.asPaddingValues()
-                                    .calculateBottomPadding()
-                            )
-                            .background(Color.White)
-                    )
-                }
-            }
-        }
-    }
-}
-
 @Composable
 fun WritePage(
     navController: NavController,
@@ -798,10 +709,23 @@ fun WritePage(
     description: String,
     placeholder: String,
     mode: String,
-    viewModel: QuestionnaireViewModel
+    viewModel: SensitiveViewModel
 ) {
-    var textList by remember { mutableStateOf(mutableListOf("")) }
+    val viewModelList = when (mode) {
+        "allergy" -> viewModel.allergyInfo.map { it.allergyName }
+        "etc" -> viewModel.chronicDiseaseInfo.map { it.chronicDiseaseName}
+        else -> viewModel.surgeryHistoryInfo.map { it.surgeryHistoryName}
+    }
+    var textList by remember { mutableStateOf(viewModelList.toMutableList()) }
     val allFilled = textList.all { it.trim().isNotEmpty() }
+    val systemUiController = rememberSystemUiController()
+    SideEffect {
+        systemUiController.setStatusBarColor(
+            color = Color.White,
+            darkIcons = true
+        )
+        systemUiController.isNavigationBarVisible = true
+    }
 
     Box(
         modifier = WhiteScreenModifier
@@ -815,26 +739,10 @@ fun WritePage(
                 .padding(bottom = 80.dp)
         ) {
             BackButton(horizontalPadding = 0.dp, verticalPadding = 0.dp) {
-                val targetRoute = when (mode) {
-                    "allergy" -> "AreYouPage/약"
-                    "etc" -> "AreYouPage/알러지"
-                    else -> "AreYouPage/기저질환"
-                }
-
-                navController.navigate(targetRoute) {
-                    popUpTo("WritePage/$mode") { inclusive = true }
-                }
+                navController.popBackStack()
             }
             BackHandler {
-                val targetRoute = when (mode) {
-                    "allergy" -> "AreYouPage/약"
-                    "etc" -> "AreYouPage/알러지"
-                    else -> "AreYouPage/기저질환"
-                }
-
-                navController.navigate(targetRoute) {
-                    popUpTo("WritePage/$mode") { inclusive = true }
-                }
+                navController.popBackStack()
             }
 
             HeightSpacer(62.dp)
@@ -947,20 +855,20 @@ fun WritePage(
                     when (mode) {
                         "allergy" -> {
                             viewModel.allergyInfo =
-                                processedList.map { AllergyEntry(it, submitted = true) }
+                                processedList.map { AllergyInfo(it, submitted = true) }
                             navController.navigate("AreYouPage/기저질환")
                         }
 
                         "etc" -> {
                             viewModel.chronicDiseaseInfo =
-                                processedList.map { ChronicDiseaseEntry(it, submitted = true) }
+                                processedList.map { ChronicDiseaseInfo(it, submitted = true) }
                             navController.navigate("AreYouPage/수술")
                         }
 
                         else -> {
                             viewModel.surgeryHistoryInfo =
-                                processedList.map { SurgeryHistoryEntry(it, submitted = true) }
-                            navController.navigate("QuestionnaireCheckPage")
+                                processedList.map { SurgeryHistoryInfo(it, submitted = true) }
+                            navController.navigate("SensitiveFinalPage")
                         }
                     }
                 }
@@ -970,287 +878,71 @@ fun WritePage(
 }
 
 @Composable
-fun QuestionnaireCheckPage(
+fun SensitiveFinalPage(
     navController: NavController,
-    viewModel: QuestionnaireViewModel,
-    fromDetail: Boolean = false,
-    questionnaireId: Long? = null
+    searchHiltViewModel: SearchHiltViewModel,
+    sensitiveViewModel: SensitiveViewModel
 ) {
-    LaunchedEffect(fromDetail, questionnaireId) {
-        if (fromDetail && questionnaireId != null) {
-            viewModel.fetchQuestionnaireDetail(questionnaireId)
-        }
-    }
-    val context = LocalContext.current
-    val focusManager = LocalFocusManager.current
-    val keyboardController = LocalSoftwareKeyboardController.current
-    val userInformation = UserInfoManager.getUserData(context)
-    var questionnaireName by remember { mutableStateOf("내 문진표") }
-    var realName by remember { mutableStateOf(userInformation?.realName ?: "") }
-    var isEditingRealName by remember { mutableStateOf(false) }
-    var gender by remember { mutableStateOf(userInformation?.gender ?: "") }
-    var phone by remember { mutableStateOf(userInformation?.phone ?: "") }
-    var isEditingPhone by remember { mutableStateOf(false) }
-
-    var address by remember { mutableStateOf(userInformation?.address ?: "") }
-    val detail by remember { derivedStateOf { viewModel.questionnaireDetail } }
-
-    LaunchedEffect(detail) {
-        if (fromDetail && detail != null) {
-            viewModel.loadQuestionnaireDetail(detail!!, realName, address, phone)
-        }
-    }
-
-    var isEditingAddress by remember { mutableStateOf(false) }
-    var expanded by remember { mutableStateOf(false) }
-    var option by remember { mutableStateOf("수정") }
-    var isEditMode by remember { mutableStateOf(false) }
-
-    val medicationList = viewModel.medicationInfo
-    val allergyList = viewModel.allergyInfo
-    val diseaseList = viewModel.chronicDiseaseInfo
-    val surgeryList = viewModel.surgeryHistoryInfo
-
     Column(
-        modifier = WhiteScreenModifier
-            .padding(horizontal = 22.dp)
-            .statusBarsPadding()
-            .verticalScroll(rememberScrollState())
-    ) {
-        Box() {
-            BackButton(
-                title = "문진표 확인",
-                horizontalPadding = 0.dp,
-                verticalPadding = 0.dp,
-                iconDrawable = R.drawable.btn_vertical_dots,
-                onClick = { expanded = true }
-            ) {
-                navController.navigate("DetailPage")
-            }
-            DropdownMenu(
-                expanded = expanded,
-                onDismissRequest = { expanded = false },
-                modifier = Modifier
-                    .background(Color.White)
-                    .align(Alignment.TopEnd)
-            ) {
-                DropdownMenuItem(text = { Text("수정") }, onClick = {
-                    option = "수정"
-                    isEditMode = !isEditMode
-                    expanded = false
-                })
-
-            }
-        }
-        BasicTextField(
-            value = questionnaireName,
-            onValueChange = { questionnaireName = it },
-            singleLine = true,
-            textStyle = TextStyle(
-                fontSize = 20.sp,
-                fontFamily = pretendard,
-                fontWeight = FontWeight(600),
-                color = gray800,
-                textAlign = TextAlign.Center,
-            ),
-            keyboardOptions = KeyboardOptions(
-                imeAction = ImeAction.Done
-            ),
-            keyboardActions = KeyboardActions(
-                onDone = {
-                    keyboardController?.hide()
-                    focusManager.clearFocus()
-                }
-            ),
-            modifier = Modifier
-                .fillMaxWidth()
-        )
-        HeightSpacer(24.dp)
-        EditableProfileField(
-            label = "이름",
-            value = realName,
-            onValueChange = { realName = it },
-            isEditable = isEditingRealName,
-            onEditToggle = { isEditingRealName = !isEditingRealName }
-        )
-
-        FixedProfiledField(
-            "생년월일",
-            "${UserInfoManager.getUserData(context)?.birthDate} (만 ${
-                UserInfoManager.getUserData(context)?.age
-            }세)"
-        )
-        FixedProfiledField("성별", "${gender.toKoreanGender()}성")
-
-
-        EditableProfileField(
-            label = "전화번호",
-            value = phone,
-            onValueChange = { phone = it },
-            isEditable = isEditingPhone,
-            onEditToggle = { isEditingPhone = !isEditingPhone }
-        )
-
-        EditableProfileField(
-            label = "주소",
-            value = address,
-            onValueChange = { address = it },
-            isEditable = isEditingAddress,
-            onEditToggle = { isEditingAddress = !isEditingAddress }
-        )
-
-        HeightSpacer(20.dp)
-
-        Section(
-            "복약 정보", medicationList, isEditMode,
-            onToggle = {
-                val updated = medicationList.toMutableList()
-                updated[it] = updated[it].copy(submitted = !updated[it].submitted)
-                viewModel.medicationInfo = updated
-            },
-            onDelete = {
-                val updated = medicationList.toMutableList()
-                updated.removeAt(it)
-                viewModel.medicationInfo = updated
-            }
-        )
-
-        DottedDivider()
-
-        Section(
-            "알러지 정보", allergyList, isEditMode,
-            onToggle = {
-                val updated = allergyList.toMutableList()
-                updated[it] = updated[it].copy(submitted = !updated[it].submitted)
-                viewModel.allergyInfo = updated
-            },
-            onDelete = {
-                val updated = allergyList.toMutableList()
-                updated.removeAt(it)
-                viewModel.allergyInfo = updated
-            }
-        )
-
-        DottedDivider()
-
-        Section(
-            "기저질환", diseaseList, isEditMode,
-            onToggle = {
-                val updated = diseaseList.toMutableList()
-                updated[it] = updated[it].copy(submitted = !updated[it].submitted)
-                viewModel.chronicDiseaseInfo = updated
-            },
-            onDelete = {
-                val updated = diseaseList.toMutableList()
-                updated.removeAt(it)
-                viewModel.chronicDiseaseInfo = updated
-            }
-        )
-
-        DottedDivider()
-
-        Section(
-            "수술 이력", surgeryList, isEditMode,
-            onToggle = {
-                val updated = surgeryList.toMutableList()
-                updated[it] = updated[it].copy(submitted = !updated[it].submitted)
-                viewModel.surgeryHistoryInfo = updated
-            },
-            onDelete = {
-                val updated = surgeryList.toMutableList()
-                updated.removeAt(it)
-                viewModel.surgeryHistoryInfo = updated
-            }
-        )
-
-        NextButton(
-            mModifier = buttonModifier,
-            text = if (fromDetail) {
-                if (isEditMode) "수정완료" else "생성하기"
-            } else {
-                if (isEditMode) "수정완료" else "제출하기"
-            },
-            onClick = {
-                if (isEditMode) {
-                    isEditMode = false
-                } else {
-                    viewModel.realName = realName
-                    viewModel.address = address
-                    viewModel.phoneNumber = phone
-                    viewModel.questionnaireName = questionnaireName
-
-
-                    if (fromDetail){
-                        viewModel.modify()
-                        navController.navigate("PillMainPage/Chart")
-                    }
-                    else{
-                        viewModel.submit()
-                        navController.navigate("DetailPage")
-                    }
-                }
-            }
-        )
-    }
-}
-
-@Composable
-fun <T> Section(
-    title: String,
-    items: List<T>,
-    isEditMode: Boolean,
-    onDelete: (Int) -> Unit,
-    onToggle: (Int) -> Unit
-) where T : Any {
-    HeightSpacer(24.dp)
-    Text(text = title, fontWeight = FontWeight.Bold, fontSize = 16.sp)
-    HeightSpacer(16.dp)
-    items.forEachIndexed { index, item ->
-        val label = when (item) {
-            is MedicationEntry -> item.medicationName
-            is AllergyEntry -> item.allergyName
-            is ChronicDiseaseEntry -> item.chronicDiseaseName
-            is SurgeryHistoryEntry -> item.surgeryHistoryName
-            else -> ""
-        }
-        val submitted = when (item) {
-            is MedicationEntry -> item.submitted
-            is AllergyEntry -> item.submitted
-            is ChronicDiseaseEntry -> item.submitted
-            is SurgeryHistoryEntry -> item.submitted
-            else -> false
-        }
-
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 4.dp)
+        modifier = WhiteScreenModifier.statusBarsPadding()
+    ){
+        val context = LocalContext.current
+        val realName =sensitiveViewModel.realName
+        val address = sensitiveViewModel.address
+        val phoneNumber = UserInfoManager.getUserData(context)?.phone
+        val gender = UserInfoManager.getUserData(context)?.gender
+        val birthDate = UserInfoManager.getUserData(context)?.birthDate
+        val age = UserInfoManager.getUserData(context)?.age
+        val allergyList = sensitiveViewModel.allergyInfo
+        val chronicList = sensitiveViewModel.chronicDiseaseInfo
+        val surgeryList = sensitiveViewModel.surgeryHistoryInfo
+        Column(
+            modifier = WhiteScreenModifier
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp)
         ) {
-            Text(
-                text = label,
-                style = TextStyle(
-                    fontSize = 14.sp,
-                    fontFamily = pretendard,
-                    fontWeight = FontWeight(500),
-                    color = gray800,
-                    textAlign = TextAlign.Justify,
-                )
-            )
-            Spacer(modifier = Modifier.weight(1f))
-            if (isEditMode) {
-                Text(
-                    text = "X",
-                    color = Color.Red,
-                    modifier = Modifier
-                        .padding(horizontal = 8.dp)
-                        .clickable { onDelete(index) }
-                )
-            } else {
-                IosButton(checked = submitted, onCheckedChange = { onToggle(index) })
+            Text("입력 정보 확인", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+
+            Spacer(Modifier.height(12.dp))
+            Text("이름: $realName")
+            Text("성별: $gender")
+            Text("생년월일: $birthDate (만 ${age}세)")
+            Text("주소: $address")
+            Text("전화번호: $phoneNumber")
+
+            Spacer(Modifier.height(12.dp))
+            Text("알러지 정보:")
+            allergyList.filter { it.submitted }.forEach {
+                Text("- ${it.allergyName}")
+            }
+
+            Spacer(Modifier.height(8.dp))
+            Text("만성질환 정보:")
+            chronicList.filter { it.submitted }.forEach {
+                Text("- ${it.chronicDiseaseName}")
+            }
+
+            Spacer(Modifier.height(8.dp))
+            Text("수술 이력:")
+            surgeryList.filter { it.submitted }.forEach {
+                Text("- ${it.surgeryHistoryName}")
+            }
+
+            Spacer(Modifier.weight(1f))
+            NextButton(
+                mModifier = buttonModifier,
+                text = "작성 완료"
+            ) {
+                sensitiveViewModel.updateSensitivePermissions()
+                sensitiveViewModel.phoneNumber = phoneNumber.toString()
+                sensitiveViewModel.submitSensitiveProfile()
+                Toast.makeText(context, "민감정보 작성 완료!\n 필팁의 강력한 AI 기능을 이용해보세요!", Toast.LENGTH_SHORT).show()
+                navController.navigate("PillMainPage") {
+                    popUpTo("EssentialPage") { inclusive = true }
+                }
             }
         }
     }
-    HeightSpacer(24.dp)
 }
+
 

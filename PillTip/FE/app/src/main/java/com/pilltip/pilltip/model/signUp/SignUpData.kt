@@ -91,3 +91,15 @@ data class UserData(
     val address: String?,
     val permissions: Boolean
 )
+
+/* 중복 체크 */
+data class DuplicateCheckRequest(
+    val value: String,
+    val type: String
+)
+
+data class DuplicateCheckResponse(
+    val status: String,
+    val message: String,
+    val data: Boolean
+)

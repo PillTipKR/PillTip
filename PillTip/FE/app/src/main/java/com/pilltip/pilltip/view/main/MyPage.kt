@@ -65,7 +65,6 @@ import androidx.core.content.ContextCompat
 import androidx.navigation.NavController
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.pilltip.pilltip.R
-import com.pilltip.pilltip.composable.AuthComposable.RoundTextField
 import com.pilltip.pilltip.composable.BackButton
 import com.pilltip.pilltip.composable.HeightSpacer
 import com.pilltip.pilltip.composable.IosButton
@@ -83,9 +82,8 @@ import com.pilltip.pilltip.composable.WidthSpacer
 import com.pilltip.pilltip.composable.noRippleClickable
 import com.pilltip.pilltip.model.HandleBackPressToExitApp
 import com.pilltip.pilltip.model.UserInfoManager
-import com.pilltip.pilltip.model.search.PersonalInfoUpdateRequest
-import com.pilltip.pilltip.model.search.QuestionnaireViewModel
 import com.pilltip.pilltip.model.search.SearchHiltViewModel
+import com.pilltip.pilltip.model.search.SensitiveViewModel
 import com.pilltip.pilltip.model.signUp.TokenManager
 import com.pilltip.pilltip.ui.theme.gray050
 import com.pilltip.pilltip.ui.theme.gray100
@@ -105,7 +103,7 @@ import java.time.LocalDate
 fun MyPage(
     navController: NavController,
     searchHiltViewModel: SearchHiltViewModel,
-    questionnaireViewModel: QuestionnaireViewModel
+    sensitiveViewModel: SensitiveViewModel
 ) {
     HandleBackPressToExitApp(navController)
     val systemUiController = rememberSystemUiController()
@@ -117,7 +115,7 @@ fun MyPage(
         systemUiController.isNavigationBarVisible = true
     }
     LaunchedEffect(Unit) {
-        questionnaireViewModel.loadPermissions()
+        sensitiveViewModel.loadPermissions()
     }
     val context = LocalContext.current
     val screenWidth = LocalConfiguration.current.screenWidthDp.dp
@@ -158,7 +156,7 @@ fun MyPage(
         contract = ActivityResultContracts.RequestPermission()
     ) { isGranted ->
         if (isGranted) {
-            questionnaireViewModel.updateSinglePermission("phone", true)
+            sensitiveViewModel.updateSinglePermission("phone", true)
             Toast.makeText(context, "알림 권한이 허용되었어요", Toast.LENGTH_SHORT).show()
         } else {
             Toast.makeText(context, "알림 권한이 거부되었어요", Toast.LENGTH_SHORT).show()
@@ -168,8 +166,9 @@ fun MyPage(
     LaunchedEffect(selectedDate) {
         searchHiltViewModel.fetchDailyDosageLog(selectedDate)
     }
-    val permissionState = questionnaireViewModel.permissionState
+    val permissionState = sensitiveViewModel.permissionState
     val toggle = permissionState?.phonePermission ?: false
+    val permission = UserInfoManager.getUserData(LocalContext.current)?.permissions
 
     Column(
         modifier = WhiteScreenModifier
@@ -201,7 +200,6 @@ fun MyPage(
                             }
 
                             else -> {
-                                // 권한 요청
                                 permissionLauncher.launch(permission)
                             }
                         }
@@ -242,13 +240,13 @@ fun MyPage(
             navController.navigate("MyDrugInfoPage")
         }
         MyPageMenuItem(text = "내 건강정보 관리") {
-            navController.navigate("MyHealthPage")
+            if(permission == true)
+                navController.navigate("MyHealthPage")
+            else
+                navController.navigate("EssentialPage")
         }
         MyPageMenuItem(text = "내 리뷰 관리") {
             // TODO: navController.navigate(...)
-        }
-        MyPageMenuItem(text = "내 개인정보 관리") {
-            navController.navigate("MyDataPage")
         }
         HeightSpacer(48.dp)
         Text(
@@ -272,14 +270,14 @@ fun MyPage(
                             return@MyPageToggleItem
                         }
                     }
-                    questionnaireViewModel.updateSinglePermission("phone", true)
+                    sensitiveViewModel.updateSinglePermission("phone", true)
                     Toast.makeText(
                         context,
                         "푸시 알림 권한을 허용했어요! 앞으로 복약 알림을 보내드릴게요!",
                         Toast.LENGTH_SHORT
                     ).show()
                 } else {
-                    questionnaireViewModel.updateSinglePermission("phone", false)
+                    sensitiveViewModel.updateSinglePermission("phone", false)
                     Toast.makeText(context, "앞으로 복약 알림을 비롯한 푸시알림을 받지 않아요", Toast.LENGTH_SHORT)
                         .show()
                 }
@@ -496,6 +494,14 @@ fun MyDrugInfoPage(
     var expanded by remember { mutableStateOf(false) }
     var sortOption by remember { mutableStateOf("최신순") }
     val pillDetail by viewModel.pillDetail.collectAsState()
+    val systemUiController = rememberSystemUiController()
+    SideEffect {
+        systemUiController.setStatusBarColor(
+            color = Color.White,
+            darkIcons = true
+        )
+        systemUiController.isNavigationBarVisible = true
+    }
 
     LaunchedEffect(Unit) {
         viewModel.fetchDosageSummary()
@@ -598,6 +604,14 @@ fun MyDrugManagementPage(
     searchHiltViewModel: SearchHiltViewModel,
     medicationId: Long
 ) {
+    val systemUiController = rememberSystemUiController()
+    SideEffect {
+        systemUiController.setStatusBarColor(
+            color = Color.White,
+            darkIcons = true
+        )
+        systemUiController.isNavigationBarVisible = true
+    }
     LaunchedEffect(Unit) {
         searchHiltViewModel.fetchTakingPillDetail(medicationId)
     }
@@ -750,12 +764,19 @@ fun EssentialInfoPage(
     navController: NavController,
     searchHiltViewModel: SearchHiltViewModel
 ) {
-    var toggle by remember { mutableStateOf(true) }
     val scope = rememberCoroutineScope()
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var isSheetVisible by remember { mutableStateOf(false) }
     var isEssential1Checked by remember { mutableStateOf(false) }
     var isEssential2Checked by remember { mutableStateOf(false) }
+    val systemUiController = rememberSystemUiController()
+    SideEffect {
+        systemUiController.setStatusBarColor(
+            color = Color.White,
+            darkIcons = true
+        )
+        systemUiController.isNavigationBarVisible = true
+    }
     Column(
         modifier = WhiteScreenModifier
             .padding(horizontal = 22.dp)
@@ -770,11 +791,6 @@ fun EssentialInfoPage(
         MyPageMenuItem(text = "내 민감정보 삭제") {
             isSheetVisible = true
         }
-        MyPageToggleItem(
-            text = "푸시알람 동의",
-            isChecked = toggle,
-            onCheckedChange = { toggle = !toggle }
-        )
     }
     if (isSheetVisible) {
         LaunchedEffect(Unit) {
@@ -939,6 +955,14 @@ fun MyHealthPage(
     }
 
     val sensitiveInfo by searchHiltViewModel.sensitiveInfo.collectAsState()
+    val systemUiController = rememberSystemUiController()
+    SideEffect {
+        systemUiController.setStatusBarColor(
+            color = Color.White,
+            darkIcons = true
+        )
+        systemUiController.isNavigationBarVisible = true
+    }
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -996,6 +1020,14 @@ fun MyHealthDetailPage(
         "surgery" -> sensitiveInfo?.surgeryHistoryInfo ?: emptyList()
         else -> emptyList()
     }
+    val systemUiController = rememberSystemUiController()
+    SideEffect {
+        systemUiController.setStatusBarColor(
+            color = Color.White,
+            darkIcons = true
+        )
+        systemUiController.isNavigationBarVisible = true
+    }
 
     Column(
         modifier = WhiteScreenModifier
@@ -1022,104 +1054,6 @@ fun MyHealthDetailPage(
             ) {
                 Text(text = item)
             }
-        }
-    }
-}
-
-@Composable
-fun MyDataPage(
-    navController: NavController,
-    searchHiltViewModel: SearchHiltViewModel
-) {
-    val context = LocalContext.current
-    var name by remember { mutableStateOf("") }
-    var address by remember { mutableStateOf("") }
-    var isValid = name.isNotEmpty() && address.isNotEmpty()
-    Column(
-        modifier = WhiteScreenModifier
-            .padding(horizontal = 22.dp)
-            .statusBarsPadding()
-    ) {
-        BackHandler {
-            navController.popBackStack()
-        }
-        BackButton(
-            title = "내 개인정보 수정",
-            horizontalPadding = 0.dp,
-            verticalPadding = 0.dp
-        ) {
-            navController.popBackStack()
-        }
-        HeightSpacer(36.dp)
-        Text(
-            text = "개인 정보",
-            style = TextStyle(
-                fontSize = 18.sp,
-                fontFamily = pretendard,
-                fontWeight = FontWeight(600),
-                color = gray800,
-            )
-        )
-        HeightSpacer(28.dp)
-        Text(
-            text = "닉네임",
-            style = TextStyle(
-                fontSize = 16.sp,
-                fontFamily = pretendard,
-                fontWeight = FontWeight(600),
-                color = gray800,
-            )
-        )
-        HeightSpacer(12.dp)
-        RoundTextField(
-            text = name,
-            textChange = { name = it },
-            placeholder = "실명을 입력해주세요",
-            isLogin = false
-        )
-        HeightSpacer(26.dp)
-        Text(
-            text = "주소",
-            style = TextStyle(
-                fontSize = 16.sp,
-                fontFamily = pretendard,
-                fontWeight = FontWeight(600),
-                color = gray800,
-            )
-        )
-        HeightSpacer(12.dp)
-        RoundTextField(
-            text = address,
-            textChange = { address = it },
-            placeholder = "주소를 입력해주세요",
-            isLogin = false
-        )
-        Spacer(modifier = Modifier.weight(1f))
-        NextButton(
-            mModifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 16.dp)
-                .padding(bottom = 46.dp)
-                .height(58.dp),
-            buttonColor = if (isValid) primaryColor else Color(0xFF348ADF),
-            text = "수정하기"
-        ) {
-            if (isValid) {
-                val request = PersonalInfoUpdateRequest(
-                    realName = name,
-                    address = address
-                )
-                searchHiltViewModel.updatePersonalInfo(
-                    request = request,
-                    onSuccess = {
-                        Toast.makeText(context, "개인정보가 성공적으로 수정됐어요.", Toast.LENGTH_SHORT).show()
-                    },
-                    onError = {
-                        Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
-                    }
-                )
-            }
-
         }
     }
 }

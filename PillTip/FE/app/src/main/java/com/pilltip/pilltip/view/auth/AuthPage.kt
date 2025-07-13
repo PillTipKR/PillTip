@@ -70,6 +70,8 @@ import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
@@ -182,6 +184,10 @@ fun SelectPage(
     }
 
     SideEffect {
+        systemUiController.setStatusBarColor(
+            color = Color.White,
+            darkIcons = true
+        )
         systemUiController.isNavigationBarVisible = true
     }
     Column(
@@ -299,7 +305,8 @@ fun LoginPage(
                         TokenManager.saveTokens(context, accessToken, refreshToken)
                         Log.d("Login", "로그인 성공! 액세스토큰: $accessToken")
                         UserInfoManager.saveUserData(context, userData)
-                        Toast.makeText(context, "${userData.nickname}님, 반가워요!", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, "${userData.nickname}님, 반가워요!", Toast.LENGTH_SHORT)
+                            .show()
                         navController.navigate("PillMainPage") {
                             popUpTo(0) { inclusive = true }
                         }
@@ -452,7 +459,11 @@ fun LoginPage(
                 .padding(vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            HorizontalDivider(thickness = 1.5.dp, color = Color(0xFFE2E4EC), modifier = Modifier.weight(1f))
+            HorizontalDivider(
+                thickness = 1.5.dp,
+                color = Color(0xFFE2E4EC),
+                modifier = Modifier.weight(1f)
+            )
             Text(
                 text = "간편 로그인",
                 style = TextStyle(
@@ -463,7 +474,11 @@ fun LoginPage(
                 ),
                 modifier = Modifier.padding(horizontal = 12.dp)
             )
-            HorizontalDivider(thickness = 1.5.dp, color = Color(0xFFE2E4EC), modifier = Modifier.weight(1f))
+            HorizontalDivider(
+                thickness = 1.5.dp,
+                color = Color(0xFFE2E4EC),
+                modifier = Modifier.weight(1f)
+            )
         }
         HeightSpacer(20.dp)
         Row(
@@ -474,7 +489,10 @@ fun LoginPage(
                 modifier = Modifier
                     .width(52.dp)
                     .height(52.dp)
-                    .background(color = Color(0xFFFDE500), shape = RoundedCornerShape(size = 100.dp)),
+                    .background(
+                        color = Color(0xFFFDE500),
+                        shape = RoundedCornerShape(size = 100.dp)
+                    ),
                 contentAlignment = Alignment.Center
             ) {
                 Image(
@@ -507,7 +525,11 @@ fun LoginPage(
                         viewModel.fetchMyInfo(accessToken) { userData ->
                             TokenManager.saveTokens(context, accessToken, refreshToken)
                             UserInfoManager.saveUserData(context, userData)
-                            Toast.makeText(context, "${userData.nickname}님, 반가워요!", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(
+                                context,
+                                "${userData.nickname}님, 반가워요!",
+                                Toast.LENGTH_SHORT
+                            ).show()
                             navController.navigate("PillMainPage") {
                                 popUpTo(0) { inclusive = true }
                             }
@@ -724,6 +746,7 @@ fun IdPage(
     navController: NavController,
     viewModel: SignUpViewModel
 ) {
+    val context = LocalContext.current
     var ID by remember { mutableStateOf("") }
     var isChecked by remember { mutableStateOf(false) }
 
@@ -742,7 +765,7 @@ fun IdPage(
     val isLengthValid = ID.length >= 8 && ID.length <= 20
     val isSpecialCharValid = !containsSpeical && ID.isNotEmpty()
     val isAllConditionsValid = isEnglishAndNumberValid && isLengthValid && isSpecialCharValid
-
+    var isDuplicate by remember { mutableStateOf<Boolean?>(null) }
     val focusRequester = FocusRequester()
     var isFocused by remember { mutableStateOf(false) }
     val focusManager = LocalFocusManager.current
@@ -771,7 +794,14 @@ fun IdPage(
                 value = ID,
                 cursorBrush = SolidColor(if (isFocused) Color(0xFF397CDB) else Color(0xFFBFBFBF)),
                 onValueChange = {
-                    ID = it
+                    val filtered = it.filter { ch -> ch.isLetterOrDigit() }
+                    if (filtered != it) {
+                        ID = filtered
+                    } else {
+                        ID = it
+                    }
+                    isDuplicate = true
+                    isChecked = false
                 },
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                 keyboardActions = KeyboardActions(
@@ -862,8 +892,20 @@ fun IdPage(
             buttonColor = if (isAllConditionsValid) Color(0xFF348ADF) else Color(0xFFCADCF5),
             onClick = {
                 viewModel.updateloginId(ID)
-                if (isChecked && isAllConditionsValid) navController.navigate("PasswordPage")
-                isChecked = true
+                if (!isChecked) {
+                    viewModel.checkLoginIdDuplicate(ID) { isSuccess, isAvailable ->
+                        isDuplicate = isAvailable?.not()
+                        if (isSuccess && isDuplicate == true) {
+                            Toast.makeText(context, "이미 사용 중인 아이디입니다.", Toast.LENGTH_SHORT).show()
+                        } else if (!isSuccess) {
+                            Toast.makeText(context, "중복 확인 중 오류가 발생했어요.", Toast.LENGTH_SHORT).show()
+                        }
+                        if (isDuplicate == false) isChecked = true
+                    }
+                } else if (isChecked && !isDuplicate!! && isAllConditionsValid) {
+                    // 중복 확인 완료 + 사용 가능 + 유효성 검증 완료
+                    navController.navigate("PasswordPage")
+                }
             }
         )
     }
@@ -896,7 +938,8 @@ fun PasswordPage(
     val keyboardController = LocalSoftwareKeyboardController.current
 
     val isAllConditionsValid = isEnglishAndNumberValid && isLengthValid && isSequentialNumbersValid
-
+    var isVisible1 by remember { mutableStateOf(true) }
+    var isVisible2 by remember { mutableStateOf(true) }
     var termsOfService by remember { mutableStateOf(false) }
 
     Column(
@@ -921,12 +964,18 @@ fun PasswordPage(
             BasicTextField(
                 value = password,
                 onValueChange = {
-                    password = it
+                    val filtered = it.filter { ch -> ch.isLetterOrDigit() }
+                    if (filtered != it) {
+                        password = filtered
+                    } else {
+                        password = it
+                    }
                 },
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                 keyboardActions = KeyboardActions(
                     onDone = { keyboardController?.hide() }
                 ),
+                visualTransformation = if (isVisible1 == true) PasswordVisualTransformation() else VisualTransformation.None,
                 modifier = Modifier
                     .height(22.dp)
                     .weight(1f)
@@ -954,6 +1003,20 @@ fun PasswordPage(
                                     color = Color(0x99818181)
                                 )
                             )
+                        } else {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.End,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Image(
+                                    imageVector = ImageVector.vectorResource(R.drawable.btn_login_visiblility),
+                                    contentDescription = "비밀번호 확인",
+                                    modifier = Modifier.noRippleClickable {
+                                        isVisible1 = !isVisible1
+                                    }
+                                )
+                            }
                         }
                         innerTextField()
                     }
@@ -988,8 +1051,14 @@ fun PasswordPage(
             BasicTextField(
                 value = reenteredPassword,
                 onValueChange = {
-                    reenteredPassword = it
+                    val filtered = it.filter { ch -> ch.isLetterOrDigit() }
+                    if (filtered != it) {
+                        reenteredPassword = filtered
+                    } else {
+                        reenteredPassword = it
+                    }
                 },
+                visualTransformation = if (isVisible2 == true) PasswordVisualTransformation() else VisualTransformation.None,
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                 keyboardActions = KeyboardActions(
                     onDone = { keyboardController?.hide() }
@@ -1021,6 +1090,20 @@ fun PasswordPage(
                                     color = Color(0x99818181)
                                 )
                             )
+                        } else {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.End,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Image(
+                                    imageVector = ImageVector.vectorResource(R.drawable.btn_login_visiblility),
+                                    contentDescription = "비밀번호 확인",
+                                    modifier = Modifier.noRippleClickable {
+                                        isVisible2 = !isVisible2
+                                    }
+                                )
+                            }
                         }
                         innerTextField()
                     }
@@ -1076,8 +1159,8 @@ fun PasswordPage(
             mModifier = buttonModifier,
             text = "다음",
             buttonColor =
-            if (isAllConditionsValid && password == reenteredPassword) Color(0xFF348ADF)
-            else Color(0xFFCADCF5),
+                if (isAllConditionsValid && password == reenteredPassword) Color(0xFF348ADF)
+                else Color(0xFFCADCF5),
             onClick = {
                 if (isAllConditionsValid && password == reenteredPassword) {
                     viewModel.updatePassword(password)
@@ -1285,11 +1368,11 @@ fun ProfilePage(
         ProfileStepDescription("연령")
         HeightSpacer(12.dp)
         AgeField(
-         ageChange = { selectedYear, selectedMonth, selectedDay ->
-            year = selectedYear
-            month = selectedMonth
-            day = selectedDay
-        },
+            ageChange = { selectedYear, selectedMonth, selectedDay ->
+                year = selectedYear
+                month = selectedMonth
+                day = selectedDay
+            },
             displayYear = year,
             displayMonth = month,
             displayDay = day,
@@ -1415,8 +1498,17 @@ fun InterestPage(
                             viewModel.submitTerms(
                                 token = accessToken,
                                 onSuccess = {
-                                    navController.navigate("PillMainPage") {
-                                        popUpTo(0) { inclusive = true }
+                                    viewModel.fetchMyInfo(accessToken) { userData ->
+                                        TokenManager.saveTokens(context, accessToken, refreshToken)
+                                        UserInfoManager.saveUserData(context, userData)
+                                        Toast.makeText(
+                                            context,
+                                            "${userData.nickname}님, 필팁에 오신 걸 환영해요!",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                        navController.navigate("PillMainPage") {
+                                            popUpTo(0) { inclusive = true }
+                                        }
                                     }
                                 },
                                 onFailure = { error ->
@@ -1425,7 +1517,7 @@ fun InterestPage(
                                         "약관 전송 실패: ${error?.message ?: "알 수 없는 오류"}",
                                         Toast.LENGTH_SHORT
                                     ).show()
-                                    navController.navigate("SelectPage")  {
+                                    navController.navigate("SelectPage") {
                                         popUpTo(0) { inclusive = true }
                                     }
                                 }
@@ -1437,7 +1529,7 @@ fun InterestPage(
                                 error?.message ?: "회원가입에 실패했습니다. 다시 시도해주세요.",
                                 Toast.LENGTH_SHORT
                             ).show()
-                            navController.navigate("SelectPage")  {
+                            navController.navigate("SelectPage") {
                                 popUpTo(0) { inclusive = true }
                             }
                         }

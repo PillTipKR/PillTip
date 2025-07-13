@@ -19,6 +19,7 @@ import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -31,6 +32,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.pilltip.pilltip.R
 import com.pilltip.pilltip.composable.BackButton
 import com.pilltip.pilltip.composable.DrugLogCard
@@ -58,7 +60,14 @@ fun NotificationPage(
         tabs.size
     }
     val coroutineScope = rememberCoroutineScope()
-
+    val systemUiController = rememberSystemUiController()
+    SideEffect {
+        systemUiController.setStatusBarColor(
+            color = Color.White,
+            darkIcons = true
+        )
+        systemUiController.isNavigationBarVisible = true
+    }
 
     LaunchedEffect(selectedDate) {
         selectedDate?.let {
@@ -85,10 +94,6 @@ fun NotificationPage(
                         inclusive = true
                     }
                 }
-            },
-            iconDrawable = R.drawable.btn_vertical_dots,
-            onClick = {
-
             }
         )
         TabRow(
