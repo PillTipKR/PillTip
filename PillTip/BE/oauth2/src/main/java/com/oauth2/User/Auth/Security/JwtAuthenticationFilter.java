@@ -56,51 +56,50 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             // 요청 헤더에서 JWT 토큰 추출
             String jwt = getJwtFromRequest(request);
     
+            // JWT 토큰이 없는 경우 명확한 에러 메시지 반환
+            if (jwt == null) {
+                SecurityContextHolder.clearContext();
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.setContentType("application/json;charset=UTF-8");
+                response.getWriter().write(objectMapper.writeValueAsString(
+                    ApiResponse.error(AuthMessageConstants.TOKEN_NOT_PROVIDED, "no_token")
+                ));
+                return;
+            }
 
             // JWT 토큰이 유효한 경우 사용자 ID를 추출
-            if (jwt != null) {
-                try {
-        
-                    
-                    // 토큰에서 사용자 ID 추출
-                    Long userId = tokenService.getUserIdFromToken(jwt);
+            try {
+                // 토큰에서 사용자 ID 추출
+                Long userId = tokenService.getUserIdFromToken(jwt);
 
-                    
-                    // DB에서 토큰 정보 조회
-                    UserToken userToken = userTokenRepository.findById(userId)
-                            .orElseThrow(() -> new BadCredentialsException(AuthMessageConstants.INVALID_TOKEN));
+                // DB에서 토큰 정보 조회
+                UserToken userToken = userTokenRepository.findById(userId)
+                        .orElseThrow(() -> new BadCredentialsException(AuthMessageConstants.INVALID_TOKEN));
 
-
-                    // 토큰 일치 여부 및 만료 시간 검증
-                    
-                    
-                    if (!userToken.getAccessToken().equals(jwt)) {
-                        throw new BadCredentialsException(AuthMessageConstants.INVALID_TOKEN);
-                    }
-
-                    
-                    
-                    if (userToken.getAccessTokenExpiry().isBefore(LocalDateTime.now())) {
-                        throw new BadCredentialsException(AuthMessageConstants.TOKEN_EXPIRED_DETAIL);
-                    }
-
-                    // 사용자 정보 조회
-                    User user = userRepository.findById(userId)
-                            .orElseThrow(() -> new BadCredentialsException(AuthMessageConstants.USER_INFO_NOT_FOUND_RETRY_LOGIN));
-                    
-                    // 사용자 정보를 기반으로 인증 토큰 생성
-                    UsernamePasswordAuthenticationToken authentication = 
-                        new UsernamePasswordAuthenticationToken(user, null, null);
-                    authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-
-                    // 인증 토큰을 컨텍스트에 설정
-                    SecurityContextHolder.getContext().setAuthentication(authentication);
-
-                } catch (RuntimeException e) {
-
-                    SecurityContextHolder.clearContext();
-                    throw new BadCredentialsException(e.getMessage());
+                // 토큰 일치 여부 및 만료 시간 검증
+                if (!userToken.getAccessToken().equals(jwt)) {
+                    throw new BadCredentialsException(AuthMessageConstants.INVALID_TOKEN);
                 }
+
+                if (userToken.getAccessTokenExpiry().isBefore(LocalDateTime.now())) {
+                    throw new BadCredentialsException(AuthMessageConstants.TOKEN_EXPIRED_DETAIL);
+                }
+
+                // 사용자 정보 조회
+                User user = userRepository.findById(userId)
+                        .orElseThrow(() -> new BadCredentialsException(AuthMessageConstants.USER_INFO_NOT_FOUND_RETRY_LOGIN));
+                
+                // 사용자 정보를 기반으로 인증 토큰 생성
+                UsernamePasswordAuthenticationToken authentication = 
+                    new UsernamePasswordAuthenticationToken(user, null, null);
+                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+
+                // 인증 토큰을 컨텍스트에 설정
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+
+            } catch (RuntimeException e) {
+                SecurityContextHolder.clearContext();
+                throw new BadCredentialsException(e.getMessage());
             }
             
             // 정상적인 경우에만 필터 체인 계속 실행

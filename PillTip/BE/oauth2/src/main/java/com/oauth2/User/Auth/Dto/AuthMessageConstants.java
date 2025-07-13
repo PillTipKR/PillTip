@@ -6,6 +6,7 @@ public class AuthMessageConstants {
     
     // 인증 관련 에러 메시지
     public static final String USER_NOT_AUTHENTICATED = "로그인이 필요합니다.";
+    public static final String TOKEN_NOT_PROVIDED = "토큰이 제공되지 않았습니다. 로그인이 필요합니다.";
     public static final String INVALID_TOKEN = "토큰이 올바르지 않습니다.";
     public static final String TOKEN_EXPIRED = "토큰이 만료되었습니다.";
     public static final String INVALID_REFRESH_TOKEN = "리프레시 토큰이 올바르지 않습니다.";
