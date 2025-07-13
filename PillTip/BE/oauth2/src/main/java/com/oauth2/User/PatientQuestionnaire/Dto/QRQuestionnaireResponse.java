@@ -15,6 +15,7 @@ public class QRQuestionnaireResponse {
     private String patientName;
     private boolean patientPregnant;
     private String hospitalCode;
+    private String hospitalName;
     private Long questionnaireId;
     private String accessToken;
     private int expiresInMinutes;

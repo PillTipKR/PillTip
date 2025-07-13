@@ -12,7 +12,7 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 public class PatientQuestionnaireRequest {
-    private String questionnaireName;
+    //private String questionnaireName;
 
     // 수정 시에만 사용 (생성 시에는 Taking Pill에서 자동으로 가져옴)
     private List<InfoItem> medicationInfo;
@@ -20,7 +20,7 @@ public class PatientQuestionnaireRequest {
     private List<InfoItem> chronicDiseaseInfo;
     private List<InfoItem> surgeryHistoryInfo;
 
-    private String notes;
+    // private String notes;
 
     // Add these fields for user info update
     private String realName;

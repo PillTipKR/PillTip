@@ -11,64 +11,64 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
-import java.util.List;  
+import java.util.List;
 import java.util.Map;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class PatientQuestionnaireResponse {
-    // private Long questionnaireId;
-    // private String questionnaireName;
+public class PatientPublicQuestionnaireResponse {
+    private Long questionnaireId;
+    private String questionnaireName;
     private String realName;
     private String address;
     private String phoneNumber;
-    // private String gender;
-    // private String birthDate;
-    // private String height;
-    // private String weight;
-    // private String pregnant;
+    private String gender;
+    private String birthDate;
+    private String height;
+    private String weight;
+    private String pregnant;
     private LocalDate issueDate;
     private LocalDate lastModifiedDate;
-    // private String notes;
+    private String notes;
     private List<Map<String, Object>> medicationInfo;
     private List<Map<String, Object>> allergyInfo;
     private List<Map<String, Object>> chronicDiseaseInfo;
     private List<Map<String, Object>> surgeryHistoryInfo;
-    // private Long expirationDate; // 3분 후 만료 시간(ms)
+    private Long expirationDate; // 3분 후 만료 시간(ms)
 
-    public static PatientQuestionnaireResponse from(PatientQuestionnaire questionnaire, String decryptedPhoneNumber, String decryptedRealName, String decryptedAddress, EncryptionUtil encryptionUtil, Long expirationDate) {
+    public static PatientPublicQuestionnaireResponse from(PatientQuestionnaire questionnaire, String decryptedPhoneNumber, String decryptedRealName, String decryptedAddress, EncryptionUtil encryptionUtil, Long expirationDate) {
         ObjectMapper objectMapper = new ObjectMapper();
         try {
-            return PatientQuestionnaireResponse.builder()
-                    // .questionnaireId(questionnaire.getQuestionnaireId())
-                    // .questionnaireName(questionnaire.getQuestionnaireName())
+            return PatientPublicQuestionnaireResponse.builder()
+                    .questionnaireId(questionnaire.getQuestionnaireId())
+                    .questionnaireName(questionnaire.getQuestionnaireName())
                     .realName(decryptedRealName)
                     .address(decryptedAddress)
                     .phoneNumber(decryptedPhoneNumber)
-                    // .gender(questionnaire.getUser().getUserProfile() != null ? 
-                    //        questionnaire.getUser().getUserProfile().getGender() != null ? 
-                    //        questionnaire.getUser().getUserProfile().getGender().name() : null : null)
-                    // .birthDate(questionnaire.getUser().getUserProfile() != null && 
-                    //          questionnaire.getUser().getUserProfile().getBirthDate() != null ? 
-                    //          questionnaire.getUser().getUserProfile().getBirthDate().toString() : null)
-                    // .height(questionnaire.getUser().getUserProfile() != null && 
-                    //        questionnaire.getUser().getUserProfile().getHeight() != null ? 
-                    //        questionnaire.getUser().getUserProfile().getHeight().toString() : null)
-                    // .weight(questionnaire.getUser().getUserProfile() != null && 
-                    //        questionnaire.getUser().getUserProfile().getWeight() != null ? 
-                    //        questionnaire.getUser().getUserProfile().getWeight().toString() : null)
-                    // .pregnant(questionnaire.getUser().getUserProfile() != null ? 
-                    //         questionnaire.getUser().getUserProfile().isPregnant() ? "Y" : "N" : null)
+                    .gender(questionnaire.getUser().getUserProfile() != null ? 
+                           questionnaire.getUser().getUserProfile().getGender() != null ? 
+                           questionnaire.getUser().getUserProfile().getGender().name() : null : null)
+                    .birthDate(questionnaire.getUser().getUserProfile() != null && 
+                             questionnaire.getUser().getUserProfile().getBirthDate() != null ? 
+                             questionnaire.getUser().getUserProfile().getBirthDate().toString() : null)
+                    .height(questionnaire.getUser().getUserProfile() != null && 
+                           questionnaire.getUser().getUserProfile().getHeight() != null ? 
+                           questionnaire.getUser().getUserProfile().getHeight().toString() : null)
+                    .weight(questionnaire.getUser().getUserProfile() != null && 
+                           questionnaire.getUser().getUserProfile().getWeight() != null ? 
+                           questionnaire.getUser().getUserProfile().getWeight().toString() : null)
+                    .pregnant(questionnaire.getUser().getUserProfile() != null ? 
+                            questionnaire.getUser().getUserProfile().isPregnant() ? "Y" : "N" : null)
                     .issueDate(questionnaire.getIssueDate())
                     .lastModifiedDate(questionnaire.getLastModifiedDate())
-                    // .notes(questionnaire.getNotes())
+                    .notes(questionnaire.getNotes())
                     .medicationInfo(parseEncryptedJsonToList(questionnaire.getMedicationInfo(), objectMapper, encryptionUtil))
                     .allergyInfo(parseEncryptedJsonToList(questionnaire.getAllergyInfo(), objectMapper, encryptionUtil))
                     .chronicDiseaseInfo(parseEncryptedJsonToList(questionnaire.getChronicDiseaseInfo(), objectMapper, encryptionUtil))
                     .surgeryHistoryInfo(parseEncryptedJsonToList(questionnaire.getSurgeryHistoryInfo(), objectMapper, encryptionUtil))
-                    //.expirationDate(expirationDate)
+                    .expirationDate(expirationDate)
                     .build();
         } catch (JsonProcessingException e) {
             throw new RuntimeException("Failed to parse questionnaire data", e);
