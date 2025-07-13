@@ -162,12 +162,6 @@ export default function QuestionnaireDisplay({
           <div className={styles.infoItem}>
             <Notes notes={questionnaire.data.notes ?? ""} />
             <span> 작성일 : {questionnaire.data.lastModifiedDate}</span>
-            {/* 작성일 아래에 남은 시간 표시 */}
-            {remainingSeconds !== null && (
-              <span style={{ color: "#2579ef", fontWeight: 600, marginTop: 4 }}>
-                새로고침까지 남은 시간: {remainingSeconds}초
-              </span>
-            )}
           </div>
         </div>
       </div>

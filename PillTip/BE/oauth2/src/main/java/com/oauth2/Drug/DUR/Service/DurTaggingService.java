@@ -31,7 +31,7 @@ public class DurTaggingService {
         Map<Long, Drug> drugMap = drugRepository.findAllById(drugIds).stream()
                 .collect(Collectors.toMap(Drug::getId, drug -> drug));
 
-        List<Long> takingPills = takingPillRepository.findAllByUserId(user.getId()).stream()
+        List<Long> takingPills = takingPillRepository.findByUser(user).stream()
                 .map(TakingPill::getId).toList();
 
         List<SearchDurDto> result = new ArrayList<>();

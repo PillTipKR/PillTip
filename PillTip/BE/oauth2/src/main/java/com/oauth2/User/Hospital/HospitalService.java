@@ -14,6 +14,11 @@ public class HospitalService {
         return hospitalRepository.findByHospitalCode(hospitalCode).isPresent();
     }
 
+    public Hospital findByHospitalCode(String hospitalCode) {
+        return hospitalRepository.findByHospitalCode(hospitalCode)
+            .orElseThrow(() -> new IllegalArgumentException("Hospital not found with code: " + hospitalCode));
+    }
+
     public String generateHospitalCode(String address) {
         String prefix;
         if (address.contains("서울")) {

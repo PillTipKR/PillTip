@@ -65,8 +65,8 @@ public class PatientQuestionnaireService {
 
         PatientQuestionnaire questionnaire = PatientQuestionnaire.builder()
                 .user(updatedUser)
-                .questionnaireName(request.getQuestionnaireName())
-                .notes(request.getNotes())
+                .questionnaireName(request.getRealName() + "님의 문진표")
+                .notes("")
                 .issueDate(LocalDate.now())
                 .lastModifiedDate(LocalDate.now())
                 .allergyInfo(allergyInfoJson)
@@ -135,53 +135,53 @@ public class PatientQuestionnaireService {
         questionnaireRepository.delete(q);
     }
 
-    @Transactional
-    public PatientQuestionnaire updateQuestionnaire(User user, Long id, PatientQuestionnaireRequest request) throws JsonProcessingException {
-        // User를 다시 조회하여 영속성 컨텍스트에 연결
-        User managedUser = userService.getCurrentUser(user.getId());
+    // @Transactional
+    // public PatientQuestionnaire updateQuestionnaire(User user, Long id, PatientQuestionnaireRequest request) throws JsonProcessingException {
+    //     // User를 다시 조회하여 영속성 컨텍스트에 연결
+    //     User managedUser = userService.getCurrentUser(user.getId());
         
-        // Update user realName and address
-        User updatedUser = userService.updatePersonalInfo(managedUser, request.getRealName(), request.getAddress());
-        userService.updatePhoneNumber(updatedUser, request.getPhoneNumber());
+    //     // Update user realName and address
+    //     User updatedUser = userService.updatePersonalInfo(managedUser, request.getRealName(), request.getAddress());
+    //     userService.updatePhoneNumber(updatedUser, request.getPhoneNumber());
         
-        PatientQuestionnaire q = questionnaireRepository.findByIdWithUser(id)
-            .orElseThrow(() -> new IllegalArgumentException("문진표를 찾을 수 없습니다."));
-        if (!q.getUser().getId().equals(updatedUser.getId())) {
-            throw new SecurityException("본인 문진표만 수정할 수 있습니다.");
-        }
+    //     PatientQuestionnaire q = questionnaireRepository.findByIdWithUser(id)
+    //         .orElseThrow(() -> new IllegalArgumentException("문진표를 찾을 수 없습니다."));
+    //     if (!q.getUser().getId().equals(updatedUser.getId())) {
+    //         throw new SecurityException("본인 문진표만 수정할 수 있습니다.");
+    //     }
         
-        // Taking-pill에서 모든 약 이름 가져오기 (검증용)
-        List<String> takingPillMedicationNames = takingPillService.getTakingPillsByUser(updatedUser).stream()
-                .map(takingPill -> takingPill.getMedicationName())
-                .collect(Collectors.toList());
+    //     // Taking-pill에서 모든 약 이름 가져오기 (검증용)
+    //     List<String> takingPillMedicationNames = takingPillService.getTakingPillsByUser(updatedUser).stream()
+    //             .map(takingPill -> takingPill.getMedicationName())
+    //             .collect(Collectors.toList());
         
-        // Request body의 medicationInfo와 taking-pill 데이터 검증 (수정 시에만)
-        if (request.getMedicationInfo() != null) {
-            List<String> requestMedicationNames = request.getMedicationInfo().stream()
-                    .map(item -> item.getMedicationName())
-                    .filter(name -> name != null && !name.trim().isEmpty())
-                    .collect(Collectors.toList());
+    //     // Request body의 medicationInfo와 taking-pill 데이터 검증 (수정 시에만)
+    //     if (request.getMedicationInfo() != null) {
+    //         List<String> requestMedicationNames = request.getMedicationInfo().stream()
+    //                 .map(item -> item.getMedicationName())
+    //                 .filter(name -> name != null && !name.trim().isEmpty())
+    //                 .collect(Collectors.toList());
             
-            // taking-pill에 없는 약이 있는지 확인
-            List<String> invalidMedications = requestMedicationNames.stream()
-                    .filter(name -> !takingPillMedicationNames.contains(name))
-                    .collect(Collectors.toList());
+    //         // taking-pill에 없는 약이 있는지 확인
+    //         List<String> invalidMedications = requestMedicationNames.stream()
+    //                 .filter(name -> !takingPillMedicationNames.contains(name))
+    //                 .collect(Collectors.toList());
             
-            if (!invalidMedications.isEmpty()) {
-                throw new IllegalArgumentException("다음 약물은 복용 중인 약 목록에 없습니다: " + String.join(", ", invalidMedications));
-            }
-        }
+    //                 if (!invalidMedications.isEmpty()) {
+    //         throw new IllegalArgumentException("다음 약물은 복용 중인 약 목록에 없습니다: " + String.join(", ", invalidMedications));
+    //     }
+    // }
+    
+    // q.setQuestionnaireName(request.getRealName() + "님의 문진표");
+    // q.setNotes("");
+    // q.setAllergyInfo(objectMapper.writeValueAsString(toKeyedList(request.getAllergyInfo(), "allergyName")));
+    //     q.setChronicDiseaseInfo(objectMapper.writeValueAsString(toKeyedList(request.getChronicDiseaseInfo(), "chronicDiseaseName")));
+    //     q.setSurgeryHistoryInfo(objectMapper.writeValueAsString(toKeyedList(request.getSurgeryHistoryInfo(), "surgeryHistoryName")));
+    //     q.setMedicationInfo(objectMapper.writeValueAsString(toKeyedList(request.getMedicationInfo(), "medicationName")));
+    //     q.setLastModifiedDate(LocalDate.now());
         
-        q.setQuestionnaireName(request.getQuestionnaireName());
-        q.setNotes(request.getNotes());
-        q.setAllergyInfo(objectMapper.writeValueAsString(toKeyedList(request.getAllergyInfo(), "allergyName")));
-        q.setChronicDiseaseInfo(objectMapper.writeValueAsString(toKeyedList(request.getChronicDiseaseInfo(), "chronicDiseaseName")));
-        q.setSurgeryHistoryInfo(objectMapper.writeValueAsString(toKeyedList(request.getSurgeryHistoryInfo(), "surgeryHistoryName")));
-        q.setMedicationInfo(objectMapper.writeValueAsString(toKeyedList(request.getMedicationInfo(), "medicationName")));
-        q.setLastModifiedDate(LocalDate.now());
-        
-        return q;
-    }
+    //     return q;
+    // }
 
     @Transactional
     public List<PatientQuestionnaireSummaryResponse> deleteQuestionnaireAndReturnList(User user, Long id) {
@@ -267,8 +267,8 @@ public class PatientQuestionnaireService {
         // 문진표 조회 (약물 검증 후)
         PatientQuestionnaire q = getCurrentUserQuestionnaire(finalUser);
         
-        q.setQuestionnaireName(request.getQuestionnaireName());
-        q.setNotes(request.getNotes());
+        q.setQuestionnaireName(request.getRealName() + "님의 문진표");
+        q.setNotes("");
         q.setAllergyInfo(objectMapper.writeValueAsString(toKeyedList(request.getAllergyInfo(), "allergyName")));
         q.setChronicDiseaseInfo(objectMapper.writeValueAsString(toKeyedList(request.getChronicDiseaseInfo(), "chronicDiseaseName")));
         q.setSurgeryHistoryInfo(objectMapper.writeValueAsString(toKeyedList(request.getSurgeryHistoryInfo(), "surgeryHistoryName")));
