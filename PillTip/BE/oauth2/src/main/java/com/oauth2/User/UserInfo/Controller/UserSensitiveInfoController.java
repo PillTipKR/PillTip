@@ -61,6 +61,7 @@ public class UserSensitiveInfoController {
                 infoForQuestionnaire != null ? infoForQuestionnaire.getSurgeryHistoryInfo() : null, "surgeryHistoryName");
 
             // 4. 문진표 자동 생성 (이미 있으면 예외 무시)
+            // medicationInfo는 PatientQuestionnaireService.createQuestionnaire()에서 taking-pill에서 자동으로 가져옴
             try {
                 com.oauth2.User.PatientQuestionnaire.Dto.PatientQuestionnaireRequest questionnaireRequest =
                     com.oauth2.User.PatientQuestionnaire.Dto.PatientQuestionnaireRequest.builder()
@@ -74,6 +75,7 @@ public class UserSensitiveInfoController {
                         .surgeryHistoryInfo(surgeryHistoryInfo)
                         .build();
                 patientQuestionnaireService.createQuestionnaire(user, questionnaireRequest);
+                logger.info("문진표 자동 생성 성공 (taking-pill 정보 포함) for user: {}", user.getId());
             } catch (Exception e) {
                 logger.warn("문진표 자동 생성 실패(이미 존재할 수 있음): {}", e.getMessage());
             }

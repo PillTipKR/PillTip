@@ -4,6 +4,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.oauth2.User.PatientQuestionnaire.Entity.PatientQuestionnaire;
+import com.oauth2.User.TakingPill.Entity.TakingPill;
+import com.oauth2.User.TakingPill.Service.TakingPillService;
 import com.oauth2.Util.Encryption.EncryptionUtil;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -11,8 +13,10 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Data
 @NoArgsConstructor
@@ -65,6 +69,84 @@ public class PatientPublicQuestionnaireResponse {
                     .lastModifiedDate(questionnaire.getLastModifiedDate())
                     .notes(questionnaire.getNotes())
                     .medicationInfo(parseEncryptedJsonToList(questionnaire.getMedicationInfo(), objectMapper, encryptionUtil))
+                    .allergyInfo(parseEncryptedJsonToList(questionnaire.getAllergyInfo(), objectMapper, encryptionUtil))
+                    .chronicDiseaseInfo(parseEncryptedJsonToList(questionnaire.getChronicDiseaseInfo(), objectMapper, encryptionUtil))
+                    .surgeryHistoryInfo(parseEncryptedJsonToList(questionnaire.getSurgeryHistoryInfo(), objectMapper, encryptionUtil))
+                    .expirationDate(expirationDate)
+                    .build();
+        } catch (Exception e) {
+            // 파싱 실패 시에도 빈 리스트로 기본값 설정
+            return PatientPublicQuestionnaireResponse.builder()
+                    .questionnaireId(questionnaire.getQuestionnaireId())
+                    .questionnaireName(questionnaire.getQuestionnaireName())
+                    .realName(decryptedRealName)
+                    .address(decryptedAddress)
+                    .phoneNumber(decryptedPhoneNumber)
+                    .gender(questionnaire.getUser().getUserProfile() != null ? 
+                           questionnaire.getUser().getUserProfile().getGender() != null ? 
+                           questionnaire.getUser().getUserProfile().getGender().name() : null : null)
+                    .birthDate(questionnaire.getUser().getUserProfile() != null && 
+                             questionnaire.getUser().getUserProfile().getBirthDate() != null ? 
+                             questionnaire.getUser().getUserProfile().getBirthDate().toString() : null)
+                    .height(questionnaire.getUser().getUserProfile() != null && 
+                           questionnaire.getUser().getUserProfile().getHeight() != null ? 
+                           questionnaire.getUser().getUserProfile().getHeight().toString() : null)
+                    .weight(questionnaire.getUser().getUserProfile() != null && 
+                           questionnaire.getUser().getUserProfile().getWeight() != null ? 
+                           questionnaire.getUser().getUserProfile().getWeight().toString() : null)
+                    .pregnant(questionnaire.getUser().getUserProfile() != null ? 
+                            questionnaire.getUser().getUserProfile().isPregnant() ? "Y" : "N" : null)
+                    .issueDate(questionnaire.getIssueDate())
+                    .lastModifiedDate(questionnaire.getLastModifiedDate())
+                    .notes(questionnaire.getNotes())
+                    .medicationInfo(List.of())
+                    .allergyInfo(List.of())
+                    .chronicDiseaseInfo(List.of())
+                    .surgeryHistoryInfo(List.of())
+                    .expirationDate(expirationDate)
+                    .build();
+        }
+    }
+
+    // 실시간 taking-pill 정보를 포함한 공개 문진표 응답 생성
+    public static PatientPublicQuestionnaireResponse fromWithRealTimeMedication(PatientQuestionnaire questionnaire, String decryptedPhoneNumber, String decryptedRealName, String decryptedAddress, EncryptionUtil encryptionUtil, TakingPillService takingPillService, Long expirationDate) {
+        ObjectMapper objectMapper = new ObjectMapper();
+        try {
+            // 실시간으로 taking-pill에서 약물 정보 가져오기
+            List<Map<String, Object>> realTimeMedicationInfo = takingPillService.getTakingPillsByUser(questionnaire.getUser()).stream()
+                    .map(takingPill -> {
+                        Map<String, Object> medication = new HashMap<>();
+                        medication.put("medicationId", takingPill.getMedicationId());
+                        medication.put("medicationName", takingPill.getMedicationName());
+                        medication.put("submitted", true);
+                        return medication;
+                    })
+                    .collect(Collectors.toList());
+
+            return PatientPublicQuestionnaireResponse.builder()
+                    .questionnaireId(questionnaire.getQuestionnaireId())
+                    .questionnaireName(questionnaire.getQuestionnaireName())
+                    .realName(decryptedRealName)
+                    .address(decryptedAddress)
+                    .phoneNumber(decryptedPhoneNumber)
+                    .gender(questionnaire.getUser().getUserProfile() != null ? 
+                           questionnaire.getUser().getUserProfile().getGender() != null ? 
+                           questionnaire.getUser().getUserProfile().getGender().name() : null : null)
+                    .birthDate(questionnaire.getUser().getUserProfile() != null && 
+                             questionnaire.getUser().getUserProfile().getBirthDate() != null ? 
+                             questionnaire.getUser().getUserProfile().getBirthDate().toString() : null)
+                    .height(questionnaire.getUser().getUserProfile() != null && 
+                           questionnaire.getUser().getUserProfile().getHeight() != null ? 
+                           questionnaire.getUser().getUserProfile().getHeight().toString() : null)
+                    .weight(questionnaire.getUser().getUserProfile() != null && 
+                           questionnaire.getUser().getUserProfile().getWeight() != null ? 
+                           questionnaire.getUser().getUserProfile().getWeight().toString() : null)
+                    .pregnant(questionnaire.getUser().getUserProfile() != null ? 
+                            questionnaire.getUser().getUserProfile().isPregnant() ? "Y" : "N" : null)
+                    .issueDate(questionnaire.getIssueDate())
+                    .lastModifiedDate(questionnaire.getLastModifiedDate())
+                    .notes(questionnaire.getNotes())
+                    .medicationInfo(realTimeMedicationInfo) // 실시간 taking-pill 정보 사용
                     .allergyInfo(parseEncryptedJsonToList(questionnaire.getAllergyInfo(), objectMapper, encryptionUtil))
                     .chronicDiseaseInfo(parseEncryptedJsonToList(questionnaire.getChronicDiseaseInfo(), objectMapper, encryptionUtil))
                     .surgeryHistoryInfo(parseEncryptedJsonToList(questionnaire.getSurgeryHistoryInfo(), objectMapper, encryptionUtil))
