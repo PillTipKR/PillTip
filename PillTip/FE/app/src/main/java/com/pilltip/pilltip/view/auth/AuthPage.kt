@@ -245,7 +245,12 @@ fun SelectPage(
             borderColor = Color(0xFF408AF1),
             backgroundColor = Color.White,
             fontColor = primaryColor,
-            onClick = { navController.navigate("IDPage") }
+            onClick = {
+                navController.navigate("IDPage")
+                signUpViewModel.updateLoginType(LoginType.IDPW)
+                signUpViewModel.updateToken("")
+                signUpViewModel.updateProvider("")
+            }
         )
         HeightSpacer(14.dp)
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -399,11 +404,12 @@ fun LoginPage(
                     textAlign = TextAlign.Center,
                 ),
                 modifier = Modifier.noRippleClickable {
-                    navController.navigate("FindMyInfoPage/FIND_ID") {
-                        popUpTo(
-                            "LoginPage"
-                        ) { inclusive = false }
-                    }
+                    Toast.makeText(context, "업데이트를 기대해주세요!", Toast.LENGTH_SHORT).show()
+//                    navController.navigate("FindMyInfoPage/FIND_ID") {
+//                        popUpTo(
+//                            "LoginPage"
+//                        ) { inclusive = false }
+//                    }
                 }
             )
             Image(
@@ -421,11 +427,12 @@ fun LoginPage(
                     textAlign = TextAlign.Center,
                 ),
                 modifier = Modifier.noRippleClickable {
-                    navController.navigate("FindMyInfoPage/FIND_PW") {
-                        popUpTo(
-                            "LoginPage"
-                        ) { inclusive = false }
-                    }
+                    Toast.makeText(context, "업데이트를 기대해주세요!", Toast.LENGTH_SHORT).show()
+//                    navController.navigate("FindMyInfoPage/FIND_PW") {
+//                        popUpTo(
+//                            "LoginPage"
+//                        ) { inclusive = false }
+//                    }
                 }
             )
             Image(

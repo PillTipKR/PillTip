@@ -61,6 +61,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.graphics.toColorInt
 import androidx.navigation.NavController
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.google.firebase.messaging.FirebaseMessaging
@@ -110,11 +111,11 @@ fun PillMainPage(
     sensitiveViewModel: SensitiveViewModel,
     initialTab: BottomTab = BottomTab.Home
 ) {
-    var selectedTab by remember { mutableStateOf(BottomTab.Home) }
+    var selectedTab by remember { mutableStateOf(initialTab) }
     val systemUiController = rememberSystemUiController()
     val scrollState = rememberScrollState()
 
-    val baseColor = Color(0xFFD0E6FD)
+    val baseColor = Color(0xFFF1F6FE)
     val endColor = Color.White
     val steps = 12
 
@@ -190,9 +191,12 @@ fun HomePage(
     val systemUiController = rememberSystemUiController()
     val permission = UserInfoManager.getUserData(LocalContext.current)?.permissions
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    var isSheetVisible by remember { mutableStateOf(false) }
     SideEffect {
         systemUiController.setStatusBarColor(
-            color = Color(0xFFD0E6FD),
+            color = Color(0xFFF1F6FE),
             darkIcons = true
         )
         systemUiController.isNavigationBarVisible = true
@@ -225,6 +229,9 @@ fun HomePage(
             Column(
                 Modifier
                     .fillMaxSize()
+                    .noRippleClickable {
+                        navController.navigate("SearchPage")
+                    }
             ) {
                 Text(
                     text = "빠른 약 검색",
@@ -273,13 +280,24 @@ fun HomePage(
             SmallTabCard(
                 HeaderText = "잊지말고 드세요",
                 SubHeaderText = "복약 관리",
-                ImageField = R.drawable.img_main_manage
+                ImageField = R.drawable.img_main_manage,
+                onClick = {
+                    navController.navigate("MyDrugInfoPage")
+                }
             )
             HeightSpacer(12.dp)
             SmallTabCard(
                 HeaderText = "간편한 내 기록 관리",
                 SubHeaderText = "스마트 문진표",
-                ImageField = R.drawable.logo_pilltip_blue_pill
+                ImageField = R.drawable.ic_main_shield,
+                onClick = {
+                    navController.navigate("PillMainPage/Chart") {
+                        popUpTo("PillMainPage") {
+                            inclusive = false
+                        }
+                        launchSingleTop = true
+                    }
+                }
             )
         }
     }
@@ -294,20 +312,24 @@ fun HomePage(
         FeatureButton(
             imageResource = R.drawable.ic_main_friend,
             description = "친구 추가",
-            onClick = {}
+            onClick = {
+                Toast.makeText(context, "정식 오픈 뒤 서비스 예정이에요\n업데이트를 기대해주세요!", Toast.LENGTH_SHORT).show()
+            }
         )
         FeatureButton(
             imageResource = R.drawable.ic_main_cute_baby,
             description = "자녀 관리",
-            onClick = {}
+            onClick = {
+                Toast.makeText(context, "법적 검토 중인 기능이에요\n업데이트를 기대해주세요!", Toast.LENGTH_SHORT).show()
+            }
         )
         FeatureButton(
             imageResource = R.drawable.ic_main_qrcode,
             description = "문진표 QR",
             onClick = {
-                if(permission == true) navController.navigate("QRScanPage")
+                if (permission == true) navController.navigate("QRScanPage")
                 else {
-                    Toast.makeText(context, "민감정보", Toast.LENGTH_SHORT).show()
+                    isSheetVisible = true
                 }
             }
         )
@@ -315,6 +337,7 @@ fun HomePage(
             imageResource = R.drawable.ic_main_review,
             description = "최신 리뷰",
             onClick = {
+                Toast.makeText(context, "정식 오픈 뒤 서비스 예정이에요\n업데이트를 기대해주세요!", Toast.LENGTH_SHORT).show()
             }
         )
     }
@@ -357,9 +380,7 @@ fun HomePage(
             }
         }
     }
-    val scope = rememberCoroutineScope()
-    val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    var isSheetVisible by remember { mutableStateOf(false) }
+
     if (isSheetVisible) {
         LaunchedEffect(Unit) {
             bottomSheetState.show()
@@ -434,13 +455,12 @@ fun HomePage(
                             .weight(1f)
                             .padding(vertical = 16.dp)
                             .height(58.dp),
-                        text = "입력하기",
+                        text = "뒤로가기",
                         buttonColor = gray100,
                         textColor = gray700,
                         onClick = {
                             scope.launch {
                                 bottomSheetState.hide()
-                                navController.navigate("EssentialPage")
                             }.invokeOnCompletion {
                                 isSheetVisible = false
                             }
@@ -452,11 +472,12 @@ fun HomePage(
                             .weight(1f)
                             .padding(vertical = 16.dp)
                             .height(58.dp),
-                        text = "뒤로가기",
+                        text = "입력하기",
                         buttonColor = primaryColor,
                         onClick = {
                             scope.launch {
                                 bottomSheetState.hide()
+                                navController.navigate("EssentialPage")
                             }.invokeOnCompletion {
                                 isSheetVisible = false
                             }
@@ -529,7 +550,7 @@ fun MyQuestionnairePage(
                     )
                     HeightSpacer(10.dp)
                     Text(
-                        text = "문진표가 없어요\n문진표를 추가해보세요",
+                        text = "필팁의 스마트 문진표를 사용하려면\n민감정보 수집 추가 동의가 필요해요!",
                         style = TextStyle(
                             fontSize = 16.sp,
                             lineHeight = 22.4.sp,
@@ -581,6 +602,7 @@ fun MyQuestionnairePage(
                     CircularProgressIndicator()
                 }
             }
+
             else -> {
                 val editable = searchHiltViewModel.editableQuestionnaire.value ?: return
 
@@ -662,6 +684,7 @@ fun MyQuestionnairePage(
                 Canvas(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .padding(horizontal = 22.dp)
                         .height(10.dp)
                 ) {
                     val triangleHeight = size.height
@@ -684,7 +707,7 @@ fun MyQuestionnairePage(
 
                     val paint = android.graphics.Paint().apply {
                         style = android.graphics.Paint.Style.FILL
-                        color = android.graphics.Color.WHITE
+                        color = "#F9FAFB".toColorInt()
                         isAntiAlias = true
                         setShadowLayer(3f, 0f, 4f, android.graphics.Color.argb(10, 0, 0, 0))
                     }
@@ -695,18 +718,16 @@ fun MyQuestionnairePage(
                         restore()
                     }
                 }
-
-                    NextButton(
-                        mModifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 16.dp, horizontal = 22.dp)
-                            .height(58.dp),
-                        text = "제출하기"
-                    ) {
-                        searchHiltViewModel.submitEditedQuestionnaire()
-                        navController.navigate("QRScanPage")
-                    }
-
+                NextButton(
+                    mModifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 16.dp, horizontal = 22.dp)
+                        .height(58.dp),
+                    text = "제출하기"
+                ) {
+                    searchHiltViewModel.submitEditedQuestionnaire()
+                    navController.navigate("QRScanPage")
+                }
             }
         }
     }

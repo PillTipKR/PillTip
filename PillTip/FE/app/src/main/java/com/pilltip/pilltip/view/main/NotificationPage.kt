@@ -40,7 +40,9 @@ import com.pilltip.pilltip.composable.HeightSpacer
 import com.pilltip.pilltip.composable.WhiteScreenModifier
 import com.pilltip.pilltip.model.search.SearchHiltViewModel
 import com.pilltip.pilltip.ui.theme.gray050
+import com.pilltip.pilltip.ui.theme.gray300
 import com.pilltip.pilltip.ui.theme.gray500
+import com.pilltip.pilltip.ui.theme.gray900
 import com.pilltip.pilltip.ui.theme.pretendard
 import com.pilltip.pilltip.ui.theme.primaryColor
 import kotlinx.coroutines.launch
@@ -101,7 +103,6 @@ fun NotificationPage(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(Color.White),
-            contentColor = primaryColor,
             indicator = { tabPositions ->
                 SecondaryIndicator(
                     Modifier.tabIndicatorOffset(tabPositions[pagerState.currentPage]),
@@ -120,8 +121,8 @@ fun NotificationPage(
                             pagerState.animateScrollToPage(index)
                         }
                     },
-                    selectedContentColor = primaryColor,
-                    unselectedContentColor = gray500,
+                    selectedContentColor = gray900,
+                    unselectedContentColor = gray300,
                     text = {
                         Text(
                             text = title,

@@ -372,6 +372,12 @@ data class PermissionData(
     val medicalInfoPermission: Boolean
 )
 
+data class BaseResponse(
+    val status: String,
+    val message: String,
+    val data: String
+)
+
 /**
  * 건강정보 조회
  */

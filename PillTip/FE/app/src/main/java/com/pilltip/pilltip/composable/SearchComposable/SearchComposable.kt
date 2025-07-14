@@ -332,6 +332,7 @@ fun HighlightedText(fullText: String, keyword: String) {
 
 @Composable
 fun AutoCompleteList(
+    horizontalPadding : Dp = 22.dp,
     query: String,
     searched: List<SearchData>,
     onClick: (SearchData) -> Unit,
@@ -346,7 +347,7 @@ fun AutoCompleteList(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable { onClick(item) }
-                    .padding(horizontal = 22.dp, vertical = 8.dp),
+                    .padding(horizontal = horizontalPadding, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 if (item.imageUrl != null) {
@@ -526,16 +527,6 @@ fun DrugSearchResultCard(
                             color = gray800,
                         )
                     )
-                    WidthSpacer(2.dp)
-                    Text(
-                        text = "(0)", /*아직 별점 데이터 없음. 향후 추가 예정*/
-                        style = TextStyle(
-                            fontSize = 12.sp,
-                            fontFamily = pretendard,
-                            fontWeight = FontWeight(400),
-                            color = gray800,
-                        )
-                    )
                     WidthSpacer(4.dp)
                     Box(
                         modifier = Modifier
@@ -555,16 +546,23 @@ fun DrugSearchResultCard(
                 }
                 Spacer(modifier = Modifier.height(6.dp))
                 val ingredients = drug.ingredients
-                val visibleCount = 2
+                val visibleCount = 1
                 val remainingCount = ingredients.size - visibleCount
-                ingredients.take(visibleCount).forEach { ingredient ->
-                    val isMainText = if (ingredient.isMain) " [주성분]" else ""
-                    Text(
-                        text = "⸰ $isMainText ${ingredient.name} (${ingredient.dose})",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = gray800
-                    )
-                }
+                ingredients
+                    .take(visibleCount)
+                    .filter { it.isMain }
+                    .forEach { ingredient ->
+                        Text(
+                            text = "⸰ ${ingredient.name} (${ingredient.dose})",
+                            style = TextStyle(
+                                fontSize = 12.sp,
+                                fontFamily = pretendard,
+                                fontWeight = FontWeight(400),
+                                color = gray800,
+                            )
+                        )
+                    }
+                HeightSpacer(3.dp)
                 if (remainingCount > 0) {
                     Text(
                         text = "… 외 ${remainingCount}개 성분",
@@ -572,7 +570,7 @@ fun DrugSearchResultCard(
                         color = gray500
                     )
                 }
-                Spacer(modifier = Modifier.height(6.dp))
+                HeightSpacer(6.dp)
                 Text(
                     text = "후기 0개",
                     style = TextStyle(
