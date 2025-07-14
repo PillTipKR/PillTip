@@ -74,7 +74,11 @@ public class UserSensitiveInfoController {
                         .chronicDiseaseInfo(chronicDiseaseInfo)
                         .surgeryHistoryInfo(surgeryHistoryInfo)
                         .build();
-                patientQuestionnaireService.createQuestionnaire(user, questionnaireRequest);
+                if(patientQuestionnaireService.getLatestQuestionnaireByUser(user) == null) {
+                    patientQuestionnaireService.createQuestionnaire(user, questionnaireRequest);
+                } else {
+                    patientQuestionnaireService.updateCurrentUserQuestionnaire(user, questionnaireRequest);
+                }
                 logger.info("문진표 자동 생성 성공 (taking-pill 정보 포함) for user: {}", user.getId());
             } catch (Exception e) {
                 logger.warn("문진표 자동 생성 실패(이미 존재할 수 있음): {}", e.getMessage());
@@ -205,6 +209,9 @@ public class UserSensitiveInfoController {
         try {
             UserSensitiveInfoDto sensitiveInfo = userSensitiveInfoService.deleteSensitiveInfoCategories(user, request);
             
+            // 문진표 동기화 추가
+            patientQuestionnaireService.syncFromSensitiveInfo(user, sensitiveInfo);
+            
             if (sensitiveInfo == null) {
                 return ResponseEntity.status(404)
                     .body(ApiResponse.error(UserInfoMessageConstants.SENSITIVE_INFO_NOT_FOUND, null));
@@ -234,7 +241,9 @@ public class UserSensitiveInfoController {
         
         try {
             userSensitiveInfoService.deleteAllSensitiveInfoByUser(user);
-            userSensitiveInfoService.syncFromQuestionnaire(user, "", "", "");
+            UserSensitiveInfoDto emptyInfo = userSensitiveInfoService.saveOrUpdateSensitiveInfo(user, null, null, null);
+            // 문진표 동기화 추가
+            patientQuestionnaireService.syncFromSensitiveInfo(user, emptyInfo);
             logger.info("Successfully deleted all sensitive info for user: {}", user.getId());
             return ResponseEntity.status(200)
                 .body(ApiResponse.success(UserInfoMessageConstants.SENSITIVE_INFO_ALL_DELETE_SUCCESS, "민감정보가 성공적으로 삭제되었습니다."));

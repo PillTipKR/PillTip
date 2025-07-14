@@ -86,15 +86,12 @@ public class UserSensitiveInfoService {
         switch (category.toLowerCase()) {
             case "allergy":
                 sensitiveInfo.setAllergyInfo(convertListToCommaSeparated(data));
-                syncFromQuestionnaire(user, sensitiveInfo.getAllergyInfo(), sensitiveInfo.getChronicDiseaseInfo(), sensitiveInfo.getSurgeryHistoryInfo());
                 break;
             case "chronicdisease":
                 sensitiveInfo.setChronicDiseaseInfo(convertListToCommaSeparated(data));
-                syncFromQuestionnaire(user, sensitiveInfo.getAllergyInfo(), sensitiveInfo.getChronicDiseaseInfo(), sensitiveInfo.getSurgeryHistoryInfo());
                 break;
             case "surgeryhistory":
                 sensitiveInfo.setSurgeryHistoryInfo(convertListToCommaSeparated(data));
-                syncFromQuestionnaire(user, sensitiveInfo.getAllergyInfo(), sensitiveInfo.getChronicDiseaseInfo(), sensitiveInfo.getSurgeryHistoryInfo());
                 break;
             default:
                 throw new IllegalArgumentException("Invalid category: " + category);
@@ -104,23 +101,6 @@ public class UserSensitiveInfoService {
         return UserSensitiveInfoDto.from(saved);
     }
 
-    /**
-     * 문진표에서 민감정보 동기화
-     */
-    @Transactional
-    public UserSensitiveInfoDto syncFromQuestionnaire(User user, String allergyInfo,
-                                                     String chronicDiseaseInfo, String surgeryHistoryInfo) {
-        UserSensitiveInfo sensitiveInfo = userSensitiveInfoRepository.findByUser(user)
-                .orElse(new UserSensitiveInfo());
-
-        sensitiveInfo.setUser(user);
-        sensitiveInfo.setAllergyInfo(mergeAndDeduplicate(sensitiveInfo.getAllergyInfo(), allergyInfo));
-        sensitiveInfo.setChronicDiseaseInfo(mergeAndDeduplicate(sensitiveInfo.getChronicDiseaseInfo(), chronicDiseaseInfo));
-        sensitiveInfo.setSurgeryHistoryInfo(mergeAndDeduplicate(sensitiveInfo.getSurgeryHistoryInfo(), surgeryHistoryInfo));
-
-        UserSensitiveInfo saved = userSensitiveInfoRepository.save(sensitiveInfo);
-        return UserSensitiveInfoDto.from(saved);
-    }
     
     /**
      * 기존 정보와 새로운 정보를 병합하고 중복을 제거합니다.
@@ -165,15 +145,30 @@ public class UserSensitiveInfoService {
 
         if (!request.isKeepAllergyInfo()) {
             sensitiveInfo.setAllergyInfo("");
-            syncFromQuestionnaire(user, "", sensitiveInfo.getChronicDiseaseInfo(), sensitiveInfo.getSurgeryHistoryInfo());
+            saveOrUpdateSensitiveInfo(
+                user,
+                null,
+                convertCommaSeparatedToList(sensitiveInfo.getChronicDiseaseInfo()),
+                convertCommaSeparatedToList(sensitiveInfo.getSurgeryHistoryInfo())
+            );
         }
         if (!request.isKeepChronicDiseaseInfo()) {
             sensitiveInfo.setChronicDiseaseInfo("");
-            syncFromQuestionnaire(user, sensitiveInfo.getAllergyInfo(), "", sensitiveInfo.getSurgeryHistoryInfo());
+            saveOrUpdateSensitiveInfo(
+                user,
+                convertCommaSeparatedToList(sensitiveInfo.getAllergyInfo()),
+                null,
+                convertCommaSeparatedToList(sensitiveInfo.getSurgeryHistoryInfo())
+            );
         }
         if (!request.isKeepSurgeryHistoryInfo()) {
             sensitiveInfo.setSurgeryHistoryInfo("");
-            syncFromQuestionnaire(user, sensitiveInfo.getAllergyInfo(), sensitiveInfo.getChronicDiseaseInfo(), "");
+            saveOrUpdateSensitiveInfo(
+                user,
+                convertCommaSeparatedToList(sensitiveInfo.getAllergyInfo()),
+                convertCommaSeparatedToList(sensitiveInfo.getChronicDiseaseInfo()),
+                null
+            );
         }
 
         UserSensitiveInfo saved = userSensitiveInfoRepository.save(sensitiveInfo);
@@ -197,5 +192,16 @@ public class UserSensitiveInfoService {
                 .filter(item -> item != null && !item.trim().isEmpty())
                 .reduce((a, b) -> a + "," + b)
                 .orElse("");
+    }
+
+    // String(콤마 구분) -> List<String> 변환 헬퍼 메서드 추가
+    private List<String> convertCommaSeparatedToList(String data) {
+        if (data == null || data.trim().isEmpty()) {
+            return List.of();
+        }
+        return Stream.of(data.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .toList();
     }
 } 
