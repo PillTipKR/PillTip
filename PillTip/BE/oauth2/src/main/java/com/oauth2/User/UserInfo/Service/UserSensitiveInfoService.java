@@ -70,6 +70,7 @@ public class UserSensitiveInfoService {
     @Transactional
     public void deleteAllSensitiveInfo(User user) {
         userSensitiveInfoRepository.deleteByUser(user);
+        
     }
 
     /**
@@ -85,12 +86,15 @@ public class UserSensitiveInfoService {
         switch (category.toLowerCase()) {
             case "allergy":
                 sensitiveInfo.setAllergyInfo(convertListToCommaSeparated(data));
+                syncFromQuestionnaire(user, sensitiveInfo.getAllergyInfo(), sensitiveInfo.getChronicDiseaseInfo(), sensitiveInfo.getSurgeryHistoryInfo());
                 break;
             case "chronicdisease":
                 sensitiveInfo.setChronicDiseaseInfo(convertListToCommaSeparated(data));
+                syncFromQuestionnaire(user, sensitiveInfo.getAllergyInfo(), sensitiveInfo.getChronicDiseaseInfo(), sensitiveInfo.getSurgeryHistoryInfo());
                 break;
             case "surgeryhistory":
                 sensitiveInfo.setSurgeryHistoryInfo(convertListToCommaSeparated(data));
+                syncFromQuestionnaire(user, sensitiveInfo.getAllergyInfo(), sensitiveInfo.getChronicDiseaseInfo(), sensitiveInfo.getSurgeryHistoryInfo());
                 break;
             default:
                 throw new IllegalArgumentException("Invalid category: " + category);
@@ -161,12 +165,15 @@ public class UserSensitiveInfoService {
 
         if (!request.isKeepAllergyInfo()) {
             sensitiveInfo.setAllergyInfo("");
+            syncFromQuestionnaire(user, "", sensitiveInfo.getChronicDiseaseInfo(), sensitiveInfo.getSurgeryHistoryInfo());
         }
         if (!request.isKeepChronicDiseaseInfo()) {
             sensitiveInfo.setChronicDiseaseInfo("");
+            syncFromQuestionnaire(user, sensitiveInfo.getAllergyInfo(), "", sensitiveInfo.getSurgeryHistoryInfo());
         }
         if (!request.isKeepSurgeryHistoryInfo()) {
             sensitiveInfo.setSurgeryHistoryInfo("");
+            syncFromQuestionnaire(user, sensitiveInfo.getAllergyInfo(), sensitiveInfo.getChronicDiseaseInfo(), "");
         }
 
         UserSensitiveInfo saved = userSensitiveInfoRepository.save(sensitiveInfo);
