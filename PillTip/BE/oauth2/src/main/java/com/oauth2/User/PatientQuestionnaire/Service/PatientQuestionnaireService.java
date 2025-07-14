@@ -274,6 +274,59 @@ public class PatientQuestionnaireService {
             .orElseThrow(() -> new IllegalArgumentException("문진표를 찾을 수 없습니다."));
     }
 
+    // === 민감정보에서 문진표 동기화 ===
+    @Transactional
+    public void syncFromSensitiveInfo(User user, com.oauth2.User.UserInfo.Dto.UserSensitiveInfoDto sensitiveInfo) {
+        // 최신 문진표 조회
+        PatientQuestionnaire questionnaire = getLatestQuestionnaireByUser(user);
+        try {
+            // 민감정보가 null이면 모두 빈 리스트로 처리
+            java.util.List<PatientQuestionnaireRequest.InfoItem> allergyList = java.util.Collections.emptyList();
+            java.util.List<PatientQuestionnaireRequest.InfoItem> chronicList = java.util.Collections.emptyList();
+            java.util.List<PatientQuestionnaireRequest.InfoItem> surgeryList = java.util.Collections.emptyList();
+
+            if (sensitiveInfo != null) {
+                allergyList = toInfoItemList(sensitiveInfo.getAllergyInfo(), "allergyName");
+                chronicList = toInfoItemList(sensitiveInfo.getChronicDiseaseInfo(), "chronicDiseaseName");
+                surgeryList = toInfoItemList(sensitiveInfo.getSurgeryHistoryInfo(), "surgeryHistoryName");
+            }
+
+            if (questionnaire == null) {
+                // 문진표가 없으면 새로 생성
+                PatientQuestionnaireRequest req = PatientQuestionnaireRequest.builder()
+                    .realName(user.getRealName())
+                    .address(user.getAddress())
+                    .phoneNumber(user.getUserProfile() != null ? user.getUserProfile().getPhone() : null)
+                    .allergyInfo(allergyList)
+                    .chronicDiseaseInfo(chronicList)
+                    .surgeryHistoryInfo(surgeryList)
+                    .build();
+                createQuestionnaire(user, req);
+            } else {
+                // 있으면 값만 갱신
+                questionnaire.setAllergyInfo(objectMapper.writeValueAsString(toKeyedList(allergyList, "allergyName")));
+                questionnaire.setChronicDiseaseInfo(objectMapper.writeValueAsString(toKeyedList(chronicList, "chronicDiseaseName")));
+                questionnaire.setSurgeryHistoryInfo(objectMapper.writeValueAsString(toKeyedList(surgeryList, "surgeryHistoryName")));
+                questionnaire.setLastModifiedDate(java.time.LocalDate.now());
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("문진표 동기화 실패: " + e.getMessage(), e);
+        }
+    }
+
+    // 민감정보 List<String> -> InfoItem 리스트 변환
+    private java.util.List<PatientQuestionnaireRequest.InfoItem> toInfoItemList(java.util.List<String> list, String key) {
+        if (list == null) return java.util.Collections.emptyList();
+        return list.stream()
+            .map(value -> PatientQuestionnaireRequest.InfoItem.builder()
+                .allergyName("allergyName".equals(key) ? value : null)
+                .chronicDiseaseName("chronicDiseaseName".equals(key) ? value : null)
+                .surgeryHistoryName("surgeryHistoryName".equals(key) ? value : null)
+                .submitted(true)
+                .build())
+            .collect(java.util.stream.Collectors.toList());
+    }
+    
     // /**
     //  * 문진표에서 민감정보 동기화
     //  */
