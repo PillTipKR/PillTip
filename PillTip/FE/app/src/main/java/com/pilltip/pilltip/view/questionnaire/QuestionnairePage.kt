@@ -5,10 +5,12 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -40,7 +42,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.asAndroidPath
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.vectorResource
@@ -57,7 +62,10 @@ import com.pilltip.pilltip.composable.AuthComposable.RoundTextField
 import com.pilltip.pilltip.composable.BackButton
 import com.pilltip.pilltip.composable.HeightSpacer
 import com.pilltip.pilltip.composable.NextButton
+import com.pilltip.pilltip.composable.QuestionnaireComposable.DottedDivider
+import com.pilltip.pilltip.composable.QuestionnaireComposable.InfoRow
 import com.pilltip.pilltip.composable.QuestionnaireComposable.InformationBox
+import com.pilltip.pilltip.composable.QuestionnaireComposable.QuestionnaireToggleSection
 import com.pilltip.pilltip.composable.WhiteScreenModifier
 import com.pilltip.pilltip.composable.WidthSpacer
 import com.pilltip.pilltip.composable.buttonModifier
@@ -68,6 +76,9 @@ import com.pilltip.pilltip.model.search.ChronicDiseaseInfo
 import com.pilltip.pilltip.model.search.SearchHiltViewModel
 import com.pilltip.pilltip.model.search.SensitiveViewModel
 import com.pilltip.pilltip.model.search.SurgeryHistoryInfo
+import com.pilltip.pilltip.model.signUp.SignUpViewModel
+import com.pilltip.pilltip.model.signUp.TokenManager
+import com.pilltip.pilltip.ui.theme.gray050
 import com.pilltip.pilltip.ui.theme.gray100
 import com.pilltip.pilltip.ui.theme.gray400
 import com.pilltip.pilltip.ui.theme.gray500
@@ -78,7 +89,9 @@ import com.pilltip.pilltip.ui.theme.primaryColor
 import com.pilltip.pilltip.ui.theme.primaryColor050
 import com.pilltip.pilltip.view.auth.logic.EssentialTerms
 import com.pilltip.pilltip.view.auth.logic.OptionalTerms
+import com.pilltip.pilltip.view.questionnaire.Logic.toKoreanGender
 import kotlinx.coroutines.launch
+import androidx.core.graphics.toColorInt
 
 @Composable
 fun QuestionnairePage(
@@ -564,7 +577,10 @@ fun NameAddressPage(
                             scope.launch {
                                 bottomSheetState.hide()
                                 sensitiveViewModel.resetAll()
-                                if(detailExists) navController.popBackStack("DetailPage", inclusive = false)
+                                if (detailExists) navController.popBackStack(
+                                    "DetailPage",
+                                    inclusive = false
+                                )
                                 else navController.popBackStack("PillMainPage", inclusive = false)
                             }.invokeOnCompletion {
                                 isSheetVisible = false
@@ -713,8 +729,8 @@ fun WritePage(
 ) {
     val viewModelList = when (mode) {
         "allergy" -> viewModel.allergyInfo.map { it.allergyName }
-        "etc" -> viewModel.chronicDiseaseInfo.map { it.chronicDiseaseName}
-        else -> viewModel.surgeryHistoryInfo.map { it.surgeryHistoryName}
+        "etc" -> viewModel.chronicDiseaseInfo.map { it.chronicDiseaseName }
+        else -> viewModel.surgeryHistoryInfo.map { it.surgeryHistoryName }
     }
     var textList by remember { mutableStateOf(viewModelList.toMutableList()) }
     val allFilled = textList.all { it.trim().isNotEmpty() }
@@ -781,21 +797,40 @@ fun WritePage(
             )
 
             HeightSpacer(30.dp)
-
             if (textList.size < 10) {
-                Text(
-                    text = "+ 추가하기",
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = primaryColor,
-                    modifier = Modifier
-                        .clickable {
-                            textList = textList.toMutableList().apply { add("") }
-                        }
-                        .padding(vertical = 8.dp)
-                )
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .border(
+                                width = 1.dp,
+                                color = primaryColor,
+                                shape = RoundedCornerShape(size = 1000.dp)
+                            )
+                            .padding(1.dp)
+                            .background(
+                                color = Color.White,
+                                shape = RoundedCornerShape(size = 1000.dp)
+                            )
+                            .padding(start = 14.dp, top = 8.dp, end = 14.dp, bottom = 8.dp)
+                            .noRippleClickable {
+                                textList = textList.toMutableList().apply { add("") }
+                            },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "+ 추가하기",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center,
+                            color = primaryColor
+                        )
+                    }
+                }
             }
-
+            HeightSpacer(10.dp)
             LazyColumn(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -804,7 +839,8 @@ fun WritePage(
                 items(textList.size) { index ->
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         RoundTextField(
                             text = textList[index],
@@ -816,21 +852,18 @@ fun WritePage(
                             isLogin = false,
                             modifier = Modifier.weight(1f)
                         )
-
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "X",
-                            fontSize = 18.sp,
-                            color = Color.Gray,
+                        WidthSpacer(6.dp)
+                        Image(
+                            imageVector = ImageVector.vectorResource(R.drawable.btn_red_xmark),
+                            contentDescription = "삭제",
                             modifier = Modifier
-                                .clickable {
-                                    textList =
-                                        textList.toMutableList().apply { removeAt(index) }
+                                .size(14.dp)
+                                .noRippleClickable {
+                                    textList = textList.toMutableList().apply { removeAt(index) }
                                 }
-                                .padding(8.dp)
                         )
                     }
-                    Spacer(modifier = Modifier.height(12.dp))
+                    HeightSpacer(12.dp)
                 }
 
                 item {
@@ -880,66 +913,184 @@ fun WritePage(
 @Composable
 fun SensitiveFinalPage(
     navController: NavController,
-    searchHiltViewModel: SearchHiltViewModel,
+    viewModel: SignUpViewModel,
     sensitiveViewModel: SensitiveViewModel
 ) {
-    Column(
+    val context = LocalContext.current
+    val realName = sensitiveViewModel.realName
+    val address = sensitiveViewModel.address
+    val phoneNumber = UserInfoManager.getUserData(context)?.phone
+    val gender = UserInfoManager.getUserData(context)?.gender
+    val birthDate = UserInfoManager.getUserData(context)?.birthDate
+    val age = UserInfoManager.getUserData(context)?.age
+    val allergyList = sensitiveViewModel.allergyInfo
+    val chronicList = sensitiveViewModel.chronicDiseaseInfo
+    val surgeryList = sensitiveViewModel.surgeryHistoryInfo
+    val backStackEntryExists = navController.backQueue.any {
+        it.destination.route == "DetailPage"
+    }
+
+    Box(
         modifier = WhiteScreenModifier.statusBarsPadding()
-    ){
-        val context = LocalContext.current
-        val realName =sensitiveViewModel.realName
-        val address = sensitiveViewModel.address
-        val phoneNumber = UserInfoManager.getUserData(context)?.phone
-        val gender = UserInfoManager.getUserData(context)?.gender
-        val birthDate = UserInfoManager.getUserData(context)?.birthDate
-        val age = UserInfoManager.getUserData(context)?.age
-        val allergyList = sensitiveViewModel.allergyInfo
-        val chronicList = sensitiveViewModel.chronicDiseaseInfo
-        val surgeryList = sensitiveViewModel.surgeryHistoryInfo
+    ) {
         Column(
-            modifier = WhiteScreenModifier
-                .verticalScroll(rememberScrollState())
-                .padding(16.dp)
+            modifier = Modifier
+                .fillMaxSize()
         ) {
-            Text("입력 정보 확인", fontSize = 20.sp, fontWeight = FontWeight.Bold)
-
-            Spacer(Modifier.height(12.dp))
-            Text("이름: $realName")
-            Text("성별: $gender")
-            Text("생년월일: $birthDate (만 ${age}세)")
-            Text("주소: $address")
-            Text("전화번호: $phoneNumber")
-
-            Spacer(Modifier.height(12.dp))
-            Text("알러지 정보:")
-            allergyList.filter { it.submitted }.forEach {
-                Text("- ${it.allergyName}")
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    text = "민감정보 확인",
+                    style = TextStyle(
+                        fontSize = 16.sp,
+                        fontFamily = pretendard,
+                        fontWeight = FontWeight(500),
+                        color = gray800,
+                    )
+                )
             }
+            Column(
+                modifier = Modifier.weight(1f)
+                .verticalScroll(rememberScrollState())
+            ) {
+                HeightSpacer(10.dp)
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 22.dp)
+                        .shadow(
+                            elevation = 3.dp,
+                            shape = RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp),
+                            clip = false
+                        )
+                        .background(
+                            gray050,
+                            shape = RoundedCornerShape(
+                                topStart = 12.dp,
+                                topEnd = 12.dp,
+                                bottomStart = 0.dp,
+                                bottomEnd = 0.dp
+                            )
+                        )
+                        .padding(start = 20.dp, top = 30.dp, end = 20.dp, bottom = 30.dp),
+                ) {
+                    HeightSpacer(12.dp)
+                    InfoRow("이름", realName)
+                    HeightSpacer(12.dp)
+                    InfoRow("생년월일", "$birthDate (만 ${age}세)")
+                    HeightSpacer(12.dp)
+                    InfoRow("성별", gender?.toKoreanGender() ?: "알 수 없음")
+                    HeightSpacer(12.dp)
+                    InfoRow("전화번호", phoneNumber.toString())
+                    HeightSpacer(12.dp)
+                    InfoRow("주소", address)
+                    HeightSpacer(24.dp)
+                    DottedDivider()
+                    HeightSpacer(24.dp)
+                    QuestionnaireToggleSection(
+                        title = "알러지 정보",
+                        items = allergyList,
+                        getName = { it.allergyName },
+                        getSubmitted = { it.submitted },
+                        onToggle = { },
+                        enable = false
+                    )
+                    HeightSpacer(12.dp)
+                    DottedDivider()
+                    HeightSpacer(24.dp)
+                    QuestionnaireToggleSection(
+                        title = "기저질환",
+                        items = chronicList,
+                        getName = { it.chronicDiseaseName },
+                        getSubmitted = { it.submitted },
+                        onToggle = { },
+                        enable = false
+                    )
+                    HeightSpacer(12.dp)
+                    DottedDivider()
+                    HeightSpacer(24.dp)
+                    QuestionnaireToggleSection(
+                        title = "수술 이력",
+                        items = surgeryList,
+                        getName = { it.surgeryHistoryName },
+                        getSubmitted = { it.submitted },
+                        onToggle = { },
+                        enable = false
+                    )
+                }
+                Canvas(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 22.dp)
+                        .height(10.dp)
+                ) {
+                    val triangleHeight = size.height
+                    val triangleWidth = triangleHeight / 0.866f
 
-            Spacer(Modifier.height(8.dp))
-            Text("만성질환 정보:")
-            chronicList.filter { it.submitted }.forEach {
-                Text("- ${it.chronicDiseaseName}")
+                    val triangleCount = (size.width / triangleWidth).toInt()
+                    val adjustedTriangleWidth = size.width / triangleCount
+
+                    val path = Path().apply {
+                        moveTo(0f, 0f)
+                        var x = 0f
+                        for (i in 0 until triangleCount) {
+                            lineTo(x + adjustedTriangleWidth / 2f, triangleHeight)
+                            lineTo(x + adjustedTriangleWidth, 0f)
+                            x += adjustedTriangleWidth
+                        }
+                        lineTo(size.width, 0f)
+                        close()
+                    }
+                    val paint = android.graphics.Paint().apply {
+                        style = android.graphics.Paint.Style.FILL
+                        color = "#F9FAFB".toColorInt()
+                        isAntiAlias = true
+                        setShadowLayer(3f, 0f, 4f, android.graphics.Color.argb(10, 0, 0, 0))
+                    }
+
+                    this.drawContext.canvas.nativeCanvas.apply {
+                        save()
+                        drawPath(path.asAndroidPath(), paint)
+                        restore()
+                    }
+                }
             }
-
-            Spacer(Modifier.height(8.dp))
-            Text("수술 이력:")
-            surgeryList.filter { it.submitted }.forEach {
-                Text("- ${it.surgeryHistoryName}")
-            }
-
-            Spacer(Modifier.weight(1f))
             NextButton(
                 mModifier = buttonModifier,
                 text = "작성 완료"
             ) {
                 sensitiveViewModel.updateSensitivePermissions()
                 sensitiveViewModel.phoneNumber = phoneNumber.toString()
-                sensitiveViewModel.submitSensitiveProfile()
-                Toast.makeText(context, "민감정보 작성 완료!\n 필팁의 강력한 AI 기능을 이용해보세요!", Toast.LENGTH_SHORT).show()
-                navController.navigate("PillMainPage") {
-                    popUpTo("EssentialPage") { inclusive = true }
-                }
+                sensitiveViewModel.submitSensitiveProfile(
+                    onSuccess = {
+                        viewModel.fetchMyInfo(TokenManager.getAccessToken(context).toString()) { userData ->
+                            UserInfoManager.saveUserData(context, userData)
+                            Toast.makeText(context, "민감정보 작성 완료!\n 필팁의 강력한 AI 기능을 이용해보세요!", Toast.LENGTH_SHORT).show()
+                            if (backStackEntryExists) {
+                                navController.navigate("DetailPage") {
+                                    popUpTo("DetailPage") {
+                                        inclusive = false
+                                    }
+                                }
+                            } else {
+                                navController.navigate("PillMainPage") {
+                                    popUpTo("PillMainPage") {
+                                        inclusive = true
+                                    }
+                                    launchSingleTop = true
+                                }
+                            }
+                        }
+                    },
+                    onFailure = {
+                        Toast.makeText(context, "제출에 실패했어요. 다시 시도해주세요!", Toast.LENGTH_SHORT).show()
+                    }
+                )
             }
         }
     }

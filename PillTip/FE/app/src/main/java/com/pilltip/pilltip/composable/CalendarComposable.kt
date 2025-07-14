@@ -309,46 +309,113 @@ fun DosageTimeDetailItem(
             Row(
                 modifier = Modifier.fillMaxWidth()
             ) {
-                NextButton(
-                    mModifier = Modifier
+                Box(
+                    modifier = Modifier
                         .weight(1f)
-                        .height(49.dp),
-                    text = "미룰래요",
-                    textSize = 14,
-                    textColor = gray700,
-                    buttonColor = gray100
-                ) {
-                    viewModel.fetchDosageLogMessage(
-                        logId = schedule.logId,
-                        onSuccess = { message ->
-                            Toast.makeText(context, "5분 뒤 복약 알림을 다시 드릴게요!", Toast.LENGTH_SHORT)
-                                .show()
+                        .height(49.dp)
+                        .background(color = gray100, shape = RoundedCornerShape(size = 12.dp))
+                        .padding(start = 30.dp, top = 16.dp, end = 30.dp, bottom = 16.dp)
+                        .noRippleClickable{
+                            if(!schedule.isTaken) {
+                                viewModel.fetchDosageLogMessage(
+                                    logId = schedule.logId,
+                                    onSuccess = { message ->
+                                        Toast.makeText(context, "5분 뒤 복약 알림을 다시 드릴게요!", Toast.LENGTH_SHORT)
+                                            .show()
+                                    },
+                                    onError = { error ->
+                                        Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
+                                    }
+                                )
+                            } else {
+                                Toast.makeText(context, "이미 복약하셨어요!", Toast.LENGTH_SHORT)
+                                    .show()
+                            }
                         },
-                        onError = { error ->
-                            Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
-                        }
+                    contentAlignment = Alignment.Center
+                ){
+                    Text(
+                        text = "5분 미루기",
+                        style = TextStyle(
+                            fontSize = 14.sp,
+                            fontFamily = pretendard,
+                            fontWeight = FontWeight(600),
+                            color = gray700,
+                        )
                     )
                 }
                 WidthSpacer(8.dp)
-                NextButton(
-                    mModifier = Modifier
+                Box(
+                    modifier = Modifier
                         .weight(1f)
-                        .height(49.dp),
-                    text = if (schedule.isTaken) "안 먹었어요" else "먹었어요",
-                    textColor = Color.White,
-                    textSize = 14,
-                    buttonColor = primaryColor
-                ) {
-                    viewModel.toggleDosageTaken(
-                        logId = schedule.logId,
-                        onSuccess = {
-                            viewModel.fetchDailyDosageLog(selectedDate)
+                        .height(49.dp)
+                        .background(color = primaryColor, shape = RoundedCornerShape(size = 12.dp))
+                        .padding(start = 30.dp, top = 16.dp, end = 30.dp, bottom = 16.dp)
+                        .noRippleClickable{
+                            if(!schedule.isTaken) {
+                                viewModel.toggleDosageTaken(
+                                    logId = schedule.logId,
+                                    onSuccess = {
+                                        viewModel.fetchDailyDosageLog(selectedDate)
+                                    },
+                                    onError = {
+                                        Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
+                                    }
+                                )
+                            }
                         },
-                        onError = {
-                            Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
-                        }
+                    contentAlignment = Alignment.Center
+                ){
+                    Text(
+                        text = "먹었어요",
+                        style = TextStyle(
+                            fontSize = 14.sp,
+                            fontFamily = pretendard,
+                            fontWeight = FontWeight(600),
+                            color = Color(0xFFFFFFFF),
+                        )
                     )
                 }
+//                NextButton(
+//                    mModifier = Modifier
+//                        .height(49.dp)
+//                        .weight(1f),
+//                    text = "미룰래요",
+//                    textSize = 14,
+//                    textColor = gray700,
+//                    buttonColor = gray100
+//                ) {
+//                    viewModel.fetchDosageLogMessage(
+//                        logId = schedule.logId,
+//                        onSuccess = { message ->
+//                            Toast.makeText(context, "5분 뒤 복약 알림을 다시 드릴게요!", Toast.LENGTH_SHORT)
+//                                .show()
+//                        },
+//                        onError = { error ->
+//                            Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
+//                        }
+//                    )
+//                }
+//                WidthSpacer(8.dp)
+//                NextButton(
+//                    mModifier = Modifier
+//                        .weight(1f)
+//                        .height(49.dp),
+//                    text = if (schedule.isTaken) "안 먹었어요" else "먹었어요",
+//                    textColor = Color.White,
+//                    textSize = 14,
+//                    buttonColor = primaryColor
+//                ) {
+//                    viewModel.toggleDosageTaken(
+//                        logId = schedule.logId,
+//                        onSuccess = {
+//                            viewModel.fetchDailyDosageLog(selectedDate)
+//                        },
+//                        onError = {
+//                            Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
+//                        }
+//                    )
+//                }
             }
         }
     }

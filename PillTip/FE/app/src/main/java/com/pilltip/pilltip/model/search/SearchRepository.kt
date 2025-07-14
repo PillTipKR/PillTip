@@ -266,11 +266,16 @@ interface SensitiveInfoApi {
 
     @GET("/api/sensitive-info")
     suspend fun getSensitiveInfo(): SensitiveInfoResponse
+
+    @DELETE("/api/sensitive-info/all")
+    suspend fun deleteAllSensitiveInfo(): BaseResponse
 }
 
 interface SensitiveInfoRepository {
     suspend fun updateSensitiveProfile(request: SensitiveSubmitRequest): SensitiveResponseData
     suspend fun fetchSensitiveInfo(): SensitiveInfoData
+    suspend fun deleteAllSensitiveInfo(): String
+
 }
 
 class SensitiveInfoRepositoryImpl(
@@ -282,6 +287,10 @@ class SensitiveInfoRepositoryImpl(
 
     override suspend fun fetchSensitiveInfo(): SensitiveInfoData {
         return api.getSensitiveInfo().data
+    }
+
+    override suspend fun deleteAllSensitiveInfo(): String {
+        return api.deleteAllSensitiveInfo().data
     }
 }
 

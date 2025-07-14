@@ -21,6 +21,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -167,11 +168,20 @@ fun SmallTabCard(
             },
         contentAlignment = Alignment.BottomEnd
     ) {
-        Image(
-            painter = painterResource(id = ImageField),
-            contentDescription = "logo",
-            modifier = Modifier
-        )
+        if(ImageField == R.drawable.ic_main_shield) {
+            Image(
+                painter = painterResource(id = ImageField),
+                contentDescription = "logo",
+                modifier = Modifier.scale(1.1f).offset(x = 15.dp, y = (20).dp)
+            )
+        } else {
+            Image(
+                painter = painterResource(id = ImageField),
+                contentDescription = "logo",
+                modifier = Modifier
+            )
+        }
+
         Column(
             modifier = Modifier
                 .fillMaxSize()

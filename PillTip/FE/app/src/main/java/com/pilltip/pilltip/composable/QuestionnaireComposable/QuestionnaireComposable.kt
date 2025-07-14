@@ -191,7 +191,8 @@ fun <T> QuestionnaireToggleSection(
     items: List<T>,
     getName: (T) -> String,
     getSubmitted: (T) -> Boolean,
-    onToggle: (Int) -> Unit
+    onToggle: (Int) -> Unit,
+    enable: Boolean = true
 ) {
     var expanded by remember { mutableStateOf(true) }
     val rotationDegree by animateFloatAsState(
@@ -244,10 +245,12 @@ fun <T> QuestionnaireToggleSection(
                             color = gray800
                         )
                     )
-                    IosButton(
-                        checked = getSubmitted(item),
-                        onCheckedChange = { onToggle(index) }
-                    )
+                    if(enable){
+                        IosButton(
+                            checked = getSubmitted(item),
+                            onCheckedChange = { onToggle(index) }
+                        )
+                    }
                 }
                 HeightSpacer(12.dp)
             }
@@ -261,10 +264,12 @@ fun CameraPermissionWrapper(
 ) {
     val context = LocalContext.current
     val cameraPermission = Manifest.permission.CAMERA
+    var permissionGranted by remember { mutableStateOf(false) }
 
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission(),
         onResult = { isGranted ->
+            permissionGranted = isGranted
             if (!isGranted) {
                 Toast.makeText(context, "카메라 권한이 필요해요", Toast.LENGTH_SHORT).show()
             }
@@ -272,20 +277,21 @@ fun CameraPermissionWrapper(
     )
 
     LaunchedEffect(Unit) {
-        when (PackageManager.PERMISSION_GRANTED) {
-            ContextCompat.checkSelfPermission(context, cameraPermission) -> {
-                // 이미 권한이 있음 → 바로 실행
-            }
-            else -> {
-                permissionLauncher.launch(cameraPermission)
-            }
+        permissionGranted = ContextCompat.checkSelfPermission(
+            context,
+            cameraPermission
+        ) == PackageManager.PERMISSION_GRANTED
+
+        if (!permissionGranted) {
+            permissionLauncher.launch(cameraPermission)
         }
     }
 
-    if (ContextCompat.checkSelfPermission(context, cameraPermission) == PackageManager.PERMISSION_GRANTED) {
+    if (permissionGranted) {
         onGranted()
     }
 }
+
 
 @Composable
 fun QrScannerEntry(onQrScanned: (String) -> Unit) {

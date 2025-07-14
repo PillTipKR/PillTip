@@ -7,6 +7,7 @@ import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateDpAsState
@@ -14,6 +15,8 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
@@ -49,7 +52,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.TabRowDefaults.SecondaryIndicator
@@ -60,6 +65,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -126,6 +132,7 @@ import com.pilltip.pilltip.model.search.SearchHiltViewModel
 import com.pilltip.pilltip.ui.theme.gray050
 import com.pilltip.pilltip.ui.theme.gray100
 import com.pilltip.pilltip.ui.theme.gray200
+import com.pilltip.pilltip.ui.theme.gray300
 import com.pilltip.pilltip.ui.theme.gray400
 import com.pilltip.pilltip.ui.theme.gray500
 import com.pilltip.pilltip.ui.theme.gray600
@@ -152,6 +159,14 @@ fun SearchPage(
     val recentSearches by logViewModel.recentSearches.collectAsState()
     val autoCompleted by searchViewModel.autoCompleted.collectAsState()
     val isLoading by searchViewModel.isAutoCompleteLoading.collectAsState()
+    BackHandler {
+        navController.navigate("PillMainPage") {
+            popUpTo("PillMainPage") {
+                inclusive = true
+            }
+            launchSingleTop = true
+        }
+    }
 
     LaunchedEffect(Unit) {
         snapshotFlow { inputText }
@@ -504,6 +519,7 @@ fun DetailPage(
     val pagerState = rememberPagerState(initialPage = 0) {
         tabs.size
     }
+    val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     val detailState by searchViewModel.drugDetail.collectAsState()
     val nickname = UserInfoManager.getUserData(LocalContext.current)?.nickname
@@ -667,9 +683,9 @@ fun DetailPage(
                                     color = gray500
                                 )
                             )
-                            HeightSpacer(9.63.dp)
+                            HeightSpacer(16.dp)
                             HorizontalDivider(thickness = 0.5.dp, color = gray200)
-                            HeightSpacer(9.63.dp)
+                            HeightSpacer(16.dp)
                             Row(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
@@ -696,7 +712,7 @@ fun DetailPage(
                             HeightSpacer(14.dp)
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
                             ) {
                                 detail.durTags.forEach { tag ->
                                     Box(
@@ -733,11 +749,10 @@ fun DetailPage(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .background(Color.White),
-                            contentColor = primaryColor,
                             indicator = { tabPositions ->
                                 SecondaryIndicator(
                                     Modifier.tabIndicatorOffset(tabPositions[pagerState.currentPage]),
-                                    color = primaryColor
+                                    color = gray800
                                 )
                             }
                         ) {
@@ -751,8 +766,8 @@ fun DetailPage(
                                             pagerState.animateScrollToPage(index)
                                         }
                                     },
-                                    selectedContentColor = primaryColor,
-                                    unselectedContentColor = gray500,
+                                    selectedContentColor = gray800,
+                                    unselectedContentColor = gray300,
                                     text = {
                                         Text(
                                             text = title,
@@ -816,7 +831,7 @@ fun DetailPage(
                     }
                     HorizontalDivider(
                         modifier = Modifier.fillMaxWidth(),
-                        thickness = 2.dp,
+                        thickness = 1.dp,
                         color = gray200
                     )
                     Row(
@@ -825,6 +840,7 @@ fun DetailPage(
                             .background(Color.White),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
+
                         NextButton(
                             mModifier = Modifier
                                 .weight(1f)
@@ -834,13 +850,25 @@ fun DetailPage(
                                 .border(
                                     1.dp,
                                     primaryColor,
-                                    shape = RoundedCornerShape(size = 16.dp)
+                                    shape = RoundedCornerShape(size = 12.dp)
                                 ),
                             text = "복약정보 저장",
+                            shape = 12,
                             buttonColor = Color.White,
                             textColor = primaryColor,
                             onClick = {
-                                navController.navigate("DosagePage/${detail.id}/${Uri.encode(detail.name)}")
+                                if (detail.isTaking == true) Toast.makeText(
+                                    context,
+                                    "이미 복약 중이에요!",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                                else navController.navigate(
+                                    "DosagePage/${detail.id}/${
+                                        Uri.encode(
+                                            detail.name
+                                        )
+                                    }"
+                                )
                             }
                         )
                         NextButton(
@@ -850,10 +878,15 @@ fun DetailPage(
                                 .padding(start = 5.dp, bottom = 46.dp, end = 22.dp)
                                 .height(58.dp),
                             text = "리뷰 쓰기",
+                            shape = 12,
                             buttonColor = primaryColor,
                             textColor = Color.White,
                             onClick = {
-
+                                Toast.makeText(
+                                    context,
+                                    "정식 오픈 뒤 서비스 예정이에요\n업데이트를 기대해주세요!",
+                                    Toast.LENGTH_SHORT
+                                ).show()
                             }
                         )
                     }
@@ -874,19 +907,24 @@ fun DrugInfoTab(
     val clipboardManager = LocalClipboardManager.current
     val permission = UserInfoManager.getUserData(LocalContext.current)?.permissions
     val gptAdvice by viewModel.gptAdvice.collectAsState()
+    val scrollState = rememberScrollState()
+    val coroutineScope = rememberCoroutineScope()
+    val showScrollToTop by remember {
+        derivedStateOf { scrollState.value > 300 }
+    }
 
     if (permission == true && gptAdvice == null) {
         LaunchedEffect(detail.id) {
             viewModel.fetchGptAdvice(detail)
         }
     }
-
     Column(
         modifier = Modifier
             .fillMaxSize()
             .heightIn(min = 300.dp)
             .padding(horizontal = 22.dp, vertical = 30.dp)
     ) {
+        HeightSpacer(12.dp)
         Text(
             text = "${nickname}님 AI 맞춤 안내",
             style = TextStyle(
@@ -908,7 +946,7 @@ fun DrugInfoTab(
         )
         HeightSpacer(12.dp)
         if (permission == true) {
-            if(gptAdvice!=null){
+            if (gptAdvice != null) {
                 ExpandableInfoBox(
                     item = gptAdvice!!,
                     collapsedHeight = 186.dp
@@ -940,7 +978,7 @@ fun DrugInfoTab(
                 Column(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally
-                ){
+                ) {
                     HeightSpacer(20.dp)
                     Canvas(modifier = Modifier.size(size = 30.dp)) {
                         val startAngle = 5f
@@ -1262,9 +1300,9 @@ fun AudioSearchPage(
                 color = Color(0xFF323439),
             )
         )
-        HeightSpacer(31.dp)
+        HeightSpacer(20.dp)
         Text(
-            text = "가장 많이 검색된 내용이에요",
+            text = "음성으로 검색해보세요!",
             style = TextStyle(
                 fontSize = 14.sp,
                 fontFamily = pretendard,
@@ -1272,29 +1310,7 @@ fun AudioSearchPage(
                 color = gray400,
             )
         )
-        HeightSpacer(24.dp)
-        FlowRow(
-            modifier = Modifier
-                .fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp)
-        ) {
-            allKeywords.forEach { keyword ->
-                val isSelected = keyword in selectedKeywords
-                TagButton(
-                    keyword = keyword,
-                    isSelected = isSelected,
-                    onClick = {
-                        if (isSelected) {
-                            selectedKeywords.remove(keyword)
-                        } else if (selectedKeywords.size < 5) {
-                            selectedKeywords.add(keyword)
-                        }
-                    }
-                )
-            }
-        }
-        HeightSpacer(50.dp)
+        Spacer(modifier = Modifier.weight(1f))
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -1323,6 +1339,7 @@ fun AudioSearchPage(
                 modifier = Modifier
             )
         }
+        Spacer(modifier = Modifier.weight(1f))
     }
 }
 

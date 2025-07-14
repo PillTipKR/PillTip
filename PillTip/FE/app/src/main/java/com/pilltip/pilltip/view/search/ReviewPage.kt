@@ -27,8 +27,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -114,14 +117,22 @@ fun ReviewStatisticsSection(
         }
         HeightSpacer(8.dp)
         Text(
-            text = "${reviewStats?.like?.toString() ?: "0"}명의 이용자들이 해당 약품에 만족하고 있어요!",
+            text = buildAnnotatedString {
+                val likeCount = reviewStats?.like?.toString() ?: "0"
+                withStyle(style = SpanStyle(color = primaryColor)) {
+                    append(likeCount)
+                }
+                withStyle(style = SpanStyle(color = Color.Black)) {
+                    append("명의 이용자들이 해당 약품에 만족하고 있어요!")
+                }
+            },
             style = TextStyle(
                 fontSize = 12.sp,
                 fontFamily = pretendard,
-                fontWeight = FontWeight(600),
-                color = primaryColor,
+                fontWeight = FontWeight(600)
             )
         )
+
         HeightSpacer(18.dp)
         Row(
             modifier = Modifier

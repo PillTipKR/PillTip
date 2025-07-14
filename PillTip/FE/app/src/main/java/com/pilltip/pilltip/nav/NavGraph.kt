@@ -108,7 +108,7 @@ fun NavGraph(
             val systemUiController = rememberSystemUiController()
             SideEffect {
                 systemUiController.setStatusBarColor(
-                    color = Color(0xFFD0E6FD),
+                    color = Color(0xFFF1F6FE),
                     darkIcons = true
                 )
                 systemUiController.isNavigationBarVisible = true
@@ -246,7 +246,7 @@ fun NavGraph(
             val (title, description, placeholder) = when (mode) {
                 "allergy" -> Triple(
                     "알러지명을 입력해주세요",
-                    "예: 약품, 식푿 등 알러지가 있다면 알려주세요",
+                    "예: 약품, 식품 등 알러지가 있다면 알려주세요",
                     "예: 페니실린"
                 )
 
@@ -273,12 +273,12 @@ fun NavGraph(
             )
         }
         composable("SensitiveFinalPage") {
-            SensitiveFinalPage(navController, searchHiltViewModel, sensitiveViewModel)
+            SensitiveFinalPage(navController, signUpViewModel, sensitiveViewModel)
         }
 
         /* mypage */
         composable("MyDrugInfoPage") { MyDrugInfoPage(navController, searchHiltViewModel) }
-        composable("EssentialInfoPage") { EssentialInfoPage(navController, searchHiltViewModel) }
+        composable("EssentialInfoPage") { EssentialInfoPage(navController, sensitiveViewModel, signUpViewModel) }
         composable("DURPage") { DURPage(navController) }
         composable("DURSearchPage") {
             DURSearchPage(navController, searchHiltViewModel)

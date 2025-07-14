@@ -139,8 +139,10 @@ fun RoundTextField(
         modifier = modifier
             .border(
                 width = 1.dp,
-                color = if (isLogin){ if(text.isEmpty())gray050 else Color.White} else{
-                    if(text.isEmpty()) gray050 else primaryColor
+                color = if (isLogin) {
+                    if (text.isNotEmpty()) gray050 else Color.White
+                } else {
+                    if (text.isEmpty()) gray050 else primaryColor
                 },
                 shape = RoundedCornerShape(size = 12.dp)
             )

@@ -252,7 +252,7 @@ fun HealthCard(
                 color = Color(0xFF000000),
             )
         )
-        HeightSpacer(8.dp)
+        HeightSpacer(10.dp)
         Row(
             verticalAlignment = Alignment.CenterVertically
         ) {

@@ -27,6 +27,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.PlatformTextStyle
@@ -59,12 +60,13 @@ fun NextButton(
     buttonColor: Color = Color(0xFF397CDB),
     textColor: Color = Color.White,
     textSize: Int = 18,
+    shape : Int = 16,
     onClick: () -> Unit
 ) {
     Button(
         onClick = onClick,
         modifier = mModifier,
-        shape = RoundedCornerShape(size = 16.dp),
+        shape = RoundedCornerShape(size = shape.dp),
         colors = ButtonDefaults.buttonColors(buttonColor),
     ) {
         Text(
@@ -178,6 +180,7 @@ fun BackButton(
             Image(
                 imageVector = ImageVector.vectorResource(id = iconDrawable),
                 contentDescription = "logo",
+                colorFilter = ColorFilter.tint(Color.Black),
                 modifier = Modifier.noRippleClickable {
                     onClick()
                 }

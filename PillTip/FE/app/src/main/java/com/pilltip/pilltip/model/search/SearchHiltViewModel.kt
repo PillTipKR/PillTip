@@ -604,7 +604,7 @@ class SensitiveViewModel @Inject constructor(
         )
     }
 
-    fun submitSensitiveProfile() {
+    fun submitSensitiveProfile(onSuccess: () -> Unit = {}, onFailure: (Throwable) -> Unit = {}) {
         viewModelScope.launch {
             try {
                 val response = sensitiveInfoRepository.updateSensitiveProfile(toRequest())
@@ -616,8 +616,10 @@ class SensitiveViewModel @Inject constructor(
                 surgeryHistoryInfo = response.sensitiveInfo.surgeryHistoryInfo.map { SurgeryHistoryInfo(it, true) }
 
                 Log.d("SensitiveSubmit", "업데이트 성공")
+                onSuccess()
             } catch (e: Exception) {
                 Log.e("SensitiveSubmit", "업데이트 실패: ${e.message}")
+                onFailure(e)
             }
         }
     }
@@ -632,6 +634,23 @@ class SensitiveViewModel @Inject constructor(
                 onSuccess(result)
             } catch (e: Exception) {
                 errorMessage = e.message
+            }
+        }
+    }
+
+    fun deleteAllSensitiveInfo(
+        onSuccess: (String) -> Unit = {},
+        onFailure: (Throwable) -> Unit = {}
+    ) {
+        viewModelScope.launch {
+            try {
+                val resultMessage = sensitiveInfoRepository.deleteAllSensitiveInfo()
+                Log.d("SensitiveDelete", "삭제 성공: $resultMessage")
+                resetAll()
+                onSuccess(resultMessage)
+            } catch (e: Exception) {
+                Log.e("SensitiveDelete", "삭제 실패: ${e.message}")
+                onFailure(e)
             }
         }
     }

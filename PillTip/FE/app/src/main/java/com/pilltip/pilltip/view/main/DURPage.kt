@@ -141,7 +141,7 @@ fun DURPage(
                 color = primaryColor,
             )
         )
-        HeightSpacer(4.dp)
+        HeightSpacer(6.dp)
         Text(
             text = "상충작용을 분석할\n약품을 두 개 선택해주세요.",
             style = TextStyle(
@@ -149,7 +149,7 @@ fun DURPage(
                 lineHeight = 33.8.sp,
                 fontFamily = pretendard,
                 fontWeight = FontWeight(700),
-                color = Color(0xFF121212),
+                color = Color.Black,
             )
         )
         HeightSpacer(52.dp)
@@ -190,7 +190,7 @@ fun DURPage(
                     color = gray600,
                 )
                 Image(
-                    imageVector = ImageVector.vectorResource(R.drawable.btn_right_gray_arrow),
+                    imageVector = ImageVector.vectorResource(R.drawable.btn_announce_arrow),
                     contentDescription = "약 검색 페이지 이동",
                     modifier = Modifier.size(20.dp)
                 )
@@ -297,7 +297,7 @@ fun DURSearchPage(
                 Text(
                     text = "약품을 검색해보세요!",
                     style = TextStyle(
-                        fontSize = 14.sp,
+                        fontSize = 16.sp,
                         fontFamily = pretendard,
                         fontWeight = FontWeight(600),
                         color = gray700,
@@ -306,6 +306,7 @@ fun DURSearchPage(
             } else {
                 Box(modifier = Modifier.fillMaxSize()) {
                     AutoCompleteList(
+                        horizontalPadding = 0.dp,
                         query = inputText,
                         searched = autoCompleted,
                         onClick = { },
@@ -374,7 +375,8 @@ fun DURSearchPage(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 22.dp, vertical = 16.dp)
+                        .padding(horizontal = 22.dp)
+                        .padding(top = 8.dp)
                 ) {
                     Box(
                         modifier = Modifier
@@ -383,7 +385,7 @@ fun DURSearchPage(
                             .height(4.dp)
                             .background(Color(0xFFD9D9D9), RoundedCornerShape(2.dp))
                     )
-                    HeightSpacer(8.dp)
+                    HeightSpacer(16.dp)
                     Text(
                         text = "선택 의약품",
                         fontSize = 14.sp,
@@ -607,8 +609,7 @@ fun DURResultPage(
     durData: DurGptData
 ) {
     val scrollState = rememberScrollState()
-
-    val baseColor = if (durData.durTrueInter) Color(0xFFFFE0E0) else Color(0xFFD0E6FD)
+    val baseColor = if (durData.durTrueInter) Color(0xFFFFF3F3) else Color(0xFFF1F6FE)
     val endColor = Color.White
     val steps = 12
     val systemUiController = rememberSystemUiController()
@@ -667,8 +668,8 @@ fun DURResultPage(
             modifier = Modifier
                 .height(30.dp)
                 .background(
-                    color = if (durData.durTrueInter) Color(0xFFFFC8C6) else Color(
-                        0xFFB8D9FB
+                    color = if (durData.durTrueInter) Color(0xFFFFE1E0) else Color(
+                        0xFFDFECFF
                     ), shape = RoundedCornerShape(size = 100.dp)
                 )
                 .padding(start = 14.dp, top = 8.dp, end = 14.dp, bottom = 8.dp),
@@ -750,7 +751,7 @@ fun DURResultPage(
                     isOk = durData.durTrueInter,
                     description = durData.interact
                 )
-                HeightSpacer(18.dp)
+                HeightSpacer(30.dp)
                 Text(
                     text = "본 결과지는 식품의약품안전처 의약품안전사용서비스(DUR)와",
                     style = TextStyle(
@@ -810,7 +811,11 @@ fun DURResultPage(
         }
         HeightSpacer(12.dp)
         NextButton(
-            mModifier = buttonModifier,
+            mModifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 16.dp)
+                .padding(bottom = 46.dp)
+                .height(58.dp),
             text = "확인"
         ) {
             navController.navigate("PillMainPage") {

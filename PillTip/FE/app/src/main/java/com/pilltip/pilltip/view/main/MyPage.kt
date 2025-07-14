@@ -84,6 +84,7 @@ import com.pilltip.pilltip.model.HandleBackPressToExitApp
 import com.pilltip.pilltip.model.UserInfoManager
 import com.pilltip.pilltip.model.search.SearchHiltViewModel
 import com.pilltip.pilltip.model.search.SensitiveViewModel
+import com.pilltip.pilltip.model.signUp.SignUpViewModel
 import com.pilltip.pilltip.model.signUp.TokenManager
 import com.pilltip.pilltip.ui.theme.gray050
 import com.pilltip.pilltip.ui.theme.gray100
@@ -246,7 +247,7 @@ fun MyPage(
                 navController.navigate("EssentialPage")
         }
         MyPageMenuItem(text = "내 리뷰 관리") {
-            // TODO: navController.navigate(...)
+            Toast.makeText(context, "업데이트를 기대해주세요!", Toast.LENGTH_SHORT).show()
         }
         HeightSpacer(48.dp)
         Text(
@@ -444,7 +445,7 @@ fun MyPageMenuItem(
             fontSize = 16.sp,
             fontFamily = pretendard,
             fontWeight = FontWeight(400),
-            color = gray900,
+            color = if(text == "로그아웃") Color(0xFFEB2C28) else gray900,
         ),
         modifier = Modifier
             .fillMaxWidth()
@@ -508,6 +509,13 @@ fun MyDrugInfoPage(
     LaunchedEffect(Unit) {
         viewModel.fetchDosageSummary()
     }
+    BackHandler {
+        navController.navigate("PillMainPage/MyPage") {
+            popUpTo(0) {
+                inclusive = true
+            }
+        }
+    }
 
     Column(
         modifier = WhiteScreenModifier
@@ -518,7 +526,13 @@ fun MyDrugInfoPage(
             title = "복약정보 관리",
             horizontalPadding = 0.dp,
             verticalPadding = 0.dp
-        ) { navController.popBackStack() }
+        ) {
+            navController.navigate("PillMainPage/MyPage") {
+                popUpTo(0) {
+                    inclusive = true
+                }
+            }
+        }
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(4.dp),
@@ -628,10 +642,18 @@ fun MyDrugManagementPage(
             horizontalPadding = 0.dp,
             verticalPadding = 0.dp
         ) {
-            navController.popBackStack()
+            navController.navigate("PillMainPage/MyPage") {
+                popUpTo(0) {
+                    inclusive = true
+                }
+            }
         }
         BackHandler {
-            navController.popBackStack()
+            navController.navigate("PillMainPage/MyPage") {
+                popUpTo(0) {
+                    inclusive = true
+                }
+            }
         }
         HeightSpacer(22.dp)
         if (pillDetail != null) {
@@ -764,7 +786,8 @@ fun MyDrugManagementPage(
 @Composable
 fun EssentialInfoPage(
     navController: NavController,
-    searchHiltViewModel: SearchHiltViewModel
+    sensitiveViewModel: SensitiveViewModel,
+    viewModel: SignUpViewModel,
 ) {
     val scope = rememberCoroutineScope()
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -772,12 +795,20 @@ fun EssentialInfoPage(
     var isEssential1Checked by remember { mutableStateOf(false) }
     var isEssential2Checked by remember { mutableStateOf(false) }
     val systemUiController = rememberSystemUiController()
+    val context = LocalContext.current
     SideEffect {
         systemUiController.setStatusBarColor(
             color = Color.White,
             darkIcons = true
         )
         systemUiController.isNavigationBarVisible = true
+    }
+    BackHandler {
+        navController.navigate("PillMainPage/MyPage") {
+            popUpTo(0) {
+                inclusive = true
+            }
+        }
     }
     Column(
         modifier = WhiteScreenModifier
@@ -788,7 +819,13 @@ fun EssentialInfoPage(
             title = "앱 이용 약관",
             horizontalPadding = 0.dp,
             verticalPadding = 0.dp
-        ) { navController.popBackStack() }
+        ) {
+            navController.navigate("PillMainPage/MyPage") {
+                popUpTo(0) {
+                    inclusive = true
+                }
+            }
+        }
         HeightSpacer(24.dp)
         MyPageMenuItem(text = "내 민감정보 삭제") {
             isSheetVisible = true
@@ -918,7 +955,6 @@ fun EssentialInfoPage(
                         contentDescription = "description",
                         modifier = Modifier
                             .noRippleClickable {
-
                             }
                     )
                 }
@@ -935,6 +971,22 @@ fun EssentialInfoPage(
                     onClick = {
                         if (isEssential1Checked && isEssential2Checked) {
                             scope.launch {
+                                sensitiveViewModel.sensitivePermission = false
+                                sensitiveViewModel.medicalPermission = false
+                                sensitiveViewModel.updateSensitivePermissions()
+                                sensitiveViewModel.deleteAllSensitiveInfo(
+                                    onSuccess = {
+                                        viewModel.fetchMyInfo(TokenManager.getAccessToken(context).toString()) { userData ->
+                                            UserInfoManager.saveUserData(context, userData)
+                                            Toast.makeText(context, "모든 데이터가 파기처리 되었습니다", Toast.LENGTH_SHORT).show()
+                                        }
+                                    },
+                                    onFailure = {
+                                        Toast.makeText(context, "삭제 실패, 다시 시도해주세요", Toast.LENGTH_SHORT).show()
+
+                                    }
+                                )
+
                                 bottomSheetState.hide()
                             }.invokeOnCompletion {
                                 isSheetVisible = false
@@ -965,6 +1017,13 @@ fun MyHealthPage(
         )
         systemUiController.isNavigationBarVisible = true
     }
+    BackHandler {
+        navController.navigate("PillMainPage/MyPage") {
+            popUpTo(0) {
+                inclusive = true
+            }
+        }
+    }
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -975,7 +1034,13 @@ fun MyHealthPage(
             title = "건강정보 관리",
             horizontalPadding = 22.dp,
             verticalPadding = 0.dp
-        ) { navController.popBackStack() }
+        ) {
+            navController.navigate("PillMainPage/MyPage") {
+                popUpTo(0) {
+                    inclusive = true
+                }
+            }
+        }
         Column(
             modifier = Modifier
                 .fillMaxSize()
