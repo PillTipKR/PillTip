@@ -234,7 +234,7 @@ public class UserSensitiveInfoController {
         
         try {
             userSensitiveInfoService.deleteAllSensitiveInfoByUser(user);
-            
+            userSensitiveInfoService.syncFromQuestionnaire(user, "", "", "");
             logger.info("Successfully deleted all sensitive info for user: {}", user.getId());
             return ResponseEntity.status(200)
                 .body(ApiResponse.success(UserInfoMessageConstants.SENSITIVE_INFO_ALL_DELETE_SUCCESS, "민감정보가 성공적으로 삭제되었습니다."));
