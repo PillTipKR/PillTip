@@ -1,12 +1,14 @@
 package com.oauth2.Drug.Import.DrugImport.Service;
 
 import com.oauth2.Drug.DrugInfo.Domain.*;
+import com.oauth2.Drug.DrugInfo.Repository.DrugRepository;
 import com.oauth2.Drug.DrugInfo.Service.DrugEffectService;
 import com.oauth2.Drug.DrugInfo.Service.DrugService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -22,6 +24,7 @@ public class PromptImporter {
 
 
     private final DrugService drugService;
+    private final DrugRepository drugRepository;
     private final DrugEffectService drugEffectService;
     private final PromptDrugUpdater promptDrugUpdater;
     private final Logger logger = LoggerFactory.getLogger(PromptImporter.class);
@@ -170,12 +173,14 @@ public class PromptImporter {
 
         // 4. 마크다운 특수문자 제거
         String[] markdownSymbols = {
-                "\\*\\*",       // **,
-                "~~",                  // 취소선
-                "`+",                  // `, ```, 등
-                "#+",                  // #, ##, ###
-                ">", "-", "\\+",       // 인용, 리스트
-                "\\|", "!", "_",       // 기타 마크다운
+                "\\*\\*",  // **
+                "~~",      // ~~
+                "`+",      // ` or ```
+                "#+",      // #, ## 등
+                "^>\\s*",  // 인용문 '>'는 문장 앞에 오는 경우만 제거 (문장 내부 > 는 보존)
+                "^\\-\\s*", // 리스트 '-' 문장 앞에서만 제거
+                "^\\+\\s*", // 리스트 '+' 문장 앞에서만 제거
+                "^\\d+\\.\\s*", // 숫자 리스트 항목: '1. ', '2. ' 등
         };
 
         for (String symbol : markdownSymbols) {
@@ -186,10 +191,53 @@ public class PromptImporter {
     }
 
 
+    @Transactional
+    public void importPromptIngCaution(String filePath) throws IOException {
+        String fileContent = Files.readString(Path.of(filePath));
+        String[] blocks = fileContent.split("===+");
+        List<DrugEffect> cautions = new ArrayList<>();
+        for (int i = 1; i < blocks.length; i += 2) {
+            String ingredientName = blocks[i].trim(); // ex. "로페라미드"
+            String cautionText = blocks[i + 1].trim();
+
+            // 성분명이 포함된 모든 약물 검색
+            List<Drug> matchedDrugs = drugRepository.findByNameContaining(ingredientName);
+            if (matchedDrugs.isEmpty()) {
+                System.out.println("일치하는 약물이 없음: " + ingredientName);
+                continue;
+            }
+
+            for (Drug drug : matchedDrugs) {
+                Optional<DrugEffect> cautionOpt = drug.getDrugEffects().stream()
+                        .filter(e -> e.getType() == DrugEffect.Type.CAUTION)
+                        .findFirst();
+
+                DrugEffect caution;
+                if (cautionOpt.isPresent()) {
+                    caution = cautionOpt.get();
+                    cautionText = cleanAllFormatting(cautionText);
+                    caution.setContent(cautionText);
+                } else {
+                    // CAUTION 타입이 없으면 새로 생성
+                    caution = new DrugEffect();
+                    caution.setDrug(drug);
+                    caution.setType(DrugEffect.Type.CAUTION);
+                    caution.setContent(cautionText);
+                }
+
+                cautions.add(caution);
+                System.out.println("저장 완료: " + drug.getName());
+            }
+        }
+        drugEffectService.saveAll(cautions);
+    }
+
+    @Transactional
     public void importPromptCaution(String filePath) {
         try {
             String fullText = Files.readString(Path.of(filePath));
             String[] blocks = fullText.split("=== "); // "=== 약이름 주의사항 ===" 기준으로 분할
+            List<DrugEffect> cautions = new ArrayList<>();
 
             for (String block : blocks) {
                 block = block.trim();
@@ -223,11 +271,12 @@ public class PromptImporter {
                 if (cautionOpt.isPresent()) {
                     DrugEffect caution = cautionOpt.get();
                     caution.setContent(cautionText);
-                    drugEffectService.save(caution);
+                    cautions.add(caution);
                 } else {
                     System.out.println("주의사항 항목이 존재하지 않음 (신규 생성 필요?): " + drugName);
                 }
             }
+            drugEffectService.saveAll(cautions);
         } catch (IOException e) {
             logger.error("Error occurred in import caution file: {}", e.getMessage());
         }

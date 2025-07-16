@@ -4,6 +4,8 @@ import com.oauth2.Drug.DrugInfo.Domain.DrugEffect;
 import com.oauth2.Drug.DrugInfo.Repository.DrugEffectRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class DrugEffectService {
     private final DrugEffectRepository drugEffectRepository;
@@ -18,5 +20,9 @@ public class DrugEffectService {
 
     public DrugEffect save(DrugEffect drugEffect) {
         return drugEffectRepository.save(drugEffect);
+    }
+
+    public List<DrugEffect> saveAll(List<DrugEffect> cautions) {
+        return drugEffectRepository.saveAll(cautions);
     }
 }
