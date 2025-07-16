@@ -73,22 +73,25 @@ public class PromptDrugUpdater {
         // 3. HTML 특수문자 제거 (기본 escape 문자)
         result = result.replaceAll("&[a-zA-Z]+;", "");
 
-        // 4. 마크다운 특수문자 제거
+        // 4. 마크다운 제목 라인 제거: ## 1. 제목 or ### 제목 등
+        result = result.replaceAll("(?m)^\\s*#{1,6}\\s*\\d*\\.?\\s*.*$", "");
+
+
+        // 5. 마크다운 특수문자 제거
         String[] markdownSymbols = {
-                "\\*\\*",       // **,
-                "~~",                  // 취소선
-                "`+",                  // `, ```, 등
-                "#+",                  // #, ##, ###
-                ">", "-", "\\+",       // 인용, 리스트
-                "\\|", "!", "_",       // 기타 마크다운
+                "\\*\\*",  // **
+                "~~",      // ~~
+                "`+",      // ` or ```
+                "#+",      // #, ## 등
+                "^>\\s*",  // 인용문 '>'는 문장 앞에 오는 경우만 제거 (문장 내부 > 는 보존)
+                "^\\-\\s*", // 리스트 '-' 문장 앞에서만 제거
+                "^\\+\\s*", // 리스트 '+' 문장 앞에서만 제거
+                "^\\d+\\.\\s*", // 숫자 리스트 항목: '1. ', '2. ' 등
         };
 
         for (String symbol : markdownSymbols) {
             result = result.replaceAll(symbol, "");
         }
-
-        // 5. 공백 정리 (여러 공백 → 하나로, 앞뒤 trim)
-        result = result.trim().replaceAll("\\s+", " ");
 
         return result;
     }

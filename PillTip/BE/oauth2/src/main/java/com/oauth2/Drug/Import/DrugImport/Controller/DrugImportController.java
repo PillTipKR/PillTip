@@ -39,6 +39,9 @@ public class DrugImportController {
     @Value("${promptCaution3}")
     private String promptCaution3;
 
+    @Value("${promptIngCaution}")
+    private String promptIngCaution;
+
     @Value("${promptDrug1}")
     private String promptDrug1;
 
@@ -118,6 +121,17 @@ public class DrugImportController {
         promptImporter.importPromptCaution(promptCaution3);
         System.out.println("주의사항 정보 주입 완료");
     }
+
+    private void importIngrCaution() throws IOException {
+        promptImporter.importPromptIngCaution(promptIngCaution);
+    }
+
+    @PostMapping("/prompt/caution/all")
+    public void importCaution() throws IOException {
+        importCautionPrompt();
+        importIngrCaution();
+    }
+
 
 
     @PostMapping("/ingredients")
