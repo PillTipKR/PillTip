@@ -172,6 +172,40 @@ fun SelectPage(
     val context = LocalContext.current
     var termsOfService by remember { mutableStateOf(false) }
 
+    val user by kakaoViewModel.user
+    val token = kakaoViewModel.getAccessToken()
+
+    LaunchedEffect(user) {
+        if (user != null && token != null) {
+            signUpViewModel.socialLogin(
+                token = token,
+                provider = "KAKAO",
+                onSuccess = { accessToken, refreshToken ->
+                    signUpViewModel.fetchMyInfo(accessToken) { userData ->
+                        TokenManager.saveTokens(context, accessToken, refreshToken)
+                        Log.d("Login", "로그인 성공! 액세스토큰: $accessToken")
+                        UserInfoManager.saveUserData(context, userData)
+                        Toast.makeText(context, "이미 가입하셨군요!\n${userData.nickname}님, 반가워요!", Toast.LENGTH_SHORT)
+                            .show()
+                        navController.navigate("PillMainPage") {
+                            popUpTo(0) { inclusive = true }
+                        }
+                    }
+                },
+                onFailure = { error ->
+                    Log.e("SocialLogin", "가입되어 있지 않은 회원입니다. 회원가입 진행합니다: ${error?.message}")
+                    kakaoViewModel.user.value?.let { user ->
+                        signUpViewModel.updateLoginType(LoginType.SOCIAL)
+                        signUpViewModel.updateToken(token ?: "")
+                        signUpViewModel.updateProvider("kakao")
+                        termsOfService = true
+                    }
+                }
+            )
+        }
+    }
+
+
     SideEffect {
         systemUiController.setStatusBarColor(
             color = Color.White,
@@ -214,17 +248,7 @@ fun SelectPage(
             backgroundColor = Color(0xFFFEE500),
             fontColor = Color.Black,
             onClick = {
-                kakaoViewModel.kakaoLogin(context) { success ->
-                    if (success) {
-                        val token = kakaoViewModel.getAccessToken()
-                        kakaoViewModel.user.value?.let { user ->
-                            signUpViewModel.updateLoginType(LoginType.SOCIAL)
-                            signUpViewModel.updateToken(token ?: "")
-                            signUpViewModel.updateProvider("kakao")
-                            termsOfService = true
-                        }
-                    }
-                }
+                kakaoViewModel.kakaoLogin(context)
             }
         )
 //        HeightSpacer(16.dp)
