@@ -10,5 +10,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 public class QuestionnaireQRUrlResponse {
+    private String realName;
     private String qrUrl;
 } 

@@ -215,12 +215,11 @@ public class TokenService {
     }
 
     // 커스텀 JWT 토큰 생성 (userId, questionnaireId, hospitalCode, 만료초)
-    public String createCustomJwtToken(Long userId, Long questionnaireId, String hospitalCode, int expiresInSeconds) {
+    public String createCustomJwtToken(Long userId, String hospitalCode, int expiresInSeconds) {
         long now = System.currentTimeMillis();
         Key key = new SecretKeySpec(secretKey.getBytes(StandardCharsets.UTF_8), SignatureAlgorithm.HS256.getJcaName());
         String token = Jwts.builder()
                 .setSubject(String.valueOf(userId))
-                .claim("questionnaireId", questionnaireId)
                 .claim("hospitalCode", hospitalCode)
                 .setIssuedAt(new Date(now))
                 .setExpiration(new Date(now + expiresInSeconds * 1000L))
@@ -231,7 +230,7 @@ public class TokenService {
     }
 
     // 커스텀 JWT 토큰 검증 (questionnaireId 일치)
-    public boolean validateCustomJwtToken(String token, Long questionnaireId) {
+    public boolean validateCustomJwtToken(String token, String id) {
         try {
             
             Claims claims = Jwts.parserBuilder()
@@ -239,8 +238,8 @@ public class TokenService {
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
-            Long tokenQid = claims.get("questionnaireId", Long.class);
-            if (!questionnaireId.equals(tokenQid)) {
+            String tokenId = claims.get("id", String.class);
+            if (!id.equals(tokenId)) {
                 return false;
             }
             return true;
