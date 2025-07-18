@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+// 1. 인증서 검사 사용 / 2. 인증서 검사 비활성화
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = "1";
 
-// BE API 엔드포인트 설정
-const BE_BASE_URL = process.env.BE_API_URL || "http://localhost:20022";
+const BE_BASE_URL = process.env.BE_API_URL || "https://pilltip.com:20022";
 
 export async function GET(
   request: NextRequest,
@@ -12,7 +12,6 @@ export async function GET(
 ) {
   const { questionnaireId } = await context.params;
 
-  // 디버깅용 로그 추가
   console.log("[DEBUG] request.nextUrl:", request.nextUrl.toString());
   console.log("[DEBUG] questionnaireId:", questionnaireId);
 
@@ -37,7 +36,6 @@ export async function GET(
         : `Bearer ${jwtToken}`;
     }
 
-    // ✅ token 파라미터로 요청 (BE가 token/jwtToken 모두 지원하므로 이게 더 안전)
     const beUrl = `${BE_BASE_URL}/api/questionnaire/public/${questionnaireId}?token=${jwtToken}`;
 
     // 디버깅용 로그

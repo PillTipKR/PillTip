@@ -26,6 +26,7 @@ import org.springframework.web.bind.annotation.*;
 import com.oauth2.User.Auth.Service.TokenService;   
 import com.oauth2.User.TakingPill.Service.TakingPillService;
 import com.oauth2.Util.Encryption.EncryptionUtil;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/questionnaire")
@@ -315,6 +316,7 @@ public class QuestionnaireController {
                 .body(ApiResponse.error(QuestionnaireMessageConstants.QUESTIONNAIRE_UPDATE_FAILED, null));
         }
     }
+    
     // QR 코드를 통한 문진표 URL 생성 API (DB에 저장)
     @PostMapping("/qr-url/{hospitalCode}")
     public ResponseEntity<ApiResponse<QuestionnaireQRUrlResponse>> generateQRUrl(
@@ -353,7 +355,7 @@ public class QuestionnaireController {
                 .body(ApiResponse.error("토큰이 필요합니다. QR 코드를 다시 스캔해주세요.", null));
         }
         
-        boolean valid = tokenService.validateCustomJwtToken(actualToken, id);
+        boolean valid = tokenService.validateCustomJwtToken(actualToken, id.toString());
         if (!valid) {
             return ResponseEntity.status(401)
                 .body(ApiResponse.error(QuestionnaireMessageConstants.INVALID_CUSTOM_TOKEN, null));
@@ -375,6 +377,23 @@ public class QuestionnaireController {
             logger.error("Public questionnaire access failed: {}", e.getMessage(), e);
             return ResponseEntity.status(500)
                 .body(ApiResponse.error("문진표 접근에 실패했습니다.", null));
+        }
+    }
+
+    @GetMapping("/qr-url/all/{hospitalCode}")
+    public ResponseEntity<ApiResponse<List<QuestionnaireQRUrlResponse>>> getAllQRUrl(
+            @AuthenticationPrincipal User user,
+            @PathVariable(value = "hospitalCode", required = false) String hospitalCode) {
+        try {
+            List<QuestionnaireQRUrlResponse> response = questionnaireQRUrlService.getAllQRUrl(hospitalCode);
+            return ResponseEntity.ok(ApiResponse.success(QuestionnaireMessageConstants.QR_URL_RETRIEVE_SUCCESS, response));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(404)
+                .body(ApiResponse.error("QR URL을 찾을 수 없습니다.", null));
+        } catch (Exception e) {
+            logger.error("QR URL retrieve failed: {}", e.getMessage(), e);
+            return ResponseEntity.status(500)
+                .body(ApiResponse.error(QuestionnaireMessageConstants.QR_URL_RETRIEVE_FAILED, null));
         }
     }
 } 
