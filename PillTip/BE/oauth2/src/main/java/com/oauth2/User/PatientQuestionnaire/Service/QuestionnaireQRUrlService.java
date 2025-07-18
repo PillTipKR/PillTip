@@ -1,11 +1,11 @@
 package com.oauth2.User.PatientQuestionnaire.Service;
 
-import com.oauth2.User.Auth.Entity.User;
+import com.oauth2.User.UserInfo.Entity.User;
 import com.oauth2.User.PatientQuestionnaire.Entity.QuestionnaireQRUrl;
 import com.oauth2.User.PatientQuestionnaire.Repository.QuestionnaireQRUrlRepository;
 import com.oauth2.User.PatientQuestionnaire.Dto.QuestionnaireQRUrlResponse;
 import com.oauth2.User.Hospital.HospitalService;
-import com.oauth2.User.Auth.Service.TokenService;
+import com.oauth2.Account.Service.TokenService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

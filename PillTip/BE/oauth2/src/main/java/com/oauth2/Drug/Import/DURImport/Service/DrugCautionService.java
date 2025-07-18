@@ -3,6 +3,7 @@ package com.oauth2.Drug.Import.DURImport.Service;
 import com.oauth2.Drug.DUR.Domain.DrugCaution;
 import com.oauth2.Drug.DrugInfo.Domain.Drug;
 import com.oauth2.Drug.DUR.Repository.DrugCautionRepository;
+import com.oauth2.Drug.DrugInfo.Repository.DrugIngredientRepository;
 import com.oauth2.Drug.DrugInfo.Repository.DrugRepository;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.csv.CSVFormat;
@@ -37,8 +38,25 @@ public class DrugCautionService {
     @Value("${pregnancyFile}")
     private String pregnancyFile;
 
+    @Value("${ingredient.age}")
+    private String ingredientAge;
+
+    @Value("${ingredient.elder}")
+    private String ingredientElder;
+
+    @Value("${ingredient.period}")
+    private String ingredientPeriod;
+
+    @Value("${ingredient.lactation}")
+    private String ingredientLactation;
+
+    @Value("${ingredient.pregnant}")
+    private String ingredientPregnant;
+
+
     private final DrugCautionRepository drugCautionRepository;
     private final DrugRepository drugRepository;
+    private final DrugIngredientRepository drugIngredientRepository;
 
     private DrugCaution.ConditionType convertConditionType(String type) {
         return switch (type.trim()) {
@@ -197,6 +215,7 @@ public class DrugCautionService {
         }
     }
 
+
     private String removeLeadingParentheses(String name) {
         while (name.startsWith("(")) {
             int depth = 0;
@@ -214,11 +233,56 @@ public class DrugCautionService {
         return name.split("\\(")[0];
     }
 
+    private void parseIngrCautions(String filePath, DrugCaution.ConditionType conditionType) throws IOException {
+        try (
+                Reader reader = new FileReader(filePath);
+                CSVParser csvParser = CSVFormat.DEFAULT
+                        .withFirstRecordAsHeader()
+                        .withIgnoreEmptyLines()
+                        .withAllowMissingColumnNames()
+                        .withTrim()
+                        .parse(reader)
+        ) {
+            for (CSVRecord record : csvParser) {
+                String ingrName = record.get(0).trim();       // 첫 번째 컬럼
+                String conditionValue = record.get(2).trim();    // "1세 미만" 등
+                String note = record.get(3).trim();              // 위험성
+
+                List<Long> drugIds = drugIngredientRepository.findDrugIdsByIngredientName(ingrName);
+
+                if(drugIds.isEmpty()) continue;
+
+                for(Long id : drugIds){
+                    if(!drugCautionRepository.findByDrugIdAndConditionType(id, conditionType).isEmpty()) continue;
+                    saveIngredientCaution(id, conditionType,conditionValue, note);
+                }
+            }
+        }
+    }
+
+    public void parseIngrAll() throws IOException {
+        parseIngrCautions(ingredientAge, DrugCaution.ConditionType.AGE);
+        parseIngrCautions(ingredientElder, DrugCaution.ConditionType.ELDER);
+        parseIngrCautions(ingredientLactation, DrugCaution.ConditionType.LACTATION);
+        parseIngrCautions(ingredientPeriod, DrugCaution.ConditionType.PERIOD);
+        parseIngrCautions(ingredientPregnant, DrugCaution.ConditionType.PREGNANCY);
+    }
+
+    private void saveIngredientCaution(Long id, DrugCaution.ConditionType conditionType, String conditionValue, String note) {
+        DrugCaution caution = new DrugCaution();
+        caution.setDrugId(id);
+        caution.setConditionType(conditionType);
+        caution.setConditionValue(conditionValue);
+        caution.setNote(note);
+        drugCautionRepository.save(caution);
+    }
+
     private void saveCaution(String productName, DrugCaution.ConditionType conditionTypeStr, String conditionValue, String note) {
         productName = removeLeadingParentheses(productName);
         List<Drug> drugs = drugRepository.findByNameContaining(productName);
         if (!drugs.isEmpty()) {
             Drug drug = drugs.get(0);
+            if(!drugCautionRepository.findByDrugIdAndConditionType(drug.getId(), conditionTypeStr).isEmpty()) return;
             DrugCaution caution = new DrugCaution();
             caution.setDrugId(drug.getId());
             caution.setConditionType(conditionTypeStr);

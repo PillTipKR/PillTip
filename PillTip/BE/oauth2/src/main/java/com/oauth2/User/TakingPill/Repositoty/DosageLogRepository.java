@@ -1,6 +1,6 @@
 package com.oauth2.User.TakingPill.Repositoty;
 
-import com.oauth2.User.Auth.Entity.User;
+import com.oauth2.User.UserInfo.Entity.User;
 import com.oauth2.User.TakingPill.Entity.DosageLog;
 import com.oauth2.User.TakingPill.Entity.TakingPill;
 import org.springframework.data.jpa.repository.JpaRepository;

@@ -33,6 +33,17 @@ public class DurImportController {
         }
     }
 
+    @PostMapping("/caution/all")
+    public ResponseEntity<String> importCautionFromPath() {
+        try {
+            drugCautionService.parseIngrAll();
+            return ResponseEntity.ok("주의 정보 저장 완료");
+        } catch (Exception e) {
+            logger.error("Error occurred in import caution: {}", e.getMessage());
+            return ResponseEntity.internalServerError().body("에러: " + e.getMessage());
+        }
+    }
+
     @PostMapping("/all")
     public ResponseEntity<String> saveCaution() {
         try {

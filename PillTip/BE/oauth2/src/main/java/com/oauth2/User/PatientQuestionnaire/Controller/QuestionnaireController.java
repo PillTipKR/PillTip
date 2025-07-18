@@ -2,14 +2,16 @@
 // description : 문진표 관련 API 컨트롤러
 package com.oauth2.User.PatientQuestionnaire.Controller;
 
+import com.oauth2.Account.Service.AccountService;
+import com.oauth2.Account.Entity.Account;
 import com.oauth2.User.PatientQuestionnaire.Dto.PatientQuestionnaireSummaryResponse;
 import com.oauth2.User.PatientQuestionnaire.Service.PatientQuestionnaireService;
 import com.oauth2.User.PatientQuestionnaire.Service.QuestionnaireQRUrlService;
-import com.oauth2.User.Auth.Dto.ApiResponse;
+import com.oauth2.Account.Dto.ApiResponse;
 import com.oauth2.User.PatientQuestionnaire.Dto.QuestionnaireMessageConstants;
 import com.oauth2.User.UserInfo.Dto.UserPermissionsRequest;
 import com.oauth2.User.UserInfo.Dto.UserPermissionsResponse;
-import com.oauth2.User.Auth.Entity.User;
+import com.oauth2.User.UserInfo.Entity.User;
 import com.oauth2.User.UserInfo.Service.UserPermissionsService;
 import com.oauth2.User.PatientQuestionnaire.Dto.PatientQuestionnaireResponse;
 import com.oauth2.User.PatientQuestionnaire.Entity.PatientQuestionnaire;
@@ -23,9 +25,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-import com.oauth2.User.Auth.Service.TokenService;   
+import com.oauth2.Account.Service.TokenService;
 import com.oauth2.User.TakingPill.Service.TakingPillService;
 import com.oauth2.Util.Encryption.EncryptionUtil;
+
+import java.nio.file.AccessDeniedException;
 
 @RestController
 @RequestMapping("/api/questionnaire")
@@ -39,11 +43,16 @@ public class QuestionnaireController {
     private final TakingPillService takingPillService;
     private final QuestionnaireQRUrlService questionnaireQRUrlService;
     private final EncryptionUtil encryptionUtil;
-    
+    private final AccountService accountService;
+
     //동의사항 조회
     @GetMapping("/permissions")
     public ResponseEntity<ApiResponse<UserPermissionsResponse>> getUserPermissions(
-            @AuthenticationPrincipal User user) {
+            @AuthenticationPrincipal Account account,
+            @RequestHeader(name = "X-Profile-Id", required = false, defaultValue = "0") Long profileId
+    ) throws AccessDeniedException {
+        User user = accountService.findUserByProfileId(profileId, account.getId());
+
         try {
             UserPermissionsResponse permissions = userPermissionsService.getUserPermissions(user);
             return ResponseEntity.status(200)
@@ -58,8 +67,12 @@ public class QuestionnaireController {
     //동의사항 수정
     @PutMapping("/permissions/multi")
     public ResponseEntity<ApiResponse<UserPermissionsResponse>> updateMedicalPermissions(
-            @AuthenticationPrincipal User user,
-            @RequestBody UserPermissionsRequest request) {
+            @AuthenticationPrincipal Account account,
+            @RequestBody UserPermissionsRequest request,
+            @RequestHeader(name = "X-Profile-Id", required = false, defaultValue = "0") Long profileId
+    ) throws AccessDeniedException {
+        User user = accountService.findUserByProfileId(profileId, account.getId());
+
         try {
             UserPermissionsResponse permissions = userPermissionsService.updateMedicalPermissions(user, request);
             return ResponseEntity.status(200)
@@ -73,9 +86,13 @@ public class QuestionnaireController {
     //동의사항 수정 (여러개 수정)
     @PutMapping("/permissions/{permissionType}")
     public ResponseEntity<ApiResponse<UserPermissionsResponse>> updatePermission(
-            @AuthenticationPrincipal User user,
+            @AuthenticationPrincipal Account account,
             @PathVariable String permissionType,
-            @RequestParam boolean granted) {
+            @RequestParam boolean granted,
+            @RequestHeader(name = "X-Profile-Id", required = false, defaultValue = "0") Long profileId
+    ) throws AccessDeniedException {
+        User user = accountService.findUserByProfileId(profileId, account.getId());
+
         try {
             UserPermissionsResponse permissions = userPermissionsService.updatePermission(user, permissionType, granted);
             return ResponseEntity.status(200)
@@ -93,7 +110,11 @@ public class QuestionnaireController {
     //문진표 기능 사용 가능 여부 확인
     @GetMapping("/available")
     public ResponseEntity<ApiResponse<QuestionnaireAvailabilityResponse>> isQuestionnaireAvailable(
-            @AuthenticationPrincipal User user) {
+            @AuthenticationPrincipal Account account,
+            @RequestHeader(name = "X-Profile-Id", required = false, defaultValue = "0") Long profileId
+    ) throws AccessDeniedException {
+        User user = accountService.findUserByProfileId(profileId, account.getId());
+
         try {
             // 1. 동의사항 확인
             UserPermissionsResponse permissions = userPermissionsService.getUserPermissions(user);
@@ -144,7 +165,11 @@ public class QuestionnaireController {
     // 문진표 리스트 조회 (구체적인 경로를 먼저 정의)
     @GetMapping("/list")
     public ResponseEntity<ApiResponse<java.util.List<PatientQuestionnaireSummaryResponse>>> getUserQuestionnaireList(
-            @AuthenticationPrincipal User user) {
+            @AuthenticationPrincipal Account account,
+            @RequestHeader(name = "X-Profile-Id", required = false, defaultValue = "0") Long profileId
+    ) throws AccessDeniedException {
+        User user = accountService.findUserByProfileId(profileId, account.getId());
+
         java.util.List<PatientQuestionnaireSummaryResponse> list = patientQuestionnaireService.getUserQuestionnaireSummaries(user);
         return ResponseEntity.status(200)
             .body(ApiResponse.success(QuestionnaireMessageConstants.QUESTIONNAIRE_LIST_RETRIEVE_SUCCESS, list));
@@ -153,7 +178,11 @@ public class QuestionnaireController {
     // 현재 접속한 유저의 문진표 조회
     @GetMapping("")
     public ResponseEntity<ApiResponse<PatientQuestionnaireResponse>> getCurrentUserQuestionnaire(
-            @AuthenticationPrincipal User user) {
+            @AuthenticationPrincipal Account account,
+            @RequestHeader(name = "X-Profile-Id", required = false, defaultValue = "0") Long profileId
+    ) throws AccessDeniedException {
+        User user = accountService.findUserByProfileId(profileId, account.getId());
+
         try {
             PatientQuestionnaire questionnaire = patientQuestionnaireService.getCurrentUserQuestionnaire(user);
             Long expirationDate = System.currentTimeMillis() + 180 * 1000L;
@@ -277,7 +306,11 @@ public class QuestionnaireController {
     // 현재 유저의 문진표 삭제
     @DeleteMapping("")
     public ResponseEntity<ApiResponse<String>> deleteCurrentUserQuestionnaire(
-            @AuthenticationPrincipal User user) {
+            @AuthenticationPrincipal Account account,
+            @RequestHeader(name = "X-Profile-Id", required = false, defaultValue = "0") Long profileId
+    ) throws AccessDeniedException {
+        User user = accountService.findUserByProfileId(profileId, account.getId());
+
         try {
             patientQuestionnaireService.deleteCurrentUserQuestionnaire(user);
             return ResponseEntity.status(200)
@@ -295,8 +328,12 @@ public class QuestionnaireController {
     // 현재 유저의 문진표 수정
     @PutMapping("")
     public ResponseEntity<ApiResponse<PatientQuestionnaireResponse>> updateCurrentUserQuestionnaire(
-            @AuthenticationPrincipal User user,
-            @RequestBody PatientQuestionnaireRequest request) {
+            @AuthenticationPrincipal Account account,
+            @RequestBody PatientQuestionnaireRequest request,
+            @RequestHeader(name = "X-Profile-Id", required = false, defaultValue = "0") Long profileId
+    ) throws AccessDeniedException {
+        User user = accountService.findUserByProfileId(profileId, account.getId());
+
         try {
             PatientQuestionnaire questionnaire = patientQuestionnaireService.updateCurrentUserQuestionnaire(user, request);
             Long expirationDate = System.currentTimeMillis() + 180 * 1000L;
@@ -318,8 +355,12 @@ public class QuestionnaireController {
     // QR 코드를 통한 문진표 URL 생성 API (DB에 저장)
     @PostMapping("/qr-url/{hospitalCode}")
     public ResponseEntity<ApiResponse<QuestionnaireQRUrlResponse>> generateQRUrl(
-            @AuthenticationPrincipal User user,
-            @PathVariable String hospitalCode) {
+            @AuthenticationPrincipal Account account,
+            @PathVariable String hospitalCode,
+            @RequestHeader(name = "X-Profile-Id", required = false, defaultValue = "0") Long profileId
+    ) throws AccessDeniedException {
+        User user = accountService.findUserByProfileId(profileId, account.getId());
+
         try {
             // 1. 현재 유저의 문진표 존재 여부 확인
             patientQuestionnaireService.getCurrentUserQuestionnaire(user);

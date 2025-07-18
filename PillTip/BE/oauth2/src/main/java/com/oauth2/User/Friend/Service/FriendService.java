@@ -1,8 +1,8 @@
 package com.oauth2.User.Friend.Service;
 
-import com.oauth2.User.Auth.Entity.User;
-import com.oauth2.User.Auth.Repository.UserRepository;
-import com.oauth2.User.Auth.Service.TokenService;
+import com.oauth2.User.UserInfo.Entity.User;
+import com.oauth2.User.UserInfo.Repository.UserRepository;
+import com.oauth2.Account.Service.TokenService;
 import com.oauth2.User.Friend.Dto.FriendListDto;
 import com.oauth2.User.Friend.Dto.FriendMessageConstants;
 import com.oauth2.User.Friend.Entity.Friend;

@@ -12,7 +12,7 @@ import com.oauth2.Drug.DrugInfo.Domain.DrugEffect;
 import com.oauth2.Drug.DrugInfo.Domain.DrugStorageCondition;
 import com.oauth2.Drug.DrugInfo.Repository.DrugRepository;
 import com.oauth2.Drug.Search.Dto.SearchIndexDTO;
-import com.oauth2.User.Auth.Entity.User;
+import com.oauth2.User.UserInfo.Entity.User;
 import com.oauth2.User.TakingPill.Entity.TakingPillCounter;
 import com.oauth2.User.TakingPill.Repositoty.TakingPillCounterRepository;
 import lombok.RequiredArgsConstructor;

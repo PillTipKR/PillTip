@@ -3,14 +3,16 @@
 package com.oauth2.User.UserInfo.Controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.oauth2.User.Auth.Entity.User;
+import com.oauth2.Account.Service.AccountService;
+import com.oauth2.Account.Entity.Account;
+import com.oauth2.User.UserInfo.Entity.User;
 import com.oauth2.User.UserInfo.Dto.UserSensitiveInfoDeleteRequest;
 import com.oauth2.User.UserInfo.Dto.UserSensitiveInfoDto;
 import com.oauth2.User.UserInfo.Dto.UserProfileUpdateRequest;
 import com.oauth2.User.UserInfo.Dto.UserProfileUpdateResponse;
 import com.oauth2.User.UserInfo.Service.UserSensitiveInfoService;
 import com.oauth2.User.UserInfo.Service.UserService;
-import com.oauth2.User.Auth.Dto.ApiResponse;
+import com.oauth2.Account.Dto.ApiResponse;
 import com.oauth2.User.UserInfo.Dto.UserInfoMessageConstants;
 import com.oauth2.User.PatientQuestionnaire.Service.PatientQuestionnaireService;
 import com.oauth2.User.PatientQuestionnaire.Dto.PatientQuestionnaireRequest;
@@ -21,6 +23,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.nio.file.AccessDeniedException;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -31,6 +34,7 @@ public class UserSensitiveInfoController {
 
     private static final Logger logger = LoggerFactory.getLogger(UserSensitiveInfoController.class);
     private final UserSensitiveInfoService userSensitiveInfoService;
+    private final AccountService accountService;
     private final UserService userService;
     private final PatientQuestionnaireService patientQuestionnaireService;
 
@@ -39,8 +43,12 @@ public class UserSensitiveInfoController {
      */
     @PutMapping("/profile")
     public ResponseEntity<ApiResponse<UserProfileUpdateResponse>> updateUserProfile(
-            @AuthenticationPrincipal User user,
-            @RequestBody UserProfileUpdateRequest request) {
+            @AuthenticationPrincipal Account account,
+            @RequestBody UserProfileUpdateRequest request,
+            @RequestHeader(name = "X-Profile-Id", required = false, defaultValue = "0") Long profileId
+    ) throws AccessDeniedException {
+        User user = accountService.findUserByProfileId(profileId, account.getId());
+
         logger.info("Received updateUserProfile request for user: {}", user.getId());
         try {
             // 1. 사용자 기본 정보 업데이트
@@ -119,7 +127,11 @@ public class UserSensitiveInfoController {
      */
     @GetMapping("")
     public ResponseEntity<ApiResponse<UserSensitiveInfoDto>> getSensitiveInfo(
-            @AuthenticationPrincipal User user) {
+            @AuthenticationPrincipal Account account,
+            @RequestHeader(name = "X-Profile-Id", required = false, defaultValue = "0") Long profileId
+    ) throws AccessDeniedException {
+        User user = accountService.findUserByProfileId(profileId, account.getId());
+
         logger.info("Received getSensitiveInfo request for user: {}", user.getId());
         
         try {
@@ -144,8 +156,12 @@ public class UserSensitiveInfoController {
      */
     @PutMapping("")
     public ResponseEntity<ApiResponse<UserSensitiveInfoDto>> updateSensitiveInfo(
-            @AuthenticationPrincipal User user,
-            @RequestBody UserSensitiveInfoDto request) {
+            @AuthenticationPrincipal Account account,
+            @RequestBody UserSensitiveInfoDto request,
+            @RequestHeader(name = "X-Profile-Id", required = false, defaultValue = "0") Long profileId
+    ) throws AccessDeniedException {
+        User user = accountService.findUserByProfileId(profileId, account.getId());
+
         logger.info("Received updateSensitiveInfo request for user: {}", user.getId());
         
         try {
@@ -171,9 +187,13 @@ public class UserSensitiveInfoController {
      */
     @PutMapping("/{category}")
     public ResponseEntity<ApiResponse<UserSensitiveInfoDto>> updateSensitiveInfoCategory(
-            @AuthenticationPrincipal User user,
+            @AuthenticationPrincipal Account account,
             @PathVariable String category,
-            @RequestBody List<String> data) {
+            @RequestBody List<String> data,
+            @RequestHeader(name = "X-Profile-Id", required = false, defaultValue = "0") Long profileId
+    ) throws AccessDeniedException {
+        User user = accountService.findUserByProfileId(profileId, account.getId());
+
         logger.info("Received updateSensitiveInfoCategory request for user: {} - Category: {}", user.getId(), category);
         
         try {
@@ -202,8 +222,12 @@ public class UserSensitiveInfoController {
      */
     @DeleteMapping("")
     public ResponseEntity<ApiResponse<UserSensitiveInfoDto>> deleteSensitiveInfoCategories(
-            @AuthenticationPrincipal User user,
-            @RequestBody UserSensitiveInfoDeleteRequest request) {
+            @AuthenticationPrincipal Account account,
+            @RequestBody UserSensitiveInfoDeleteRequest request,
+            @RequestHeader(name = "X-Profile-Id", required = false, defaultValue = "0") Long profileId
+    ) throws AccessDeniedException {
+        User user = accountService.findUserByProfileId(profileId, account.getId());
+
         logger.info("Received deleteSensitiveInfoCategories request for user: {}", user.getId());
         
         try {
@@ -236,7 +260,11 @@ public class UserSensitiveInfoController {
      */
     @DeleteMapping("/all")
     public ResponseEntity<ApiResponse<String>> deleteAllSensitiveInfo(
-            @AuthenticationPrincipal User user) {
+            @AuthenticationPrincipal Account account,
+            @RequestHeader(name = "X-Profile-Id", required = false, defaultValue = "0") Long profileId
+    ) throws AccessDeniedException {
+        User user = accountService.findUserByProfileId(profileId, account.getId());
+
         logger.info("Received deleteAllSensitiveInfo request for user: {}", user.getId());
         
         try {

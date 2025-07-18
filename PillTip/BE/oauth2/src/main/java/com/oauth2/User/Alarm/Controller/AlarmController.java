@@ -1,10 +1,12 @@
 package com.oauth2.User.Alarm.Controller;
 
+import com.oauth2.Account.Service.AccountService;
+import com.oauth2.Account.Entity.Account;
 import com.oauth2.User.Alarm.Service.AlarmService;
-import com.oauth2.User.Auth.Dto.ApiResponse;
-import com.oauth2.User.Auth.Entity.User;
-import com.oauth2.User.Auth.Repository.UserRepository;
-import com.oauth2.User.Auth.Dto.AuthMessageConstants;
+import com.oauth2.Account.Dto.ApiResponse;
+import com.oauth2.User.UserInfo.Entity.User;
+import com.oauth2.User.UserInfo.Repository.UserRepository;
+import com.oauth2.Account.Dto.AuthMessageConstants;
 import com.oauth2.User.Alarm.Dto.AlarmMessageConstants;
 import com.oauth2.User.Friend.Service.FriendService;
 import com.oauth2.User.TakingPill.Entity.DosageLog;
@@ -16,6 +18,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.nio.file.AccessDeniedException;
+
 @RestController
 @RequestMapping("/api/alarm")
 @RequiredArgsConstructor
@@ -25,10 +29,15 @@ public class AlarmController {
     private final DosageLogService dosageLogService;
     private final UserRepository userRepository;
     private final FriendService friendService;
+    private final AccountService accountService;
 
     /* FCM Token 서버 저장 API */
     @PostMapping("/token")
-    public String getToken(@AuthenticationPrincipal User user, @RequestParam String token) {
+    public String getToken(@AuthenticationPrincipal Account account, @RequestParam String token,
+                           @RequestHeader(name = "X-Profile-Id", required = false, defaultValue = "0") Long profileId
+    ) throws AccessDeniedException {
+        User user = accountService.findUserByProfileId(profileId, account.getId());
+
         alarmService.getToken(user.getId(), token);
         return "OK";
     }
@@ -60,10 +69,14 @@ public class AlarmController {
     // 안 먹은 친구 콕 찌르기
     @GetMapping("/{friendId}/{logId}")
     public ResponseEntity<ApiResponse<String>> reminder(
-            @AuthenticationPrincipal User user,
-            @PathVariable Long friendId, @PathVariable Long logId) {
+            @AuthenticationPrincipal Account account,
+            @PathVariable Long friendId, @PathVariable Long logId,
+            @RequestHeader(name = "X-Profile-Id", required = false, defaultValue = "0") Long profileId
+    ) throws AccessDeniedException {
+        User user = accountService.findUserByProfileId(profileId, account.getId());
+
         try {
-            User friend = userRepository.findById(friendId)
+            User friend = userRepository.findByFriendId(friendId)
                     .orElseThrow(NotExistUserException::new);
 
             friendService.assertIsFriend(user.getId(), friendId);
@@ -72,7 +85,7 @@ public class AlarmController {
             if(dosageLog == null) throw new NotExistDosageLogException();
             if(dosageLog.getIsTaken()) throw new IllegalStateException(AuthMessageConstants.ALREADY_TAKEN);
             alarmService.sendFriendMedicationReminder(
-                    friend.getFCMToken(),
+                    friend.getAccount().getFCMToken(),
                     dosageLog.getId(),
                     user.getNickname(),
                     dosageLog.getMedicationName(),

@@ -1,7 +1,6 @@
 package com.oauth2.User.Hospital;
 
-import com.oauth2.User.Auth.Dto.ApiResponse;
-import com.oauth2.User.Hospital.HospitalMessageConstants;
+import com.oauth2.Account.Dto.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

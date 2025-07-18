@@ -1,23 +1,24 @@
 package com.oauth2.Util.Elasticsearch.Controller;
 
+import com.oauth2.Account.Service.AccountService;
+import com.oauth2.Account.Entity.Account;
 import com.oauth2.Util.Elasticsearch.Dto.ElasticQuery;
 import com.oauth2.Util.Elasticsearch.Dto.ElasticsearchDTO;
 import com.oauth2.Util.Elasticsearch.Service.ElasticsearchService;
-import com.oauth2.User.Auth.Dto.ApiResponse;
-import com.oauth2.User.Auth.Entity.User;
+import com.oauth2.Account.Dto.ApiResponse;
+import com.oauth2.User.UserInfo.Entity.User;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/autocomplete")
+@RequiredArgsConstructor
 public class ElasticSearchController {
 
     @Value("${elastic.autocomplete.index}")
@@ -37,40 +38,47 @@ public class ElasticSearchController {
     private int pageSize;
 
     private final ElasticsearchService elasticsearchService;
-
-    public ElasticSearchController(ElasticsearchService elasticsearchService) {
-        this.elasticsearchService = elasticsearchService;
-    }
+    private final AccountService accountService;
 
     @GetMapping("/drugs")
     public ResponseEntity<ApiResponse<List<ElasticsearchDTO>>> getDrugSearch(
-            @AuthenticationPrincipal User user,
+            @AuthenticationPrincipal Account account,
             @RequestParam String input,
-            @RequestParam(defaultValue = "0") int page) throws IOException {
+            @RequestParam(defaultValue = "0") int page,
+            @RequestHeader(name = "X-Profile-Id", required = false, defaultValue = "0") Long profileId
+    ) throws IOException {
+        User user = accountService.findUserByProfileId(profileId, account.getId());
+
         return getApiResponseResponseEntity(user, input, page, drug);
     }
 
     @GetMapping("/manufacturers")
     public ResponseEntity<ApiResponse<List<ElasticsearchDTO>>> getManufacturerSearch(
-            @AuthenticationPrincipal User user,
+            @AuthenticationPrincipal Account account,
             @RequestParam String input,
-            @RequestParam(defaultValue = "0") int page) throws IOException {
+            @RequestParam(defaultValue = "0") int page,
+            @RequestHeader(name = "X-Profile-Id", required = false, defaultValue = "0") Long profileId
+    ) throws IOException {
+        User user = accountService.findUserByProfileId(profileId, account.getId());
+
         return getApiResponseResponseEntity(user, input, page, manufacturer);
     }
 
     @GetMapping("/ingredients")
     public ResponseEntity<ApiResponse<List<ElasticsearchDTO>>> getIngredientSearch(
-            @AuthenticationPrincipal User user,
+            @AuthenticationPrincipal Account account,
             @RequestParam String input,
-            @RequestParam(defaultValue = "0") int page) throws IOException {
+            @RequestParam(defaultValue = "0") int page,
+            @RequestHeader(name = "X-Profile-Id", required = false, defaultValue = "0") Long profileId
+    ) throws IOException {
+        User user = accountService.findUserByProfileId(profileId, account.getId());
+
         return getApiResponseResponseEntity(user, input, page, ingredient);
     }
 
 
     private ResponseEntity<ApiResponse<List<ElasticsearchDTO>>> getApiResponseResponseEntity(
-            @AuthenticationPrincipal User user,
-            @RequestParam String input,
-            @RequestParam(defaultValue = "0") int page, String field) throws IOException {
+            User user, String input, int page, String field) throws IOException {
         if (user == null) {
             return ResponseEntity.badRequest()
                     .body(ApiResponse.error("User not authenticated", null));

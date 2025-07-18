@@ -6,7 +6,7 @@ import com.oauth2.User.PatientQuestionnaire.Dto.PatientQuestionnaireRequest;
 import com.oauth2.User.PatientQuestionnaire.Dto.PatientQuestionnaireSummaryResponse;
 import com.oauth2.User.PatientQuestionnaire.Entity.PatientQuestionnaire;
 import com.oauth2.User.PatientQuestionnaire.Repository.PatientQuestionnaireRepository;
-import com.oauth2.User.Auth.Entity.User;
+import com.oauth2.User.UserInfo.Entity.User;
 import com.oauth2.User.PatientQuestionnaire.Dto.QuestionnaireMessageConstants;
 import com.oauth2.User.UserInfo.Service.UserService;
 import com.oauth2.User.TakingPill.Service.TakingPillService;
