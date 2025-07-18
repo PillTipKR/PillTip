@@ -3,7 +3,6 @@ package com.oauth2.Drug.Import.DrugImport.Service;
 import com.oauth2.Drug.DrugInfo.Domain.*;
 import com.oauth2.Drug.DrugInfo.Repository.DrugRepository;
 import com.oauth2.Drug.DrugInfo.Service.DrugEffectService;
-import com.oauth2.Drug.DrugInfo.Service.DrugService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,8 +21,6 @@ import java.util.regex.Pattern;
 @RequiredArgsConstructor
 public class PromptImporter {
 
-
-    private final DrugService drugService;
     private final DrugRepository drugRepository;
     private final DrugEffectService drugEffectService;
     private final PromptDrugUpdater promptDrugUpdater;
@@ -137,22 +134,18 @@ public class PromptImporter {
 
     protected Drug matchDrugByNameVariants(String name) {
         // 1단계: 원래 이름 기준 매칭
-        for (Drug drug : drugService.findAll()) {
-            if (drug.getName().equals(name)) return drug;
-        }
+        List<Drug> match = drugRepository.findByNameContaining(name);
+        if(!match.isEmpty()) return match.get(0);
 
         // 2단계: 괄호 제거 후 매칭
         String noParen = removeLeadingParentheses(name);
-        for (Drug drug : drugService.findAll()) {
-            if (removeLeadingParentheses(drug.getName()).equals(noParen)) return drug;
-        }
+        match = drugRepository.findByNameContaining(noParen);
+        if(!match.isEmpty()) return match.get(0);
 
         // 3단계: 정규화 후 공백 제거 매칭
         String normalized = normalizeDrugName(noParen);
-        for (Drug drug : drugService.findAll()) {
-            String targetNorm = normalizeDrugName(drug.getName());
-            if (targetNorm.equals(normalized)) return drug;
-        }
+        match = drugRepository.findByNameContaining(normalized);
+        if(!match.isEmpty()) return match.get(0);
 
         return null;
     }
