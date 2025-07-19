@@ -6,13 +6,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import androidx.navigation.navDeepLink
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.pilltip.pilltip.composable.MainComposable.BottomTab
 import com.pilltip.pilltip.composable.QuestionnaireComposable.QrScannerEntry
@@ -31,6 +31,8 @@ import com.pilltip.pilltip.view.auth.PhoneAuthPage
 import com.pilltip.pilltip.view.auth.ProfilePage
 import com.pilltip.pilltip.view.auth.SelectPage
 import com.pilltip.pilltip.view.auth.SplashPage
+import com.pilltip.pilltip.view.friend.FriendAcceptPage
+import com.pilltip.pilltip.view.friend.FriendListPage
 import com.pilltip.pilltip.view.main.DURLoadingPage
 import com.pilltip.pilltip.view.main.DURPage
 import com.pilltip.pilltip.view.main.DURSearchPage
@@ -184,7 +186,11 @@ fun NavGraph(
             QrScannerEntry(onQrScanned = { qrValue ->
                 if (qrValue.startsWith("/api/")) {
                     sensitiveViewModel.qrSubmit(qrValue) { qrData ->
-                        Toast.makeText(context, "${qrData.hospitalName}으로 문진표 전송 완료!", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(
+                            context,
+                            "${qrData.hospitalName}으로 문진표 전송 완료!",
+                            Toast.LENGTH_SHORT
+                        ).show()
                         navController.navigate("PillMainPage")
                     }
                     Toast.makeText(context, "QR 인식 완료!", Toast.LENGTH_SHORT).show()
@@ -278,7 +284,13 @@ fun NavGraph(
 
         /* mypage */
         composable("MyDrugInfoPage") { MyDrugInfoPage(navController, searchHiltViewModel) }
-        composable("EssentialInfoPage") { EssentialInfoPage(navController, sensitiveViewModel, signUpViewModel) }
+        composable("EssentialInfoPage") {
+            EssentialInfoPage(
+                navController,
+                sensitiveViewModel,
+                signUpViewModel
+            )
+        }
         composable("DURPage") { DURPage(navController) }
         composable("DURSearchPage") {
             DURSearchPage(navController, searchHiltViewModel)
@@ -309,6 +321,26 @@ fun NavGraph(
         composable("MyDrugManagementPage/{id}") { backStackEntry ->
             val id = backStackEntry.arguments?.getString("id") ?: ""
             MyDrugManagementPage(navController, searchHiltViewModel, id.toLong())
+        }
+
+        /* 친구 추가 */
+        composable(
+            route = "friend_accept/{inviteToken}",
+            arguments = listOf(navArgument("inviteToken") { type = NavType.StringType }),
+            deepLinks = listOf(
+                navDeepLink { uriPattern = "pilltip://invite/{inviteToken}" }
+            )
+        ) { backStackEntry ->
+            val token = backStackEntry.arguments?.getString("inviteToken")
+            FriendAcceptPage(
+                inviteToken = token,
+                navController = navController,
+                searchHiltViewModel = searchHiltViewModel,
+                sensitiveViewModel = sensitiveViewModel
+            )
+        }
+        composable ("FriendListPage"){
+            FriendListPage(navController, searchHiltViewModel)
         }
 
     }

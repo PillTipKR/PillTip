@@ -1,5 +1,8 @@
 package com.pilltip.pilltip.view.main
 
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.Canvas
@@ -7,7 +10,6 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -66,12 +68,9 @@ import androidx.navigation.NavController
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.google.firebase.messaging.FirebaseMessaging
 import com.pilltip.pilltip.R
-import com.pilltip.pilltip.composable.BackButton
 import com.pilltip.pilltip.composable.HeightSpacer
-import com.pilltip.pilltip.composable.IosButton
 import com.pilltip.pilltip.composable.MainComposable.BottomBar
 import com.pilltip.pilltip.composable.MainComposable.BottomTab
-import com.pilltip.pilltip.composable.MainComposable.DURText
 import com.pilltip.pilltip.composable.MainComposable.DosageCard
 import com.pilltip.pilltip.composable.MainComposable.DosagePage
 import com.pilltip.pilltip.composable.MainComposable.FeatureButton
@@ -83,8 +82,8 @@ import com.pilltip.pilltip.composable.NextButton
 import com.pilltip.pilltip.composable.QuestionnaireComposable.DottedDivider
 import com.pilltip.pilltip.composable.QuestionnaireComposable.InfoRow
 import com.pilltip.pilltip.composable.QuestionnaireComposable.QuestionnaireToggleSection
+import com.pilltip.pilltip.composable.SearchComposable.shareText
 import com.pilltip.pilltip.composable.WidthSpacer
-import com.pilltip.pilltip.composable.buttonModifier
 import com.pilltip.pilltip.composable.noRippleClickable
 import com.pilltip.pilltip.model.HandleBackPressToExitApp
 import com.pilltip.pilltip.model.UserInfoManager
@@ -93,7 +92,6 @@ import com.pilltip.pilltip.model.search.SensitiveViewModel
 import com.pilltip.pilltip.ui.theme.backgroundColor
 import com.pilltip.pilltip.ui.theme.gray050
 import com.pilltip.pilltip.ui.theme.gray100
-import com.pilltip.pilltip.ui.theme.gray400
 import com.pilltip.pilltip.ui.theme.gray500
 import com.pilltip.pilltip.ui.theme.gray600
 import com.pilltip.pilltip.ui.theme.gray700
@@ -101,6 +99,7 @@ import com.pilltip.pilltip.ui.theme.gray800
 import com.pilltip.pilltip.ui.theme.pretendard
 import com.pilltip.pilltip.ui.theme.primaryColor
 import com.pilltip.pilltip.view.questionnaire.Logic.toKoreanGender
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 
@@ -194,6 +193,11 @@ fun HomePage(
     val scope = rememberCoroutineScope()
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var isSheetVisible by remember { mutableStateOf(false) }
+    var isFriendSheetVisible by remember { mutableStateOf(false) }
+    val inviteUrl by searchHiltViewModel.inviteUrl.collectAsState()
+    var link by remember { mutableStateOf("") }
+    var nickname = UserInfoManager.getUserData(context)?.nickname
+
     SideEffect {
         systemUiController.setStatusBarColor(
             color = Color(0xFFF1F6FE),
@@ -313,7 +317,21 @@ fun HomePage(
             imageResource = R.drawable.ic_main_friend,
             description = "친구 추가",
             onClick = {
-                Toast.makeText(context, "정식 오픈 뒤 서비스 예정이에요\n업데이트를 기대해주세요!", Toast.LENGTH_SHORT).show()
+                scope.launch {
+                    try {
+                        searchHiltViewModel.fetchInviteUrl()
+                        delay(300)
+
+                        inviteUrl?.let { url ->
+                            link = url
+                            isFriendSheetVisible = true
+                            val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                            clipboard.setPrimaryClip(ClipData.newPlainText("초대 링크", url))
+                        } ?: Toast.makeText(context, "링크를 불러오지 못했어요", Toast.LENGTH_SHORT).show()
+                    } catch (e: Exception) {
+                        Toast.makeText(context, "오류 발생: ${e.message}", Toast.LENGTH_SHORT).show()
+                    }
+                }
             }
         )
         FeatureButton(
@@ -480,6 +498,112 @@ fun HomePage(
                                 navController.navigate("EssentialPage")
                             }.invokeOnCompletion {
                                 isSheetVisible = false
+                            }
+                        }
+                    )
+                }
+            }
+        }
+    }
+    if (isFriendSheetVisible) {
+        LaunchedEffect(Unit) {
+            bottomSheetState.show()
+        }
+        ModalBottomSheet(
+            onDismissRequest = {
+                scope.launch {
+                    bottomSheetState.hide()
+                }.invokeOnCompletion {
+                    isFriendSheetVisible = false
+                }
+            },
+            sheetState = bottomSheetState,
+            containerColor = Color.White,
+            dragHandle = {
+                Box(
+                    Modifier
+                        .padding(top = 8.dp, bottom = 11.dp)
+                        .width(48.dp)
+                        .height(5.dp)
+                        .background(Color(0xFFE2E4EC), RoundedCornerShape(12.dp))
+                )
+            }
+        ) {
+
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 22.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                HeightSpacer(12.dp)
+                Image(
+                    imageVector = ImageVector.vectorResource(R.drawable.ic_details_blue_common_pills),
+                    contentDescription = "초대링크 수신 성공",
+                    modifier = Modifier
+                        .padding(1.4.dp)
+                        .width(28.dp)
+                        .height(28.dp)
+                )
+                HeightSpacer(15.dp)
+                Text(
+                    text = "초대링크 생성 성공!",
+                    style = TextStyle(
+                        fontSize = 18.sp,
+                        lineHeight = 25.2.sp,
+                        fontFamily = pretendard,
+                        fontWeight = FontWeight(700),
+                        color = Color(0xFF1A1A1A)
+                    )
+                )
+                HeightSpacer(8.dp)
+                Text(
+                    text = "링크를 공유하러 가볼까요?",
+                    style = TextStyle(
+                        fontSize = 14.sp,
+                        lineHeight = 19.6.sp,
+                        fontFamily = pretendard,
+                        fontWeight = FontWeight(400),
+                        color = gray500,
+                        textAlign = TextAlign.Center
+                    )
+                )
+                HeightSpacer(12.dp)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    NextButton(
+                        mModifier = Modifier
+                            .weight(1f)
+                            .padding(vertical = 16.dp)
+                            .height(58.dp),
+                        text = "뒤로가기",
+                        buttonColor = gray100,
+                        textColor = gray700,
+                        onClick = {
+                            scope.launch {
+                                bottomSheetState.hide()
+                            }.invokeOnCompletion {
+                                isFriendSheetVisible = false
+                            }
+                        }
+                    )
+                    WidthSpacer(12.dp)
+                    NextButton(
+                        mModifier = Modifier
+                            .weight(1f)
+                            .padding(vertical = 16.dp)
+                            .height(58.dp),
+                        text = "공유하기",
+                        buttonColor = primaryColor,
+                        onClick = {
+                            scope.launch {
+                                bottomSheetState.hide()
+                                shareText(context, "Pilltip | 당신만의 개인맞춤 의약관리\n ${nickname}님께서 친구 요청을 보내셨어요! ", link)
+                            }.invokeOnCompletion {
+                                isFriendSheetVisible = false
                             }
                         }
                     )

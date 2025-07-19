@@ -6,12 +6,9 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.toMutableStateList
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pilltip.pilltip.model.AuthInterceptor
-import com.pilltip.pilltip.model.UserInfoManager
-import com.pilltip.pilltip.model.signUp.NetworkModule
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -49,7 +46,8 @@ class SearchHiltViewModel @Inject constructor(
     private val deleteRepo: DeleteRepository,
     private val personalInfoRepo: PersonalInfoRepository,
     private val reviewStatsRepo: ReviewStatsRepository,
-    private val questionnaireRepo: QuestionnaireRepository
+    private val questionnaireRepo: QuestionnaireRepository,
+    private val friendRepo: FriendRepository
 ) : ViewModel() {
 
     /* 약품명 자동 완성 API*/
@@ -301,19 +299,24 @@ class SearchHiltViewModel @Inject constructor(
     private val _dailyDosageLog = MutableStateFlow<DailyDosageLogData?>(null)
     val dailyDosageLog: StateFlow<DailyDosageLogData?> = _dailyDosageLog.asStateFlow()
     var selectedDrugLog by mutableStateOf<DosageLogPerDrug?>(null)
-
+    var isFriendView by mutableStateOf(false)
+    var targetFriendId: Long? = null
     fun fetchDailyDosageLog(date: LocalDate) {
+        selectedDrugLog = null
         viewModelScope.launch {
             try {
-                val response = dosageLogRepo.getDailyDosageLog(date.toString())
-                _dailyDosageLog.value = response.data
-                Log.d("DailyDosageLog", "성공: ${response.data}")
+                val data = if (isFriendView && targetFriendId != null) {
+                    dosageLogRepo.getFriendDosageLog(targetFriendId!!, date.toString())
+                } else {
+                    dosageLogRepo.getDailyDosageLog(date.toString()).data
+                }
+                _dailyDosageLog.value = data
             } catch (e: Exception) {
-                Log.e("DailyDosageLog", "실패: ${e.message}")
-                _dailyDosageLog.value = null
+                Log.e("DosageLog", "복약 기록 조회 실패: ${e.message}")
             }
         }
     }
+
 
     private val _selectedDate = MutableStateFlow(LocalDate.now())
     val selectedDate: StateFlow<LocalDate> = _selectedDate
@@ -495,6 +498,52 @@ class SearchHiltViewModel @Inject constructor(
                 Log.d("문진표 수정", "성공")
             } catch (e: Exception) {
                 Log.e("문진표 수정 실패", e.toString())
+            }
+        }
+    }
+
+    /* 친구 추가 링크 생성*/
+    private val _inviteUrl = MutableStateFlow<String?>(null)
+    val inviteUrl: StateFlow<String?> = _inviteUrl.asStateFlow()
+
+    fun fetchInviteUrl() {
+        viewModelScope.launch {
+            try {
+                val url = friendRepo.fetchInviteUrl()
+                _inviteUrl.value = url
+            } catch (e: Exception) {
+                Log.e("InviteURL", "초대 링크 요청 실패: ${e.message}")
+            }
+        }
+    }
+
+    /* 친구 추가 수락 */
+    private val _friendAcceptResult = MutableStateFlow<String?>(null)
+    val friendAcceptResult: StateFlow<String?> = _friendAcceptResult.asStateFlow()
+
+    fun acceptFriendInvite(token: String) {
+        viewModelScope.launch {
+            try {
+                val result = friendRepo.acceptFriendInvite(token)
+                _friendAcceptResult.value = result
+                Log.d("FriendAccept", "친구 수락 완료: $result")
+            } catch (e: Exception) {
+                Log.e("FriendAccept", "친구 수락 실패: ${e.message}")
+            }
+        }
+    }
+
+    /* 친구 리스트 */
+    private val _friendList = MutableStateFlow<List<FriendListDto>>(emptyList())
+    val friendList: StateFlow<List<FriendListDto>> = _friendList.asStateFlow()
+
+    fun fetchFriendList() {
+        viewModelScope.launch {
+            try {
+                val list = friendRepo.getFriendList()
+                _friendList.value = list
+            } catch (e: Exception) {
+                Log.e("FriendList", "친구 목록 불러오기 실패: ${e.message}")
             }
         }
     }
@@ -955,4 +1004,17 @@ object RepositoryModule {
     fun provideQrRepository(api: QrApi): QrRepository {
         return QrRepositoryImpl(api)
     }
+
+    /* 친구 추가 */
+    @Provides
+    fun provideFriendApi(@Named("SearchRetrofit") retrofit: Retrofit): FriendApi {
+        return retrofit.create(FriendApi::class.java)
+    }
+
+    @Provides
+    fun provideFriendRepository(api: FriendApi): FriendRepository {
+        return FriendRepositoryImpl(api)
+    }
+
+
 }
