@@ -423,7 +423,6 @@ public class QuestionnaireController {
 
     @GetMapping("/qr-url/all/{hospitalCode}")
     public ResponseEntity<ApiResponse<List<QuestionnaireQRUrlResponse>>> getAllQRUrl(
-            @AuthenticationPrincipal User user,
             @PathVariable(value = "hospitalCode", required = false) String hospitalCode) {
         try {
             List<QuestionnaireQRUrlResponse> response = questionnaireQRUrlService.getAllQRUrl(hospitalCode);

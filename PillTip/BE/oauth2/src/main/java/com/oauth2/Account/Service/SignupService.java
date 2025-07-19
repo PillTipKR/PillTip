@@ -14,7 +14,7 @@ import com.oauth2.User.Alarm.Repository.FCMTokenRepository;
 import com.oauth2.User.UserInfo.Entity.*;
 import com.oauth2.User.UserInfo.Repository.UserRepository;
 import com.oauth2.Account.Dto.OAuth2UserInfo;
-import com.oauth2.User.UserInfo.Service.ProfileService;
+import com.oauth2.User.UserInfo.Service.UserProfileService;
 import com.oauth2.User.UserInfo.Service.UserService;
 import com.oauth2.Util.Exception.CustomException.*;
 import lombok.RequiredArgsConstructor;
@@ -39,7 +39,7 @@ public class SignupService {
     private final OAuth2Service oauth2Service;
     private final FCMTokenRepository fcmTokenRepository;
     private final AccountRepository accountRepository;
-    private final ProfileService profileService;
+    private final UserProfileService userProfileService;
 
     //회원가입 요청 처리
     public User signup(SignupRequest request) {
@@ -93,7 +93,7 @@ public class SignupService {
                     request.getPhone(),
                     request.getInterest()
             );
-            profileService.userSetting(user, profileRequest,true);
+            userProfileService.userSetting(user, profileRequest,true);
 
             logger.info("사용자 토큰 생성 시작");
             AccountToken accountToken = tokenService.generateTokens(account.getId());

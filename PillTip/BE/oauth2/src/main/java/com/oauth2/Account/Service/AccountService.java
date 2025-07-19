@@ -5,7 +5,6 @@ import com.oauth2.Account.Repository.AccountRepository;
 import com.oauth2.User.UserInfo.Entity.User;
 import com.oauth2.User.UserInfo.Dto.UserListDto;
 import com.oauth2.Util.Exception.CustomException.InvalidProfileIdException;
-import com.oauth2.Util.Exception.CustomException.NotExistUserException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -49,7 +48,7 @@ public class AccountService {
         return account.getUsers().stream()
                 .filter(u -> u.getId().equals(profileId))
                 .findFirst()
-                .orElseThrow(NotExistUserException::new);
+                .orElseThrow(InvalidProfileIdException::new);
     }
 
 
