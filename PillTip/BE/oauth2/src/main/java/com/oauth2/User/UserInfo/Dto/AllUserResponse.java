@@ -33,6 +33,7 @@ public class AllUserResponse{
 
     // 권한 정보 (두 권한이 모두 true일 때만 true)
     private final boolean permissions;
+    private final Boolean friendPermission;
 
     private final boolean isMain;
     private final List<UserListDto> userList;
@@ -42,7 +43,7 @@ public class AllUserResponse{
         this.id = user.getId();
         this.nickname = user.getNickname();
         this.profilePhoto = user.getProfilePhoto(); // EncryptionConverter가 자동으로 복호화
-        this.terms = user.isTerms();
+        this.terms = user.getTerms();
         this.isMain = user.isMain();
         this.userList = userList;
 
@@ -67,5 +68,7 @@ public class AllUserResponse{
         this.permissions = userPermissions != null &&
                 userPermissions.isSensitiveInfoPermission() &&
                 userPermissions.isMedicalInfoPermission();
+        this.friendPermission = user.getFriendPermission() != null ? user.getFriendPermission() : false;
+
     }
 }

@@ -33,7 +33,7 @@ public class UserService {
     private final FCMTokenRepository fcmTokenRepository;
     private final AccountTokenRepository accountTokenRepository;
     private final AccountRepository accountRepository;
-    private final ProfileService profileService;
+    private final UserProfileService userProfileService;
 
     // 현재 로그인한 사용자 정보 조회
     public User getCurrentUser(Long userId) {
@@ -146,7 +146,7 @@ public class UserService {
 
             List<User> users = account.getUsers();
             for (User user : users) {
-                profileService.deleteProfile(user.getId());
+                userProfileService.deleteProfile(user.getId());
             }
             logger.info("회원 탈퇴 완료 - AccountId: {}", accountId);
             accountRepository.delete(account);

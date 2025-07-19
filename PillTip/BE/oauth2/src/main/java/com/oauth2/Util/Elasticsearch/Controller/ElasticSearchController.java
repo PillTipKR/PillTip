@@ -38,51 +38,35 @@ public class ElasticSearchController {
     private int pageSize;
 
     private final ElasticsearchService elasticsearchService;
-    private final AccountService accountService;
 
     @GetMapping("/drugs")
     public ResponseEntity<ApiResponse<List<ElasticsearchDTO>>> getDrugSearch(
-            @AuthenticationPrincipal Account account,
             @RequestParam String input,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestHeader(name = "X-Profile-Id", required = false, defaultValue = "0") Long profileId
+            @RequestParam(defaultValue = "0") int page
     ) throws IOException {
-        User user = accountService.findUserByProfileId(profileId, account.getId());
-
-        return getApiResponseResponseEntity(user, input, page, drug);
+        return getApiResponseResponseEntity(input, page, drug);
     }
 
     @GetMapping("/manufacturers")
     public ResponseEntity<ApiResponse<List<ElasticsearchDTO>>> getManufacturerSearch(
-            @AuthenticationPrincipal Account account,
             @RequestParam String input,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestHeader(name = "X-Profile-Id", required = false, defaultValue = "0") Long profileId
+            @RequestParam(defaultValue = "0") int page
     ) throws IOException {
-        User user = accountService.findUserByProfileId(profileId, account.getId());
-
-        return getApiResponseResponseEntity(user, input, page, manufacturer);
+        return getApiResponseResponseEntity(input, page, manufacturer);
     }
 
     @GetMapping("/ingredients")
     public ResponseEntity<ApiResponse<List<ElasticsearchDTO>>> getIngredientSearch(
-            @AuthenticationPrincipal Account account,
             @RequestParam String input,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestHeader(name = "X-Profile-Id", required = false, defaultValue = "0") Long profileId
+            @RequestParam(defaultValue = "0") int page
     ) throws IOException {
-        User user = accountService.findUserByProfileId(profileId, account.getId());
-
-        return getApiResponseResponseEntity(user, input, page, ingredient);
+        return getApiResponseResponseEntity(input, page, ingredient);
     }
 
 
     private ResponseEntity<ApiResponse<List<ElasticsearchDTO>>> getApiResponseResponseEntity(
-            User user, String input, int page, String field) throws IOException {
-        if (user == null) {
-            return ResponseEntity.badRequest()
-                    .body(ApiResponse.error("User not authenticated", null));
-        }
+            String input, int page, String field) throws IOException {
+
         List<String> filter = List.of();
         ElasticQuery eq = new ElasticQuery(input, field, index, filter, pageSize, page);
         List<ElasticsearchDTO> result = elasticsearchService.getMatchingFromElasticsearch(eq, ElasticsearchDTO.class);
