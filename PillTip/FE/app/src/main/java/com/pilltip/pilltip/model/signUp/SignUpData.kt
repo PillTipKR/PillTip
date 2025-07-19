@@ -4,12 +4,12 @@ data class SignUpData(
     val loginType: LoginType = LoginType.IDPW,
     val loginId: String = "",
     val password: String = "",
-    val token: String = "", // 소셜 로그인 시 access token
-    val provider: String = "", // 소셜 로그인 시 kakao, google
+    val token: String = "",
+    val provider: String = "",
     val nickname: String = "",
     val term: Boolean = false,
     val gender: String = "",
-    val birthDate: String = "", // YYYY-MM-DD
+    val birthDate: String = "",
     val age: Int = 0,
     val height: Int = 0,
     val weight: Int = 0,
