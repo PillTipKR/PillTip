@@ -8,6 +8,7 @@ import com.oauth2.User.Auth.Entity.*;
 import com.oauth2.User.Alarm.Repository.FCMTokenRepository;
 import com.oauth2.User.UserInfo.Entity.*;
 import com.oauth2.User.Auth.Repository.UserRepository;
+import com.oauth2.User.UserInfo.Entity.UserPermissions;
 import com.oauth2.User.Auth.Dto.OAuth2UserInfo;
 import com.oauth2.User.UserInfo.Service.UserService;
 import lombok.RequiredArgsConstructor;

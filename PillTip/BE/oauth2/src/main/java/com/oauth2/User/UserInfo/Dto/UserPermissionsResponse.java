@@ -3,6 +3,7 @@
 package com.oauth2.User.UserInfo.Dto;
 
 import com.oauth2.User.UserInfo.Entity.UserPermissions;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -21,6 +22,7 @@ public class UserPermissionsResponse {
     private boolean filePermission;          // 파일 동의
     private boolean sensitiveInfoPermission; // 민감정보 수집 동의
     private boolean medicalInfoPermission;   // 의약품 관련 동의
+    private boolean friendPermission;        // 친구 동의
 
     public static UserPermissionsResponse from(UserPermissions userPermissions) {
         return UserPermissionsResponse.builder()
@@ -32,6 +34,7 @@ public class UserPermissionsResponse {
                 .filePermission(userPermissions.isFilePermission())
                 .sensitiveInfoPermission(userPermissions.isSensitiveInfoPermission())
                 .medicalInfoPermission(userPermissions.isMedicalInfoPermission())
+                .friendPermission(userPermissions.isFriendPermission())
                 .build();
     }
 } 

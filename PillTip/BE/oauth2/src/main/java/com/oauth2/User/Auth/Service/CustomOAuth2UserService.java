@@ -5,6 +5,8 @@ package com.oauth2.User.Auth.Service;
 import com.oauth2.User.Auth.Entity.*;
 import com.oauth2.User.UserInfo.Entity.*;
 import com.oauth2.User.Auth.Repository.UserRepository;
+import com.oauth2.User.UserInfo.Entity.UserPermissions;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
