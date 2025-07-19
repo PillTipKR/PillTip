@@ -7,10 +7,10 @@ import com.oauth2.Drug.Review.Domain.Review;
 import com.oauth2.Drug.Review.Domain.ReviewLike;
 import com.oauth2.User.Alarm.Domain.FCMToken;
 import com.oauth2.User.PatientQuestionnaire.Entity.PatientQuestionnaire;
+import com.oauth2.User.UserInfo.Entity.UserPermissions;
 import com.oauth2.User.TakingPill.Entity.TakingPill;
 import com.oauth2.User.UserInfo.Entity.Interests;
 import com.oauth2.User.UserInfo.Entity.UserLocation;
-import com.oauth2.User.UserInfo.Entity.UserPermissions;
 import com.oauth2.User.UserInfo.Entity.UserProfile;
 import com.oauth2.Util.Encryption.EncryptionConverter;
 
@@ -61,7 +61,7 @@ public class User {
     private String nickname;
 
     @Column(nullable = false) // 유저의 동의사항
-    private boolean terms;
+    private Boolean terms;
 
     @Column(name = "real_name")
     @Convert(converter = EncryptionConverter.class)
@@ -89,6 +89,9 @@ public class User {
     @JsonManagedReference
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
     private UserPermissions userPermissions;
+
+    @Column(name = "friend_permission")
+    private Boolean friendPermission;
 
     // 유저 위치 1대 1 관계
     @JsonManagedReference
