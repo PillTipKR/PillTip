@@ -61,7 +61,7 @@ public class User {
     private String nickname;
 
     @Column(nullable = false) // 유저의 동의사항
-    private boolean terms;
+    private Boolean terms;
 
     @Column(name = "real_name")
     @Convert(converter = EncryptionConverter.class)
@@ -89,6 +89,9 @@ public class User {
     @JsonManagedReference
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
     private UserPermissions userPermissions;
+
+    @Column(name = "friend_permission")
+    private Boolean friendPermission;
 
     // 유저 위치 1대 1 관계
     @JsonManagedReference
