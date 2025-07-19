@@ -33,7 +33,7 @@ public class DrugInteractionService {
     @Value("${interactionFile2}")
     private String interactionFile2;
 
-    @Value("${ingredient.ing}")
+    @Value("${ingredient.interaction}")
     private String interaction;
 
 

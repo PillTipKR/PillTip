@@ -6,7 +6,7 @@ import com.oauth2.Drug.DUR.Dto.DurTagDto;
 import com.oauth2.Drug.DetailPage.Dto.*;
 import com.oauth2.Drug.Prompt.Dto.*;
 import com.oauth2.User.TakingPill.Dto.TakingPillSummaryResponse;
-import com.oauth2.User.Auth.Entity.User;
+import com.oauth2.User.UserInfo.Entity.User;
 import com.oauth2.User.TakingPill.Service.TakingPillService;
 import com.oauth2.User.UserInfo.Dto.UserSensitiveInfoDto;
 import com.oauth2.User.UserInfo.Service.UserSensitiveInfoService;

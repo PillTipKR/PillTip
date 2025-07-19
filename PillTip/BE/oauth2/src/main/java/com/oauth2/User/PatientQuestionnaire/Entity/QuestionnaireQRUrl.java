@@ -2,7 +2,7 @@
 // description : 문진표 QR URL 엔티티
 package com.oauth2.User.PatientQuestionnaire.Entity;
 
-import com.oauth2.User.Auth.Entity.User;
+import com.oauth2.User.UserInfo.Entity.User;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.*;

@@ -7,7 +7,7 @@ import com.oauth2.Drug.DrugInfo.Repository.DrugRepository;
 import com.oauth2.User.TakingPill.Dto.TakingPillRequest;
 import com.oauth2.User.TakingPill.Dto.TakingPillSummaryResponse;
 import com.oauth2.User.TakingPill.Dto.TakingPillDetailResponse;
-import com.oauth2.User.Auth.Entity.User;
+import com.oauth2.User.UserInfo.Entity.User;
 import com.oauth2.User.TakingPill.Entity.*;
 import com.oauth2.User.TakingPill.Repositoty.DosageLogRepository;
 import com.oauth2.User.TakingPill.Repositoty.TakingPillCounterRepository;

@@ -6,7 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.oauth2.Drug.DUR.Dto.*;
 import com.oauth2.Drug.DrugInfo.Domain.Drug;
 import com.oauth2.Drug.DrugInfo.Repository.DrugRepository;
-import com.oauth2.User.Auth.Entity.User;
+import com.oauth2.User.UserInfo.Entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;

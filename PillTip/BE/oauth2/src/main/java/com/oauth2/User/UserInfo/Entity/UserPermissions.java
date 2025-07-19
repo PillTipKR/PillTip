@@ -3,7 +3,6 @@
 package com.oauth2.User.UserInfo.Entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.oauth2.User.Auth.Entity.User;
 import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Getter;

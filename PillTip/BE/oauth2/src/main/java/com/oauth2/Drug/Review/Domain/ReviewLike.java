@@ -1,6 +1,6 @@
 package com.oauth2.Drug.Review.Domain;
 
-import com.oauth2.User.Auth.Entity.User;
+import com.oauth2.User.UserInfo.Entity.User;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;

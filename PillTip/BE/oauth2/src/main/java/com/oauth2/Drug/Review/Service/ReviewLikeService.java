@@ -4,7 +4,7 @@ import com.oauth2.Drug.Review.Domain.Review;
 import com.oauth2.Drug.Review.Domain.ReviewLike;
 import com.oauth2.Drug.Review.Repository.ReviewLikeRepository;
 import com.oauth2.Drug.Review.Repository.ReviewRepository;
-import com.oauth2.User.Auth.Entity.User;
+import com.oauth2.User.UserInfo.Entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

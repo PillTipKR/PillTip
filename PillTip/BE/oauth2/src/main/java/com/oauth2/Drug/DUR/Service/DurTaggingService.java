@@ -7,7 +7,7 @@ import com.oauth2.Drug.DUR.Dto.SearchDurDto;
 import com.oauth2.Drug.DrugInfo.Domain.Drug;
 import com.oauth2.Drug.DrugInfo.Repository.DrugRepository;
 import com.oauth2.Drug.Search.Dto.SearchIndexDTO;
-import com.oauth2.User.Auth.Entity.User;
+import com.oauth2.User.UserInfo.Entity.User;
 import com.oauth2.User.TakingPill.Entity.TakingPill;
 import com.oauth2.User.TakingPill.Repositoty.TakingPillRepository;
 import lombok.RequiredArgsConstructor;

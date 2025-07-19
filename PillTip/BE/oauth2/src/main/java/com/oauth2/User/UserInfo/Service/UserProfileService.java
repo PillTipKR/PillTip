@@ -1,6 +1,6 @@
 package com.oauth2.User.UserInfo.Service;
 
-import com.oauth2.User.Auth.Entity.User;
+import com.oauth2.User.UserInfo.Entity.User;
 import com.oauth2.User.UserInfo.Entity.UserProfile;
 import com.oauth2.User.UserInfo.Repository.UserProfileRepository;
 import lombok.RequiredArgsConstructor;

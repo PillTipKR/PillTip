@@ -2,7 +2,7 @@ package com.oauth2.User.TakingPill.Entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
-import com.oauth2.User.Auth.Entity.User;
+import com.oauth2.User.UserInfo.Entity.User;
 import com.oauth2.Util.Encryption.EncryptionConverter;
 
 import jakarta.persistence.*;

@@ -1,7 +1,9 @@
 package com.oauth2.User.TakingPill.Controller;
 
-import com.oauth2.User.Auth.Dto.ApiResponse;
-import com.oauth2.User.Auth.Entity.User;
+import com.oauth2.Account.Service.AccountService;
+import com.oauth2.Account.Entity.Account;
+import com.oauth2.Account.Dto.ApiResponse;
+import com.oauth2.User.UserInfo.Entity.User;
 import com.oauth2.User.Friend.Service.FriendService;
 import com.oauth2.User.TakingPill.Dto.AllDosageLogResponse;
 import com.oauth2.User.TakingPill.Dto.WeekDosageLogResponse;
@@ -21,11 +23,16 @@ public class DosageLogController {
 
     private final DosageLogService dosageLogService;
     private final FriendService friendService;
+    private final AccountService accountService;
 
     @GetMapping("/date")
     public ResponseEntity<ApiResponse<AllDosageLogResponse>> getDateLogs(
-           @AuthenticationPrincipal User user,
-            @RequestParam LocalDate date) {
+           @AuthenticationPrincipal Account account,
+           @RequestParam LocalDate date,
+           @RequestHeader(name = "X-Profile-Id", required = false, defaultValue = "0") Long profileId
+    ) throws AccessDeniedException {
+        User user = accountService.findUserByProfileId(profileId, account.getId());
+
         AllDosageLogResponse responses = dosageLogService.getDateLog(user.getId(), date);
         return ResponseEntity.ok().body(ApiResponse.success(responses));
     }
@@ -33,16 +40,25 @@ public class DosageLogController {
 
     @GetMapping("/week")
     public ResponseEntity<ApiResponse<WeekDosageLogResponse>> getWeekLogs(
-            @AuthenticationPrincipal User user,
-            @RequestParam LocalDate date) {
+            @AuthenticationPrincipal Account account,
+            @RequestParam LocalDate date,
+            @RequestHeader(name = "X-Profile-Id", required = false, defaultValue = "0") Long profileId
+    ) throws AccessDeniedException {
+        User user = accountService.findUserByProfileId(profileId, account.getId());
+
         WeekDosageLogResponse responses = dosageLogService.getWeeklySummary(user.getId(), date);
         return ResponseEntity.ok().body(ApiResponse.success(responses));
     }
 
     @GetMapping("/{friendId}/date")
     public ResponseEntity<ApiResponse<AllDosageLogResponse>> getFriendDateLogs(
-            @AuthenticationPrincipal User user,
-            @PathVariable Long friendId, @RequestParam LocalDate date) throws AccessDeniedException {
+            @AuthenticationPrincipal Account account,
+            @PathVariable Long friendId,
+            @RequestParam LocalDate date,
+            @RequestHeader(name = "X-Profile-Id", required = false, defaultValue = "0") Long profileId
+    ) throws AccessDeniedException {
+        User user = accountService.findUserByProfileId(profileId, account.getId());
+
         friendService.assertIsFriend(user.getId(), friendId);
         AllDosageLogResponse responses = dosageLogService.getDateLog(friendId, date);
         return ResponseEntity.ok().body(ApiResponse.success(responses));

@@ -5,7 +5,7 @@ import com.oauth2.Drug.DrugInfo.Repository.DrugRepository;
 import com.oauth2.Drug.Review.Domain.*;
 import com.oauth2.Drug.Review.Dto.*;
 import com.oauth2.Drug.Review.Repository.*;
-import com.oauth2.User.Auth.Entity.User;
+import com.oauth2.User.UserInfo.Entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;

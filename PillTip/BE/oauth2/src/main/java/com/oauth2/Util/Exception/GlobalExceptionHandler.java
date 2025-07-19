@@ -1,10 +1,7 @@
 package com.oauth2.Util.Exception;
 
-import com.oauth2.Util.Exception.CustomException.NotExistDosageLogException;
-import com.oauth2.Util.Exception.CustomException.NotExistUserException;
+import com.oauth2.Util.Exception.CustomException.*;
 import com.oauth2.Util.Exception.Model.ErrorResponse;
-import com.oauth2.Util.Exception.CustomException.MissingFCMTokenException;
-import com.oauth2.Util.Exception.CustomException.NotFriendException;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -75,6 +72,348 @@ public class GlobalExceptionHandler {
     @ExceptionHandler
     protected ResponseEntity<ErrorResponse> handleNotExistUserException(NotExistUserException e) {
         final ErrorResponse response = ErrorResponse.of(NOT_EXIST_USER, e.getMessage());
+        return new ResponseEntity<>(response, response.getStatus());
+    }
+
+    @ExceptionHandler
+    protected ResponseEntity<ErrorResponse> handleUserNotAuthenticatedException(UserNotAuthenticatedException e) {
+        final ErrorResponse response = ErrorResponse.of(USER_NOT_AUTHENTICATED, e.getMessage());
+        return new ResponseEntity<>(response, response.getStatus());
+    }
+
+    @ExceptionHandler
+    protected ResponseEntity<ErrorResponse> handleTokenNotProvidedException(TokenNotProvidedException e) {
+        final ErrorResponse response = ErrorResponse.of(TOKEN_NOT_PROVIDED, e.getMessage());
+        return new ResponseEntity<>(response, response.getStatus());
+    }
+
+    @ExceptionHandler
+    protected ResponseEntity<ErrorResponse> handleInvalidTokenException(InvalidTokenException e) {
+        final ErrorResponse response = ErrorResponse.of(INVALID_TOKEN, e.getMessage());
+        return new ResponseEntity<>(response, response.getStatus());
+    }
+
+    @ExceptionHandler
+    protected ResponseEntity<ErrorResponse> handleTokenExpiredException(TokenExpiredException e) {
+        final ErrorResponse response = ErrorResponse.of(TOKEN_EXPIRED, e.getMessage());
+        return new ResponseEntity<>(response, response.getStatus());
+    }
+
+    @ExceptionHandler
+    protected ResponseEntity<ErrorResponse> handleInvalidRefreshTokenException(InvalidRefreshTokenException e) {
+        final ErrorResponse response = ErrorResponse.of(INVALID_REFRESH_TOKEN, e.getMessage());
+        return new ResponseEntity<>(response, response.getStatus());
+    }
+
+    @ExceptionHandler
+    protected ResponseEntity<ErrorResponse> handleAuthenticationFailedException(AuthenticationFailedException e) {
+        final ErrorResponse response = ErrorResponse.of(AUTHENTICATION_FAILED, e.getMessage());
+        return new ResponseEntity<>(response, response.getStatus());
+    }
+
+    @ExceptionHandler
+    protected ResponseEntity<ErrorResponse> handleDosageTimeNotPassedException(DosageTimeNotPassedException e) {
+        final ErrorResponse response = ErrorResponse.of(DOSAGE_TIME_NOT_PASSED, e.getMessage());
+        return new ResponseEntity<>(response, response.getStatus());
+    }
+
+    @ExceptionHandler
+    protected ResponseEntity<ErrorResponse> handleAlreadyTakenException(AlreadyTakenException e) {
+        final ErrorResponse response = ErrorResponse.of(ALREADY_TAKEN, e.getMessage());
+        return new ResponseEntity<>(response, response.getStatus());
+    }
+
+    @ExceptionHandler
+    protected ResponseEntity<ErrorResponse> handleOperationFailedException(OperationFailedException e) {
+        final ErrorResponse response = ErrorResponse.of(OPERATION_FAILED, e.getMessage());
+        return new ResponseEntity<>(response, response.getStatus());
+    }
+
+    @ExceptionHandler
+    protected ResponseEntity<ErrorResponse> handleInvalidRequestException(InvalidRequestException e) {
+        final ErrorResponse response = ErrorResponse.of(INVALID_REQUEST, e.getMessage());
+        return new ResponseEntity<>(response, response.getStatus());
+    }
+
+    @ExceptionHandler
+    protected ResponseEntity<ErrorResponse> handleSerializationFailedException(SerializationFailedException e) {
+        final ErrorResponse response = ErrorResponse.of(SERIALIZATION_FAILED, e.getMessage());
+        return new ResponseEntity<>(response, response.getStatus());
+    }
+
+    @ExceptionHandler
+    protected ResponseEntity<ErrorResponse> handleDeserializationFailedException(DeserializationFailedException e) {
+        final ErrorResponse response = ErrorResponse.of(DESERIALIZATION_FAILED, e.getMessage());
+        return new ResponseEntity<>(response, response.getStatus());
+    }
+
+    @ExceptionHandler
+    protected ResponseEntity<ErrorResponse> handleFileUploadFailedException(FileUploadFailedException e) {
+        final ErrorResponse response = ErrorResponse.of(FILE_UPLOAD_FAILED, e.getMessage());
+        return new ResponseEntity<>(response, response.getStatus());
+    }
+
+    @ExceptionHandler
+    protected ResponseEntity<ErrorResponse> handleFileSaveFailedException(FileSaveFailedException e) {
+        final ErrorResponse response = ErrorResponse.of(FILE_SAVE_FAILED, e.getMessage());
+        return new ResponseEntity<>(response, response.getStatus());
+    }
+
+    @ExceptionHandler
+    protected ResponseEntity<ErrorResponse> handleDirectoryCreateFailedException(DirectoryCreateFailedException e) {
+        final ErrorResponse response = ErrorResponse.of(DIRECTORY_CREATE_FAILED, e.getMessage());
+        return new ResponseEntity<>(response, response.getStatus());
+    }
+
+    @ExceptionHandler
+    protected ResponseEntity<ErrorResponse> handleLoginFailedException(LoginFailedException e) {
+        final ErrorResponse response = ErrorResponse.of(LOGIN_FAILED, e.getMessage());
+        return new ResponseEntity<>(response, response.getStatus());
+    }
+
+    @ExceptionHandler
+    protected ResponseEntity<ErrorResponse> handleSignupFailedException(SignupFailedException e) {
+        final ErrorResponse response = ErrorResponse.of(SIGNUP_FAILED, e.getMessage());
+        return new ResponseEntity<>(response, response.getStatus());
+    }
+
+    @ExceptionHandler
+    protected ResponseEntity<ErrorResponse> handleLogoutFailedException(LogoutFailedException e) {
+        final ErrorResponse response = ErrorResponse.of(LOGOUT_FAILED, e.getMessage());
+        return new ResponseEntity<>(response, response.getStatus());
+    }
+
+    @ExceptionHandler
+    protected ResponseEntity<ErrorResponse> handleTokenRefreshFailedException(TokenRefreshFailedException e) {
+        final ErrorResponse response = ErrorResponse.of(TOKEN_REFRESH_FAILED, e.getMessage());
+        return new ResponseEntity<>(response, response.getStatus());
+    }
+
+    @ExceptionHandler
+    protected ResponseEntity<ErrorResponse> handleLoginTypeRequiredException(LoginTypeRequiredException e) {
+        final ErrorResponse response = ErrorResponse.of(LOGIN_TYPE_REQUIRED, e.getMessage());
+        return new ResponseEntity<>(response, response.getStatus());
+    }
+
+    @ExceptionHandler
+    protected ResponseEntity<ErrorResponse> handleSocialAccountAlreadyExistsException(SocialAccountAlreadyExistsException e) {
+        final ErrorResponse response = ErrorResponse.of(SOCIAL_ACCOUNT_ALREADY_EXISTS, e.getMessage());
+        return new ResponseEntity<>(response, response.getStatus());
+    }
+
+    @ExceptionHandler
+    protected ResponseEntity<ErrorResponse> handleTermsAgreementFailedException(TermsAgreementFailedException e) {
+        final ErrorResponse response = ErrorResponse.of(TERMS_AGREEMENT_FAILED, e.getMessage());
+        return new ResponseEntity<>(response, response.getStatus());
+    }
+
+    @ExceptionHandler
+    protected ResponseEntity<ErrorResponse> handleSearchFailedException(SearchFailedException e) {
+        final ErrorResponse response = ErrorResponse.of(SEARCH_FAILED, e.getMessage());
+        return new ResponseEntity<>(response, response.getStatus());
+    }
+
+    @ExceptionHandler
+    protected ResponseEntity<ErrorResponse> handleUnsupportedOauth2ProviderException(UnsupportedOauth2ProviderException e) {
+        final ErrorResponse response = ErrorResponse.of(UNSUPPORTED_OAUTH2_PROVIDER, e.getMessage());
+        return new ResponseEntity<>(response, response.getStatus());
+    }
+
+    @ExceptionHandler
+    protected ResponseEntity<ErrorResponse> handleOauth2UserIdRequiredException(Oauth2UserIdRequiredException e) {
+        final ErrorResponse response = ErrorResponse.of(OAUTH2_USER_ID_REQUIRED, e.getMessage());
+        return new ResponseEntity<>(response, response.getStatus());
+    }
+
+    @ExceptionHandler
+    protected ResponseEntity<ErrorResponse> handleOauth2UserInfoParseFailedException(Oauth2UserInfoParseFailedException e) {
+        final ErrorResponse response = ErrorResponse.of(OAUTH2_USER_INFO_PARSE_FAILED, e.getMessage());
+        return new ResponseEntity<>(response, response.getStatus());
+    }
+
+    @ExceptionHandler
+    protected ResponseEntity<ErrorResponse> handleSocialAccountAlreadyExistsDetailException(SocialAccountAlreadyExistsDetailException e) {
+        final ErrorResponse response = ErrorResponse.of(SOCIAL_ACCOUNT_ALREADY_EXISTS_DETAIL, e.getMessage());
+        return new ResponseEntity<>(response, response.getStatus());
+    }
+
+    @ExceptionHandler
+    protected ResponseEntity<ErrorResponse> handleInvalidPhoneNumberFormatException(InvalidPhoneNumberFormatException e) {
+        final ErrorResponse response = ErrorResponse.of(INVALID_PHONE_NUMBER_FORMAT, e.getMessage());
+        return new ResponseEntity<>(response, response.getStatus());
+    }
+
+    @ExceptionHandler
+    protected ResponseEntity<ErrorResponse> handleDrugNotFoundException(DrugNotFoundException e) {
+        final ErrorResponse response = ErrorResponse.of(DRUG_NOT_FOUND, e.getMessage());
+        return new ResponseEntity<>(response, response.getStatus());
+    }
+
+    @ExceptionHandler
+    protected ResponseEntity<ErrorResponse> handleDrugInteractionNotFoundException(DrugInteractionNotFoundException e) {
+        final ErrorResponse response = ErrorResponse.of(DRUG_INTERACTION_NOT_FOUND, e.getMessage());
+        return new ResponseEntity<>(response, response.getStatus());
+    }
+
+    @ExceptionHandler
+    protected ResponseEntity<ErrorResponse> handleUnsupportedDrugTypeException(UnsupportedDrugTypeException e) {
+        final ErrorResponse response = ErrorResponse.of(UNSUPPORTED_DRUG_TYPE, e.getMessage());
+        return new ResponseEntity<>(response, response.getStatus());
+    }
+
+    @ExceptionHandler
+    protected ResponseEntity<ErrorResponse> handleReviewDeletePermissionDeniedException(ReviewDeletePermissionDeniedException e) {
+        final ErrorResponse response = ErrorResponse.of(REVIEW_DELETE_PERMISSION_DENIED, e.getMessage());
+        return new ResponseEntity<>(response, response.getStatus());
+    }
+
+    @ExceptionHandler
+    protected ResponseEntity<ErrorResponse> handleUnknownTagTypeException(UnknownTagTypeException e) {
+        final ErrorResponse response = ErrorResponse.of(UNKNOWN_TAG_TYPE, e.getMessage());
+        return new ResponseEntity<>(response, response.getStatus());
+    }
+
+    @ExceptionHandler
+    protected ResponseEntity<ErrorResponse> handleElasticsearchOperationFailedException(ElasticsearchOperationFailedException e) {
+        final ErrorResponse response = ErrorResponse.of(ELASTICSEARCH_OPERATION_FAILED, e.getMessage());
+        return new ResponseEntity<>(response, response.getStatus());
+    }
+
+    @ExceptionHandler
+    protected ResponseEntity<ErrorResponse> handleJsonConversionFailedException(JsonConversionFailedException e) {
+        final ErrorResponse response = ErrorResponse.of(JSON_CONVERSION_FAILED, e.getMessage());
+        return new ResponseEntity<>(response, response.getStatus());
+    }
+
+    @ExceptionHandler
+    protected ResponseEntity<ErrorResponse> handleJsonParseFailedException(JsonParseFailedException e) {
+        final ErrorResponse response = ErrorResponse.of(JSON_PARSE_FAILED, e.getMessage());
+        return new ResponseEntity<>(response, response.getStatus());
+    }
+
+    @ExceptionHandler
+    protected ResponseEntity<ErrorResponse> handleUnexpectedErrorException(UnexpectedErrorException e) {
+        final ErrorResponse response = ErrorResponse.of(UNEXPECTED_ERROR, e.getMessage());
+        return new ResponseEntity<>(response, response.getStatus());
+    }
+
+    @ExceptionHandler
+    protected ResponseEntity<ErrorResponse> handleValidationFailedException(ValidationFailedException e) {
+        final ErrorResponse response = ErrorResponse.of(VALIDATION_FAILED, e.getMessage());
+        return new ResponseEntity<>(response, response.getStatus());
+    }
+
+    @ExceptionHandler
+    protected ResponseEntity<ErrorResponse> handleGoogleUserIdRequiredException(GoogleUserIdRequiredException e) {
+        final ErrorResponse response = ErrorResponse.of(GOOGLE_USER_ID_REQUIRED, e.getMessage());
+        return new ResponseEntity<>(response, response.getStatus());
+    }
+
+    @ExceptionHandler
+    protected ResponseEntity<ErrorResponse> handleKakaoUserIdRequiredException(KakaoUserIdRequiredException e) {
+        final ErrorResponse response = ErrorResponse.of(KAKAO_USER_ID_REQUIRED, e.getMessage());
+        return new ResponseEntity<>(response, response.getStatus());
+    }
+
+    @ExceptionHandler
+    protected ResponseEntity<ErrorResponse> handleGoogleUserInfoParseFailedException(GoogleUserInfoParseFailedException e) {
+        final ErrorResponse response = ErrorResponse.of(GOOGLE_USER_INFO_PARSE_FAILED, e.getMessage());
+        return new ResponseEntity<>(response, response.getStatus());
+    }
+
+    @ExceptionHandler
+    protected ResponseEntity<ErrorResponse> handleKakaoUserInfoParseFailedException(KakaoUserInfoParseFailedException e) {
+        final ErrorResponse response = ErrorResponse.of(KAKAO_USER_INFO_PARSE_FAILED, e.getMessage());
+        return new ResponseEntity<>(response, response.getStatus());
+    }
+
+    @ExceptionHandler
+    protected ResponseEntity<ErrorResponse> handleInvalidRefreshTokenDetailException(InvalidRefreshTokenDetailException e) {
+        final ErrorResponse response = ErrorResponse.of(INVALID_REFRESH_TOKEN_DETAIL, e.getMessage());
+        return new ResponseEntity<>(response, response.getStatus());
+    }
+
+    @ExceptionHandler
+    protected ResponseEntity<ErrorResponse> handleTokenNotFoundException(TokenNotFoundException e) {
+        final ErrorResponse response = ErrorResponse.of(TOKEN_NOT_FOUND, e.getMessage());
+        return new ResponseEntity<>(response, response.getStatus());
+    }
+
+    @ExceptionHandler
+    protected ResponseEntity<ErrorResponse> handleTokenExpiredDetailException(TokenExpiredDetailException e) {
+        final ErrorResponse response = ErrorResponse.of(TOKEN_EXPIRED_DETAIL, e.getMessage());
+        return new ResponseEntity<>(response, response.getStatus());
+    }
+
+    @ExceptionHandler
+    protected ResponseEntity<ErrorResponse> handleTokenInvalidRetryLoginException(TokenInvalidRetryLoginException e) {
+        final ErrorResponse response = ErrorResponse.of(TOKEN_INVALID_RETRY_LOGIN, e.getMessage());
+        return new ResponseEntity<>(response, response.getStatus());
+    }
+
+    @ExceptionHandler
+    protected ResponseEntity<ErrorResponse> handleTokenExpiredRetryLoginException(TokenExpiredRetryLoginException e) {
+        final ErrorResponse response = ErrorResponse.of(TOKEN_EXPIRED_RETRY_LOGIN, e.getMessage());
+        return new ResponseEntity<>(response, response.getStatus());
+    }
+
+    @ExceptionHandler
+    protected ResponseEntity<ErrorResponse> handleUserInfoNotFoundRetryLoginException(UserInfoNotFoundRetryLoginException e) {
+        final ErrorResponse response = ErrorResponse.of(USER_INFO_NOT_FOUND_RETRY_LOGIN, e.getMessage());
+        return new ResponseEntity<>(response, response.getStatus());
+    }
+
+    @ExceptionHandler
+    protected ResponseEntity<ErrorResponse> handleLoginTypeRequiredDetailException(LoginTypeRequiredDetailException e) {
+        final ErrorResponse response = ErrorResponse.of(LOGIN_TYPE_REQUIRED_DETAIL, e.getMessage());
+        return new ResponseEntity<>(response, response.getStatus());
+    }
+
+    @ExceptionHandler
+    protected ResponseEntity<ErrorResponse> handleUserIdPasswordRequiredException(UserIdPasswordRequiredException e) {
+        final ErrorResponse response = ErrorResponse.of(USER_ID_PASSWORD_REQUIRED, e.getMessage());
+        return new ResponseEntity<>(response, response.getStatus());
+    }
+
+    @ExceptionHandler
+    protected ResponseEntity<ErrorResponse> handleTokenRequiredForSocialException(TokenRequiredForSocialException e) {
+        final ErrorResponse response = ErrorResponse.of(TOKEN_REQUIRED_FOR_SOCIAL, e.getMessage());
+        return new ResponseEntity<>(response, response.getStatus());
+    }
+
+    @ExceptionHandler
+    protected ResponseEntity<ErrorResponse> handleErrorKeywordLoginTypeException(ErrorKeywordLoginTypeException e) {
+        final ErrorResponse response = ErrorResponse.of(ERROR_KEYWORD_LOGIN_TYPE, e.getMessage());
+        return new ResponseEntity<>(response, response.getStatus());
+    }
+
+    @ExceptionHandler
+    protected ResponseEntity<ErrorResponse> handleErrorKeywordPhoneNumberException(ErrorKeywordPhoneNumberException e) {
+        final ErrorResponse response = ErrorResponse.of(ERROR_KEYWORD_PHONE_NUMBER, e.getMessage());
+        return new ResponseEntity<>(response, response.getStatus());
+    }
+
+    @ExceptionHandler
+    protected ResponseEntity<ErrorResponse> handleErrorKeywordNicknameException(ErrorKeywordNicknameException e) {
+        final ErrorResponse response = ErrorResponse.of(ERROR_KEYWORD_NICKNAME, e.getMessage());
+        return new ResponseEntity<>(response, response.getStatus());
+    }
+
+    @ExceptionHandler
+    protected ResponseEntity<ErrorResponse> handleErrorKeywordUserIdException(ErrorKeywordUserIdException e) {
+        final ErrorResponse response = ErrorResponse.of(ERROR_KEYWORD_USER_ID, e.getMessage());
+        return new ResponseEntity<>(response, response.getStatus());
+    }
+
+
+    @ExceptionHandler
+    protected ResponseEntity<ErrorResponse> handleProfileIsMainException(ProfileIsMainException e) {
+        final ErrorResponse response = ErrorResponse.of(PROFILE_IS_MAIN, e.getMessage());
+        return new ResponseEntity<>(response, response.getStatus());
+    }
+    @ExceptionHandler
+    protected ResponseEntity<ErrorResponse> handleProfileIsMainException(InvalidProfileIdException e) {
+        final ErrorResponse response = ErrorResponse.of(INVALID_PROFILE_ID, e.getMessage());
         return new ResponseEntity<>(response, response.getStatus());
     }
 

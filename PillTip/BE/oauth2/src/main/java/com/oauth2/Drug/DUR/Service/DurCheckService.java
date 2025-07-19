@@ -8,7 +8,7 @@ import com.oauth2.Drug.DUR.Dto.DurTagDto;
 import com.oauth2.Drug.DUR.Dto.DurUserContext;
 import com.oauth2.Drug.DrugInfo.Domain.Drug;
 import com.oauth2.Drug.DrugInfo.Repository.DrugRepository;
-import com.oauth2.User.Auth.Entity.User;
+import com.oauth2.User.UserInfo.Entity.User;
 import com.oauth2.User.TakingPill.Dto.TakingPillSummaryResponse;
 import com.oauth2.User.TakingPill.Service.TakingPillService;
 import com.oauth2.User.UserInfo.Entity.UserProfile;

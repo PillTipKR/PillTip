@@ -2,7 +2,7 @@
 // description : 사용자 의료 이력 Repository
 package com.oauth2.User.UserInfo.Repository;
 
-import com.oauth2.User.Auth.Entity.User;
+import com.oauth2.User.UserInfo.Entity.User;
 import com.oauth2.User.UserInfo.Entity.UserSensitiveInfo;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;

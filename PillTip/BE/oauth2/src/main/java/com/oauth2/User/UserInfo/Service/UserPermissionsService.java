@@ -4,7 +4,7 @@ package com.oauth2.User.UserInfo.Service;
 
 import com.oauth2.User.UserInfo.Dto.UserPermissionsRequest;
 import com.oauth2.User.UserInfo.Dto.UserPermissionsResponse;
-import com.oauth2.User.Auth.Entity.User;
+import com.oauth2.User.UserInfo.Entity.User;
 import com.oauth2.User.UserInfo.Entity.UserPermissions;
 import com.oauth2.User.UserInfo.Repository.UserPermissionsRepository;
 import lombok.RequiredArgsConstructor;

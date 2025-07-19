@@ -1,9 +1,9 @@
 package com.oauth2.User.Alarm.Init;
 
+import com.oauth2.User.Alarm.Dto.AlarmDto;
 import com.oauth2.User.Alarm.Service.AlarmService;
-import com.oauth2.User.Auth.Entity.User;
 import com.oauth2.User.TakingPill.Entity.DosageLog;
-import com.oauth2.User.Auth.Repository.UserRepository;
+import com.oauth2.User.UserInfo.Repository.UserRepository;
 import com.oauth2.User.TakingPill.Repositoty.DosageLogRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -25,23 +25,23 @@ public class DrugAlarmScheduler {
     public void dispatchMedicationAlarms() {
         LocalDateTime now = LocalDateTime.now();
 
-        List<User> users = userRepository.findAllActiveUsersWithPillInfo();
+        List<AlarmDto> alarmDtos = userRepository.findAllActiveUsersWithPillInfo();
 
-        for (User user : users) {
+        for (AlarmDto alarmDto : alarmDtos) {
             // TakingPill 엔티티에서 직접 복용 중인 약 정보 조회
-            List<DosageLog> dosageLogs = dosageLogRepository.findByUserAndDate(user.getId(),LocalDate.now());
-            List<DosageLog> rescheduled = dosageLogRepository.findByUserAndRescheduledDate(user.getId(),LocalDate.now());
+            List<DosageLog> dosageLogs = dosageLogRepository.findByUserAndDate(alarmDto.userId(), LocalDate.now());
+            List<DosageLog> rescheduled = dosageLogRepository.findByUserAndRescheduledDate(alarmDto.userId(), LocalDate.now());
             for(DosageLog dosageLog : dosageLogs) {
                 LocalDateTime dateTime = dosageLog.getScheduledTime();
                 if(dateTime.getHour() == now.getHour() && dateTime.getMinute() == now.getMinute()) {
-                    alarmService.sendMedicationAlarm(user.getFCMToken(), dosageLog.getId(),
+                    alarmService.sendMedicationAlarm(alarmDto.FCMToken(), dosageLog.getId(),
                             dosageLog.getAlarmName(), dosageLog.getMedicationName());
                 }
             }
             for(DosageLog dosageLog : rescheduled) {
                 LocalDateTime rescheduledTime = dosageLog.getRescheduledTime();
                 if(rescheduledTime.getHour() == now.getHour() && rescheduledTime.getMinute() == now.getMinute()) {
-                    alarmService.sendMedicationAlarm(user.getFCMToken(), dosageLog.getId(),
+                    alarmService.sendMedicationAlarm(alarmDto.FCMToken(), dosageLog.getId(),
                             dosageLog.getAlarmName(), dosageLog.getMedicationName());
                 }
             }

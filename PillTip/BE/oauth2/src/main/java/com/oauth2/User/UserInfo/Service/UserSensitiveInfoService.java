@@ -3,7 +3,7 @@
 package com.oauth2.User.UserInfo.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.oauth2.User.Auth.Entity.User;
+import com.oauth2.User.UserInfo.Entity.User;
 import com.oauth2.User.UserInfo.Dto.UserSensitiveInfoDto;
 import com.oauth2.User.UserInfo.Dto.UserSensitiveInfoDeleteRequest;
 import com.oauth2.User.UserInfo.Entity.UserSensitiveInfo;

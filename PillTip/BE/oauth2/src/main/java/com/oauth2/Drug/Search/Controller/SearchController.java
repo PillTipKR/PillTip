@@ -4,16 +4,15 @@ import com.oauth2.Drug.DUR.Dto.SearchDurDto;
 import com.oauth2.Drug.DUR.Service.DurTaggingService;
 import com.oauth2.Drug.Search.Dto.SearchIndexDTO;
 import com.oauth2.Drug.Search.Service.SearchService;
-import com.oauth2.User.Auth.Dto.ApiResponse;
-import com.oauth2.User.Auth.Entity.User;
+import com.oauth2.Account.Service.AccountService;
+import com.oauth2.Account.Entity.Account;
+import com.oauth2.Account.Dto.ApiResponse;
+import com.oauth2.User.UserInfo.Entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.util.List;
@@ -35,35 +34,46 @@ public class SearchController {
 
     private final SearchService searchService;
     private final DurTaggingService durTaggingService;
+    private final AccountService accountService;
 
     @GetMapping("/drugs")
     public ResponseEntity<ApiResponse<List<SearchDurDto>>> getDrugSearch(
-            @AuthenticationPrincipal User user,
+            @AuthenticationPrincipal Account account,
             @RequestParam String input,
-            @RequestParam(defaultValue = "0") int page) throws IOException {
+            @RequestParam(defaultValue = "0") int page,
+            @RequestHeader(name = "X-Profile-Id", required = false, defaultValue = "0") Long profileId
+    ) throws IOException {
+        User user = accountService.findUserByProfileId(profileId, account.getId());
+
         return getTagSearch(user,input,page,drug);
     }
 
     @GetMapping("/manufacturers")
     public ResponseEntity<ApiResponse<List<SearchDurDto>>> getManufacturerSearch(
-            @AuthenticationPrincipal User user,
+            @AuthenticationPrincipal Account account,
             @RequestParam String input,
-            @RequestParam(defaultValue = "0") int page) throws IOException {
+            @RequestParam(defaultValue = "0") int page,
+            @RequestHeader(name = "X-Profile-Id", required = false, defaultValue = "0") Long profileId
+    ) throws IOException {
+        User user = accountService.findUserByProfileId(profileId, account.getId());
+
         return getTagSearch(user,input,page,manufacturer);
     }
 
     @GetMapping("/ingredients")
     public ResponseEntity<ApiResponse<List<SearchDurDto>>> getIngredientSearch(
-            @AuthenticationPrincipal User user,
+            @AuthenticationPrincipal Account account,
             @RequestParam String input,
-            @RequestParam(defaultValue="0") int page) throws IOException {
+            @RequestParam(defaultValue="0") int page,
+            @RequestHeader(name = "X-Profile-Id", required = false, defaultValue = "0") Long profileId
+    ) throws IOException {
+        User user = accountService.findUserByProfileId(profileId, account.getId());
+
         return getTagSearch(user,input,page,ingredient);
     }
 
     private ResponseEntity<ApiResponse<List<SearchDurDto>>> getTagSearch(
-            @AuthenticationPrincipal User user,
-            @RequestParam String input,
-            @RequestParam(defaultValue = "0") int page, String field) throws IOException {
+            User user, String input, int page, String field) throws IOException {
         if (user == null) {
             return ResponseEntity.badRequest()
                     .body(ApiResponse.error("User not authenticated", null));

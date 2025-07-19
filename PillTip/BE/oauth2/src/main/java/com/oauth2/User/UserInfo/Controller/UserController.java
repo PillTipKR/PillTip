@@ -1,12 +1,12 @@
 package com.oauth2.User.UserInfo.Controller;
 
-import com.oauth2.User.Auth.Dto.*;
-import com.oauth2.User.Auth.Entity.User;
+import com.oauth2.Account.Service.AccountService;
+import com.oauth2.Account.Entity.Account;
+import com.oauth2.Account.Dto.*;
+import com.oauth2.User.UserInfo.Entity.User;
+import com.oauth2.User.UserInfo.Dto.*;
 import com.oauth2.User.UserInfo.Service.UserService;
-import com.oauth2.User.UserInfo.Dto.PersonalInfoRequest;
-import com.oauth2.User.UserInfo.Dto.UserInfoMessageConstants;
 // import com.oauth2.User.UserInfo.Dto.ProfilePhotoRequest;
-import com.oauth2.User.UserInfo.Dto.UserResponse;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,6 +16,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.AccessDeniedException;
+import java.util.List;
 
 
 @RestController
@@ -23,21 +25,24 @@ import java.io.IOException;
 @RequiredArgsConstructor
 public class UserController {
     private static final Logger logger = LoggerFactory.getLogger(UserController.class);
+    private final AccountService accountService;
     private final UserService userService;
-
 
     // 현재 로그인한 사용자 정보 조회
     @GetMapping("/me")
-    public ResponseEntity<ApiResponse<UserResponse>> getCurrentUser(@AuthenticationPrincipal User user) {
-        if (user == null) {
-            return ResponseEntity.status(400)
-                    .body(ApiResponse.error(UserInfoMessageConstants.USER_NOT_AUTHENTICATED, null));
-        }
+    public ResponseEntity<ApiResponse<AllUserResponse>> getCurrentUser(
+            @AuthenticationPrincipal Account account,
+            @RequestHeader(name = "X-Profile-Id", required = false, defaultValue = "0") Long profileId
+    ) throws AccessDeniedException {
+        User user = accountService.findUserByProfileIdOrMain(profileId, account.getId());
 
         try {
             User currentUser = userService.getCurrentUser(user.getId());
+            List<UserListDto> userListDtos = accountService.getUserList(account.getId());
+
             return ResponseEntity.status(200)
-                    .body(ApiResponse.success(new UserResponse(currentUser)));
+                    .body(ApiResponse.success(
+                            new AllUserResponse(currentUser, userListDtos)));
         } catch (Exception e) {
             logger.error("Get current user failed: {}", e.getMessage(), e);
             return ResponseEntity.status(400)
@@ -48,12 +53,11 @@ public class UserController {
     // 실명과 주소 업데이트
     @PutMapping("/personal-info")
     public ResponseEntity<ApiResponse<UserResponse>> updatePersonalInfo(
-            @AuthenticationPrincipal User user,
-            @RequestBody PersonalInfoRequest request) {
-        if (user == null) {
-            return ResponseEntity.status(400)
-                    .body(ApiResponse.error(UserInfoMessageConstants.USER_NOT_AUTHENTICATED, null));
-        }
+            @AuthenticationPrincipal Account account,
+            @RequestBody PersonalInfoRequest request,
+            @RequestHeader(name = "X-Profile-Id", required = false, defaultValue = "0") Long profileId
+    ) throws AccessDeniedException {
+        User user = accountService.findUserByProfileId(profileId, account.getId());
 
         try {
             User updatedUser = userService.updatePersonalInfo(user, request.getRealName(), request.getAddress());
@@ -69,12 +73,12 @@ public class UserController {
     // 닉네임 업데이트
     @PutMapping("/nickname")
     public ResponseEntity<ApiResponse<UserResponse>> updateNickname(
-            @AuthenticationPrincipal User user,
-            @RequestParam String nickname) {
-        if (user == null) {
-            return ResponseEntity.status(400)
-                    .body(ApiResponse.error("User not authenticated", null));
-        }
+            @AuthenticationPrincipal Account account,
+            @RequestParam String nickname,
+            @RequestHeader(name = "X-Profile-Id", required = false, defaultValue = "0") Long profileId
+    ) throws AccessDeniedException {
+        User user = accountService.findUserByProfileId(profileId, account.getId());
+
 
         try {
             String cleanedNickname = nickname.trim();
@@ -96,12 +100,12 @@ public class UserController {
 
     @PutMapping("/profile-photo")
     public ResponseEntity<ApiResponse<UserResponse>> updateProfilePhoto(
-            @AuthenticationPrincipal User user,
-            @RequestParam("file") MultipartFile file) {
-        if (user == null) {
-            return ResponseEntity.status(400)
-                    .body(ApiResponse.error("User not authenticated", null));
-        }
+            @AuthenticationPrincipal Account account,
+            @RequestParam("file") MultipartFile file,
+            @RequestHeader(name = "X-Profile-Id", required = false, defaultValue = "0") Long profileId
+    ) throws AccessDeniedException {
+        User user = accountService.findUserByProfileId(profileId, account.getId());
+
 
         try {
             String uploadDir = System.getProperty("user.dir") + "/upload/profile/";
@@ -144,14 +148,11 @@ public class UserController {
 
     // 회원 탈퇴
     @DeleteMapping("/delete-account")
-    public ResponseEntity<ApiResponse<Void>> deleteAccount(@AuthenticationPrincipal User user) {
-        if (user == null) {
-            return ResponseEntity.status(400)
-                    .body(ApiResponse.error(UserInfoMessageConstants.USER_NOT_AUTHENTICATED, null));
-        }
+    public ResponseEntity<ApiResponse<Void>> deleteAccount(
+            @AuthenticationPrincipal Account account){
 
         try {
-            userService.deleteAccount(user.getId());
+            userService.deleteAccount(account.getId());
             return ResponseEntity.status(200)
                     .body(ApiResponse.success(UserInfoMessageConstants.ACCOUNT_DELETE_SUCCESS, null));
         } catch (Exception e) {

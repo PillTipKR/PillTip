@@ -1,7 +1,7 @@
 package com.oauth2.User.UserInfo.Dto;
 
-import com.oauth2.User.Auth.Dto.ApiResponse;
-import com.oauth2.User.Auth.Entity.User;
+import com.oauth2.Account.Dto.ApiResponse;
+import com.oauth2.User.UserInfo.Entity.User;
 import com.oauth2.User.UserInfo.Entity.UserProfile;
 import com.oauth2.User.UserInfo.Service.UserProfileService;
 import lombok.RequiredArgsConstructor;
