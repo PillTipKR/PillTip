@@ -83,7 +83,6 @@ public class AlarmController {
 
             DosageLog dosageLog = dosageLogService.getDosageLog(logId);
             if(dosageLog == null) throw new NotExistDosageLogException();
-            if(dosageLog.getIsTaken()) throw new IllegalStateException(AuthMessageConstants.ALREADY_TAKEN);
             alarmService.sendFriendMedicationReminder(
                     friend.getAccount().getFCMToken(),
                     dosageLog.getId(),
