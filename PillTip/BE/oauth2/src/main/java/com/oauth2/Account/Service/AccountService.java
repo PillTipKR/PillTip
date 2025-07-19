@@ -42,7 +42,7 @@ public class AccountService {
 
 
     @Transactional(readOnly = true)
-    public User findUserByProfileIdPri(Long profileId, Long accountId) throws AccessDeniedException {
+    public User findUserByProfileIdPri(Long profileId, Long accountId) {
         Account account = accountRepository.findByIdWithUsers(accountId)
                 .orElseThrow(InvalidProfileIdException::new);
 
