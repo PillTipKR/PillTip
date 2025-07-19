@@ -34,7 +34,7 @@ public class UserController {
             @AuthenticationPrincipal Account account,
             @RequestHeader(name = "X-Profile-Id", required = false, defaultValue = "0") Long profileId
     ) throws AccessDeniedException {
-        User user = accountService.findUserByProfileIdOrMain(profileId, account.getId());
+        User user = accountService.findUserByProfileId(profileId, account.getId());
 
         try {
             User currentUser = userService.getCurrentUser(user.getId());

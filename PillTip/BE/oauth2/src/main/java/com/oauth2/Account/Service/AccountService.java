@@ -23,7 +23,7 @@ public class AccountService {
     private final AccountRepository accountRepository;
 
     @Transactional(readOnly = true)
-    public User findUserByProfileIdOrMain(Long profileId, Long accountId) throws AccessDeniedException {
+    public User findUserByProfileId(Long profileId, Long accountId) throws AccessDeniedException {
         Account account = accountRepository.findByIdWithUsers(accountId)
                 .orElseThrow(InvalidProfileIdException::new);
 
@@ -34,7 +34,7 @@ public class AccountService {
                     .findFirst()
                     .orElseThrow(InvalidProfileIdException::new);
         } else {
-            user = findUserByProfileId(profileId, accountId);
+            user = findUserByProfileIdPri(profileId, accountId);
         }
 
         return user;
@@ -42,7 +42,7 @@ public class AccountService {
 
 
     @Transactional(readOnly = true)
-    public User findUserByProfileId(Long profileId, Long accountId) throws AccessDeniedException {
+    public User findUserByProfileIdPri(Long profileId, Long accountId) throws AccessDeniedException {
         Account account = accountRepository.findByIdWithUsers(accountId)
                 .orElseThrow(InvalidProfileIdException::new);
 
