@@ -6,7 +6,6 @@ import com.oauth2.User.Alarm.Service.AlarmService;
 import com.oauth2.Account.Dto.ApiResponse;
 import com.oauth2.User.UserInfo.Entity.User;
 import com.oauth2.User.UserInfo.Repository.UserRepository;
-import com.oauth2.Account.Dto.AuthMessageConstants;
 import com.oauth2.User.Alarm.Dto.AlarmMessageConstants;
 import com.oauth2.User.Friend.Service.FriendService;
 import com.oauth2.User.TakingPill.Entity.DosageLog;
@@ -83,7 +82,6 @@ public class AlarmController {
 
             DosageLog dosageLog = dosageLogService.getDosageLog(logId);
             if(dosageLog == null) throw new NotExistDosageLogException();
-            if(dosageLog.getIsTaken()) throw new IllegalStateException(AuthMessageConstants.ALREADY_TAKEN);
             alarmService.sendFriendMedicationReminder(
                     friend.getAccount().getFCMToken(),
                     dosageLog.getId(),
