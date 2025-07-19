@@ -29,7 +29,7 @@ public class PromptController {
     public ResponseEntity<ApiResponse<String>> askGPT(
             @AuthenticationPrincipal Account account,
             @RequestBody DrugDetail detail,
-            @RequestHeader("X-Profile-Id") Long profileId) throws AccessDeniedException {
+            @RequestHeader(name = "X-Profile-Id", required = false, defaultValue = "0") Long profileId) throws AccessDeniedException {
         User user = accountService.findUserByProfileId(profileId, account.getId());
 
         String gptExplain = drugPromptService.getAsk(user, detail);

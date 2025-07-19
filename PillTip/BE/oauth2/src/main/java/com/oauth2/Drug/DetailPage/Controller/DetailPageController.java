@@ -26,7 +26,7 @@ public class DetailPageController {
     public ResponseEntity<ApiResponse<DrugDetail>> detailPage(
             @AuthenticationPrincipal Account account,
             @RequestParam long id,
-            @RequestHeader("X-Profile-Id") Long profileId) throws IOException {
+            @RequestHeader(name = "X-Profile-Id", required = false, defaultValue = "0") Long profileId) throws IOException {
         User user = accountService.findUserByProfileId(profileId, account.getId());
 
         if (user == null) throw new InvalidProfileIdException();
