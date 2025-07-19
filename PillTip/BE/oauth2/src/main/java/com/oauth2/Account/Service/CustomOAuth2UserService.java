@@ -2,13 +2,15 @@
 // description : 커스텀 OAuth2 사용자 서비스
 package com.oauth2.Account.Service;
 
+import com.oauth2.Account.Dto.CreateUserDto;
 import com.oauth2.Account.Entity.Account;
 import com.oauth2.Account.Entity.AccountToken;
 import com.oauth2.Account.Entity.LoginType;
 import com.oauth2.Account.Repository.AccountRepository;
-import com.oauth2.Account.Dto.CreateUserDto;
 import com.oauth2.User.UserInfo.Entity.*;
 import com.oauth2.User.UserInfo.Repository.UserRepository;
+import com.oauth2.User.UserInfo.Entity.UserPermissions;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;

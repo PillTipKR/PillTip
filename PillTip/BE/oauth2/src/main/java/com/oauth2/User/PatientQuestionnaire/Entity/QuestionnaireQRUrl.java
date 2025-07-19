@@ -26,4 +26,7 @@ public class QuestionnaireQRUrl {
 
     @Column(name = "qr_url", nullable = false, columnDefinition = "TEXT")
     private String qrUrl;
+
+    @Column(name = "hospital_code", nullable = false)
+    private String hospitalCode;
 } 

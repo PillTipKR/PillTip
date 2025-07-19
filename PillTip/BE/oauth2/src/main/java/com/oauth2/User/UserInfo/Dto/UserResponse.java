@@ -18,7 +18,7 @@ public class UserResponse {
     private final Long id;
     private final String nickname;
     private final String profilePhoto;
-    private final boolean terms;
+    private final Boolean terms;
     
     // UserProfile 정보
     private final Integer age;
@@ -38,12 +38,14 @@ public class UserResponse {
     // 권한 정보 (두 권한이 모두 true일 때만 true)
     private final boolean permissions;
 
+    private final Boolean friendPermission;
+
     // 생성자, 앱에서 정보를 처리하기 쉽도록 일정한 형식으로 변환
     public UserResponse(User user) {
         this.id = user.getId();
-        this.nickname = user.getNickname();
+        this.nickname = user.getNickname()  ;
         this.profilePhoto = user.getProfilePhoto(); // EncryptionConverter가 자동으로 복호화
-        this.terms = user.isTerms();
+        this.terms = user.getTerms() != null ? user.getTerms() : false;
         
         // UserProfile에서 정보 가져오기
         UserProfile profile = user.getUserProfile();
@@ -66,6 +68,8 @@ public class UserResponse {
         this.permissions = userPermissions != null && 
                           userPermissions.isSensitiveInfoPermission() && 
                           userPermissions.isMedicalInfoPermission();
+
+        this.friendPermission = user.getFriendPermission() != null ? user.getFriendPermission() : false;
     }
 
 

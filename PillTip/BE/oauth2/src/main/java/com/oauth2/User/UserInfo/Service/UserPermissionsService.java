@@ -84,6 +84,9 @@ public class UserPermissionsService {
             case "medical_info":
                 userPermissions.setMedicalInfoPermission(granted);
                 break;
+            case "friend":
+                userPermissions.setFriendPermission(granted);
+                break;
             default:
                 throw new IllegalArgumentException("Invalid permission type: " + permissionType);
         }

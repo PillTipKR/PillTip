@@ -46,16 +46,16 @@ public class SecurityConfig {
             .sessionManagement(session -> session
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             // 인증 없이 접근 가능한 경로 설정
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/", "/error", "/oauth2/**", "/login/**",
-                        "/css/**", "/js/**", "/images/**",
-                        "/static/**", "/webjars/**", "/favicon.ico",
-                        "/api/auth/signup", "/api/auth/login", "/api/auth/check-duplicate",
-                        "/api/auth/refresh", "/api/auth/social-login", "/api/questionnaire/public/**",
-                        "/profile/**"
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/", "/error", "/oauth2/**", "/login/**",
+                                "/css/**", "/js/**", "/images/**",
+                                "/static/**", "/webjars/**", "/favicon.ico",
+                                "/api/auth/signup", "/api/auth/login", "/api/auth/check-duplicate",
+                                "/api/auth/refresh", "/api/auth/social-login", "/api/questionnaire/public/**",
+                                "/profile/**", "/api/friend/inviting/**", "/invite.html"
                         ).permitAll()
-                // 나머지 경로는 인증 필요
-                .anyRequest().authenticated()
+                        // 나머지 경로는 인증 필요
+                        .anyRequest().authenticated()
             )
             // 커스텀 인증 실패 핸들러 설정
             .exceptionHandling(exceptionHandling -> exceptionHandling
@@ -63,10 +63,10 @@ public class SecurityConfig {
                     response.setStatus(HttpStatus.UNAUTHORIZED.value());
                     response.setContentType(MediaType.APPLICATION_JSON_VALUE);
                     response.setCharacterEncoding("UTF-8");
-                    
+
                     String errorMessage = AuthMessageConstants.TOKEN_NOT_PROVIDED;
                     String errorType = "no_token";
-                    
+
                     response.getWriter().write(objectMapper.writeValueAsString(
                         ApiResponse.error(errorMessage, errorType)
                     ));

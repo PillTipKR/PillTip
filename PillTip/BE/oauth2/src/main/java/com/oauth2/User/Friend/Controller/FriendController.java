@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.view.RedirectView;
 
 import java.nio.file.AccessDeniedException;
 import java.util.List;
@@ -45,6 +46,13 @@ public class FriendController {
 
         return ResponseEntity.ok(Map.of("inviteUrl", inviteUrl));
     }
+
+    @GetMapping("/invite/{token}")
+    public RedirectView redirectToHtml(@PathVariable String token) {
+        String url = server + "/invite.html?token=" + token;
+        return new RedirectView(url);
+    }
+
 
     /**
      * 친구 초대 수락 → 친구 관계 등록

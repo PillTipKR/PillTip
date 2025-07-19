@@ -1,16 +1,14 @@
 "use client";
 
-import React, { createContext, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import styles from "./layout.module.css";
-
-// 서버-클라이언트 시간차 Context 생성
-export const ServerTimeDiffContext = createContext<number>(0);
+import { ServerTimeDiffContext } from "@/context/ServerTimeDiffContext";
 
 interface Props {
   children: React.ReactNode;
 }
 
-// 서버 시간차 구하는 함수
+// 서버-클라이언트 시간차 구하는 함수
 async function getServerTimeDiff() {
   try {
     const res = await fetch("/api/server-time");

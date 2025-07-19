@@ -52,10 +52,13 @@ public class UserPermissions {
     @Column(name = "medical_info_permission", nullable = false)
     private boolean medicalInfoPermission; // 유저 의약법 동의
 
+    @Column(name = "friend_permission", nullable = false)
+    private boolean friendPermission; // 유저 친구 동의
+
     @Builder
     public UserPermissions(User user, boolean locationPermission, boolean cameraPermission,
                           boolean galleryPermission, boolean phonePermission, boolean smsPermission, boolean filePermission,
-                          boolean sensitiveInfoPermission, boolean medicalInfoPermission) {
+                          boolean sensitiveInfoPermission, boolean medicalInfoPermission, boolean friendPermission) {
         this.user = user;
         this.locationPermission = locationPermission;
         this.cameraPermission = cameraPermission;
@@ -65,5 +68,6 @@ public class UserPermissions {
         this.filePermission = filePermission;
         this.sensitiveInfoPermission = sensitiveInfoPermission;
         this.medicalInfoPermission = medicalInfoPermission;
+        this.friendPermission = friendPermission;
     }
 }

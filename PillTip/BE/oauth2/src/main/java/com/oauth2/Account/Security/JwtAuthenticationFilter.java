@@ -50,8 +50,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             requestURI.equals("/api/auth/check-duplicate") ||
             requestURI.equals("/api/auth/refresh") ||
             requestURI.startsWith("/oauth2/") ||
-            requestURI.startsWith("/api/questionnaire/public/")) {
-
+            requestURI.startsWith("/api/questionnaire/public/") ||
+            requestURI.startsWith("/api/friend/inviting") ||
+            requestURI.startsWith("/invite.html")) {
             filterChain.doFilter(request, response);
             return;
         }

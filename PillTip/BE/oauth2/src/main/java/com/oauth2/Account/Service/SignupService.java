@@ -16,6 +16,7 @@ import com.oauth2.User.UserInfo.Repository.UserRepository;
 import com.oauth2.Account.Dto.OAuth2UserInfo;
 import com.oauth2.User.UserInfo.Service.ProfileService;
 import com.oauth2.User.UserInfo.Service.UserService;
+import com.oauth2.User.UserInfo.Entity.UserPermissions;
 import com.oauth2.Util.Exception.CustomException.*;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;

@@ -178,7 +178,7 @@ public class AuthController {
         try {
             User updatedUser = userService.agreeToTerms(user);
             TermsResponse termsResponse = TermsResponse.builder()
-                .terms(updatedUser.isTerms())
+                .terms(updatedUser.getTerms())
                 .nickname(updatedUser.getNickname())
                 .build();
             return ResponseEntity.ok()
