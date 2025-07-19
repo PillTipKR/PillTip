@@ -3,10 +3,8 @@ package com.pilltip.pilltip.view.auth
 
 import android.annotation.SuppressLint
 import android.app.Activity
-import android.icu.text.ListFormatter.Width
 import android.util.Log
 import android.widget.Toast
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -25,16 +23,12 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -74,12 +68,10 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.pilltip.pilltip.R
 import com.pilltip.pilltip.composable.AppBar
@@ -1338,7 +1330,7 @@ fun PhoneAuthPage(
             text = buttonText,
             onClick = {
                 if (!isChecked) {
-                    viewModel.checkPhoneNumberDuplicate(phoneViewModel.formattedPhone.toString()) { isSuccess, isAvailable ->
+                    viewModel.checkPhoneNumberDuplicate(phoneViewModel.toString()) { isSuccess, isAvailable ->
                         isDuplicate = isAvailable?.not()
                         if (isSuccess && isDuplicate == true) {
                             Toast.makeText(context, "이미 사용 중인 번호예요.", Toast.LENGTH_SHORT).show()
