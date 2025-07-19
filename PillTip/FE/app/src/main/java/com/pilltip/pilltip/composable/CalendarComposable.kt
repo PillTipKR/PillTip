@@ -1,6 +1,5 @@
 package com.pilltip.pilltip.composable
 
-import android.util.Log
 import android.widget.Toast
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.Image
@@ -11,16 +10,12 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -42,6 +37,7 @@ import androidx.compose.ui.unit.sp
 import com.pilltip.pilltip.R
 import com.pilltip.pilltip.model.search.DosageLogPerDrug
 import com.pilltip.pilltip.model.search.DosageLogSchedule
+import com.pilltip.pilltip.model.search.FriendListDto
 import com.pilltip.pilltip.model.search.SearchHiltViewModel
 import com.pilltip.pilltip.ui.theme.gray100
 import com.pilltip.pilltip.ui.theme.gray200
@@ -117,7 +113,7 @@ fun DrugLogCard(
 fun DosageTimeItem(
     schedule: DosageLogSchedule,
     viewModel: SearchHiltViewModel,
-    selectedDate: LocalDate,
+    selectedDate: LocalDate
 ) {
     val time = schedule.scheduledTime.substring(11, 16)
     val context = LocalContext.current
@@ -153,18 +149,7 @@ fun DosageTimeItem(
 
     Row(
         modifier = Modifier
-            .fillMaxWidth()
-            .noRippleClickable {
-                viewModel.toggleDosageTaken(
-                    logId = schedule.logId,
-                    onSuccess = {
-                        viewModel.fetchDailyDosageLog(selectedDate)
-                    },
-                    onError = {
-                        Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
-                    }
-                )
-            },
+            .fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
@@ -184,6 +169,19 @@ fun DosageTimeItem(
                     shape = RoundedCornerShape(size = 1000.dp)
                 )
                 .padding(start = 10.dp, top = 6.dp, end = 10.dp, bottom = 6.dp)
+                .noRippleClickable {
+                    if (!viewModel.isFriendView) {
+                        viewModel.toggleDosageTaken(
+                            logId = schedule.logId,
+                            onSuccess = {
+                                viewModel.fetchDailyDosageLog(selectedDate)
+                            },
+                            onError = {
+                                Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
+                            }
+                        )
+                    }
+                }
         ) {
             Text(
                 text = statusText,
@@ -267,7 +265,9 @@ fun DosageTimeDetailItem(
                 end = 16.dp,
                 bottom = if (expanded) 16.dp else 20.dp
             )
-            .noRippleClickable { expanded = !expanded }
+            .noRippleClickable {
+                if (!viewModel.isFriendView) expanded = !expanded
+            }
             .animateContentSize()
     ) {
         Row(
@@ -284,7 +284,6 @@ fun DosageTimeDetailItem(
                     color = gray900,
                 )
             )
-
             Box(
                 modifier = Modifier
                     .background(
@@ -315,12 +314,16 @@ fun DosageTimeDetailItem(
                         .height(49.dp)
                         .background(color = gray100, shape = RoundedCornerShape(size = 12.dp))
                         .padding(start = 30.dp, top = 16.dp, end = 30.dp, bottom = 16.dp)
-                        .noRippleClickable{
-                            if(!schedule.isTaken) {
+                        .noRippleClickable {
+                            if (!schedule.isTaken) {
                                 viewModel.fetchDosageLogMessage(
                                     logId = schedule.logId,
                                     onSuccess = { message ->
-                                        Toast.makeText(context, "5분 뒤 복약 알림을 다시 드릴게요!", Toast.LENGTH_SHORT)
+                                        Toast.makeText(
+                                            context,
+                                            "5분 뒤 복약 알림을 다시 드릴게요!",
+                                            Toast.LENGTH_SHORT
+                                        )
                                             .show()
                                     },
                                     onError = { error ->
@@ -333,7 +336,7 @@ fun DosageTimeDetailItem(
                             }
                         },
                     contentAlignment = Alignment.Center
-                ){
+                ) {
                     Text(
                         text = "5분 미루기",
                         style = TextStyle(
@@ -351,8 +354,8 @@ fun DosageTimeDetailItem(
                         .height(49.dp)
                         .background(color = primaryColor, shape = RoundedCornerShape(size = 12.dp))
                         .padding(start = 30.dp, top = 16.dp, end = 30.dp, bottom = 16.dp)
-                        .noRippleClickable{
-                            if(!schedule.isTaken) {
+                        .noRippleClickable {
+                            if (!schedule.isTaken) {
                                 viewModel.toggleDosageTaken(
                                     logId = schedule.logId,
                                     onSuccess = {
@@ -365,7 +368,7 @@ fun DosageTimeDetailItem(
                             }
                         },
                     contentAlignment = Alignment.Center
-                ){
+                ) {
                     Text(
                         text = "먹었어요",
                         style = TextStyle(
@@ -416,6 +419,38 @@ fun DosageTimeDetailItem(
 //                        }
 //                    )
 //                }
+            }
+        }
+    }
+}
+
+@Composable
+fun UserSelectorBar(
+    currentId: Long?,
+    friends: List<FriendListDto>,
+    onUserSelected: (Long?) -> Unit
+) {
+    val items =
+        listOf<Pair<Long?, String>>(null to "나") + friends.map { it.friendId to it.nickName }
+
+    LazyRow(
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        items(items) { (id, name) ->
+            val isSelected = id == currentId
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(if (isSelected) primaryColor else gray100)
+                    .clickable { onUserSelected(id) }
+                    .padding(horizontal = 16.dp, vertical = 10.dp)
+            ) {
+                Text(
+                    text = name,
+                    color = if (isSelected) Color.White else gray800,
+                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                    fontSize = 14.sp
+                )
             }
         }
     }

@@ -1,8 +1,5 @@
 package com.pilltip.pilltip.model.search
 
-import com.kakao.sdk.auth.AuthApi
-import com.pilltip.pilltip.model.signUp.AuthRepository
-import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
@@ -420,6 +417,12 @@ interface DosageLogApi {
         @Query("date") date: String
     ): DailyDosageLogResponse
 
+    @GET("/api/dosageLog/{friendId}/date")
+    suspend fun getFriendDosageLog(
+        @Path("friendId") friendId: Long,
+        @Query("date") date: String
+    ): DailyDosageLogResponse
+
     @POST("/api/dosageLog/{logId}/taken")
     suspend fun toggleDosageTaken(
         @Path("logId") logId: Long
@@ -435,7 +438,7 @@ interface DosageLogRepository {
     suspend fun getDailyDosageLog(date: String): DailyDosageLogResponse
     suspend fun toggleDosageTaken(logId: Long): ToggleDosageTakenResponse
     suspend fun getDosageLogMessage(logId: Long): ToggleDosageTakenResponse
-
+    suspend fun getFriendDosageLog(friendId: Long, date: String): DailyDosageLogData
 }
 
 class DosageLogRepositoryImpl(
@@ -452,6 +455,11 @@ class DosageLogRepositoryImpl(
     override suspend fun getDosageLogMessage(logId: Long): ToggleDosageTakenResponse {
         return api.getDosageLogMessage(logId)
     }
+
+    override suspend fun getFriendDosageLog(friendId: Long, date: String): DailyDosageLogData {
+        return api.getFriendDosageLog(friendId, date).data
+    }
+
 }
 
 /**
@@ -558,4 +566,46 @@ class ReviewRepositoryImpl(
     }
 }
 
+/**
+ * 친구 추가
+ */
+interface FriendApi {
+    @POST("/api/friend/invite")
+    suspend fun getInviteUrl(): InviteUrlResponse
+
+    @POST("/api/friend/accept")
+    suspend fun acceptInvite(
+        @Body request: FriendAcceptRequest
+    ): FriendAcceptResponse
+
+    @GET("/api/friend/list")
+    suspend fun getFriendList(): FriendListResponse
+}
+
+interface FriendRepository {
+    suspend fun fetchInviteUrl(): String
+    suspend fun acceptFriendInvite(inviteToken: String): String
+    suspend fun getFriendList(): List<FriendListDto>
+}
+
+class FriendRepositoryImpl(
+    private val api: FriendApi
+) : FriendRepository {
+
+    override suspend fun fetchInviteUrl(): String {
+        return api.getInviteUrl().inviteUrl
+    }
+
+    override suspend fun acceptFriendInvite(inviteToken: String): String {
+        val response = api.acceptInvite(FriendAcceptRequest(inviteToken))
+        if (response.status != "success") {
+            throw Exception(response.message ?: "친구 수락 실패")
+        }
+        return response.data
+    }
+
+    override suspend fun getFriendList(): List<FriendListDto> {
+        return api.getFriendList().data
+    }
+}
 

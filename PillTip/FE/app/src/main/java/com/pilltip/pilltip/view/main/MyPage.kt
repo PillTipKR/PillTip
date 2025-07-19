@@ -249,6 +249,9 @@ fun MyPage(
         MyPageMenuItem(text = "내 리뷰 관리") {
             Toast.makeText(context, "업데이트를 기대해주세요!", Toast.LENGTH_SHORT).show()
         }
+        MyPageMenuItem(text = "내 친구 목록") {
+            navController.navigate("FriendListPage")
+        }
         HeightSpacer(48.dp)
         Text(
             text = "알림",

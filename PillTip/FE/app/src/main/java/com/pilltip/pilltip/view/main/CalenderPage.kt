@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -22,6 +21,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -52,6 +52,7 @@ import com.pilltip.pilltip.R
 import com.pilltip.pilltip.composable.DrugLogCard
 import com.pilltip.pilltip.composable.DrugLogDetailSection
 import com.pilltip.pilltip.composable.HeightSpacer
+import com.pilltip.pilltip.composable.UserSelectorBar
 import com.pilltip.pilltip.composable.noRippleClickable
 import com.pilltip.pilltip.model.search.SearchHiltViewModel
 import com.pilltip.pilltip.ui.theme.gray050
@@ -75,6 +76,11 @@ fun CalenderPage(
     val selectedDrugLog = hiltViewModel.selectedDrugLog
     val localHeight = LocalConfiguration.current.screenHeightDp
     val systemUiController = rememberSystemUiController()
+
+    val friends by hiltViewModel.friendList.collectAsState()
+    var isFriend by remember { mutableStateOf(false) }
+    val selectedFriendId = if (hiltViewModel.isFriendView) hiltViewModel.targetFriendId else null
+
     SideEffect {
         systemUiController.setStatusBarColor(
             color = gray050,
@@ -87,6 +93,10 @@ fun CalenderPage(
         selectedDate.let {
             hiltViewModel.fetchDailyDosageLog(it)
         }
+    }
+
+    LaunchedEffect(Unit) {
+        hiltViewModel.fetchFriendList()
     }
 
     BackHandler(enabled = hiltViewModel.selectedDrugLog != null) {
@@ -217,12 +227,30 @@ fun CalenderPage(
                 .padding(horizontal = 22.dp, vertical = 24.dp),
             verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
-            if (selectedDrugLog == null) {
-                logData?.perDrugLogs?.forEach { drug ->
-                    DrugLogCard(drug, hiltViewModel, selectedDate)
+            UserSelectorBar(
+                currentId = selectedFriendId,
+                friends = friends,
+                onUserSelected = { selectedId ->
+                    if (selectedId == null) {
+                        hiltViewModel.isFriendView = false
+                        hiltViewModel.targetFriendId = null
+                    } else {
+                        hiltViewModel.isFriendView = true
+                        hiltViewModel.targetFriendId = selectedId
+                    }
+                    hiltViewModel.fetchDailyDosageLog(hiltViewModel.selectedDate.value)
                 }
+            )
+            if (logData == null) {
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
             } else {
-                DrugLogDetailSection(selectedDrugLog, hiltViewModel, selectedDate)
+                if (selectedDrugLog == null) {
+                    logData?.perDrugLogs?.forEach { drug ->
+                        DrugLogCard(drug, hiltViewModel, selectedDate)
+                    }
+                } else {
+                    DrugLogDetailSection(selectedDrugLog, hiltViewModel, selectedDate)
+                }
             }
         }
     }

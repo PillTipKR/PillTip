@@ -106,7 +106,7 @@ class AuthRepository @Inject constructor(
         return when {
             phone.length == 11 -> "${phone.substring(0,3)}-${phone.substring(3,7)}-${phone.substring(7)}"
             phone.length == 10 -> "${phone.substring(0,3)}-${phone.substring(3,6)}-${phone.substring(6)}"
-            else -> phone // 예외 처리: 그냥 반환
+            else -> phone
         }
     }
 

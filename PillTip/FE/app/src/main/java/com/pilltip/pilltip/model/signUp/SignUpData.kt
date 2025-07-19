@@ -89,7 +89,15 @@ data class UserData(
     val weight: String,
     val realName: String?,
     val address: String?,
-    val permissions: Boolean
+    val permissions: Boolean,
+    val userList: List<UserProfile>?,
+    val main: Boolean
+)
+
+data class UserProfile(
+    val userId: Long,
+    val nickname: String,
+    val isMain: Boolean
 )
 
 /* 중복 체크 */

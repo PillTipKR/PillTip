@@ -550,3 +550,39 @@ data class SortInfo(
     val sorted: Boolean,
     val unsorted: Boolean
 )
+
+/**
+ * 친구추가 링크 보내기
+ */
+data class InviteUrlResponse(
+    val inviteUrl: String
+)
+
+/**
+ * 친구 추가 수락하기
+ */
+data class FriendAcceptRequest(
+    val inviteToken: String
+)
+
+data class FriendAcceptResponse(
+    val status: String,
+    val message: String?,
+    val data: String // ex: "친구 추가가 완료되었습니다."
+)
+
+/**
+ * 친구 리스트 불러오기
+ */
+data class FriendListResponse(
+    val status: String,
+    val message: String?,
+    val data: List<FriendListDto>
+)
+
+data class FriendListDto(
+    val friendId: Long,
+    val nickName: String
+)
+
+
